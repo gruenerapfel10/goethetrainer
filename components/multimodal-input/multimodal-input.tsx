@@ -47,6 +47,7 @@ import {
 } from './mention-utils';
 import { FeatureToggles } from './feature-toggles';
 import { SettingsButton } from './settings-button';
+import { VoiceInput } from '@/components/voice-input';
 
 function PureMultimodalInput({
   selectedModelId,
@@ -707,6 +708,11 @@ function PureMultimodalInput({
                         status={status}
                       />
                     )}
+                    
+                    <VoiceInput
+                      onTranscript={(text) => setInput(text)}
+                      autoSubmit={false}
+                    />
                     
                     <SettingsButton
                       status={status}

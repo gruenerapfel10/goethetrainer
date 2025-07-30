@@ -13,6 +13,7 @@ import { DocumentToolCall, DocumentToolResult } from './document';
 import { PencilEditIcon, SparklesIcon } from './icons';
 import { Markdown } from './markdown';
 import { MessageActions } from './message-actions';
+import { VoiceOutput } from './voice-output';
 import { PreviewAttachment } from './preview-attachment';
 import { Weather } from './weather';
 import { Button } from './ui/button';
@@ -448,14 +449,22 @@ const PurePreviewMessage = ({
 
           {/* Actions */}
           {!isReadonly && (
-            <MessageActions
-              key={`action-${message.id}`}
-              chatId={chatId}
-              message={message}
-              vote={vote}
-              isLoading={isLoading}
-              shouldCostFetch={completedMessageIds.has(message.id)}
-            />
+            <div className="flex items-center justify-between">
+              <MessageActions
+                key={`action-${message.id}`}
+                chatId={chatId}
+                message={message}
+                vote={vote}
+                isLoading={isLoading}
+                shouldCostFetch={completedMessageIds.has(message.id)}
+              />
+              {message.role === 'assistant' && message.content && (
+                <VoiceOutput
+                  text={message.content}
+                  className="ml-auto"
+                />
+              )}
+            </div>
           )}
         </div>
       </div>
