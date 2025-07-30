@@ -1,5 +1,6 @@
 import type { Attachment } from 'ai';
 import { toast } from 'sonner';
+import { validateFileType, formatFileSize, isImageFile } from '@/lib/file-utils';
 
 export const uploadFiles = async (
   files: FileList | File[],
@@ -7,11 +8,25 @@ export const uploadFiles = async (
   setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>,
 ) => {
   const fileArray = Array.from(files);
-  const currentUploadQueue = fileArray.map((file) => file.name);
+  
+  // Validate files before uploading
+  const validFiles: File[] = [];
+  for (const file of fileArray) {
+    const validation = validateFileType(file);
+    if (!validation.valid) {
+      toast.error(`${file.name}: ${validation.error}`);
+      continue;
+    }
+    validFiles.push(file);
+  }
+  
+  if (validFiles.length === 0) return;
+  
+  const currentUploadQueue = validFiles.map((file) => file.name);
   setUploadQueue((prev) => [...prev, ...currentUploadQueue]);
 
   try {
-    const uploadPromises = fileArray.map(async (file) => {
+    const uploadPromises = validFiles.map(async (file) => {
       const formData = new FormData();
       formData.append('file', file);
       const response = await fetch('/api/files/upload', {

@@ -1,9 +1,10 @@
 import type { Attachment } from 'ai';
-import { FileIcon } from 'lucide-react';
+import { FileIcon, Expand } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Loader2, XIcon, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { ImagePreviewModal } from './image-preview-modal';
 
 export function PreviewAttachment({
   attachment,
@@ -25,6 +26,7 @@ export function PreviewAttachment({
   const [isDeleting, setIsDeleting] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Fetch presigned URL for images
   useEffect(() => {
@@ -171,6 +173,23 @@ export function PreviewAttachment({
 
       {!isUploading && !isDeleting && (
         <div className="absolute top-0.5 right-0.5 flex gap-0.5">
+          {isImage && imageUrl && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowPreviewModal(true);
+              }}
+              className={cn(
+                'p-0.5 rounded-md bg-background/80 backdrop-blur-sm',
+                'opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+                'hover:bg-primary hover:text-primary-foreground',
+              )}
+              title="Preview image"
+            >
+              <Expand className="h-3 w-3" />
+            </button>
+          )}
           <button
             onClick={handleOpenFile}
             className={cn(
@@ -198,6 +217,15 @@ export function PreviewAttachment({
             </button>
           )}
         </div>
+      )}
+
+      {isImage && imageUrl && (
+        <ImagePreviewModal
+          isOpen={showPreviewModal}
+          onClose={() => setShowPreviewModal(false)}
+          imageUrl={imageUrl}
+          imageName={name}
+        />
       )}
     </div>
   );
