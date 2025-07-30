@@ -20,6 +20,8 @@ import { getChatHistoryPaginationKey } from './sidebar-history';
 import { motion } from 'framer-motion';
 import { getCapabilitiesToDisable, getExclusionMessage } from '@/lib/ai/capability-exclusions';
 import { ConversationBranch } from './conversation-branch';
+import { SmartNotificationAnalyzer } from '@/lib/notifications/smart-analyzer';
+import { NotificationService } from '@/lib/notifications/notification-service';
 
 export function Chat({
   id,
@@ -196,6 +198,38 @@ export function Chat({
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(`messages-${id}`, JSON.stringify(messages));
+    }
+  }, [messages, id]);
+
+  // Smart notification analysis
+  useEffect(() => {
+    if (messages.length === 0) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    const analyzer = SmartNotificationAnalyzer.getInstance();
+    const notificationService = NotificationService.getInstance();
+    
+    // Analyze the last message for notifications
+    const result = analyzer.analyzeMessage(lastMessage, id, {
+      userName: 'User', // Could be dynamic
+      previousMessages: messages.slice(-5), // Last 5 messages for context
+    });
+    
+    // Send notifications
+    if (result.shouldNotify) {
+      result.notifications.forEach(async (notification) => {
+        await notificationService.notify(notification);
+      });
+    }
+
+    // Analyze chat session periodically (every 10 messages)
+    if (messages.length % 10 === 0) {
+      const sessionResult = analyzer.analyzeChatSession(messages, id);
+      if (sessionResult.shouldNotify) {
+        sessionResult.notifications.forEach(async (notification) => {
+          await notificationService.notify(notification);
+        });
+      }
     }
   }, [messages, id]);
 

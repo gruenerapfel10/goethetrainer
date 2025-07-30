@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import { useLogo } from '../context/logo-context';
 import { LogoComponent } from './logo-component';
+import { NotificationCenter } from './notification-center';
 
 export interface FileSearchResult {
   title: string;
@@ -71,6 +72,9 @@ function PureChatHeader({
 
           {/* Children - branching component */}
           {children}
+
+          {/* Notification Center */}
+          <NotificationCenter />
         </div>
       </header>
 
