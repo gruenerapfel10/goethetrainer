@@ -24,10 +24,15 @@ import { extract } from '@/lib/ai/tools/extract';
 import { scrape } from '@/lib/ai/tools/scrape';
 import { deepResearch as deepResearchTool } from '@/lib/ai/tools/deep-research';
 import { mapControl } from '@/lib/ai/tools/map-control';
+import { connectorTool, listConnectorsTool } from '@/lib/ai/tools/connector-tool';
+import { initializeConnectors } from '@/lib/connectors';
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 import { addToolConstraints } from '@/lib/utils/message-filter';
 import { enhanceSystemPromptWithTools } from '@/lib/ai/tool-prompts';
+
+// Initialize connectors on module load
+initializeConnectors();
 
 export const maxDuration = 60;
 
@@ -114,13 +119,13 @@ ${
       : enhancedSystemText;
     
     // Define available tools for this agent based on capabilities
-    const baseTools = ['getWeather', 'requestSuggestions', 'processFile', 'chart', 'createDocument', 'updateDocument', 'mapControl'] as const;
+    const baseTools = ['getWeather', 'requestSuggestions', 'processFile', 'chart', 'createDocument', 'updateDocument', 'mapControl', 'connector', 'listConnectors'] as const;
     const webTools = webSearch && !deepResearch ? (['search', 'extract', 'scrape'] as const) : ([] as const);
     const deepResearchTools = deepResearch ? (['reason_search'] as const) : ([] as const);
     const availableTools = [...baseTools, ...webTools, ...deepResearchTools];
     
     // Create active tools list without reason_search for experimental_activeTools
-    type ActiveToolType = "search" | "getWeather" | "requestSuggestions" | "processFile" | "chart" | "createDocument" | "updateDocument" | "extract" | "scrape" | "mapControl";
+    type ActiveToolType = "search" | "getWeather" | "requestSuggestions" | "processFile" | "chart" | "createDocument" | "updateDocument" | "extract" | "scrape" | "mapControl" | "connector" | "listConnectors";
     const activeToolsList: ActiveToolType[] = [...baseTools, ...webTools] as ActiveToolType[];
     
     // Add tool constraints to system prompt
@@ -322,6 +327,8 @@ ${
                 session,
                 dataStream,
               }),
+              connector: connectorTool,
+              listConnectors: listConnectorsTool,
               ...(webSearch && !deepResearch ? {
                 search: search({
                   session,

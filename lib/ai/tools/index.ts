@@ -67,6 +67,16 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     description: 'Control the interactive globe map - zoom to countries, locations, or change map styles'
   },
   
+  // Connector tools
+  'connector': {
+    displayName: 'Service Connector',
+    description: 'Connect to external services like Gmail, Calendar, Maps, Slack, and GitHub'
+  },
+  'listConnectors': {
+    displayName: 'List Connectors',
+    description: 'List all available service connectors and their capabilities'
+  },
+  
   // Unknown tool type
   'unknown': {
     displayName: 'Unknown Tool',
