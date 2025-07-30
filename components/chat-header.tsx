@@ -14,6 +14,9 @@ import { LogoComponent } from './logo-component';
 import { NotificationCenter } from './notification-center';
 import { WorkflowBuilder } from './workflow-builder';
 import { CollaborativeWhiteboard } from './collaborative-whiteboard';
+import { VideoCallSystem } from './video-call-system';
+import { SmartDocumentEditor } from './smart-document-editor';
+import { FeatureSuite } from './feature-suite';
 
 export interface FileSearchResult {
   title: string;
@@ -74,6 +77,15 @@ function PureChatHeader({
 
           {/* Children - branching component */}
           {children}
+
+          {/* Feature Suite */}
+          <FeatureSuite />
+
+          {/* Smart Document Editor */}
+          <SmartDocumentEditor />
+
+          {/* Video Call System */}
+          <VideoCallSystem />
 
           {/* Collaborative Whiteboard */}
           <CollaborativeWhiteboard />

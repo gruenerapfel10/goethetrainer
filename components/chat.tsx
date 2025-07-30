@@ -23,6 +23,7 @@ import { ConversationBranch } from './conversation-branch';
 import { SmartNotificationAnalyzer } from '@/lib/notifications/smart-analyzer';
 import { NotificationService } from '@/lib/notifications/notification-service';
 import { WorkflowEngine } from '@/lib/automation/workflow-engine';
+import { AIMemorySystem } from '@/lib/ai-memory/memory-system';
 
 export function Chat({
   id,
@@ -220,8 +221,9 @@ export function Chat({
     const analyzer = SmartNotificationAnalyzer.getInstance();
     const notificationService = NotificationService.getInstance();
     const workflowEngine = WorkflowEngine.getInstance();
+    const memorySystem = AIMemorySystem.getInstance();
     
-    // Extract text content for workflow analysis
+    // Extract text content for analysis
     const textContent = lastMessage.parts && Array.isArray(lastMessage.parts)
       ? lastMessage.parts
           .filter((part: any) => part.type === 'text' && part.text)
@@ -229,8 +231,16 @@ export function Chat({
           .join('\n\n')
       : typeof lastMessage.content === 'string' ? lastMessage.content : '';
     
-    // Trigger workflow message events
+    // AI Memory Analysis
     if (textContent) {
+      const memoryAnalysis = memorySystem.analyzeMessage(textContent, id);
+      
+      // Store new memories
+      memoryAnalysis.newMemories.forEach(memory => {
+        memorySystem.addMemory(memory);
+      });
+      
+      // Trigger workflow message events
       workflowEngine.triggerMessageEvent(textContent, id);
     }
     
