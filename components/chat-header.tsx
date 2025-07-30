@@ -30,6 +30,7 @@ function PureChatHeader({
   selectedFiles,
   onSelectedFilesChange,
   chatTitle,
+  children,
 }: {
   chatId: string;
   selectedModelId: string;
@@ -41,6 +42,7 @@ function PureChatHeader({
   selectedFiles: FileSearchResult[];
   onSelectedFilesChange: (files: FileSearchResult[]) => void;
   chatTitle?: string;
+  children?: React.ReactNode;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -67,6 +69,8 @@ function PureChatHeader({
             />
           )}
 
+          {/* Children - branching component */}
+          {children}
         </div>
       </header>
 

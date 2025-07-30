@@ -152,6 +152,7 @@ function PureMessages({
             key={message.id}
             chatId={chatId}
             message={message}
+            messageIndex={index}
             isLoading={status === 'streaming' && index === messages.length - 1}
             vote={votes?.find((vote) => vote.messageId === message.id)}
             setMessages={setMessages}

@@ -2,7 +2,7 @@
 
 import type { Attachment, UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import useSWR, { unstable_serialize, useSWRConfig } from 'swr';
 
 import { ChatHeader, type FileSearchResult } from '@/components/chat-header';
@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { getChatHistoryPaginationKey } from './sidebar-history';
 import { motion } from 'framer-motion';
 import { getCapabilitiesToDisable, getExclusionMessage } from '@/lib/ai/capability-exclusions';
+import { ConversationBranch } from './conversation-branch';
 
 export function Chat({
   id,
@@ -41,6 +42,26 @@ export function Chat({
   };
 }) {
   const { mutate } = useSWRConfig();
+  
+  // Check if we're loading a branch
+  const [branchMessages, setBranchMessages] = useState<Array<UIMessage> | null>(null);
+  
+  useEffect(() => {
+    const branchId = sessionStorage.getItem('branch-id');
+    const savedBranchMessages = sessionStorage.getItem('branch-messages');
+    
+    if (branchId === id && savedBranchMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedBranchMessages);
+        setBranchMessages(parsedMessages);
+        // Clean up
+        sessionStorage.removeItem('branch-id');
+        sessionStorage.removeItem('branch-messages');
+      } catch (e) {
+        console.error('Failed to parse branch messages:', e);
+      }
+    }
+  }, [id]);
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
   const [isFileSearchEnabled, setIsFileSearchEnabled] = useState(false);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true); // Web search enabled by default
@@ -143,7 +164,7 @@ export function Chat({
       imageGeneration: isImageGenerationEnabled,
       selectedFiles: selectedFiles,
     },
-    initialMessages,
+    initialMessages: branchMessages || initialMessages,
     experimental_throttle: 100,
     sendExtraMessageFields: true,
     generateId: generateUUID,
@@ -171,6 +192,13 @@ export function Chat({
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(`messages-${id}`, JSON.stringify(messages));
+    }
+  }, [messages, id]);
+
   return (
     <div className="flex h-dvh w-full">
       <ArtifactInset>
@@ -186,7 +214,13 @@ export function Chat({
           selectedFiles={selectedFiles}
           onSelectedFilesChange={setSelectedFiles}
           chatTitle={chat?.customTitle || chat?.title}
-        />
+        >
+          <ConversationBranch 
+            currentChatId={id}
+            messages={messages}
+            className="ml-2"
+          />
+        </ChatHeader>
 
         <Messages
           chatId={id}

@@ -30,7 +30,7 @@ import { Text2sqlTimeline } from '@/components/timeline/components/text2sql-time
 import { RunSqlPreview } from '@/components/sql/run-sql-preview';
 
 // Utils
-import { cn, extractHostname, formatAIResponse } from '@/lib/utils';
+import { cn, extractHostname, formatAIResponse, generateUUID } from '@/lib/utils';
 import { AlertCircleIcon } from 'lucide-react';
 
 // Animation variants
@@ -358,6 +358,7 @@ const MessageContent = ({
 const PurePreviewMessage = ({
   chatId,
   message,
+  messageIndex,
   vote,
   isLoading,
   setMessages,
@@ -370,6 +371,7 @@ const PurePreviewMessage = ({
 }: {
   chatId: string;
   message: UIMessage;
+  messageIndex?: number;
   vote: Vote | undefined;
   isLoading: boolean;
   setMessages: UseChatHelpers['setMessages'];
@@ -381,6 +383,33 @@ const PurePreviewMessage = ({
   completedMessageIds?: Set<string>;
 }) => {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+
+  const handleBranch = () => {
+    if (typeof messageIndex === 'number') {
+      // Create a new branch from this message
+      const branchId = generateUUID();
+      const messages = JSON.parse(localStorage.getItem(`messages-${chatId}`) || '[]');
+      const branchMessages = messages.slice(0, messageIndex + 1);
+      
+      // Save branch messages
+      localStorage.setItem(`messages-${branchId}`, JSON.stringify(branchMessages));
+      
+      // Update branch list
+      const branches = JSON.parse(localStorage.getItem(`branches-${chatId}`) || '[]');
+      branches.push({
+        id: branchId,
+        name: `Branch ${branches.length + 1}`,
+        parentId: chatId,
+        messageCount: branchMessages.length,
+        createdAt: new Date(),
+        lastMessageAt: new Date()
+      });
+      localStorage.setItem(`branches-${chatId}`, JSON.stringify(branches));
+      
+      // Navigate to the new branch
+      window.location.href = `/chat/${branchId}`;
+    }
+  };
 
   return (
     <motion.div
@@ -457,6 +486,7 @@ const PurePreviewMessage = ({
                 vote={vote}
                 isLoading={isLoading}
                 shouldCostFetch={completedMessageIds.has(message.id)}
+                onBranch={handleBranch}
               />
               {message.role === 'assistant' && message.content && (
                 <VoiceOutput

@@ -16,6 +16,7 @@ import {
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
 import { MessageCost } from './message-cost';
+import { GitBranch } from 'lucide-react';
 
 // Helper function to extract text content from message parts
 function extractTextFromMessage(message: Message): string {
@@ -42,12 +43,14 @@ export function PureMessageActions({
   vote,
   isLoading,
   shouldCostFetch,
+  onBranch,
 }: {
   chatId: string;
   message: UIMessage;
   vote: Vote | undefined;
   isLoading: boolean;
   shouldCostFetch?: boolean;
+  onBranch?: () => void;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -182,6 +185,22 @@ export function PureMessageActions({
           </TooltipTrigger>
           <TooltipContent>Downvote Response</TooltipContent>
         </Tooltip>
+
+        {onBranch && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
+                variant="outline"
+                onClick={onBranch}
+              >
+                <GitBranch className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Branch from here</TooltipContent>
+          </Tooltip>
+        )}
+
         <MessageCost message={message} shouldFetch={shouldCostFetch} />
       </div>
     </TooltipProvider>
