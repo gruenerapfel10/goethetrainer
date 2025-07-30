@@ -22,6 +22,7 @@ import { getCapabilitiesToDisable, getExclusionMessage } from '@/lib/ai/capabili
 import { ConversationBranch } from './conversation-branch';
 import { SmartNotificationAnalyzer } from '@/lib/notifications/smart-analyzer';
 import { NotificationService } from '@/lib/notifications/notification-service';
+import { WorkflowEngine } from '@/lib/automation/workflow-engine';
 
 export function Chat({
   id,
@@ -194,6 +195,16 @@ export function Chat({
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
+  // Initialize workflow engine
+  useEffect(() => {
+    const workflowEngine = WorkflowEngine.getInstance();
+    workflowEngine.start();
+    
+    return () => {
+      workflowEngine.stop();
+    };
+  }, []);
+
   // Save messages to localStorage whenever they change
   useEffect(() => {
     if (messages.length > 0) {
@@ -201,13 +212,27 @@ export function Chat({
     }
   }, [messages, id]);
 
-  // Smart notification analysis
+  // Smart notification analysis and workflow triggers
   useEffect(() => {
     if (messages.length === 0) return;
     
     const lastMessage = messages[messages.length - 1];
     const analyzer = SmartNotificationAnalyzer.getInstance();
     const notificationService = NotificationService.getInstance();
+    const workflowEngine = WorkflowEngine.getInstance();
+    
+    // Extract text content for workflow analysis
+    const textContent = lastMessage.parts && Array.isArray(lastMessage.parts)
+      ? lastMessage.parts
+          .filter((part: any) => part.type === 'text' && part.text)
+          .map((part: any) => part.text)
+          .join('\n\n')
+      : typeof lastMessage.content === 'string' ? lastMessage.content : '';
+    
+    // Trigger workflow message events
+    if (textContent) {
+      workflowEngine.triggerMessageEvent(textContent, id);
+    }
     
     // Analyze the last message for notifications
     const result = analyzer.analyzeMessage(lastMessage, id, {

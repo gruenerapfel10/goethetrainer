@@ -12,6 +12,8 @@ import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import { useLogo } from '../context/logo-context';
 import { LogoComponent } from './logo-component';
 import { NotificationCenter } from './notification-center';
+import { WorkflowBuilder } from './workflow-builder';
+import { CollaborativeWhiteboard } from './collaborative-whiteboard';
 
 export interface FileSearchResult {
   title: string;
@@ -72,6 +74,12 @@ function PureChatHeader({
 
           {/* Children - branching component */}
           {children}
+
+          {/* Collaborative Whiteboard */}
+          <CollaborativeWhiteboard />
+
+          {/* Workflow Builder */}
+          <WorkflowBuilder />
 
           {/* Notification Center */}
           <NotificationCenter />
