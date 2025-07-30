@@ -1,4 +1,4 @@
-import { chatModels } from './models';
+
 
 export interface ModelCapability {
   id: string;
@@ -9,7 +9,7 @@ export interface ModelCapability {
 
 export interface ModelFeatures {
   fileAttachments: boolean;
-  deepResearch: boolean;
+  deepSearch: boolean;
   webSearch: boolean;
   imageGeneration: boolean;
   csvAnalysis: boolean;
@@ -20,16 +20,16 @@ export interface ModelFeatures {
 export const MODEL_CAPABILITIES: Record<string, ModelFeatures> = {
   'general-bedrock-agent': {
     fileAttachments: true,
-    deepResearch: false,
-    webSearch: false,
-    imageGeneration: false,
+    deepSearch: true,
+    webSearch: true,
+    imageGeneration: true,
     csvAnalysis: false,
     fileSearch: false,
     chartGeneration: true,
   },
   'sharepoint-agent': {
     fileAttachments: true,
-    deepResearch: false,
+    deepSearch: false,
     webSearch: false,
     imageGeneration: false,
     csvAnalysis: false,
@@ -38,34 +38,16 @@ export const MODEL_CAPABILITIES: Record<string, ModelFeatures> = {
   },
   'sharepoint-agent-v2': {
     fileAttachments: true,
-    deepResearch: true,
+    deepSearch: true,
     webSearch: false,
     imageGeneration: false,
     csvAnalysis: false,
     fileSearch: true,
     chartGeneration: true,
   },
-  'crawler-agent': {
-    fileAttachments: false,
-    deepResearch: false,
-    webSearch: true,
-    imageGeneration: false,
-    csvAnalysis: false,
-    fileSearch: false,
-    chartGeneration: false,
-  },
-  'deepresearch-agent': {
-    fileAttachments: false,
-    deepResearch: true,
-    webSearch: true,
-    imageGeneration: false,
-    csvAnalysis: false,
-    fileSearch: false,
-    chartGeneration: false,
-  },
   'csv-agent': {
     fileAttachments: true,
-    deepResearch: false,
+    deepSearch: false,
     webSearch: false,
     imageGeneration: false,
     csvAnalysis: true,
@@ -74,18 +56,18 @@ export const MODEL_CAPABILITIES: Record<string, ModelFeatures> = {
   },
   'csv-agent-v2': {
     fileAttachments: true,
-    deepResearch: false,
+    deepSearch: false,
     webSearch: false,
     imageGeneration: false,
     csvAnalysis: true,
     fileSearch: false,
     chartGeneration: true,
   },
-  'image-agent': {
-    fileAttachments: true,
-    deepResearch: false,
+  'text2sql-agent': {
+    fileAttachments: false,
+    deepSearch: false,
     webSearch: false,
-    imageGeneration: true,
+    imageGeneration: false,
     csvAnalysis: false,
     fileSearch: false,
     chartGeneration: false,
@@ -95,7 +77,7 @@ export const MODEL_CAPABILITIES: Record<string, ModelFeatures> = {
 export function getModelCapabilities(modelId: string): ModelFeatures {
   return MODEL_CAPABILITIES[modelId] || {
     fileAttachments: false,
-    deepResearch: false,
+    deepSearch: false,
     webSearch: false,
     imageGeneration: false,
     csvAnalysis: false,

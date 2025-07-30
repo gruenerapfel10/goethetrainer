@@ -1,12 +1,13 @@
 'use client';
 
 import type { UIMessage } from 'ai';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { CoinsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { chatModels } from '@/lib/ai/models';
 
 interface CostData {
   messageId: string;
@@ -24,8 +25,8 @@ const isDebugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true';
 
 export function MessageCost({
   message,
-  shouldFetch = false 
-}: { 
+  shouldFetch = false,
+}: {
   message: UIMessage;
   shouldFetch?: boolean;
 }) {
@@ -33,7 +34,9 @@ export function MessageCost({
   const [costData, setCostData] = useState<CostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const t = useTranslations('message.cost');
+  const t = useTranslations();
+
+  const models = useMemo(() => chatModels(t), [t]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -44,7 +47,9 @@ export function MessageCost({
       setError(null);
 
       try {
-        const response = await fetch(`/api/message-cost?messageId=${message.id}`);
+        const response = await fetch(
+          `/api/message-cost?messageId=${message.id}`,
+        );
 
         if (!response.ok) {
           // Treat any non-successful response (e.g., 404, 500) as a final error.
@@ -80,7 +85,6 @@ export function MessageCost({
     };
   }, [shouldFetch, session?.user?.isAdmin, message.id]); // Added message.id as dependency
 
-
   if (!costData) {
     return null;
   }
@@ -89,26 +93,38 @@ export function MessageCost({
     return null;
   }
 
+  // Get the user-friendly agent name from chatModels
+  const getAgentDisplayName = (agentType?: string) => {
+    if (!agentType) return '';
+
+    const model = models.find((m) => m.id === agentType);
+    return model?.name || agentType;
+  };
+
   // If data was successfully fetched on the first try, display the cost.
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge variant="outline" className="text-xs font-mono p-1 cursor-help">
+        <Badge
+          variant="outline"
+          className="text-xs font-mono p-1 cursor-help bord rounded-md"
+        >
           <CoinsIcon className="h-3 w-3 mr-1" />
           {costData.formattedCost}
         </Badge>
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm">
-        <div className="text-sm p-1 space-y-2">
-          <p className="font-bold">💰 {t('breakdown')}</p>
-          <div className="space-y-1">
-            {costData.agentName && (
-              <p><strong>{t('assistant')}:</strong> {costData.agentName}</p>
-            )}
-            <p><strong>{t('model')}:</strong> {costData.modelId}</p>
-            <p><strong>{t('inputTokens')}:</strong> {costData.inputTokens.toLocaleString()}</p>
-            <p><strong>{t('outputTokens')}:</strong> {costData.outputTokens.toLocaleString()}</p>
-            <p><strong>{t('totalCost')}:</strong> {costData.formattedCost}</p>
+      <TooltipContent className="max-w-xs">
+        <div className="space-y-1 text-xs">
+          {costData.agentType && (
+            <div className="font-medium">{getAgentDisplayName(costData.agentType)}</div>
+          )}
+          <div className="text-muted-foreground">{costData.modelId}</div>
+          <div className="flex justify-between gap-2">
+            <span>In: {costData.inputTokens.toLocaleString()}</span>
+            <span>Out: {costData.outputTokens.toLocaleString()}</span>
+          </div>
+          <div className="font-mono font-semibold border-t pt-1">
+            {costData.formattedCost}
           </div>
         </div>
       </TooltipContent>

@@ -1,17 +1,16 @@
 // Replacement for reason.ts
 
-import { UIMessage, streamText, Tool, DataStreamWriter, JSONValue } from 'ai';
+import { type UIMessage, streamText, type DataStreamWriter, type JSONValue } from 'ai';
 import { z } from 'zod';
 import { tool } from 'ai';
 
 import { myProvider } from '@/lib/ai/models';
 import { generateUUID } from '@/lib/utils';
-import { FileSearchResult } from '@/components/chat-header';
+import type { FileSearchResult } from '@/components/chat-header';
 import { calculateCost, getModelId } from '@/lib/costs';
 import { 
-  AgentType, 
+  type AgentType, 
   initializeReasonTools, 
-  getAvailableReasonToolNames, 
   getBaseSystemPrompt 
 } from '@/lib/ai/agent-registry';
 
@@ -37,6 +36,7 @@ interface ReasonProps {
   messages: UIMessage[];
   agentType: AgentType;
   deepResearch?: boolean;
+  deepSearch?: boolean;
   selectedFiles?: FileSearchResult[];
   session?: any;
   availableTables?: Array<{tableName: string; rowCount: number; columnCount: number}>;
@@ -53,6 +53,7 @@ export const reason = ({
   messages,
   agentType,
   deepResearch,
+  deepSearch,
   selectedFiles,
   session,
   availableTables,
@@ -77,7 +78,7 @@ execute: async ({ query, direction_guidance }: z.infer<typeof reasonParameters>,
     
     // Logging
     if (data.type === 'tool-call') console.log(`[TOOL] ${data.details?.toolName}`);
-    else if (data.type === 'tool-result' && data.details?.result) console.log('[RESULT]', JSON.stringify(data.details.result).slice(0, 128) + '...');
+    else if (data.type === 'tool-result' && data.details?.result) console.log('[RESULT]', `${JSON.stringify(data.details.result).slice(0, 128)}...`);
     else if (data.type === 'error') console.error(`[ERROR] ${agentType}:`, data.message);
   };
 
@@ -129,7 +130,7 @@ NO OTHER TEXT ALLOWED.`;
         systemPrompt += `\n\n${initialSchemaInfo}`;
       }
       
-      const initializedTools = initializeReasonTools(agentType, { dataStream, messages, deepResearch, selectedFiles, session });
+              const initializedTools = initializeReasonTools(agentType, { dataStream, messages, deepResearch, deepSearch, selectedFiles, session });
       
       const result = streamText({
         model: myProvider.languageModel('bedrock-sonnet-latest'),
@@ -177,7 +178,7 @@ NO OTHER TEXT ALLOWED.`;
             const subToolResultChunk = event.chunk;
             const operationId = activeSubToolOperations.get(subToolResultChunk.toolCallId);
             console.log(`\n=== TOOL RESULT: ${subToolResultChunk.toolName} ===`);
-            let toolFailed = subToolResultChunk.result?.error ? true : false;
+            const toolFailed = !!subToolResultChunk.result?.error;
             if (operationId) {
               // Create more detailed result messages
               let detailedResultMessage = toolFailed ? `Error in ${subToolResultChunk.toolName}` : `${subToolResultChunk.toolName} results received`;

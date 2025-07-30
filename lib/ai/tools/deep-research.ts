@@ -1,7 +1,7 @@
 // Import Firecrawl instead of Tavily
-import { DataStreamWriter, tool } from 'ai';
+import { type DataStreamWriter, tool } from 'ai';
 import { z } from 'zod';
-import { Session } from 'next-auth';
+import type { Session } from 'next-auth';
 // Add Firecrawl import
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
@@ -177,7 +177,6 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
           system: JSON_SYSTEM_PROMPT,
           temperature: 0,
         });
-        debugger;
         researchPlan = result.object;
       } catch (error) {
         console.error('Research plan generation failed:', error);
@@ -389,7 +388,6 @@ Search results: ${JSON.stringify(searchResults)}`;
             temperature: 0.1,
             system: JSON_SYSTEM_PROMPT,
           });
-          debugger;
           dataStream.writeMessageAnnotation({
             type: 'research_update',
             data: {

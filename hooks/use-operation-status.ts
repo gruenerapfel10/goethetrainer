@@ -1,6 +1,5 @@
 // hooks/useOperationStatus.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { toast } from 'sonner';
 
 interface SystemOperation {
   id: number;

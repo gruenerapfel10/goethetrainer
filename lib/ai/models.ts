@@ -53,58 +53,57 @@ export const myProvider = customProvider({
       'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
       true,
     ),
-    'crawler-agent': customModel('anthropic.claude-3-5-sonnet-20240620-v1:0'),
     'artifact-model': customModel('bedrock-sonnet-latest'),
-    'deepresearch-agent': customModel(
-      'bedrock-sonnet-latest',
-    ),
     'bedrock-sonnet-latest': customModel('bedrock-sonnet-latest'),
     'document-agent': customModel('bedrock-sonnet-latest'),
     'csv-agent': customModel('bedrock-sonnet-latest'),
     'csv-agent-v2': customModel('bedrock-sonnet-latest'),
-    'image-agent': customModel('bedrock-sonnet-latest'),
+    'text2sql-agent': customModel('bedrock-sonnet-latest'),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),
   },
 });
 
-export const chatModels: (t?: any) => Array<any> = (t?) =>
+// Define the chat model type
+export interface ChatModel {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // Icon name to be used in the UI
+}
+
+export const chatModels: (t?: any) => Array<ChatModel> = (t?) =>
   [
     {
       id: 'general-bedrock-agent',
       name: t ? t('agents.standard.label') : '',
       description: t ? t('agents.standard.description') : '',
+      icon: 'sparkles', // SparklesIcon for AI/general purpose
     },
     {
       id: 'sharepoint-agent',
       name: t ? `${t('agents.sharepoint.label')} (v1)` : '',
       description: t ? t('agents.sharepoint.description') : '',
+      icon: 'box', // BoxIcon for document storage/knowledge base
     },
     {
       id: 'sharepoint-agent-v2',
       name: t ? `${t('agents.sharepoint.label')} (v2)` : '',
       description: t ? `${t('agents.sharepoint.description')} - Enhanced version` : '',
-    },
-    {
-      id: 'crawler-agent',
-      name: t ? 'Web search assistant' : '',
-      description: t ? 'Finds market insights and online data' : '',
-    },
-    {
-      id: 'deepresearch-agent',
-      name: t ? t('agents.deepresearch.label') : '',
-      description: t ? t('agents.deepresearch.description') : '',
+      icon: 'box', // BoxIcon for document storage/knowledge base
     },
     // {
     //    id: 'chat-model-reasoning',
     //    name: t ? t('agents.reasoning.label') : '',
     //    description: t ? t('agents.reasoning.description') : '',
+    //    icon: 'code', // CodeIcon for reasoning/logic
     //  },
     //  {
     //    id: 'document-agent',
     //    name: t ? t('agents.document.label') : '',
     //    description: 'Provides info about documents',
+    //    icon: 'file', // FileIcon for document agent
     //  },
     // {
     //   id: 'csv-agent',
@@ -112,21 +111,26 @@ export const chatModels: (t?: any) => Array<any> = (t?) =>
     //   description: t
     //     ? t('agents.csv.description')
     //     : 'Analyzes CSV data and provides insights',
+    //   icon: 'table', // More appropriate for data/CSV
     // },
-    {
-      id: 'csv-agent-v2',
+    // {
+    //   id: 'csv-agent-v2',
       // name: t ? t('agents.csv.label') + ' (v2)' : 'CSV Analysis Assistant (v2)',
-      name: t ? t('agents.csv.label'): 'CSV Analysis Assistant',
-      description: t
+    //  name: t ? t('agents.csv.label'): 'CSV Analysis Assistant',
+    //  description: t
         // ? t('agents.csv.description') + ' Enhanced version with improved reasoning and structured analysis.'
-        ? t('agents.csv.description')
+    //    ? t('agents.csv.description')
         // : 'Analyzes CSV data and provides insights with enhanced reasoning and structured analysis.',
-        : 'Analyzes CSV data and provides insights.',
-    },
+       // : 'Analyzes CSV data and provides insights.',
+     // icon: 'lineChart', // LineChartIcon for data analysis
+    //},
+     //   : 'Analyzes CSV data and provides insights.',
+   // },
     {
-      id: 'image-agent',
-      name: t ? t('agents.image.label') : '',
-      description: t ? t('agents.image.description') : 'Creates and edit images from text prompts',
+      id: 'text2sql-agent',
+      name: t ? t('agents.text2sql.label') : '',
+      description: t ? t('agents.text2sql.description') : '',
+      icon: 'lineChart'
     },
   ] as const;
 

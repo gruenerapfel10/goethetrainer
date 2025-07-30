@@ -8,7 +8,6 @@ import {
   XIcon,
   Loader2,
   FileIcon,
-  FileText,
   FileCode,
   ChevronRight,
   Search,
@@ -20,11 +19,8 @@ import {
   FileAudio,
   Archive,
   Check,
-  Focus,
-  Eye,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner"
 
 // Original FileSearchResult interface from your provided file
 export interface FileSearchResult {

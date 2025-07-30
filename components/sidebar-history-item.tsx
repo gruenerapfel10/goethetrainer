@@ -14,6 +14,7 @@ import {
   PinIcon,
   ShareIcon,
   TrashIcon,
+  PinOffIcon,
 } from './icons';
 import { memo, useState } from 'react';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
@@ -82,26 +83,30 @@ const PureChatItem = ({
 
   return (
     <>
-      <SidebarMenuItem>
-        <div className="group/menu-item relative flex items-center w-full">
-          <SidebarMenuButton asChild isActive={isActive} className="flex-1 min-w-0 pr-16">
-            <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-              <div className="flex items-center w-full min-w-0">
-                {chat.isPinned && (
-                  <PinIcon className="mr-2 h-3 w-3 text-muted-foreground shrink-0" />
-                )}
-                <span className="truncate min-w-0 flex-1">
-                  {chat.customTitle || chat.title}
-                </span>
-              </div>
+      <SidebarMenuItem className="group/menu-item">
+        <div className="relative flex items-center w-full">
+          <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            tooltip={chat.customTitle || chat.title}
+            className="flex-1 min-w-0 pr-12"
+          >
+            <Link
+              href={`/chat/${chat.id}`}
+              onClick={() => setOpenMobile(false)}
+              className="flex items-center w-full h-full"
+            >
+              <span className="truncate">
+                {chat.customTitle || chat.title}
+              </span>
             </Link>
           </SidebarMenuButton>
 
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 items-center opacity-0 group-hover/menu-item:opacity-100 transition-opacity">
+          <div className="absolute right-1 inset-y-0 flex items-center opacity-0 group-hover/menu-item:opacity-100 transition-opacity">
             <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuAction
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-6 w-6"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-6 w-6 flex items-center justify-center"
                   showOnHover={false}
                 >
                   <MoreHorizontalIcon className="h-3 w-3" />
@@ -118,15 +123,22 @@ const PureChatItem = ({
                   <span>{t('chat.rename')}</span>
                 </DropdownMenuItem>
 
-                {!chat.isPinned && (
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={handleTogglePin}
-                  >
-                    <PinIcon className="mr-2 h-4 w-4" />
-                    <span>{t('chat.pin')}</span>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={handleTogglePin}
+                >
+                  {chat.isPinned ? (
+                    <>
+                      <PinOffIcon className="mr-2 h-4 w-4" />
+                      <span>{t('chat.unpin')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <PinIcon className="mr-2 h-4 w-4" />
+                      <span>{t('chat.pin')}</span>
+                    </>
+                  )}
+                </DropdownMenuItem>
 
                 <DropdownMenuSub>
                   <DropdownMenuSubTrigger className="cursor-pointer">

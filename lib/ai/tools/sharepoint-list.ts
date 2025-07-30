@@ -1,7 +1,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { BedrockAgentClient as BedrockControlPlaneClient, ListKnowledgeBasesCommand, KnowledgeBaseSummary } from "@aws-sdk/client-bedrock-agent";
-import { StandardizedToolResult, TimelineItemUtils } from './types';
+import { BedrockAgentClient as BedrockControlPlaneClient, ListKnowledgeBasesCommand, type KnowledgeBaseSummary } from "@aws-sdk/client-bedrock-agent";
+import { type StandardizedToolResult, TimelineItemUtils } from './types';
 
 // Initialize AWS SDK client for listing knowledge bases
 const bedrockControlPlaneClient = new BedrockControlPlaneClient({
@@ -16,9 +16,7 @@ const sharepointListParameters = z.object({
   maxResults: z.number().optional().default(DEFAULT_MAX_RESULTS),
 });
 
-interface SharepointListProps {
-  // dataStream: DataStreamWriter; // No longer needed here
-}
+type SharepointListProps = {}
 
 export const sharepointList = ({}: SharepointListProps) => tool({
   description: 'Lists all available SharePoint knowledge bases and their details.',

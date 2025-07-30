@@ -199,25 +199,27 @@ export const recommendChartType = (data: any[], userIntent?: string): ChartType 
 
 // Enhanced chart tool for AI agents
 export const chartTool = tool({
-  description: `Creates beautiful, interactive charts using shadcn/ui components and Recharts. Supports multiple chart types with automatic theming and responsive design.
+  description: `MANDATORY VISUALIZATION TOOL: Creates beautiful, interactive charts. YOU MUST USE THIS TOOL for ANY data visualization request.
   
-  The AI should analyze the data and user intent to select the appropriate chart type and configuration. Use this tool when users want to visualize data patterns, trends, comparisons, or distributions.
+  CRITICAL: When users request charts, graphs, plots, visualizations, or ask to "show" data visually, YOU MUST USE THIS TOOL.
+  DO NOT generate HTML, SVG, or code for charts - this tool handles all rendering automatically.
   
   Available chart types:
-  - line: Perfect for time series data and trends
-  - bar: Ideal for category comparisons
-  - area: Great for cumulative trends and filled line charts
-  - pie: Best for proportions and percentages
-  - radar: Excellent for multi-dimensional data comparison
-  - radialBar: Modern circular progress/comparison charts
-  - scatter: Perfect for correlation analysis
+  - line: Time series data and trends
+  - bar: Category comparisons
+  - area: Cumulative trends
+  - pie: Proportions and percentages
+  - radar: Multi-dimensional comparisons
+  - radialBar: Circular progress charts
+  - scatter: Correlation analysis
   
-  Key features:
-  - Automatic data processing and smart type detection
-  - Built-in responsive design and accessibility
-  - Consistent theming with light/dark mode support
-  - Beautiful animations and interactions
-  - Professional styling out of the box`,
+  Features:
+  - Automatic data processing and type detection
+  - Responsive design with light/dark themes
+  - Interactive animations
+  - Professional styling
+  
+  REMEMBER: For ALL visualization requests, use this tool - never generate code.`,
   
   parameters: chartParameters,
   

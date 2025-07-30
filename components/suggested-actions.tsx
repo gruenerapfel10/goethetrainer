@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
-import { ChatRequestOptions, CreateMessage, Message } from 'ai';
+import type { ChatRequestOptions, CreateMessage, Message } from 'ai';
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -24,21 +24,28 @@ function PureSuggestedActions({
   let translationNamespace = '';
 
   // Determine which translation namespace to use based on the model
-  if (selectedModelId === 'sharepoint-agent') {
+  if (selectedModelId === 'sharepoint-agent' || selectedModelId === 'sharepoint-agent-v2') {
     translationNamespace = 'suggestedActions.sharepoint';
-  } else if (selectedModelId === 'crawler-agent') {
+  } else if (selectedModelId === 'web-agent') {
     translationNamespace = 'suggestedActions.crawler';
   } else if (selectedModelId === 'general-bedrock-agent') {
     translationNamespace = 'suggestedActions.general';
-  } else if (selectedModelId === 'deepresearch-agent' || selectedModelId === 'chat-model-reasoning') {
+  } else if (selectedModelId === 'chat-model-reasoning') {
     translationNamespace = 'suggestedActions.reasoning';
+  } else if (selectedModelId === 'csv-agent' || selectedModelId === 'csv-agent-v2') {
+    translationNamespace = 'suggestedActions.csv';
+  } else if (selectedModelId === 'text2sql-agent') {
+    translationNamespace = 'suggestedActions.sql';
+  } else {
+    // Default to general for any other model (general assistant, image-agent, etc)
+    translationNamespace = 'suggestedActions.general';
   }
 
   // Get the translations for the selected model
   const t = useTranslations(translationNamespace);
 
   // Define translations keys based on model
-  if (selectedModelId === 'sharepoint-agent') {
+  if (selectedModelId === 'sharepoint-agent' || selectedModelId === 'sharepoint-agent-v2') {
     suggestedActions = [
       {
         titleKey: 'winningProposals.title',
@@ -61,7 +68,7 @@ function PureSuggestedActions({
         actionKey: 'remoteWork.action',
       },
     ];
-  } else if (selectedModelId === 'crawler-agent') {
+  } else if (selectedModelId === 'web-agent') {
     suggestedActions = [
       {
         titleKey: 'trends.title',
@@ -107,7 +114,7 @@ function PureSuggestedActions({
         actionKey: 'response.action',
       },
     ];
-  } else if (selectedModelId === 'deepresearch-agent' || selectedModelId === 'chat-model-reasoning') {
+  } else if (selectedModelId === 'chat-model-reasoning') {
     suggestedActions = [
       {
         titleKey: 'trends.title',
@@ -152,6 +159,76 @@ function PureSuggestedActions({
     //     actionKey: 'ai.action',
     //   },
     // ];
+  } else if (selectedModelId === 'csv-agent' || selectedModelId === 'csv-agent-v2') {
+    suggestedActions = [
+      {
+        titleKey: 'analysis.title',
+        labelKey: 'analysis.label',
+        actionKey: 'analysis.action',
+      },
+      {
+        titleKey: 'summary.title',
+        labelKey: 'summary.label',
+        actionKey: 'summary.action',
+      },
+      {
+        titleKey: 'trends.title',
+        labelKey: 'trends.label',
+        actionKey: 'trends.action',
+      },
+      {
+        titleKey: 'visualization.title',
+        labelKey: 'visualization.label',
+        actionKey: 'visualization.action',
+      },
+    ];
+  } else if (selectedModelId === 'text2sql-agent') {
+    suggestedActions = [
+      {
+        titleKey: 'showTables.title',
+        labelKey: 'showTables.label',
+        actionKey: 'showTables.action',
+      },
+      {
+        titleKey: 'topRecords.title',
+        labelKey: 'topRecords.label',
+        actionKey: 'topRecords.action',
+      },
+      {
+        titleKey: 'aggregate.title',
+        labelKey: 'aggregate.label',
+        actionKey: 'aggregate.action',
+      },
+      {
+        titleKey: 'relationships.title',
+        labelKey: 'relationships.label',
+        actionKey: 'relationships.action',
+      },
+    ];
+  } else {
+    // Default to general actions
+    suggestedActions = [
+      {
+        titleKey: 'proposal.title',
+        labelKey: 'proposal.label',
+        actionKey: 'proposal.action',
+      },
+      {
+        titleKey: 'timeline.title',
+        labelKey: 'timeline.label',
+        actionKey: 'timeline.action',
+      },
+      {
+        titleKey: 'campaign.title',
+        labelKey: 'campaign.label',
+        actionKey: 'campaign.action',
+      },
+      {
+        titleKey: 'response.title',
+        labelKey: 'response.label',
+        actionKey: 'response.action',
+      },
+    ];
   }
 
   return (

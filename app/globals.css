@@ -1,141 +1,763 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0 / 95%);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0 / 98%);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885 / 95%);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375 / 95%);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375 / 98%);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375 / 98%);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325 / 95%);
-  --border: oklch(0.92 0.004 286.32 / 20%);
-  --input: oklch(0.92 0.004 286.32 / 20%);
-  --ring: oklch(0.705 0.015 286.067 / 30%);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0 / 95%);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375 / 98%);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32 / 20%);
-  --sidebar-ring: oklch(0.705 0.015 286.067 / 30%);
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
 }
 
-.dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885 / 95%);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885 / 98%);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32 / 95%);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033 / 95%);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033 / 98%);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033 / 98%);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216 / 95%);
-  --border: oklch(1 0 0 / 20%);
-  --input: oklch(1 0 0 / 20%);
-  --ring: oklch(0.552 0.016 285.938 / 30%);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885 / 95%);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033 / 98%);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 20%);
-  --sidebar-ring: oklch(0.552 0.016 285.938 / 30%);
+@media (prefers-color-scheme: dark) {
+    :root {
+        --foreground-rgb: 255, 255, 255;
+        --background-start-rgb: 0, 0, 0;
+        --background-end-rgb: 0, 0, 0;
+    }
 }
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+}
+
+@layer base {
+    /* Base color definitions that will be referenced by theme variables */
+    :root {
+        /* Neutral colors */
+        --white: 0 0% 100%;
+        --white-alpha: 0 0% 100% / 0.5;
+        --off-white: 0 0% 98%;
+        --light-gray-1: 0 0% 96%;
+        --light-gray-2: 240 4.8% 95.9%;
+        --medium-gray-1: 240 5.9% 90%;
+        --medium-gray-2: 220 13% 91%;
+        --dark-gray-1: 240 3.8% 46.1%;
+        --dark-gray-2: 240 5% 50%;
+        --dark-gray-3: 240 5% 65%;
+        --dark-gray-4: 240 5.3% 26.1%;
+        --light-zinc: 240 3.7% 15.9%;
+        --darker-zinc: 240 3.7% 7%;
+        --light-dark-zinc: 240 6% 10%;
+        --darkest-zinc: 240 3.7% 5.9%;
+        --near-black: 240 10% 3.9%;
+        --near-black-alpha: 240 10% 3.9% / 0.5;
+        --black-alpha-light: 240 10% 3.9% / 0.2;
+        --white-alpha-light: 0 0% 100% / 0.2;
+
+        /* Accent colors */
+        --red: 0 84.2% 60.2%;
+        --red-dark: 0 62.8% 30.6%;
+        --red-alpha: 0 84.2% 60.2% / 0.15;
+        --red-dark-alpha: 0 62.8% 30.6% / 0.2;
+        --green: 120 100% 50%;
+        --blue: 217.2 91.2% 59.8%;
+        --blue-dark: 224.3 76.3% 48%;
+
+        /* Chart colors - light */
+        --chart-light-1: 12 76% 61%;
+        --chart-light-2: 173 58% 39%;
+        --chart-light-3: 197 37% 24%;
+        --chart-light-4: 43 74% 66%;
+        --chart-light-5: 27 87% 67%;
+
+        /* Chart colors - dark */
+        --chart-dark-1: 220 70% 50%;
+        --chart-dark-2: 160 60% 45%;
+        --chart-dark-3: 30 80% 55%;
+        --chart-dark-4: 280 65% 60%;
+        --chart-dark-5: 340 75% 55%;
+
+        /* Navy Blue variants - primary background color */
+        --gilesta-navy: 217 40% 19%;           /* Base navy */
+        --gilesta-navy-darkest: 217 40% 12%;   /* Darkest surfaces */
+        --gilesta-navy-darker: 217 40% 16%;    /* Darker surfaces */
+        --gilesta-navy-lighter: 217 40% 29%;   /* Lighter accents */
+        --gilesta-navy-lightest: 217 40% 79%;  /* Very light accents */
+
+        /* Burgundy variants - primary accent color */
+        --gilesta-burgundy: 341 53% 20%;        /* Base burgundy */
+        --gilesta-burgundy-darker: 341 53% 20%; /* Darker variant */
+        --gilesta-burgundy-lighter: 341 53% 20%; /* Lighter variant */
+        --gilesta-burgundy-lightest: 341 53% 20%; /* Very light variant */
+
+        /* Neutral grays - for text and subtle UI elements */
+        --gilesta-white: 220 5% 98%;
+        --gilesta-light-gray: 220 5% 85%;
+        --gilesta-medium-gray: 220 5% 65%;
+        --gilesta-dark-gray: 220 5% 35%;
+
+        /* Status colors */
+        --gilesta-success: 142 76% 36%;
+        --gilesta-error: 343 52% 20%;    /* Using burgundy as error */
+        --gilesta-info: 217 40% 50%;     /* Using navy derivative for info */
+
+        /* Dashboard color variations - enhanced for better visibility */
+        --dashboard-bg-main: 240 10% 3.9%; /* Near black for main background */
+        --dashboard-bg-card: 240 6% 12%; /* Slightly lighter for cards - improved visibility */
+        --dashboard-bg-hover: 240 6% 16%; /* Hover state for elements - more distinct */
+        --dashboard-bg-active: 240 6% 20%; /* Active state for elements - more distinct */
+        --dashboard-border-light: 240 8% 24%; /* Light borders - improved contrast */
+        --dashboard-border-dark: 240 8% 32%; /* Darker borders - improved contrast */
+        --dashboard-text-primary: 0 0% 100%; /* Primary text color - maximum contrast */
+        --dashboard-text-secondary: 240 5% 75%; /* Secondary/muted text - improved readability */
+        --dashboard-text-tertiary: 240 5% 60%; /* Further muted text - improved readability */
+
+        /* Success/error colors with better visibility */
+        --dashboard-success: 142 76% 45.3%; /* Brighter green for better visibility */
+        --dashboard-error: 0 84.2% 60.2%; /* Brighter red for better visibility */
+        --dashboard-warning: 38 92.7% 50.2%; /* Bright amber for warnings */
+
+        /* Chart colors with better contrast */
+        --dashboard-chart-blue: 221.2 83.2% 60%; /* Brighter blue chart element */
+        --dashboard-chart-green: 142 76% 45.3%; /* Brighter green chart element */
+        --dashboard-chart-purple: 262.1 83.3% 65%; /* Brighter purple chart element */
+        --dashboard-chart-orange: 24.6 95% 60%; /* Brighter orange chart element */
+        --dashboard-chart-yellow: 44.9 92.5% 70%; /* Brighter yellow chart element */
+    }
+
+    /* Light theme */
+    :root {
+        --radius: 0.5rem;
+
+        /* Base theme colors */
+        --background: var(--white);
+        --foreground: var(--near-black);
+
+        /* Card variants */
+        --card: var(--white);
+        --card-foreground: var(--near-black);
+        --card-bg-alpha: var(--white-alpha);
+        --card-bg-solid: var(--white);
+        --card-hover-bg: var(--light-gray-1);
+        --dashboard-card-background-solid: var(--white);
+        --dashboard-card-background-alpha: var(--white-alpha);
+
+        /* UI elements */
+        --popover: var(--white);
+        --popover-foreground: var(--near-black);
+        --primary: var(--near-black);
+        --primary-foreground: var(--off-white);
+        --secondary: var(--light-gray-2);
+        --secondary-foreground: var(--near-black);
+        --muted: var(--light-gray-2);
+        --muted-foreground: var(--dark-gray-1);
+        --accent: var(--light-gray-2);
+        --accent-foreground: var(--near-black);
+        --destructive: var(--red);
+        --success: var(--green);
+        --destructive-foreground: var(--off-white);
+        --destructive-focus-bg: var(--red-alpha);
+
+        /* Borders & inputs */
+        --border: var(--medium-gray-1);
+        --input: var(--medium-gray-1);
+        --ring: var(--near-black);
+        --button-bg-alpha: var(--white-alpha);
+        --button-hover-bg: var(--light-gray-1);
+        --button-hover: var(--light-gray-1);
+        --label-text: var(--dark-gray-2);
+
+        /* Charts */
+        --chart-1: var(--chart-light-1);
+        --chart-2: var(--chart-light-2);
+        --chart-3: var(--chart-light-3);
+        --chart-4: var(--chart-light-4);
+        --chart-5: var(--chart-light-5);
+
+        /* Sidebar */
+        --sidebar-background: var(--off-white);
+        --sidebar-foreground: var(--dark-gray-4);
+        --sidebar-primary: var(--near-black);
+        --sidebar-primary-foreground: var(--off-white);
+        --sidebar-accent: var(--light-gray-2);
+        --sidebar-accent-foreground: var(--near-black);
+        --sidebar-border: var(--medium-gray-2);
+        --sidebar-ring: var(--blue);
+
+        /* Spreadsheet */
+        --spreadsheet-bg: var(--white);
+        --spreadsheet-header-bg: var(--light-gray-1);
+        --spreadsheet-text: var(--near-black);
+        --spreadsheet-border: var(--medium-gray-2);
+
+        /* Code blocks */
+        --code-block-bg: var(--white);
+        --code-block-border: var(--medium-gray-2);
+        --code-block-text: var(--near-black);
+        --code-inline-bg: var(--light-gray-1);
+
+        /* Chat input */
+        --chat-input-button-border: var(--medium-gray-2);
+        --chat-input-button-hover: var(--medium-gray-1);
+        --chat-input-textarea-border: var(--medium-gray-2);
+
+        /* Document previews */
+        --document-preview-border: var(--medium-gray-1);
+        --document-preview-border-dark: var(--light-zinc);
+        --document-preview-skeleton-bg: var(--black-alpha-light);
+
+        /* Artifacts */
+        --artifact-border-light: var(--medium-gray-1);
+        --artifact-border-dark: var(--light-zinc);
+        --artifact-skeleton-bg: var(--black-alpha-light);
+
+        --dashboard-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        --dashboard-card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Dark theme */
+    .dark {
+        /* Base theme colors */
+        --background: var(--near-black);
+        --foreground: var(--off-white);
+
+        /* Card variants */
+        --card-foreground: var(--off-white);
+        --dashboard-card-background-solid: var(--near-black);
+        --dashboard-card-background-alpha: var(--near-black-alpha);
+
+        /* UI elements */
+        --popover: var(--near-black);
+        --popover-foreground: var(--off-white);
+        --primary: var(--off-white);
+        --primary-foreground: var(--near-black);
+        --secondary: var(--light-zinc);
+        --secondary-foreground: var(--off-white);
+        --accent: var(--light-zinc);
+        --accent-foreground: var(--off-white);
+        --destructive-foreground: var(--off-white);
+        --destructive-focus-bg: var(--red-dark-alpha);
+
+        /* Borders & inputs */
+        --input: var(--light-zinc);
+        --ring: var(--light-gray-2);
+        --button-bg-alpha: var(--near-black-alpha);
+        --button-hover-bg: var(--light-zinc);
+        --button-hover: var(--light-zinc);
+        --label-text: var(--dark-gray-3);
+
+        /* Charts */
+        --chart-1: var(--chart-dark-1);
+        --chart-2: var(--chart-dark-2);
+        --chart-3: var(--chart-dark-3);
+        --chart-4: var(--chart-dark-4);
+        --chart-5: var(--chart-dark-5);
+
+        /* Sidebar */
+        --sidebar-background: var(--light-dark-zinc);
+        --sidebar-foreground: var(--light-gray-2);
+        --sidebar-primary: var(--blue-dark);
+        --sidebar-primary-foreground: var(--white);
+        --sidebar-accent: var(--light-zinc);
+        --sidebar-accent-foreground: var(--light-gray-2);
+        --sidebar-border: var(--light-zinc);
+        --sidebar-ring: var(--blue);
+
+        /* Spreadsheet */
+        --spreadsheet-bg: var(--near-black);
+        --spreadsheet-header-bg: var(--darkest-zinc);
+        --spreadsheet-text: var(--off-white);
+        --spreadsheet-border: var(--light-zinc);
+
+        /* Code blocks */
+        --code-block-bg: var(--darkest-zinc);
+        --code-block-border: var(--light-zinc);
+        --code-block-text: var(--off-white);
+        --code-inline-bg: var(--light-zinc);
+
+        /* Chat input */
+        --chat-input-button-border: var(--light-zinc);
+        --chat-input-button-hover: var(--darker-zinc);
+        --chat-input-textarea-border: var(--light-zinc);
+
+        /* Document previews */
+        --document-preview-border: var(--light-zinc);
+        --document-preview-border-dark: var(--light-zinc);
+        --document-preview-skeleton-bg: var(--white-alpha-light);
+
+        /* Artifacts */
+        --artifact-border-light: var(--light-zinc);
+        --artifact-border-dark: var(--light-zinc);
+        --artifact-skeleton-bg: var(--white-alpha-light);
+
+
+        --dashboard-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        --dashboard-card-shadow-hover: 0 4px 6px rgba(0, 0, 0, 0.4);
+
+        /* Ensure success/error colors have good visibility */
+        --success: var(--dashboard-success);
+        --destructive: var(--dashboard-error);
+
+        /* Set icon colors to ensure visibility */
+        --icon-muted: var(--dashboard-text-secondary);
+        --icon-primary: var(--dashboard-text-primary);
+
+        /* Enhanced dashboard colors for dark theme - improved zinc variants */
+        --dashboard-bg-main: 240 10% 3.9%; /* Near black for main background */
+        --dashboard-bg-card: 240 5% 10%; /* Zinc card background */
+        --dashboard-bg-hover: 240 5% 14%; /* Zinc hover state */
+        --dashboard-bg-active: 240 5% 18%; /* Zinc active state */
+
+        /* Better borders with zinc variants */
+        --border: 240 5% 26%; /* Medium zinc border */
+        --dashboard-border-light: 240 5% 20%; /* Light zinc border */
+        --dashboard-border-dark: 240 5% 30%; /* Darker zinc border */
+
+        /* Card backgrounds with zinc variants */
+        --card: var(--dashboard-bg-card);
+        --card-bg-alpha: var(--dashboard-bg-card) / 0.8;
+        --card-bg-solid: var(--dashboard-bg-card);
+        --card-hover-bg: var(--dashboard-bg-hover);
+
+        /* Table cell hover state with zinc variants */
+        --muted: var(--dashboard-bg-hover);
+        --muted-foreground: 240 5% 75%; /* Lighter text for better contrast */
+    }
+
+    /* Gilesta theme */
+    .gilesta {
+        /* Base theme colors */
+        --background: var(--gilesta-navy);
+        --foreground: var(--gilesta-white);
+        --border: var(--gilesta-navy-lighter);
+        --input: var(--gilesta-navy-lighter);
+        --ring: var(--gilesta-burgundy);
+
+        /* Card variants */
+        --card: var(--gilesta-navy-darker);
+        --card-foreground: var(--gilesta-white);
+        --card-bg-alpha: var(--gilesta-navy-darker) / 0.8;
+        --card-bg-solid: var(--gilesta-navy-darker);
+        --card-hover-bg: var(--gilesta-navy-lighter);
+        --dashboard-card-background-solid: var(--gilesta-navy-darker);
+        --dashboard-card-background-alpha: var(--gilesta-navy-darker) / 0.8;
+
+        /* UI elements */
+        --popover: var(--gilesta-navy-darker);
+        --popover-foreground: var(--gilesta-white);
+        --primary: var(--gilesta-burgundy);
+        --primary-foreground: var(--gilesta-white);
+        --secondary: var(--gilesta-navy-lighter);
+        --secondary-foreground: var(--gilesta-white);
+        --muted: var(--gilesta-navy-lighter);
+        --muted-foreground: var(--gilesta-light-gray);
+        --accent: var(--gilesta-burgundy-lighter);
+        --accent-foreground: var(--gilesta-white);
+        --destructive: var(--gilesta-burgundy);
+        --destructive-foreground: var(--gilesta-white);
+        --destructive-focus-bg: var(--gilesta-burgundy) / 0.2;
+        --success: var(--gilesta-success);
+
+        /* Button variants */
+        --button-bg-alpha: var(--gilesta-navy-darker) / 0.8;
+        --button-hover-bg: var(--gilesta-navy-lighter);
+        --button-hover: var(--gilesta-navy-lighter);
+        --label-text: var(--gilesta-medium-gray);
+
+        /* Charts - using variations of our two main colors */
+        --chart-1: var(--gilesta-navy);
+        --chart-2: var(--gilesta-burgundy);
+        --chart-3: 217 30% 44%;  /* Navy variant */
+        --chart-4: 343 42% 45%;  /* Burgundy variant */
+        --chart-5: 237 40% 29%;  /* Navy blueish variant */
+
+        /* Sidebar */
+        --sidebar-background: var(--gilesta-navy-darkest);
+        --sidebar-foreground: var(--gilesta-white);
+        --sidebar-primary: var(--gilesta-burgundy);
+        --sidebar-primary-foreground: var(--gilesta-white);
+        --sidebar-accent: var(--gilesta-burgundy-lighter);
+        --sidebar-accent-foreground: var(--gilesta-white);
+        --sidebar-border: var(--gilesta-navy-lighter);
+        --sidebar-ring: var(--gilesta-burgundy);
+
+        /* Spreadsheet */
+        --spreadsheet-bg: var(--gilesta-navy);
+        --spreadsheet-header-bg: var(--gilesta-navy-darkest);
+        --spreadsheet-text: var(--gilesta-white);
+        --spreadsheet-border: var(--gilesta-navy-lighter);
+
+        /* Code blocks */
+        --code-block-bg: var(--gilesta-navy-darkest);
+        --code-block-border: var(--gilesta-navy-lighter);
+        --code-block-text: var(--gilesta-white);
+        --code-inline-bg: var(--gilesta-navy-lighter);
+
+        /* Chat input */
+        --chat-input-button-border: var(--gilesta-navy-lighter);
+        --chat-input-button-hover: var(--gilesta-navy-lighter);
+        --chat-input-textarea-border: var(--gilesta-navy-lighter);
+
+        /* Document previews */
+        --document-preview-border: var(--gilesta-navy-lighter);
+        --document-preview-border-dark: var(--gilesta-navy-lighter);
+        --document-preview-skeleton-bg: var(--gilesta-white) / 0.2;
+
+        /* Artifacts */
+        --artifact-border-light: var(--gilesta-navy-lighter);
+        --artifact-border-dark: var(--gilesta-navy-lighter);
+        --artifact-skeleton-bg: var(--gilesta-white) / 0.2;
+    }
+}
+
+.rdg-light {
+    --rdg-background-color: hsl(var(--spreadsheet-bg));
+    --rdg-header-background-color: hsl(var(--spreadsheet-header-bg));
+    --rdg-row-hover-background-color: hsl(var(--card-hover-bg));
+    --rdg-selection-color: hsl(var(--primary));
+    --rdg-border-color: hsl(var(--spreadsheet-border));
+    --rdg-color: hsl(var(--spreadsheet-text));
+}
+
+.rdg-dark {
+    --rdg-background-color: hsl(var(--spreadsheet-bg));
+    --rdg-header-background-color: hsl(var(--spreadsheet-header-bg));
+    --rdg-row-hover-background-color: hsl(var(--card-hover-bg));
+    --rdg-selection-color: hsl(var(--primary));
+    --rdg-border-color: hsl(var(--spreadsheet-border));
+    --rdg-color: hsl(var(--spreadsheet-text));
+}
+
+/* Create utility classes that use the new variables */
+@layer utilities {
+    .bg-card-solid {
+        background-color: hsl(var(--dashboard-card-background-solid));
+    }
+    .bg-dashboard-card-alpha {
+        background-color: hsl(var(--dashboard-card-background-alpha));
+    }
+    .dashboard-bg-card {
+        background-color: hsl(var(--dashboard-bg-card));
+    }
+
+    .dashboard-border {
+        border-color: hsl(var(--dashboard-border-light));
+    }
+
+    .dashboard-shadow {
+        box-shadow: var(--dashboard-card-shadow);
+    }
+
+    .dashboard-shadow-hover {
+        box-shadow: var(--dashboard-card-shadow-hover);
+    }
+
+    .dashboard-text-success {
+        color: hsl(var(--dashboard-success));
+    }
+
+    .dashboard-text-error {
+        color: hsl(var(--dashboard-error));
+    }
+
+    .dashboard-text-secondary {
+        color: hsl(var(--dashboard-text-secondary));
+    }
+
+    .text-icon-muted {
+        color: hsl(var(--dashboard-text-secondary));
+    }
+
+    .text-icon-primary {
+        color: hsl(var(--dashboard-text-primary));
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    @font-face {
+        font-family: "geist";
+        font-style: normal;
+        font-weight: 100 900;
+        src: url(/fonts/geist.woff2) format("woff2");
+    }
+
+    @font-face {
+        font-family: "geist-mono";
+        font-style: normal;
+        font-weight: 100 900;
+        src: url(/fonts/geist-mono.woff2) format("woff2");
+    }
+}
+
+/* Dashboard specific styles as regular CSS classes */
+.dashboard-card-header-icon {
+    color: hsl(var(--dashboard-text-secondary));
+}
+
+.dashboard-secondary-text {
+    color: hsl(var(--dashboard-text-secondary));
+}
+
+.dashboard-emphasis-text {
+    color: hsl(var(--dashboard-text-primary));
+    font-weight: 500;
+}
+
+.skeleton {
+    * {
+        pointer-events: none !important;
+    }
+
+    *[class^="text-"] {
+        color: transparent;
+        @apply rounded-md bg-foreground/20 select-none animate-pulse;
+    }
+
+    .skeleton-bg {
+        @apply bg-foreground/10;
+    }
+
+    .skeleton-div {
+        @apply bg-foreground/20 animate-pulse;
+    }
+}
+
+.ProseMirror {
+    outline: none;
+}
+
+.cm-editor,
+.cm-gutters {
+    @apply bg-background dark:bg-zinc-800 outline-none selection:bg-zinc-900 !important;
+}
+
+.ͼo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.ͼo.cm-selectionBackground,
+.ͼo.cm-content::selection {
+    @apply bg-zinc-200 dark:bg-zinc-900 !important;
+}
+
+.cm-activeLine,
+.cm-activeLineGutter {
+    @apply bg-transparent !important;
+}
+
+.cm-activeLine {
+    @apply rounded-r-sm !important;
+}
+
+.cm-lineNumbers {
+    @apply min-w-7;
+}
+
+.cm-foldGutter {
+    @apply min-w-3;
+}
+
+.cm-lineNumbers .cm-activeLineGutter {
+    @apply rounded-l-sm !important;
+}
+
+.suggestion-highlight {
+    @apply bg-blue-200 hover:bg-blue-300 dark:hover:bg-blue-400/50 dark:text-blue-50 dark:bg-blue-500/40;
+}
+
+
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
+    }
   body {
     @apply bg-background text-foreground;
+    }
+}
+
+/* Enhanced hover states for dashboard tables */
+.dashboard-table tr:hover td {
+    background-color: hsla(var(--dashboard-bg-hover) / 0.7);
+}
+
+/* Improved expanded content in flagged messages */
+.dashboard-expanded-content {
+    background-color: hsla(var(--dashboard-bg-hover) / 0.5);
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid hsla(var(--border) / 0.3);
+}
+
+/* Pure CSS staggered grid animations */
+.staggered-grid {
+  /* Container for staggered items */
+  display: grid;
+}
+
+.staggered-grid .staggered-item {
+  /* Initial state */
+  opacity: 0;
+  transform: translateY(15px);
+  /* Animation properties */
+  animation: fadeInUp 0.4s ease forwards;
+  /* Use the custom property for delay, which will be set inline on each item */
+  animation-delay: var(--stagger-delay, 0ms);
+}
+
+/* Disable animations if user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .staggered-grid .staggered-item {
+    animation: none;
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Glassmorphism Effects */
-.glass {
-  @apply backdrop-blur-md bg-background/30 border border-border/50;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-}
-
-.glass-hover {
-  @apply transition-all duration-300;
-  &:hover {
-    @apply backdrop-blur-lg bg-background/40;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+/* Animation keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.glass-message {
-  @apply backdrop-blur-sm;
-  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.05);
+/* Search highlight styles */
+.search-highlight {
+  background-color: hsla(var(--primary) / 0.15);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.2rem;
+  color: hsl(var(--primary));
+  font-weight: 500;
+}
+
+.search-highlight-muted {
+  background-color: hsla(var(--primary) / 0.1);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.2rem;
+  color: hsl(var(--primary) / 0.8);
+}
+
+/* Timeline animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-fast {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulse-bg {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: hsl(var(--primary) / 0.1);
+  }
+}
+
+@keyframes flow-up {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 20%,
+      hsl(var(--primary) / 0.8) 50%,
+      hsl(var(--primary) / 0.1) 80%,
+      transparent 100%
+    );
+  }
+  100% {
+    transform: translateX(100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 20%,
+      hsl(var(--primary) / 0.8) 50%,
+      hsl(var(--primary) / 0.1) 80%,
+      transparent 100%
+    );
+  }
+}
+
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% 50%;
+  }
+  100% {
+    background-position: 300% 50%;
+  }
+}
+
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-pulse-fast {
+    animation: pulse-fast 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-pulse-bg {
+    animation: pulse-bg 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-flow-up {
+    animation: flow-up 2s linear infinite;
+  }
+
+  .animate-shine {
+    animation: shine 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .animate-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(var(--primary) / 0.1) 20%,
+      hsl(var(--primary) / 0.8) 50%,
+      hsl(var(--primary) / 0.1) 80%,
+      transparent 100%
+    );
+    animation: shine 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .text-shimmer {
+    position: relative;
+    color: transparent;
+    background: linear-gradient(90deg, 
+      hsl(var(--primary) / 0.1) -100%, 
+      hsl(var(--primary) / 0.9) 50%,
+      hsl(var(--primary) / 0.1) 200%);
+    background-size: 500% auto;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: text-shimmer 1.5s linear infinite;
+  }
 }

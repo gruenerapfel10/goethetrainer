@@ -12,10 +12,13 @@ import { fetcher, generateUUID } from '@/lib/utils';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
 import type { VisibilityType } from './visibility-selector';
-import { Artifact } from './artifact';
+import { ArtifactPanel } from './artifact-panel';
+import { ArtifactInset } from './artifact-inset';
 import { useArtifactSelector } from '../hooks/use-artifact';
 import { toast } from 'sonner';
 import { getChatHistoryPaginationKey } from './sidebar-history';
+import { motion } from 'framer-motion';
+import { getCapabilitiesToDisable, getExclusionMessage } from '@/lib/ai/capability-exclusions';
 
 export function Chat({
   id,
@@ -40,6 +43,74 @@ export function Chat({
   const { mutate } = useSWRConfig();
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
   const [isFileSearchEnabled, setIsFileSearchEnabled] = useState(false);
+  const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true); // Web search enabled by default
+  const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(false);
+  
+  // Handle capability changes with exclusivity rules
+  const handleCapabilityChange = useCallback((capability: string, enabled: boolean) => {
+    if (!enabled) {
+      // If disabling, just disable it
+      switch (capability) {
+        case 'deepSearch':
+          setIsDeepResearchEnabled(false);
+          break;
+        case 'imageGeneration':
+          setIsImageGenerationEnabled(false);
+          break;
+        case 'webSearch':
+          setIsWebSearchEnabled(false);
+          break;
+        case 'fileSearch':
+          setIsFileSearchEnabled(false);
+          break;
+      }
+      return;
+    }
+    
+    // If enabling, check for conflicts
+    const currentState = {
+      deepSearch: isDeepResearchEnabled,
+      imageGeneration: isImageGenerationEnabled,
+      webSearch: isWebSearchEnabled,
+      fileSearch: isFileSearchEnabled,
+    };
+    
+    const toDisable = getCapabilitiesToDisable(capability, currentState);
+    const exclusionMessage = getExclusionMessage(capability, currentState);
+    
+    if (exclusionMessage) {
+      // Show warning but still allow the change
+      toast.info(exclusionMessage);
+    }
+    
+    // Disable conflicting capabilities
+    toDisable.forEach(cap => {
+      switch (cap) {
+        case 'deepSearch':
+          setIsDeepResearchEnabled(false);
+          break;
+        case 'imageGeneration':
+          setIsImageGenerationEnabled(false);
+          break;
+      }
+    });
+    
+    // Enable the requested capability
+    switch (capability) {
+      case 'deepSearch':
+        setIsDeepResearchEnabled(true);
+        break;
+      case 'imageGeneration':
+        setIsImageGenerationEnabled(true);
+        break;
+      case 'webSearch':
+        setIsWebSearchEnabled(true);
+        break;
+      case 'fileSearch':
+        setIsFileSearchEnabled(true);
+        break;
+    }
+  }, [isDeepResearchEnabled, isImageGenerationEnabled, isWebSearchEnabled, isFileSearchEnabled]);
   const [selectedFiles, setSelectedFiles] = useState<FileSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [documentCount, setDocumentCount] = useState<number | null>(null);
@@ -68,6 +139,8 @@ export function Chat({
       selectedChatModel: selectedChatModel,
       deepResearch: isDeepResearchEnabled,
       fileSearch: isFileSearchEnabled,
+      webSearch: isWebSearchEnabled,
+      imageGeneration: isImageGenerationEnabled,
       selectedFiles: selectedFiles,
     },
     initialMessages,
@@ -99,9 +172,10 @@ export function Chat({
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
   return (
-    <>
-      <div className="flex flex-col min-w-0 h-dvh bg-background self-center w-full">
-        <ChatHeader
+    <div className="flex h-dvh w-full">
+      <ArtifactInset>
+        <div className="flex flex-col min-w-0 h-dvh bg-background self-center w-full">
+          <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}
           selectedVisibilityType={selectedVisibilityType}
@@ -130,10 +204,23 @@ export function Chat({
         />
 
         {!isReadonly && (
-          <div className="absolute bottom-0 z-[10] w-full">
+          <motion.div 
+            className="absolute z-[5] w-full"
+            initial={false}
+            animate={{
+              bottom: messages.length > 0 ? "0%" : "50%",
+              transform: messages.length > 0 ? "translateY(0%)" : "translateY(50%)",
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 0.6
+            }}
+          >
             <form 
               ref={inputContainerRef}
-              className="flex mx-auto px-4 py-4 md:py-6 gap-2 w-full max-w-3xl items-center justify-center"
+              className="flex mx-auto px-4 py-4 md:py-6 gap-2 w-full max-w-3xl items-center justify-center min-h-[calc(100vh-80px)] md:min-h-0"
             >
               <MultimodalInput
                 selectedModelId={selectedChatModel}
@@ -151,33 +238,33 @@ export function Chat({
                 selectedFiles={selectedFiles}
                 onSelectedFilesChange={setSelectedFiles}
                 isDeepResearchEnabled={isDeepResearchEnabled}
-                onDeepResearchChange={setIsDeepResearchEnabled}
+                onDeepResearchChange={(enabled) => handleCapabilityChange('deepSearch', enabled)}
                 isFileSearchEnabled={isFileSearchEnabled}
                 onFileSearchChange={setIsFileSearchEnabled}
+                isWebSearchEnabled={isWebSearchEnabled}
+                onWebSearchChange={setIsWebSearchEnabled}
+                isImageGenerationEnabled={isImageGenerationEnabled}
+                onImageGenerationChange={(enabled) => handleCapabilityChange('imageGeneration', enabled)}
                 onHeightChange={handleInputHeightChange}
               />
             </form>
-          </div>
+          </motion.div>
         )}
-      </div>
+        </div>
+      </ArtifactInset>
 
-      <Artifact
+      <ArtifactPanel
         selectedModelId={selectedChatModel}
         chatId={id}
-        input={input}
-        setInput={setInput}
-        handleSubmit={handleSubmit}
         status={status}
         stop={stop}
-        attachments={attachments}
-        setAttachments={setAttachments}
-        append={append}
         messages={messages}
         setMessages={setMessages}
-        reload={reload}
         votes={votes}
+        append={append}
+        reload={reload}
         isReadonly={isReadonly}
       />
-    </>
+    </div>
   );
 }

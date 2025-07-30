@@ -1,12 +1,9 @@
-"use client"
+'use client';
 
-import * as React from "react"
-import { Command, LayoutDashboard, Layers, Eraser } from "lucide-react"
-import { usePathname } from "next/navigation"
-
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
-import { ThemeToggle } from "@/components/theme-toggle"
+import type { User } from 'next-auth';
+import { useRouter } from 'next/navigation';
+import { SidebarHistory } from '@/components/sidebar-history';
+import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import {
   Sidebar,
   SidebarContent,
@@ -15,72 +12,209 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+  SidebarRail,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { PlusIcon, LayoutDashboardIcon, ShieldIcon } from './icons';
+import { LogoComponent } from './logo-component';
+import LanguageSwitcher from './language-switcher';
+import { cn } from '@/lib/utils';
+import { useState, useEffect } from 'react';
+import { SidebarSearch } from './sidebar-search';
+import { SearchModal } from './search-modal';
+import useSWRInfinite from 'swr/infinite';
+import { fetcher } from '@/lib/utils';
+import { getChatHistoryPaginationKey } from './sidebar-history';
 
-const data = {
-  user: {
-    name: "shadcn",  // You may want to update this to your actual user data
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+// Logo Header Component
+function LogoHeader() {
+  const { state } = useSidebar();
+  
+  return (
+    <SidebarMenu className={state === 'expanded' ? 'px-2' : 'px-0'}>
+      <SidebarMenuItem>
+        <SidebarMenuButton size="lg" asChild>
+          <Link href="/" className="flex items-center justify-center">
+            <LogoComponent collapsed={state === 'collapsed'} />
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname()
-  
-  const navItems = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: LayoutDashboard,
-      isActive: pathname === "/dashboard",
-    },
-    {
-      title: "Command",
-      url: "/command",
-      icon: Command,
-      isActive: pathname === "/command",
-    },
-    {
-      title: "Eleven",
-      url: "/eleven",
-      icon: Layers,
-      isActive: pathname === "/eleven",
-    },
-    {
-      title: "Eraser",
-      url: "/eraser",
-      icon: Eraser,
-      isActive: pathname === "/eraser",
-    },
-  ]
+// New Chat Button Component
+function NewChatButton() {
+  const router = useRouter();
+  const t = useTranslations();
+  const { setOpenMobile, state } = useSidebar();
 
   return (
-    <Sidebar variant="inset" className="border-r border-foreground/10" {...props}>
+    <SidebarMenu className={state === 'expanded' ? 'px-0' : 'px-0'}>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          variant="outline"
+          tooltip={t('chat.newChat')}
+          onClick={() => {
+            router.push('/');
+            setOpenMobile(false);
+          }}
+          className={cn(
+            "w-full h-9 bg-[#0A0C10] border border-[#2A2F3C] border-[0px] text-white hover:text-white rounded-xl hover:bg-[#12151C] hover:border-[#3A4150] transition-colors duration-200 flex items-center gap-2.5",
+            state === 'expanded' ? 'justify-center' : 'justify-center !p-0 aspect-square'
+          )}
+        >
+          <PlusIcon className="h-4 w-4" />
+          {state === 'expanded' && (
+            <span className="text-sm font-medium">{t('chat.newChat')}</span>
+          )}
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+// Admin Navigation Component
+function AdminNav({ user }: { user: User | undefined }) {
+  const t = useTranslations();
+  const { setOpenMobile, state } = useSidebar();
+
+  if (!user?.isAdmin) return null;
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={t('chat.adminPortal')} asChild>
+          <Link 
+            href="/admin" 
+            onClick={() => setOpenMobile(false)}
+            className={cn(
+              "flex items-center gap-2 text-sm font-medium w-full px-2 py-2",
+              "hover:bg-sidebar-accent/50 rounded-md transition-colors"
+            )}
+          >
+            <ShieldIcon className="h-4 w-4" />
+            <span>{t('chat.adminPortal')}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+// Dashboard Navigation Component
+function DashboardNav({ user }: { user: User | undefined }) {
+  const t = useTranslations();
+  const { setOpenMobile, state } = useSidebar();
+
+  if (!user?.isAdmin) return null;
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip={t('chat.dashboard')} asChild>
+          <Link 
+            href="/dashboard" 
+            onClick={() => setOpenMobile(false)}
+            className={cn(
+              "flex items-center gap-2 text-sm font-medium w-full px-2 py-2",
+              "hover:bg-sidebar-accent/50 rounded-md transition-colors"
+            )}
+          >
+            <LayoutDashboardIcon className="h-4 w-4" />
+            <span>{t('chat.dashboard')}</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+// Language Switcher Component
+function LanguageNav() {
+  const { state } = useSidebar();
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <div className="">
+          <LanguageSwitcher />
+        </div>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
+
+export function AppSidebar({ user }: { user: User | undefined }) {
+  const { state } = useSidebar();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResultCount, setSearchResultCount] = useState<number | undefined>();
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+  // Fetch chats for search modal
+  const { data: paginatedChatHistories } = useSWRInfinite(
+    getChatHistoryPaginationKey,
+    fetcher,
+    { fallbackData: [] }
+  );
+
+  // Flatten all chats for search modal
+  const allChats = paginatedChatHistories?.flatMap(page => page.chats) || [];
+
+  // Keyboard shortcut to open search modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchModalOpen(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
+  return (
+    <Sidebar collapsible="icon">
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="/">
-                <div className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">PACEMAKER</span>
-                  <span className="truncate text-xs text-muted-foreground">Enterprise</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <LogoHeader />
+        <div className="space-y-2">
+          <NewChatButton />
+          <SidebarSearch 
+            value={searchQuery} 
+            onChange={setSearchQuery}
+            resultCount={searchQuery ? searchResultCount : undefined}
+            onOpenModal={() => setIsSearchModalOpen(true)}
+          />
+          <div className="space-y-1">
+            <AdminNav user={user} />
+            <DashboardNav user={user} />
+            <LanguageNav />
+          </div>
+        </div>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        {state === 'expanded' && (
+          <SidebarHistory 
+            user={user} 
+            searchQuery={searchQuery}
+            onSearchResultsChange={setSearchResultCount}
+          />
+        )}
       </SidebarContent>
-      <SidebarFooter className="p-4">
-        <ThemeToggle />
-        <NavUser user={data.user} />
+      <SidebarFooter>
+        {user && <SidebarUserNav user={user} />}
       </SidebarFooter>
+      <SidebarRail />
+      
+      {/* Search Modal */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        chats={allChats}
+      />
     </Sidebar>
-  )
+  );
 }

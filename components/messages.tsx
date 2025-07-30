@@ -1,6 +1,6 @@
-import type { UIMessage } from 'ai';
+import type { UIMessage, Attachment } from 'ai';
 import { memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, } from 'framer-motion';
 import { AlertCircleIcon } from 'lucide-react';
 import type { Vote } from '@/lib/db/schema';
 import type { UseChatHelpers } from '@ai-sdk/react';
@@ -23,16 +23,16 @@ interface MessagesProps {
   selectedFiles?: FileSearchResult[];
   selectedModelId?: string;
   completedMessageIds?: Set<string>;
+  attachments?: Array<Attachment>; // Add attachments for file mapping
 }
 
-// Animation variants
+// Simplified animation variants - remove problematic transitions
 const containerVariants = {
-  initial: { opacity: 0 },
+  initial: { opacity: 1 },
   animate: { 
     opacity: 1,
     transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.1
+      duration: 0
     }
   }
 };
@@ -120,6 +120,7 @@ function PureMessages({
   selectedFiles = [],
   selectedModelId = '',
   completedMessageIds = new Set(),
+  attachments = [],
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -128,52 +129,49 @@ function PureMessages({
     onViewportLeave,
     hasSentMessage,
   } = useMessages({ chatId, status });
+  
   return (
-    <motion.div
+    <div
       ref={messagesContainerRef}
       className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 transition-all duration-300 ease-in-out"
       style={{ paddingBottom: `${bottomPadding + 16}px` }}
-      variants={containerVariants}
-      initial="initial"
-      animate="animate"
     >
-      <AnimatePresence mode="wait">
-        {/* Messages */}
-        {messages.map((message, index) => {
-          // Skip rendering empty assistant messages during streaming - they'll be handled by LoadingStateRenderer
-          if (message.role === 'assistant' && status === 'streaming' && index === messages.length - 1) {
-            const hasContent = message.parts && message.parts.length > 0;
-            if (!hasContent) {
-              return null; // Skip rendering empty assistant messages
-            }
+      {/* REMOVED AnimatePresence mode="wait" - this was causing all messages to disappear */}
+      {/* Messages */}
+      {messages.map((message, index) => {
+        // Skip rendering empty assistant messages during streaming - they'll be handled by LoadingStateRenderer
+        if (message.role === 'assistant' && status === 'streaming' && index === messages.length - 1) {
+          const hasContent = message.parts && message.parts.length > 0;
+          if (!hasContent) {
+            return null; // Skip rendering empty assistant messages
           }
+        }
 
-          return (
-            <PreviewMessage
-              key={message.id}
-              chatId={chatId}
-              message={message}
-              isLoading={status === 'streaming' && index === messages.length - 1}
-              vote={votes?.find((vote) => vote.messageId === message.id)}
-              setMessages={setMessages}
-              reload={reload}
-              isReadonly={isReadonly}
-              requiresScrollPadding={hasSentMessage && index === messages.length - 1}
-              selectedFiles={selectedFiles}
-              selectedModelId={selectedModelId}
-              completedMessageIds={completedMessageIds}
-            />
-          );
-        })}
+        return (
+          <PreviewMessage
+            key={message.id}
+            chatId={chatId}
+            message={message}
+            isLoading={status === 'streaming' && index === messages.length - 1}
+            vote={votes?.find((vote) => vote.messageId === message.id)}
+            setMessages={setMessages}
+            reload={reload}
+            isReadonly={isReadonly}
+            requiresScrollPadding={hasSentMessage && index === messages.length - 1}
+            selectedFiles={selectedFiles}
+            selectedModelId={selectedModelId}
+            completedMessageIds={completedMessageIds}
+          />
+        );
+      })}
 
-        {/* Loading states */}
-        <LoadingStateRenderer status={status} messages={messages} />
+      {/* Loading states */}
+      <LoadingStateRenderer status={status} messages={messages} />
 
-        {/* Error state */}
-        {status === 'error' && <ErrorMessage />}
-      </AnimatePresence>
+      {/* Error state */}
+      {status === 'error' && <ErrorMessage />}
 
-      {/* Scroll anchor */}
+      {/* Scroll anchor - keep as motion.div for viewport events */}
       <motion.div
         ref={messagesEndRef}
         className="shrink-0 min-w-[24px] min-h-[24px]"
@@ -183,7 +181,7 @@ function PureMessages({
 
       {/* Bottom spacer */}
       <div className="shrink-0 min-w-[24px] min-h-[24px]" />
-    </motion.div>
+    </div>
   );
 }
 

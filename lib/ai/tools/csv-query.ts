@@ -7,7 +7,7 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { executeCsvQuery } from '@/lib/db/queries';
-import { generateSqlQuery, validateSqlQuery } from '@/lib/text-to-sql';
+import { generateSqlQuery, } from '@/lib/text-to-sql';
 
 /**
  * A simple helper to get just the column names from a table.

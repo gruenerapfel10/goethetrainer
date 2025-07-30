@@ -1,7 +1,7 @@
-import { DataStreamWriter } from 'ai';
+import type { DataStreamWriter } from 'ai';
 import { z } from 'zod';
-import { Session } from 'next-auth';
-import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
+import type { Session } from 'next-auth';
+import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
 interface SearchProps {
   session: Session;

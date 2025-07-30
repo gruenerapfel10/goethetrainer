@@ -1,4 +1,4 @@
-import { Search, Database, FileText, AlertCircle, Sparkles, Brain, File, Lightbulb, Circle } from "lucide-react";
+import { Search, Database, FileText, Sparkles, Brain, File, Lightbulb, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ToolIconProps {
@@ -27,6 +27,8 @@ export function ToolIcon({ toolName, className }: ToolIconProps) {
     case 'sharepoint_main_agent':
       return <Sparkles className={iconClasses} />;
     case 'csv_query':
+      return <Database className={iconClasses} />;
+      case 'text2sql':
       return <Database className={iconClasses} />;
     case 'document':
       return <File className={iconClasses} />;

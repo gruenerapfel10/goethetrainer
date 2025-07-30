@@ -1,4 +1,4 @@
-import type { Message } from 'ai';
+import type { Message, UIMessage } from 'ai';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
@@ -15,26 +15,46 @@ import {
 } from './ui/tooltip';
 import { memo } from 'react';
 import equal from 'fast-deep-equal';
+import { MessageCost } from './message-cost';
+
+// Helper function to extract text content from message parts
+function extractTextFromMessage(message: Message): string {
+  if (!message.parts || !Array.isArray(message.parts)) {
+    // Fallback to content if it exists (for backward compatibility)
+    if (typeof message.content === 'string') {
+      return message.content;
+    }
+    return '';
+  }
+
+  // Extract all text parts and join them
+  const textParts = message.parts
+    .filter((part: any) => part.type === 'text' && part.text)
+    .map((part: any) => part.text)
+    .join('\n\n');
+
+  return textParts;
+}
 
 export function PureMessageActions({
   chatId,
   message,
   vote,
   isLoading,
+  shouldCostFetch,
 }: {
   chatId: string;
-  message: Message;
+  message: UIMessage;
   vote: Vote | undefined;
   isLoading: boolean;
+  shouldCostFetch?: boolean;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
 
   if (isLoading) return null;
   if (message.role === 'user') return null;
-  if (message.toolInvocations && message.toolInvocations.length > 0)
-    return null;
-
+  
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex flex-row gap-2">
@@ -44,8 +64,13 @@ export function PureMessageActions({
               className="py-1 px-2 h-fit text-muted-foreground"
               variant="outline"
               onClick={async () => {
-                await copyToClipboard(message.content as string);
-                toast.success('Copied to clipboard!');
+                const textContent = extractTextFromMessage(message);
+                if (textContent) {
+                  await copyToClipboard(textContent);
+                  toast.success('Copied to clipboard!');
+                } else {
+                  toast.error('No text content to copy');
+                }
               }}
             >
               <CopyIcon />
@@ -157,6 +182,7 @@ export function PureMessageActions({
           </TooltipTrigger>
           <TooltipContent>Downvote Response</TooltipContent>
         </Tooltip>
+        <MessageCost message={message} shouldFetch={shouldCostFetch} />
       </div>
     </TooltipProvider>
   );

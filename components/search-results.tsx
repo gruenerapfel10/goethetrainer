@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { cn, extractHostname } from '@/lib/utils';
 import { Globe, X, ExternalLink } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { extract } from '../lib/ai/tools/extract';
 
 interface SearchResult {
   title: string;

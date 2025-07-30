@@ -1,12 +1,11 @@
-import { DataStreamWriter, tool, streamObject, generateObject } from 'ai';
+import { type DataStreamWriter, tool, generateObject } from 'ai';
 import { z } from 'zod';
-import { Session } from 'next-auth';
+import type { Session } from 'next-auth';
 import { jsonrepair } from 'jsonrepair';
 
 import { myProvider } from '../models';
 import { executeCsvQuery, listCsvTables } from '@/lib/db/queries';
 import { generateObjectWithParsing } from '@/lib/parsingUtils';
-import { StandardizedToolResult, TimelineItemUtils } from './types';
 
 interface CsvAnalyzeProps {
     session: Session;
@@ -295,7 +294,7 @@ Columns:
 ${table.columns.map(col => `- ${col.name} (${col.dataType}${col.hasMissingValues ? `, ${col.missingCount} missing values` : ''})`).join('\n')}
 
 Sample data (first row):
-${table.sampleData && table.sampleData[0] ? Object.entries(table.sampleData[0]).map(([key, value]) => `${key}: ${value}`).join(', ') : 'No sample data available'}
+${table.sampleData?.[0] ? Object.entries(table.sampleData[0]).map(([key, value]) => `${key}: ${value}`).join(', ') : 'No sample data available'}
 
 ${table.dataQualityIssues && table.dataQualityIssues.length > 0 ? `Data quality issues:
 - ${table.dataQualityIssues.join('\n- ')}` : 'No data quality issues detected'}
@@ -320,7 +319,7 @@ Based on this analysis, identify:
         });
 
         // Add AI insights about relevant columns if available
-        if (aiInsights && aiInsights.relevantColumns) {
+        if (aiInsights?.relevantColumns) {
             context.relevantColumns = aiInsights.relevantColumns;
         } else {
             // Create simple relevance suggestions if AI didn't provide any
@@ -663,7 +662,7 @@ const executePlan = async (
             console.error('Error executing query:', error);
 
             // Try to identify the issue with the query
-            let errorMessage = error instanceof Error ? error.message : String(error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
             let fixSuggestion = '';
 
             if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {

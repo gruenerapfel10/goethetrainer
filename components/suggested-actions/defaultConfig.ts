@@ -10,6 +10,60 @@ export interface SuggestedActionsConfig {
 }
 
 export const defaultSuggestions: SuggestedActionsConfig = {
+  'web-agent': [
+    // Web Search Assistant
+    {
+      title: 'Research industry trends',
+      label: 'and market insights',
+      action:
+        'Research the latest industry trends and market insights. Tell me which industry or topic you want me to focus on.',
+    },
+    {
+      title: 'Find case studies',
+      label: 'and success stories',
+      action:
+        'Search for relevant case studies and success stories in your industry. What specific type of cases are you looking for?',
+    },
+    {
+      title: 'Analyze competitors',
+      label: 'and their strategies',
+      action:
+        'Research and analyze competitor strategies and market positioning. Which competitors should I focus on?',
+    },
+    {
+      title: 'Research regulations',
+      label: 'and compliance requirements',
+      action:
+        'Find information about current regulations and compliance requirements. Which jurisdiction or industry regulations do you need?',
+    },
+  ],
+  'image-agent': [
+    // Image Generation Assistant
+    {
+      title: 'Create a logo',
+      label: 'for my brand',
+      action:
+        'Generate a professional logo design. Describe your brand, preferred style, colors, and any specific elements you want included.',
+    },
+    {
+      title: 'Design an infographic',
+      label: 'to visualize data',
+      action:
+        'Create an infographic to visualize complex data. What data points and visual style would you like me to use?',
+    },
+    {
+      title: 'Generate illustrations',
+      label: 'for presentations',
+      action:
+        'Create custom illustrations for your presentation. Describe the concept, style, and purpose of the illustrations.',
+    },
+    {
+      title: 'Create social media graphics',
+      label: 'for marketing campaigns',
+      action:
+        'Design eye-catching social media graphics. Tell me about your campaign, target platform, and brand guidelines.',
+    },
+  ],
   'sharepoint-agent': [
     // Internal Data Assistant V1
     {
@@ -64,33 +118,6 @@ export const defaultSuggestions: SuggestedActionsConfig = {
         'Based on the analysis of attached files and our knowledge base, generate specific recommendations and action items.',
     },
   ],
-  'crawler-agent': [
-    // Web Search Assistant
-    {
-      title: 'What are the latest trends',
-      label: 'shaping our industry?',
-      action:
-        'What are the latest trends shaping our industry? Summarise key insights and explain how they impact businesses like ours.',
-    },
-    {
-      title: 'Find case studies',
-      label: 'of successful strategies in our industry.',
-      action:
-        "Find case studies of successful strategies in our industry. Before retrieving, ask me if I'm interested in examples from competitors, market leaders, or specific use cases. Then, summarise key takeaways.",
-    },
-    {
-      title: 'How do top companies in our industry',
-      label: 'differentiate themselves?',
-      action:
-        'How do the top companies in our industry differentiate themselves? Before retrieving, ask me if I want a broad overview or insights into a specific market segment. Then, provide examples of their positioning and competitive strengths.',
-    },
-    {
-      title: 'What new regulations',
-      label: 'affect our industry?',
-      action:
-        'What new regulations affect our industry? Summarise key changes and how companies are adapting to them.',
-    },
-  ],
   'general-bedrock-agent': [
     // Smart AI Assistant
     {
@@ -116,33 +143,6 @@ export const defaultSuggestions: SuggestedActionsConfig = {
       label: 'to a customer complaint.',
       action:
         'I need to draft a response to a customer complaint. First, ask for details about the issue and any prior interactions. Then, confirm our typical resolution approach before generating a professional response.',
-    },
-  ],
-  'deepresearch-agent': [
-    // Reasoning Model Assistant
-    {
-      title: 'What risks and opportunities',
-      label: 'should we prepare for?',
-      action:
-        "What are the top risks and opportunities for our company this year? Before analysing, ask me if I'm focused on financial, operational, or market risks. Then, prioritise them and suggest how we can prepare.",
-    },
-    {
-      title: 'How can we strengthen',
-      label: 'our competitive position?',
-      action:
-        'How can we strengthen our competitive position? Before analysing, ask me if we should focus on pricing, branding, market expansion, or another area. Then, suggest strategic actions we should take.',
-    },
-    {
-      title: 'Before making a business decision',
-      label: 'what should we consider?',
-      action:
-        'What critical factors should we evaluate before making a major business decision? Provide a structured checklist.',
-    },
-    {
-      title: 'Evaluate AI investment',
-      label: 'for our company.',
-      action:
-        'What are the key considerations for implementing AI in our company? Provide a cost-benefit analysis framework and potential risks to assess.',
     },
   ],
   'chat-model-reasoning': [
@@ -197,6 +197,87 @@ export const defaultSuggestions: SuggestedActionsConfig = {
       label: 'based on this data',
       action:
         'Based on the data in this document, what are the most important insights we should consider? Please provide a detailed analysis.',
+    },
+  ],
+  'csv-agent': [
+    // CSV Data Analysis
+    {
+      title: 'Analyze this data',
+      label: 'and show key patterns',
+      action:
+        'Please analyze the CSV data I uploaded and identify key patterns, trends, and insights from the dataset.',
+    },
+    {
+      title: 'Summarize statistics',
+      label: 'for all columns',
+      action:
+        'Generate a comprehensive statistical summary of all columns in the CSV file, including means, medians, ranges, and distributions.',
+    },
+    {
+      title: 'Find trends over time',
+      label: 'if time data exists',
+      action:
+        'Identify and visualize any time-based trends in the data. Show me how values change over time and highlight significant patterns.',
+    },
+    {
+      title: 'Create visualizations',
+      label: 'to understand the data',
+      action:
+        'Create relevant charts and visualizations to help me better understand the relationships and patterns in this CSV data.',
+    },
+  ],
+  'csv-agent-v2': [
+    // CSV Data Analysis V2
+    {
+      title: 'Analyze this data',
+      label: 'and show key patterns',
+      action:
+        'Please analyze the CSV data I uploaded and identify key patterns, trends, and insights from the dataset.',
+    },
+    {
+      title: 'Summarize statistics',
+      label: 'for all columns',
+      action:
+        'Generate a comprehensive statistical summary of all columns in the CSV file, including means, medians, ranges, and distributions.',
+    },
+    {
+      title: 'Find trends over time',
+      label: 'if time data exists',
+      action:
+        'Identify and visualize any time-based trends in the data. Show me how values change over time and highlight significant patterns.',
+    },
+    {
+      title: 'Create visualizations',
+      label: 'to understand the data',
+      action:
+        'Create relevant charts and visualizations to help me better understand the relationships and patterns in this CSV data.',
+    },
+  ],
+  'text2sql-agent': [
+    // SQL Database Query Assistant
+    {
+      title: 'Show database tables',
+      label: 'and their structure',
+      action:
+        'Show me all available tables in the database and their column structure. Include data types and relationships.',
+    },
+    {
+      title: 'Get top records',
+      label: 'from main tables',
+      action:
+        'Show me the top 10 records from the main tables to understand the data structure and content.',
+    },
+    {
+      title: 'Generate summary stats',
+      label: 'across all tables',
+      action:
+        'Generate aggregate statistics for all numerical columns across the database tables, including counts, averages, and ranges.',
+    },
+    {
+      title: 'Find relationships',
+      label: 'between tables',
+      action:
+        'Analyze and show me the relationships between different tables in the database, including foreign keys and join conditions.',
     },
   ],
 };

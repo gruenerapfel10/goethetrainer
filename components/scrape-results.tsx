@@ -5,10 +5,8 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import {
   ChevronRight,
-  FileText,
   Loader2,
   Globe,
-  X,
   ExternalLink,
   AlertCircle,
   Copy,
@@ -83,15 +81,15 @@ export function ScrapeResults({
         <div className="rounded-lg border border-border overflow-hidden">
           <div className="p-4 bg-muted/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded-sm bg-muted animate-pulse"></div>
-              <div className="h-4 w-32 bg-muted animate-pulse rounded"></div>
+              <div className="w-5 h-5 rounded-sm bg-muted animate-pulse" />
+              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
             </div>
             <Loader2 size={16} className="animate-spin text-muted-foreground" />
           </div>
           <div className="p-4 pt-2">
-            <div className="h-3 bg-muted animate-pulse rounded w-full mb-2"></div>
-            <div className="h-3 bg-muted animate-pulse rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-muted animate-pulse rounded w-5/6"></div>
+            <div className="h-3 bg-muted animate-pulse rounded w-full mb-2" />
+            <div className="h-3 bg-muted animate-pulse rounded w-3/4 mb-2" />
+            <div className="h-3 bg-muted animate-pulse rounded w-5/6" />
           </div>
         </div>
       </div>

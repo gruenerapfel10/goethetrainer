@@ -3,13 +3,25 @@
 import { useLogo } from '../context/logo-context';
 import Image from 'next/image';
 
-export function LogoComponent() {
+export function LogoComponent({ collapsed }: { collapsed?: boolean }) {
   const { state } = useLogo();
+
+  if (collapsed) {
+    return (
+      <Image
+        src="/moterra-logo-s.svg"
+        alt="Logo"
+        width={32}
+        height={32}
+        className="object-contain"
+      />
+    );
+  }
 
   // Always show the skeleton while loading
   if (state.isLoading) {
     return (
-      <div className="h-8 w-32 animate-pulse bg-gray-200 dark:bg-gray-700 rounded" />
+      <div className="h-10 w-40 animate-pulse bg-gray-200 dark:bg-gray-700 rounded" />
     );
   }
 
@@ -19,12 +31,13 @@ export function LogoComponent() {
       <Image
         src={state.currentLogo.url}
         alt="Logo"
-        fill
-        className="object-contain"
+        width={160}
+        height={40}
+        className="object-contain max-w-full max-h-full"
       />
     );
   }
 
   // If no logo is set yet but loading is done, show skeleton
-  return <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded" />;
+  return <div className="h-10 w-40 bg-gray-200 dark:bg-gray-700 rounded" />;
 }

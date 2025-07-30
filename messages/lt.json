@@ -1,0 +1,1333 @@
+{
+  "toasts": {
+    "fileListUpdateError": "Nepavyko atnaujinti failų sąrašo",
+    "sharepointUpdateSuccess": "SharePoint'o duomenys atnaujinti sėkmingai",
+    "selectFilesUpload": "Pasirinkite failus įkėlimui",
+    "filesUploadSuccess": "Failai įkelti sėkmingai",
+    "filesUploadError": "Nepavyko įkelti failų",
+    "sharepointSyncStarted": "SharePoint'o sinchronizacija pradėta",
+    "sharepointSyncError": "Nepavyko pradėti SharePoint'o sinchronizacijos",
+    "filesDeleteSuccess": "Ištrinti ${data.deletedCount} failai",
+    "filesDeleteError": "Klaida trinant failus",
+    "copySuccess": "Įkopijuota!"
+  },
+  "sharepoint": {
+    "synchronizing": "Sinchronizuojama...",
+    "syncWithSharepoint": "Sinchronizuoti su SharePoint'u",
+    "filesCount": "Failų kiekis SharePoint'e:",
+    "newModifiedFiles": "Nauji/Modifikuoti failai:",
+    "processing": "Procesinama: {syncProgress.currentFile} ({syncProgress.filesProcessed + 1} iš {syncProgress.newFiles})",
+    "syncStatus": "Sinchronizacijos statusas:",
+    "syncProgress": "Sinchronizacijos progresas",
+    "syncingFile": "Sinchronizuojamas failas",
+    "lastSyncTitle": "Paskutinė SharePoint'o sinchronizacija",
+    "neverSynced": "Niekada"
+  },
+  "fileUpload": {
+    "dragActive": "Įkelkite failus čia",
+    "dragInactive": "Įkelkite failus čia arba paspauskite norėdami pasirinkti",
+    "limit": "Maksimalus failo dydis: 5MB vienam failui, 25MB viso",
+    "selectedFiles": "Pasirinkti failai:",
+    "uploading": "Įkeliama..."
+  },
+  "dataTable": {
+    "noResults": "Rezultatų nėra.",
+    "rowsPerPage": "Eilučių puslapyje",
+    "page": "Puslapis",
+    "of": "iš",
+    "goToFirst": "Eiti į pirmą puslapį",
+    "goToPrevious": "Eiti į ankstesnį puslapį",
+    "goToNext": "Eiti į kitą puslapį",
+    "goToLast": "Eiti į paskutinį puslapį"
+  },
+  "runSqlPreview": {
+    "rawResult": "Pirminis vykdymo rezultatas ({count} eilutės)"
+  },
+  "files": {
+    "title": "Failai",
+    "deleteAll": "Ištrinti visus failus",
+    "deleteConfirmTitle": "Ar tikrai norite viską ištrinti?",
+    "deleteConfirmMessage": "Šio veiksmo nebus galima atšaukti. Failai bus ištrinti visam laikui.",
+    "cancel": "Atšaukti",
+    "deleting": "Trinama...",
+    "deleteAllAction": "Ištrinti viską",
+    "refresh": "Atnaujinti",
+    "fileManagement": "Failų Valdymas",
+    "search": "Ieškoti failų...",
+    "columns": {
+      "name": "Pavadinimas",
+      "size": "Dydis",
+      "date": "Data",
+      "status": "Būsena",
+      "actions": "Veiksmai",
+      "ingested": "Prieinamas",
+      "processingFailed": "Apdorojimas nepavyko",
+      "viewOnSharePoint": "Peržiūrėti SharePoint'e",
+      "deleteFile": "Ištrinti failą",
+      "noFiles": "Failų nerasta",
+      "loading": "Kraunama",
+      "longLoading": "Tai užtrunka ilgiau nei tikėtasi. Palaukite...",
+      "selectAll": "Pasirinkti visus failus",
+      "selectFile": "Pasirinkti {name}",
+      "viewOnSharePointTooltip": "Peržiūrėti failą SharePoint'e",
+      "deleteFileTooltip": "Ištrinti šį failą",
+      "tooltips": {
+        "disabledDuringOperation": "Veiksmai išjungti, kol vyksta operacija"
+      }
+    },
+    "viewKnowledgeBase": "Peržiūrėti KB dokumentus",
+    "viewS3": "Peržiūrėti S3 failus",
+    "deleteSelectedTitle": "Ištrinti pasirinktus dokumentus",
+    "deleteSelectedMessage": "Tai pašalins {count} pasirinktus dokumentus iš jūsų žinių bazės. Šio veiksmo nebus galima atšaukti.",
+    "noFilesSelected": "Nepasirinkti failai",
+    "noFiles": "Failų nerasta",
+    "statusMappings": {
+      "unknown": "Nežinoma",
+      "new": "Naujas",
+      "synced": "Sinchronizuotas",
+      "uploaded": "Įkeltas",
+      "metadataStored": "Metaduomenys išsaugoti",
+      "pendingIngestion": "Laukiama",
+      "ingestionInProgress": "Apdorojama",
+      "bedrockProcessing": "Apdorojama",
+      "indexed": "Paruoštas",
+      "failedIngestion": "Nepavyko",
+      "pendingDeletion": "Trinama",
+      "deleted": "Ištrintas",
+      "archived": "Archyvuotas",
+      "new_tooltip": "Failas pridėtas, bet dar neapdorotas",
+      "synced_tooltip": "Failas sinchronizuotas iš SharePoint'o",
+      "uploaded_tooltip": "Failas įkeltas į saugyklą",
+      "metadatastored_tooltip": "Failo metaduomenys išsaugoti",
+      "metadata_stored_tooltip": "Failo metaduomenys išsaugoti",
+      "pendingingestion_tooltip": "Failas laukia apdorojimo",
+      "pending_ingestion_tooltip": "Failas laukia apdorojimo",
+      "ingestioninprogress_tooltip": "Failas šiuo metu apdorojamas",
+      "ingestion_in_progress_tooltip": "Failas šiuo metu apdorojamas",
+      "bedrockprocessing_tooltip": "Failą apdoroja AI sistema",
+      "bedrock_processing_tooltip": "Failą apdoroja AI sistema",
+      "indexed_tooltip": "Failas paruoštas ir prieinamas paieškai",
+      "failedingestion_tooltip": "Failo apdorojimas nepavyko - gali reikėti įkelti iš naujo",
+      "failed_ingestion_tooltip": "Failo apdorojimas nepavyko - gali reikėti įkelti iš naujo",
+      "pendingdeletion_tooltip": "Failas suplanuotas šalinimui",
+      "pending_deletion_tooltip": "Failas suplanuotas šalinimui",
+      "deleted_tooltip": "Failas pašalintas iš sistemos",
+      "archived_tooltip": "Failas archyvuotas"
+    }
+  },
+  "chat": {
+    "title": "Moterra Chat",
+    "description": "Moterra Chat",
+    "brand": "Moterra",
+    "newChat": "Naujas pokalbis",
+    "searchChats": "Ieškoti pokalbių",
+    "noSearchResults": "Pokalbių nerasta",
+    "adminPortal": "Admin'o portalas",
+    "enableNotifications": "Įjungti pranešimus",
+    "disableNotifications": "Išjungti pranešimus",
+    "knowledgeBaseControl": "Žinių bazė",
+    "knowledgeBase": "Žinių bazė",
+    "thinking": "Galvoju...",
+    "thinkingMessage1": "Galvoju...",
+    "thinkingMessage2": "Apmastau...",
+    "thinkingMessage3": "Svarsčiau...",
+    "thinkingMessage4": "Mąstau...",
+    "thinkingMessage5": "Analizuoju...",
+    "thinkingMessage6": "Apdoroju...",
+    "thinkingMessage7": "Nagrinėju...",
+    "thinkingMessage8": "Studijuoju...",
+    "thinkingMessage9": "Apsvarstau...",
+    "thinkingMessage10": "Dirbu prie to...",
+    "thinkingMessage11": "Sudėlioju daleles...",
+    "thinkingMessage12": "Sujungiu faktus...",
+    "processingMessage1": "Apdoroju...",
+    "processingMessage2": "Analizuoju duomenis...",
+    "processingMessage3": "Skaičiuoju...",
+    "processingMessage4": "Sprendžiu problemą...",
+    "processingMessage5": "Tvarkau mintis...",
+    "processingMessage6": "Rūšiuoju informaciją...",
+    "processingMessage7": "Sudėlioju...",
+    "processingMessage8": "Beveik baigiau...",
+    "processingMessage9": "Baigiamieji veiksmai...",
+    "processingMessage10": "Užbaigu darbą...",
+    "askPlaceholder": "Paklauskite...",
+    "share": "Dalintis",
+    "makePrivate": "Privatizuoti",
+    "makePublic": "Viešinti",
+    "delete": "Trinti",
+    "rename": "Pervadinti",
+    "pin": "Prisegti pokalbį",
+    "unpin": "Atsegti pokalbį",
+    "pinnedChats": "Prisegti",
+    "recentChats": "Naujausi",
+    "renameChat": "Pervadinti pokalbį",
+    "enterNewTitle": "Įveskite naują pavadinimą",
+    "save": "Išsaugoti",
+    "cancel": "Atšaukti",
+    "maxPinnedReached": "Pasiektas maksimalus prisegtų pokalbių skaičius (5)",
+    "dashboard": "Dashboard'as",
+    "userManagement": "Vartotojų valdymas",
+    "systemPrompts": "Sistemos pranešimai",
+    "csvManagement": "Duomenų valdymas",
+    "csvTitle": "Duomenų valdymas",
+    "csvAlertTitle": "Duomenų šaltinių valdymas",
+    "csvAlertDescription": "Įkelkite ir valdykite CSV failus duomenų bazės lentelėms kurti. Kiekvienas failas bus konvertuotas į užklausų lentelę.",
+    "csvDatabaseTablesTitle": "Duomenų bazės lentelės",
+    "csvSearchPlaceholder": "Ieškoti lentelių...",
+    "csvRefreshTablesButton": "Atnaujinti Lenteles",
+    "csvErrorInvalidFileType": "Netinkamas failo tipas. Palaikomi tipai: {supportedTypes}",
+    "csvErrorFileSizeExceeds": "Failo dydis viršija {maxSize}",
+    "csvErrorFileEmpty": "Failas yra tuščias",
+    "csvErrorNoValidFiles": "Nėra tinkamų failų įkėlimui",
+    "csvErrorUploadFailed": "Nepavyko įkelti {fileName}: {message}",
+    "csvErrorNetworkError": "Tinklo klaida įkeliant {fileName}",
+    "csvErrorUnknownUploadError": "Nežinoma klaida įkeliant",
+    "csvSuccessFileUpload": "Sėkmingai įkeltas {fileName} kaip {tableName}",
+    "csvSuccessAllFilesUploaded": "Sėkmingai įkelti {count} failai",
+    "csvInfoPartialUpload": "{successCount} failai įkelti, {errorCount} nepavyko",
+    "csvErrorAllUploadsFailed": "Nepavyko įkelti {count} failų",
+    "csvErrorFailedToLoadTableData": "Nepavyko įkelti lentelės duomenų",
+    "csvNoDataFoundInTable": "Lentelėje nerasta duomenų",
+    "csvShowingFirst100Rows": "Rodoma pirmų 100 eilučių",
+    "csvErrorFailedToFetchTables": "Nepavyko gauti lentelių",
+    "csvUnexpectedErrorFetchingTables": "Netikėta klaida gaunant lenteles",
+    "csvWarningDeletionIssues": "Kilo problemų ištrinant esamas lenteles. Tęsiamas įkėlimas.",
+    "csvErrorGeneralUploadProcess": "Įvyko klaida įkėlimo proceso metu. Bandykite dar kartą.",
+    "text2sqlTimeline": {
+      "sqlGeneration": "SQL generavimas",
+      "understandingQuestion": "Naudotojo klausimo supratimas",
+      "rephrasedQuestion": "Perfrazuotas klausimas: {question}",
+      "sqlPlanning": "SQL planavimas",
+      "reasoning": "Samprotavimas",
+      "sqlSuccess": "SQL sėkmingai sugeneruotas",
+      "sqlFailed": "SQL generavimas nepavyko",
+      "error": "Klaida SQL generavimo metu",
+      "executionStart": "Pradėtas SQL vykdymas",
+      "executionEnd": "SQL vykdymas baigtas",
+      "executionError": "SQL vykdymo klaida",
+      "resultGenerated": "Rezultatas sugeneruotas"
+    },
+    "systemPromptsDescription": "Sistemos pranešimai apibrėžia AI asistentų elgesį, galimybes ir asmenybę. Redaguokite šiuos pranešimus, kad pritaikytumėte, kaip asistentai atsakys į vartotojų užklausas.",
+    "assistants": {
+      "general-assistant": "Standartinis asistentas",
+      "csv-agent": "CSV analizės asistentas",
+      "enterPrompt": "Įveskite sistemos raginimą",
+      "systemPrompts": "Sistemos pranešimai apibrėžia AI asistentų elgesį, galimybes ir asmenybę"
+    },
+    "promptErrors": {
+      "tooShort": "Pranešimas per trumpas (mažiausiai 10 simbolių)",
+      "tooLong": "Pranešimas per ilgas (daugiausiai 5000 simbolių)"
+    },
+    "titleLogo": "Pokalbių valdymas"
+  },
+  "chatManagement": {
+    "uploadNewLogo": "Įkelti naują logotipą",
+    "dragAndDrop": "Vilkite ir numeskite logotipo failą čia",
+    "dropFileHere": "Numeskite failą čia",
+    "orClickToUpload": "arba paspauskite, kad pasirinktumėte failą",
+    "loading": "Kraunama...",
+    "noLogosUploaded": "Dar nėra įkeltų logotipų",
+    "logo": "logotipas",
+    "logos": "logotipai",
+    "titleLogo": "Pokalbių valdymas",
+    "logoManagement": "Logotipo valdymas",
+    "suggestionsManagement": "Pasiūlymų valdymas",
+    "uploadButton": "Įkelti logotipą",
+    "uploadSuccess": "Logotipas sėkmingai įkeltas",
+    "uploadError": "Nepavyko įkelti logotipo",
+    "logoSelected": "Logotipas pasirinktas sėkmingai",
+    "imageDeleted": "Vaizdas sėkmingai ištrintas",
+    "deleteError": "Nepavyko ištrinti vaizdo",
+    "setLogo": "Pasirinkti logotipą",
+    "currentLogo": "Dabartinis logotipas",
+    "poweredBy": "Powered by",
+    "brand": "Moterra",
+    "preview": "Peržiūra",
+    "uploadedLogos": "Įkelti logotipai",
+    "resetToDefault": "Iš naujo nustatyti logotipą",
+    "invalidFileType": "Netinkamas failo tipas",
+    "fileTooLarge": "Failo dydis viršija 2 MB ribą",
+    "uploadedLogo": "Įkeltas logotipas",
+    "selectFile": "Pasirinkite failą",
+    "fetchError": "Nepavyko gauti logotipų",
+    "suggestedInquiries": "Siūlomos užklausos",
+    "selectAgentType": "Pasirinkite agento tipą",
+    "selectAgentPlaceholder": "Pasirinkite agento tipą",
+    "editSuggestions": "Redaguoti pasiūlymus",
+    "suggestion": "Pasiūlymas",
+    "suggestionTitle": "Antraštė",
+    "suggestionLabel": "Paantraštė",
+    "suggestionAction": "Pilnas užklausos tekstas",
+    "enterTitle": "Įveskite antraštę",
+    "enterLabel": "Įveskite paantraštę",
+    "enterAction": "Įveskite užklausos tekstą",
+    "previous": "Ankstesnis",
+    "next": "Kitas",
+    "saveSuggestions": "Išsaugoti pasiūlymus",
+    "suggestionsSaved": "Pasiūlymai išsaugoti sėkmingai",
+    "saveFailed": "Nepavyko išsaugoti pasiūlymų",
+    "suggestionsReset": "Pasiūlymai atstatyti į numatytuosius",
+    "resetFailed": "Nepavyko atstatyti pasiūlymų",
+    "previewSuggestions": "Peržiūrėti pasiūlymus",
+    "delete": "Trinti",
+    "limitReached": "Simbolių limitas: {limit}",
+    "emptyFieldsError": "Visi laukai yra privalomi. Užpildykite visus tuščius laukus."
+  },
+  "userManagement": {
+    "title": "Vartotojai",
+    "addUser": "Pridėti vartotoją",
+    "createUser": {
+      "title": "Sukurti naują vartotoją",
+      "email": "El. paštas",
+      "password": "Slaptažodis",
+      "creating": "Kuriama...",
+      "create": "Sukurti vartotoją",
+      "emailPlaceholder": "vartotojas@pavyzdys.com",
+      "passwordPlaceholder": "••••••••"
+    },
+    "deleteUser": {
+      "title": "Ištrinti vartotoją",
+      "confirmation": "Ar tikrai norite ištrinti šį vartotoją? Šio veiksmo nebus galima atšaukti.",
+      "deleting": "Trinama...",
+      "delete": "Ištrinti"
+    },
+    "table": {
+      "email": "El. paštas",
+      "adminStatus": "Administratoriaus statusas",
+      "actions": "Veiksmai"
+    }
+  },
+  "suggestedActions": {
+    "sharepoint": {
+      "winningProposals": {
+        "title": "Gauti laimėjusius pasiūlymus",
+        "label": "susijusius su nauju klientu.",
+        "action": "Gauti laimėjusius pasiūlymus ar atvejų tyrimus, susijusius su nauju klientu. Prieš pateikdami, paklauskite manęs kliento pavadinimo ar pramonės, kad užtikrintumėte aktualumą. Tuomet apibendrinkite pagrindinius sėkmei prisidėjusius aspektus."
+      },
+      "pricing": {
+        "title": "Parodyti mūsų kainas",
+        "label": "ir paslaugų paketus.",
+        "action": "Parodyti mūsų kainų struktūras ir paslaugų paketus. Paryškinti lanksčias galimybes ar pritaikymo galimybes."
+      },
+      "successFactors": {
+        "title": "Gauti sėkmės veiksnius",
+        "label": "iš mūsų geriausių projektų.",
+        "action": "Gauti informaciją apie mūsų sėkmingiausius klientų projektus. Prieš pateikdami, paklauskite, ar ieškau konkrečių pramonės šakų, projektų tipų ar sandorių dydžių. Tuomet apibendrinkite pagrindinius sėkmei prisidėjusius veiksnius."
+      },
+      "remoteWork": {
+        "title": "Apibendrinti nuotolinio darbo politiką",
+        "label": "ir pagrindines gaires.",
+        "action": "Apibendrinti mūsų nuotolinio darbo politiką. Paryškinti pagrindines taisykles, lanksčias galimybes ir naujausius atnaujinimus."
+      }
+    },
+    "crawler": {
+      "trends": {
+        "title": "Kokios naujausios tendencijos",
+        "label": "formuoja mūsų pramonę?",
+        "action": "Kokios naujausios tendencijos formuoja mūsų pramonę? Apibendrinkite pagrindines įžvalgas ir paaiškinkite, kaip jos veikia tokias įmones kaip mūsų."
+      },
+      "caseStudies": {
+        "title": "Rasti atvejų tyrimus",
+        "label": "sėkmingų strategijų mūsų pramonėje.",
+        "action": "Rasti atvejų tyrimus apie sėkmingas strategijas mūsų pramonėje. Prieš pateikdami, paklauskite, ar domiuosi konkurentų, rinkos lyderių ar konkrečių atvejų pavyzdžiais. Tuomet apibendrinkite pagrindines išvadas."
+      },
+    "differentiation": {
+        "title": "Kaip geriausios mūsų pramonės įmonės",
+        "label": "išsiskiria?",
+        "action": "Kaip geriausios mūsų pramonės įmonės išsiskiria? Prieš pateikdami, paklauskite, ar noriu bendros apžvalgos ar įžvalgų apie konkrečią rinkos segmentą. Tuomet pateikite jų pozicionavimo ir konkurencinių pranašumų pavyzdžių."
+      },
+      "regulations": {
+        "title": "Kokie nauji reglamentai",
+        "label": "veikia mūsų pramonę?",
+        "action": "Kokie nauji reglamentai veikia mūsų pramonę? Apibendrinkite pagrindinius pokyčius ir kaip įmonės prie jų prisitaiko."
+      }
+    },
+    "general": {
+      "proposal": {
+        "title": "Sukurkime pasiūlymą",
+        "label": "naujam klientui.",
+        "action": "Man reikia parengti pasiūlymą naujam klientui. Prieš pradėdami, žingsnis po žingsnio paklauskite pagrindinių detalių, pavyzdžiui, kliento pavadinimo, tinklalapio, dominančių paslaugų/produktų ir specifinių reikalavimų. Tada sugeneruokite struktūrizuotą pasiūlymą."
+      },
+      "timeline": {
+        "title": "Padėkite sukurti laiko juostą",
+        "label": "projektui.",
+        "action": "Padėkite sukurti projekto laiko juostą. Pirmiausia paklauskite apie pagrindinius etapus ir rezultatus, tada patvirtinkite terminus ir priklausomybes prieš generuojant struktūrizuotą planą."
+      },
+      "campaign": {
+        "title": "Sugalvokime kampaniją",
+        "label": "su kūrybinėmis idėjomis.",
+        "action": "Sugalvokime kūrybinę rinkodaros kampaniją. Prieš siūlydami idėjas, paklauskite detalių, pavyzdžiui, kampanijos tikslo, tikslinės auditorijos, produkto dėmesio ir pageidaujamo tono. Tada sugeneruokite tris kūrybines kryptis."
+      },
+      "response": {
+        "title": "Parengti atsakymą",
+        "label": "į kliento skundą.",
+        "action": "Man reikia parengti atsakymą į kliento skundą. Pirmiausia paklauskite detalių apie problemą ir ankstesnes sąveikas. Tada patvirtinkite mūsų tipinį sprendimo būdą prieš generuojant profesionalų atsakymą."
+      }
+    },
+    "csv": {
+      "analysis": {
+        "title": "Analizuoti šiuos duomenis",
+        "label": "ieškant šablonų ir įžvalgų.",
+        "action": "Analizuoti įkeltus CSV duomenis ieškant šablonų, tendencijų ir įžvalgų. Pateikti išsamią pagrindinių radimų santrauką."
+      },
+      "summary": {
+        "title": "Apibendrinti statistiką",
+        "label": "iš duomenų rinkinio.",
+        "action": "Pateikti statistinę duomenų santrauką, įskaitant vidurkius, medianas, diapazonus ir pasiskirstymus skaitiniams stulpeliams."
+      },
+      "trends": {
+        "title": "Nustatyti tendencijas",
+        "label": "per laiko periodus.",
+        "action": "Nustatyti ir analizuoti tendencijas duomenyse per laiką. Ieškoti šablonų, sezoniškumo ar anomalijų."
+      },
+      "visualization": {
+        "title": "Sukurti vizualizacijas",
+        "label": "duomenims.",
+        "action": "Sukurti tinkamas diagramas ir vizualizacijas pagrindinėms duomenų išvadoms pavaizduoti."
+      }
+    },
+    "sql": {
+      "showTables": {
+        "title": "Rodyti prieinamas lenteles",
+        "label": "ir jų struktūrą.",
+        "action": "Parodyti visas prieinamas duomenų bazės lenteles ir aprašyti jų struktūrą, įskaitant stulpelių pavadinimus ir duomenų tipus."
+      },
+      "topRecords": {
+        "title": "Rodyti pavyzdinius duomenis",
+        "label": "iš pagrindinių lentelių.",
+        "action": "Parodyti 10 pirmų įrašų iš pagrindinių lentelių, kad suprasčiau duomenų struktūrą ir turinį."
+      },
+      "aggregate": {
+        "title": "Agreguotų duomenų analizė",
+        "label": "su pagrindinėmis metrikomis.",
+        "action": "Atlikti agreguotą duomenų analizę. Rodyti skaičius, sumas ir vidurkius grupuojant pagal aktualias kategorijas."
+      },
+      "relationships": {
+        "title": "Paaiškinti lentelių ryšius",
+        "label": "ir duomenų sąsajas.",
+        "action": "Paaiškinti ryšius tarp skirtingų lentelių ir kaip duomenys yra susiję visoje duomenų bazėje."
+      }
+    }
+  },
+  "reasoning": {
+    "risks": {
+      "title": "Kokioms rizikoms ir galimybėms",
+      "label": "turėtume pasiruošti?",
+      "action": "Kokios yra pagrindinės mūsų įmonės rizikos ir galimybės šiais metais? Prieš analizuodami, paklauskite, ar orientuojuosi į finansines, operacines ar rinkos rizikas. Tada prioritizuokite jas ir pasiūlykite, kaip galėtume pasiruošti."
+    },
+    "competitive": {
+      "title": "Kaip galime sustiprinti",
+      "label": "mūsų konkurencinę poziciją?",
+      "action": "Kaip galime sustiprinti mūsų konkurencinę poziciją? Prieš analizuodami, paklauskite, ar turėtume sutelkti dėmesį į kainodarą, prekės ženklą, rinkos plėtrą ar kitą sritį. Tada pasiūlykite strateginius veiksmus, kurių turėtume imtis."
+    },
+    "decision": {
+      "title": "Prieš priimdami verslo sprendimą",
+      "label": "ką turėtume apsvarstyti?",
+      "action": "Kokius kritinius veiksnius turėtume įvertinti prieš priimdami svarbų verslo sprendimą? Pateikite struktūrizuotą kontrolinį sąrašą."
+    },
+    "ai": {
+      "title": "Įvertinti AI investicijas",
+      "label": "mūsų įmonei.",
+      "action": "Kokie yra pagrindiniai aspektai diegiant dirbtinį intelektą mūsų įmonėje? Pateikite kaštų ir naudos analizės sistemą bei galimas rizikas, kurias reikia įvertinti."
+    }
+  },
+  "notFound": {
+    "title": "Puslapis nerastas",
+    "subtitle": "Puslapis, kurio ieškote, neegzistuoja",
+    "description": "Prašomas puslapis neegzistuoja arba jūs neturite prieigos prie jo.",
+    "chatNotFound": "Pokalbis nerastas",
+    "chatDescription": "Prašomas pokalbis neegzistuoja arba jūs neturite prieigos prie jo.",
+    "adminNotFound": "Prieiga uždrausta",
+    "adminDescription": "Jūs neturite teisių pasiekti šį administratoriaus puslapį.",
+    "backToHome": "Į pagrindinį puslapį",
+    "backToChats": "Į pokalbius",
+    "backToMain": "Grįžti į pagrindinį"
+  },
+  "timeframes": {
+    "today": "Šiandien",
+    "yesterday": "Vakar",
+    "days7": "Prieš 7 dienas",
+    "days30": "Prieš 30 dienų",
+    "older": "Daugiau"
+  },
+  "sidebar": {
+    "toggle": "Įjungti šoninę juostą",
+    "themeToggle": "Įjungti ${theme === 'light' ? 'tamsų' : 'šviesų'} rėžimą",
+    "logout": "Atsijungti",
+    "turnOn": "Įjungti",
+    "lightMode": "Šviesus",
+    "darkMode": "Tamsus",
+    "gilestaMode": "Gilesta",
+    "blueMode": "Mėlynas",
+    "mode": "rėžimą",
+    "colorTheme": "Spalvų rėžimas"
+  },
+  "errors": {
+    "fileListRefresh": "Nepavyko atnaujinti failų sąrašo",
+    "fileUploadNoSelection": "Pasirinkite failus įkėlimui",
+    "fileUploadFailed": "Nepavyko įkelti failų",
+    "singleFileUploadFailed": "Nepavyko įkelti failo, bandykite dar kartą!",
+    "sharePointSyncFailed": "Nepavyko pradėti SharePoint'o sinchronizacijos",
+    "fileDeleteFailed": "Klaida trinant failus",
+    "userFetch": "Nepavyko gauti vartotojų sąrašo",
+    "userCreate": "Nepavyko sukurti vartotojo",
+    "userUpdate": "Nepavyko atnaujinti vartotojo",
+    "userDelete": "Nepavyko ištrinti vartotojo",
+    "fillAllFields": "Užpildykite visus laukus",
+    "noFilesSelected": "Nepasirinkti failai",
+    "ingestionStatusFailed": "Nepavyko gauti įkėlimo būsenos",
+    "uploadFailed": "Įkėlimas nepavyko",
+    "deleteFailed": "Ištrynimas nepavyko",
+    "syncFailed": "Sinchronizacija nepavyko",
+    "ingestionFailed": "Žinių bazės atnaujinimas nepavyko: {error}",
+    "uploadStatusFailed": "Nepavyko gauti įkėlimo būsenos",
+    "deleteStatusFailed": "Nepavyko gauti ištrynimo būsenos",
+    "syncStatusFailed": "Nepavyko gauti sinchronizacijos būsenos",
+    "sharePointUrlsFetchFailed": "Nepavyko gauti SharePoint URL adresų",
+    "invalidFiles": "Pasirinkti netinkami failai",
+    "resyncFailed": "Pakartotinė sinchronizacija nepavyko",
+    "unknown": "Nežinomas šaltinis",
+    "untitled": "Be pavadinimo",
+    "promptTooShort": "Sistemos pranešimas per trumpas",
+    "promptTooLong": "Sistemos pranešimas viršija maksimalų ilgį (5000 simbolių)",
+    "promptSaveFailed": "Nepavyko išsaugoti sistemos pranešimo",
+    "promptResetFailed": "Nepavyko atstatyti sistemos pranešimo",
+    "tooManyFiles": "Pasirinkta per daug failų. Maksimaliai leidžiami {max} failai.",
+    "totalSizeExceeded": "Bendras failų dydis viršija {limit} ribą",
+    "emptyFiles": "Šie failai yra tušti ir negali būti įkelti: {files}",
+    "oversizedFiles": "Šie failai viršija {limit} dydžio ribą: {files}",
+    "unsupportedFileTypes": "Šie failai turi nepalaikomus failo tipus: {files}",
+    "defaultValidation": "Failo tikrinimas nepavyko",
+    "fetchInitialStatusFailed": "Nepavyko gauti pradinės sistemos būsenos",
+    "systemBusy": "Sistema šiuo metu užimta kita operacija",
+    "httpError": "HTTP klaida {status}",
+    "invalidJsonResponse": "Netinkamas serverio atsakymas",
+    "operationFailed": "Operacija nepavyko",
+    "cancelFailed": "Nepavyko atšaukti operacijos",
+    "validationErrorTitle": "Tikrinimo klaida",
+    "batchRejectedTotalSizeFull": "Failų svoris per didelis.",
+    "batchRejectedAllInvalidFiles": "Nepalaikomas failas ar jo tipas"
+  },
+  "success": {
+    "sharePointSync": "SharePoint duomenys sėkmingai atnaujinti",
+    "fileUpload": "Failai sėkmingai įkelti",
+    "sharePointSyncStarted": "SharePoint sinchronizavimas pradėtas",
+    "filesDeleted": "Ištrinta {count} failų",
+    "copied": "Nukopijuota!",
+    "userCreate": "Vartotojas sėkmingai sukurtas",
+    "userUpdate": "Vartotojas sėkmingai atnaujintas",
+    "userDelete": "Vartotojas sėkmingai ištrintas",
+    "fileDeleted": "Failas {name} sėkmingai ištrintas",
+    "selectedFilesDeleted": "{count} failai sėkmingai ištrinti",
+    "ingestionComplete": "Žinių bazės atnaujinimas sėkmingai baigtas",
+    "uploadComplete": "Failai sėkmingai įkelti ir apdoroti",
+    "deleteComplete": "Failai ištrinti ir žinių bazė atnaujinta",
+    "syncComplete": "SharePoint sinchronizavimas baigtas",
+    "sharePointSyncComplete": "SharePoint failai sinchronizuoti ir sėkmingai apdoroti",
+    "sharePointUrlsFetched": "Gauta {count} SharePoint URL",
+    "sharePointSyncNoChanges": "Nėra naujų failų sinchronizavimui iš SharePoint",
+    "resyncStarted": "Pakartotinis sinchronizavimas pradėtas",
+    "promptSaved": "Sistemos pranešimas sėkmingai išsaugotas",
+    "promptReset": "Sistemos pranešimas atstatytas į numatytąjį",
+    "operationComplete": "Operacija sėkmingai baigta"
+  },
+  "warnings": {
+    "someInvalidFiles": "{count} netinkami failai praleisti",
+    "noFilesUploaded": "Nebuvo įkelta jokių failų",
+    "partialSuccess": "Kai kurie failai įkelti, bet įkėlimas į žinių bazę nepavyko: {error}",
+    "noIngestionStarted": "Failai įkelti, bet įkėlimas į žinių bazę nepradėtas",
+    "areYouSure": "Ar esate visiškai tikras?",
+    "deleteWarning": "Šio veiksmo atšaukti negalima. Tai visam laikui ištrins jūsų pokalbį ir pašalins jį iš mūsų serverių.",
+    "maxFilesReached": "Pasiektas maksimalus {max} failų skaičius",
+    "someFilesSkipped": "Tik {taken} iš {max} failų pridėti (maksimaliai leidžiami {max} failai)",
+    "skippedUnsupportedType": "Nepalaikomas failų tipas",
+    "skippedTotalSizeLimitReached": "Failų svoris per didelis"
+  },
+  "info": {
+    "noSharePointUrlsFound": "Nerastas SharePoint URL adresas pasirinktiems failams",
+    "pleaseReuploadFiles": "Prašome rankiniu būdu iš naujo įkelti failus",
+    "usingS3Files": "Rodomi failai iš S3 saugyklos"
+  },
+  "actions": {
+    "refresh": "Atnaujinti",
+    "deleteAll": "Ištrinti visus failus",
+    "cancel": "Atšaukti",
+    "continue": "Tęsti",
+    "share": "Dalintis",
+    "signOut": "Atsijungti",
+    "copy": "Kopijuoti",
+    "toggleSidebar": "Įjungti šoninę juostą",
+    "delete": "Trinti",
+    "clearAll": "Išvalyti viską",
+    "deleteSelected": "Ištrinti Pasirinktus ({count})",
+    "fetchSharePointUrls": "Gauti SharePoint URL",
+    "reSync": "Persinkronizuoti Failus",
+    "forceIngest": "Priverstinis Įkėlimas",
+    "confirm": "Patvirtinti",
+    "refreshList": "Atnaujinti Sąrašą",
+    "processAllPending": "Apdoroti Laukiančius Failus",
+    "stop": "Sustabdyti"
+  },
+  "status": {
+    "synchronizing": "Sinchronizuojama...",
+    "thinking": "Galvoju...",
+    "deleting": "Trinama...",
+    "uploadingFiles": "Įkeliami failai...",
+    "deletingFiles": "Ištrinami failai...",
+    "deletingMultipleFiles": "Ištrinami {count} failai...",
+    "deletingSingleFile": "Ištrinamas failas {name}...",
+    "syncingWithSharePoint": "Sinchronizuojama su SharePoint...",
+    "resyncingFiles": "Pakartotinai sinchronizuojami failai...",
+    "ingestionInProgress": "Žinių bazės atnaujinimas vykdomas...",
+    "uploadInProgress": "Įkėlimas vykdomas...",
+    "deleteInProgress": "Ištrynimas vykdomas...",
+    "syncInProgress": "Sinchronizacija vykdoma...",
+    "loadingSharePointUrls": "Įkeliami SharePoint URL adresai...",
+    "syncComplete": "Sinchronizacija baigta",
+    "saving": "Išsaugojama...",
+    "initializing": "Inicializuojama sistema...",
+    "operationAlreadyInProgress": "Kita operacija jau vykdoma",
+    "operationStarting": "Pradedama {type}...",
+    "operationStarted": "{type} sėkmingai pradėta",
+    "operationCompleted": "Operacija sėkmingai baigta",
+    "operationFailed": "Operacija nepavyko",
+    "operationCancelled": "Operacija atšaukta",
+    "idle": "Sistema laukia",
+    "starting": "Pradedama operacija...",
+    "pullingFromSharePoint": "Gaunami pakeitimai iš SharePoint...",
+    "preparingForProcessing": "Ruošiami failai apdorojimui...",
+    "submittedToProcessor": "Pateikta dokumentų procesoriui...",
+    "processingDocuments": "Apdorojami dokumentai...",
+    "processing": "Apdorojama...",
+    "success": "Sėkmė",
+    "failed": "Nepavyko",
+    "progress": "Progresas",
+    "initiatingOp": "Pradedama {type}...",
+    "genericProgress": "Progresas",
+    "currentFileLabel": "Dabartinis",
+    "tableDisabledDuringOperation": "Veiksmai išjungti operacijos metu",
+    "filesBeingProcessed": "{count} failai laukia apdorojimo",
+    "filesBeingDeleted": "{count} failai trinami",
+    "filesCurrentlyActive": "{count} failai šiuo metu apdorojami",
+    "filesCompleted": "{count} failai baigti šioje sesijoje",
+    "processingFiles": "Apdorojami failai...",
+    "finalizingProcessing": "Baigiamas apdorojimas...",
+    "processingAndDeleting": "Apdorojami {processing} failai ir trinami {deleting} failai... {active} aktyvūs",
+    "completingProcessing": "Baigiamas apdorojimas... {active} failai baigiami"
+  },
+  "loading": {
+    "files": "Kraunami failai..."
+  },
+  "status_old": {
+    "synchronizing": "Sinchronizuojama...",
+    "thinking": "Galvoju...",
+    "deleting": "Trinama...",
+    "processing": "Procesinama: {file} ({current} iš {total})",
+    "upvoting": "Įrašomas teigiamas vertinimas...",
+    "downvoting": "Įrašomas neigiamas vertinimas..."
+  },
+  "operations": {
+    "type": {
+      "upload": "Įkėlimas",
+      "deleteMultiple": "Ištrinti Pasirinktus",
+      "deleteSingle": "Ištrinti Failą",
+      "syncSharepoint": "SharePoint Sinchronizacija",
+      "processPending": "Apdoroti Laukiančius"
+    },
+    "types": {
+      "manual_upload_and_process": "Failų Įkėlimas",
+      "sharepoint_sync_and_process": "SharePoint Sinchronizacija",
+      "file_deletion_and_process": "Failų Šalinimas",
+      "bedrock_process_pending": "Dokumentų Apdorojimas"
+    },
+    "starting": {
+      "manual_upload_and_process": "Pradedamas failų įkėlimas...",
+      "sharepoint_sync_and_process": "Pradėama SharePoint sinchronizacija...",
+      "file_deletion_and_process": "Pradedamas failų šalinimas...",
+      "bedrock_process_pending": "Pradedamas dokumentų apdorojimas..."
+    },
+    "complete": {
+      "manual_upload_and_process": "Failai sėkmingai įkelti ir apdoroti",
+      "sharepoint_sync_and_process": "SharePoint sinchronizacija sėkmingai baigta",
+      "file_deletion_and_process": "Failai sėkmingai ištrinti",
+      "bedrock_process_pending": "Dokumentų apdorojimas sėkmingai baigtas"
+    },
+    "lastOperation": "Paskutinė Operacija"
+  },
+  "labels": {
+    "files": "Failai",
+    "name": "Pavadinimas",
+    "size": "Dydis",
+    "actions": "Veiksmai",
+    "selectedFiles": "Pasirinkti failai:",
+    "fileLimit": "Maksimalus failo dydis: 100MB",
+    "sources": "Šaltiniai:",
+    "private": "Privatus",
+    "public": "Viešas",
+    "status": "Būsena",
+    "knowledgeBaseFiles": "Žinių bazės dokumentai",
+    "s3Files": "S3 failai",
+    "page": "Puslapis",
+    "loadingPagination": "Įkeliami įrašai...",
+    "paginationInfo": "Rodoma {start}-{end} iš {total} įrašų (Puslapis {page} iš {totalPages})"
+  },
+  "placeholders": {
+    "dragActive": "Įkelkite failus čia",
+    "dragInactive": "Įkelkite failus čia arba paspauskite norėdami pasirinkti",
+    "message": "Paklauskite..."
+  },
+  "dialogs": {
+    "deleteConfirmTitle": "Ar tikrai norite viską ištrinti?",
+    "deleteConfirmMessage": "Šio veiksmo nebus galima atšaukti. Failai bus ištrinti visam laikui.",
+    "deleteSelectedTitle": "Ištrinti Pasirinktus Failus",
+    "deleteSelectedMessage": "Ar tikrai norite ištrinti {count} pasirinktus failus? Šio veiksmo nebus galima atšaukti."
+  },
+  "buttons": {
+    "uploadFiles": "Įkelti failus",
+    "save": "Išsaugoti",
+    "resetToDefault": "Atstatyti į pradinį"
+  },
+  "alerts": {
+    "knowledgeBaseInfo": "Žinių bazės valdymas",
+    "knowledgeBaseDescription": "Valdykite dokumentus savo žinių bazėje. Pakeitimai atsispindės jūsų chatbote.",
+    "ingestionComplete": "Duomenų įkėlimas sėkmingai baigtas!",
+    "ingestionFailed": "Duomenų įkėlimas nepavyko",
+    "ingestionInProgress": "Žinių bazės atnaujinimas vyksta"
+  },
+  "ingestion": {
+    "status": "Įkėlimo būsena",
+    "progress": "Progresas",
+    "processedFiles": "Apdoroti failai"
+  },
+  "document": {
+    "actions": {
+      "creating": "Kuriama",
+      "created": "Sukurtas",
+      "updating": "Atnaujinama",
+      "updated": "Atnaujintas",
+      "requestingSuggestions": "Pridedami pasiūlymai",
+      "suggestionsAdded": "Pasiūlymai pridėti į"
+    },
+    "errors": {
+      "viewSharedFiles": "Failų peržiūra bendruose pokalbiuose šiuo metu nepalaikoma."
+    }
+  },
+  "login": {
+    "title": "Sveiki sugrįžę",
+    "subtitle": "Prisijunkite prie savo paskyros",
+    "microsoftButton": {
+      "default": "Prisijungti su Microsoft",
+      "loading": "Jungiamasi..."
+    },
+    "divider": "Arba tęskite su el. paštu",
+    "submitButton": "Prisijungti",
+    "signup": {
+      "text": "Neturite paskyros?",
+      "link": "Registruokitės",
+      "suffix": "nemokamai."
+    },
+    "errors": {
+      "invalidCredentials": "Neteisingi prisijungimo duomenys!",
+      "invalidData": "Nepavyko patvirtinti jūsų duomenų!",
+      "microsoftAuth": "Nepavyko prisijungti prie Microsoft"
+    },
+    "email": "El. paštas",
+    "password": "Slaptažodis"
+  },
+  "register": {
+    "title": "Registracija",
+    "subtitle": "Sukurkite paskyrą su el. paštu ir slaptažodžiu",
+    "submitButton": "Registruotis",
+    "login": {
+      "text": "Jau turite paskyrą?",
+      "link": "Prisijunkite",
+      "suffix": "vietoj to."
+    },
+    "success": "Paskyra sėkmingai sukurta",
+    "errors": {
+      "userExists": "Paskyra jau egzistuoja",
+      "createFailed": "Nepavyko sukurti paskyros",
+      "invalidData": "Nepavyko patvirtinti jūsų duomenų!"
+    }
+  },
+  "dashboard": {
+     "sharepointFailedSearches": "SharePoint nepavykusios paieškos",
+    "noFailedSearches": "Nerasta nepavykusių SharePoint paieškų",
+        "date": "Data",
+    "query": "Užklausa",
+    "response": "Atsakymas",
+    "status": "Statusas",
+    "user": "Vartotojas",
+    "reviewed": "Peržiūrėta",
+    "pending": "Laukiama",
+    "expand": "Išplėsti",
+    "collapse": "Sutraukti",
+    "notes": "Pastabos",
+    "addNotes": "Pridėti pastabas (neprivaloma)",
+    "markAsReviewed": "Pažymėti kaip peržiūrėtą",
+    "updating": "Atnaujinama...",
+     "loadingDashboard": "Kraunama...",
+     "actionsDashboard": "Veiksmai",
+    "title": "Valdymo Skydelis",
+    "actions": {
+      "view": "Peržiūrėti",
+      "back": "Atgal",
+      "viewMessages": "Peržiūrėti pokalbį",
+      "searchPlaceholder": "Ieškoti kategorijų ar naudojimo atvejų...",
+      "noSearchResults": "Nerasta kategorijų ar naudojimo atvejų, atitinkančių jūsų paiešką.",
+      "refresh": "Atnaujinti"
+    },
+    "totalTokens": {
+      "title": "Viso simboliai",
+      "description": "Simboliai, sugeneruoti visų pokalbių metu"
+    },
+    "dashboard": {
+      "actions": {
+        "view": "Peržiūrėti"
+      }
+    },
+    "agentTypeUsage": {
+      "title": "Agento Tipo Naudojimas",
+      "description": "Naudojimo atvejai pagal agento tipą",
+      "noData": "Nerasta agento tipo naudojimo atvejų. Pirmiausia sugeneruokite juos.",
+      "noSearchResults": "Nerasta agento tipo naudojimo atvejų, atitinkančių jūsų paiešką.",
+      "noDataForChart": "Nėra duomenų grafikui rodyti.",
+      "agentTypeCount": "{count} agento tipas",
+      "agentTypeCount_plural": "{count} agento tipai"
+    },
+    "userAdoption": {
+      "title": "Vartotojų Įsisavinimas",
+      "ofWorkforce": "{workforce}",
+      "active": "aktyvių savaitinių vartotojų",
+      "outOfTotal": "aktyvūs vartotojai pastarasias 7 dienas"
+    },
+    "useCaseCategories": {
+      "title": "Populiariausi Naudojimo Atvejai",
+      "useCasesTitle": "Naudojimo Atvejai",
+      "noData": "Nerasta naudojimo atvejų kategorijų. Pirmiausia sugeneruokite jas.",
+      "noSearchResults": "Nerasta kategorijų ar naudojimo atvejų, atitinkančių jūsų paiešką.",
+      "noUseCases": "Šioje kategorijoje nerasta naudojimo atvejų.",
+      "noUseCasesForCategory": "Nerasta naudojimo atvejų kategorijai: {category}",
+      "noDataForChart": "Nėra duomenų grafikui rodyti.",
+      "useCaseCount": "{count} naudojimo atvejis",
+      "useCaseCount_plural": "{count} naudojimo atvejai",
+      "noDescription": "Nėra aprašymo",
+      "generatingInfo": "Generuojami ir kategorizuojami naudojimo atvejai...",
+      "generating": "Generuojama...",
+      "generate": "Generuoti Naudojimo Atvejus",
+      "generateSuccess": "Naudojimo atvejai sėkmingai sugeneruoti ir sukategorizuoti!",
+      "alreadyCategorized": "Visos susijusios žinutės jau sukategorizuotos.",
+      "columns": {
+        "title": "Pavadinimas",
+        "description": "Aprašymas",
+        "timeSaved": "Sutaupytas Laikas",
+        "lastUpdated": "Paskutinį Kartą Atnaujinta",
+        "actions": "Veiksmai"
+      },
+      "useCaseColumns": {
+        "title": "Pavadinimas",
+        "type": "Tipas",
+        "topic": "Tema",
+        "timeSaved": "Sutaupytas laikas",
+        "lastUpdated": "Paskutinį kartą atnaujinta",
+        "actions": "Veiksmai"
+      },
+      "details": {
+        "type": "Tipas",
+        "topic": "Tema",
+        "timeSaved": "Sutaupytas laikas",
+        "lastUpdated": "Paskutinį kartą atnaujinta",
+        "messagesTitle": "Pranešimai",
+        "noMessages": "Šiam naudojimo atvejui pranešimų nerasta"
+      },
+      "searchPlaceholder": "Ieškoti kategorijų ar naudojimo atvejų...",
+      "table": {
+        "category": {
+          "title": "Kategorija",
+          "tooltip": "Pagrindinė tema arba funkcija",
+          "noCases": "Šioje kategorijoje nerasta naudojimo atvejų",
+          "cases": "{count} atvejis",
+          "cases_plural": "{count} atvejai",
+          "single": "kategorija",
+          "plural": "kategorijos",
+          "noCategories": "Nerasta kategorijų",
+          "generateHint": "Generuokite arba kurkite kategorijas, kad jas čia matytumėte"
+        },
+        "lastUpdated": {
+          "title": "Paskutinį Kartą Atnaujinta",
+          "tooltip": "Kada šios kategorijos naudojimo atvejis buvo paskutinį kartą modifikuotas ar naudotas",
+          "updated": "Atnaujinta: {date}"
+        },
+        "users": {
+          "title": "Vartotojai",
+          "tooltip": "Unikalių vartotojų, kurie naudojo šios kategorijos naudojimo atvejus, skaičius",
+          "count": "Vartotojai: {count}"
+        },
+        "timeSaved": {
+          "title": "Sutaupytas Laikas",
+          "tooltip": "Apytikris bendras sutaupytas laikas visų šios kategorijos naudojimo atvejų",
+          "value": "Sutaupytas laikas: {time}"
+        },
+        "trend": {
+          "title": "Tendencija",
+          "tooltip": "Šios kategorijos naudojimo tendencija per laiką",
+          "value": "Tendencija: {value}",
+          "month": "Mėnuo",
+          "count": "Skaičius"
+        }
+      },
+      "search": {
+        "placeholder": "Ieškoti kategorijų ar naudojimo atvejų...",
+        "noResults": "Nerasta rezultatų užklausai \"{query}\"",
+        "tryAnotherQuery": "Bandykite kitą paieškos terminą arba naršykite visas kategorijas",
+        "found": "rasta",
+        "clear": "Išvalyti paiešką",
+        "filters": {
+          "categories": "Kategorijos",
+          "all": "Visos"
+        }
+      },
+      "actions": {
+        "generate": "Generuoti",
+        "generateShort": "Gen",
+        "refresh": "Atnaujinti",
+        "refreshShort": "Atn",
+        "view": "Peržiūrėti",
+        "viewChat": "Peržiūrėti Pokalbį",
+        "showFullChat": "Rodyti Pilną Pokalbį",
+        "showUseCaseOnly": "Rodyti Tik Naudojimo Atvejį",
+        "previous": "Ankstesnis",
+        "next": "Kitas",
+        "itemsPerPage": "Elementų puslapyje:",
+        "cancel": "Atšaukti",
+        "close": "Uždaryti",
+        "retry": "Bandyti dar kartą",
+        "generateAgain": "Generuoti Dar Kartą"
+      },
+      "modal": {
+        "generate": {
+          "title": "Generuoti Naudojimo Atvejus",
+          "description": "Generuoti naudojimo atvejus analizuojant pokalbių istoriją. Šis procesas vyksta fone.",
+          "progress": "Naudojimo atvejų generavimas",
+          "progressDesc": "Žinučių analizė ir naudojimo atvejų generavimas. Galite uždaryti šį langą ir patikrinti vėliau.",
+          "complete": "Generavimas Baigtas",
+          "completeDesc": "Naudojimo atvejų generavimas baigtas. Čia rezultatų santrauka.",
+          "stage": "Etapas {current} iš {total}",
+          "initializing": "Inicijavimas...",
+          "pleaseWait": "Palaukite, kol procesas bus inicijuotas...",
+          "features": {
+            "analyze": "Analizuoja neapdorotas žinutes jūsų pokalbių istorijoje",
+            "group": "Grupuoja žinutes į susijusias temas",
+            "create": "Automatiškai kuria ir kategorizuoja naudojimo atvejus",
+            "consolidate": "Suvienija panašius naudojimo atvejus, kad išvengtų dublikatų"
+          },
+          "stats": {
+            "messagesProcessed": "Apdorotų Žinučių",
+            "newUseCases": "Naujų Naudojimo Atvejų",
+            "messagesMerged": "Sujungtų Žinučių",
+            "categoriesCreated": "Sukurtų Kategorijų",
+            "categoryAssignments": "Kategorijų Priskyrimų",
+            "existing": "Esamų",
+            "new": "Naujų",
+            "processingTime": "Bendras Apdorojimo Laikas",
+            "seconds": "sekundės",
+            "processed": "Apdorota",
+            "elapsed": "Praėjo"
+          },
+          "metrics": {
+            "elapsed": "Praėjęs laikas: {time}",
+            "processed": "Apdorota",
+            "speed": "Greitis",
+            "eta": "Likęs laikas"
+          },
+          "runningInBackground": "Vykdoma fone",
+          "runningInBackgroundDesc": "Generavimo procesas vykdomas fone. Galite uždaryti šį langą ir patikrinti vėliau.",
+          "actions": {
+            "cancel": "Atšaukti",
+            "generate": "Generuoti",
+            "processing": "Apdorojama...",
+            "close": "Uždaryti",
+            "retry": "Bandyti dar kartą",
+            "generateAgain": "Generuoti Dar Kartą"
+          },
+          "error": "Nepavyko sugeneruoti naudojimo atvejų. Bandykite dar kartą."
+        },
+        "useCase": {
+          "fullChat": "Pilna Pokalbio Istorija",
+          "useCaseMessages": "Naudojimo Atvejo Žinutės",
+          "noMessages": "Žinučių nerasta.",
+          "noUseCaseMessages": "Naudojimo atvejo žinučių nerasta.",
+          "errorLoading": "Klaida įkeliant žinutes: {error}",
+          "you": "Jūs",
+          "assistant": "Asistentas",
+          "useCase": "Naudojimo Atvejis",
+          "showFullChat": "Rodyti Pilną Pokalbį",
+          "showUseCaseOnly": "Rodyti Tik Naudojimo Atvejį"
+        }
+      },
+      "viewModes": {
+        "table": "Lentelė",
+        "analytics": "Analitika"
+      },
+      "pagination": {
+        "page": "Puslapis {current} iš {total}",
+        "showing": "Rodoma {start}-{end} iš {total}"
+      }
+    },
+    "messages": {
+      "title": "Visi Pranešimai",
+      "description": "Pranešimai visuose pokalbiuose",
+      "thisWeek": "šią savaitę",
+      "comparedToPrevious": "Palyginti su praėjusia savaite"
+    },
+    "cost": {
+      "title": "Kaina",
+      "perActiveUser": "vienam aktyviam vartotojui"
+    },
+    "modelUsage": {
+      "title": "Modelio Naudojimas"
+    },
+    "assistantUsage": {
+      "title": "Asistento Naudojimas",
+      "description": "Naudojimo statistika kiekvienam asistentui"
+    },
+    "topUseCases": {
+      "title": "Pagrindiniai naudojimo atvejai",
+      "description": "Naršyti ir valdyti naudojimo atvejus pagal kategorijas",
+      "analytics": {
+        "title": "Naudojimo atvejų analitika",
+        "description": "Analizuoti tendencijas ir įžvalgas iš naudojimo atvejų",
+        "noData": "Šiuo metu analitikos duomenų nėra. Pirmiausia sukurkite naudojimo atvejus.",
+        "error": "Klaida įkeliant analitikos duomenis",
+        "tryRefresh": "Pabandykite atnaujinti duomenis.",
+        "refreshing": "Duomenys atnaujinami",
+        "updatingData": "Lentelės ir analitikos duomenų atnaujinimas...",
+        "actions": {
+          "refresh": "Atnaujinti"
+        },
+        "stats": {
+          "totalUseCases": "Iš viso naudojimo atvejų",
+          "totalUseCasesDesc": "Bendras atskirų naudojimo atvejų skaičius visose kategorijose",
+          "totalCategories": "Iš viso kategorijų",
+          "totalCategoriesDesc": "Skirtingų kategorijų, kuriose grupuojami naudojimo atvejai, skaičius",
+          "recentActivityTrend": "Paskutinės veiklos tendencija",
+          "recentActivityTrendDesc": "Rodo, ar bendras naudojimo atvejų skaičius padidėjo, sumažėjo ar išliko stabilus, palyginti su praėjusiu mėnesiu",
+          "currentlyDefined": "Šiuo metu apibrėžta",
+          "basedOnLastTwoMonths": "Remiantis paskutiniais dviem mėnesiais",
+          "usageOverTime": "Naudojimas per laiką (mėnesinis)",
+          "usageOverTimeDesc": "Bendras naudojimo atvejų, sukurtų arba su kuriais buvo sąveikaujama per mėnesį, skaičius",
+          "topCategories": "Top {count} kategorijos",
+          "topCategoriesDesc": "Kategorijos su daugiausiai naudojimo atvejų"
+        },
+        "trends": {
+          "increasing": "Didėjanti",
+          "decreasing": "Mažėjanti",
+          "stable": "Stabili",
+          "new": "Nauja",
+          "lowData": "Mažai duomenų",
+          "noActivity": "Nėra veiklos"
+        }
+      },
+      "table": {
+        "category": {
+          "title": "Kategorija",
+          "tooltip": "Pagrindinė tema arba funkcija",
+          "noCases": "Šioje kategorijoje naudojimo atvejų nerasta",
+          "cases": "{count} atvejis",
+          "cases_plural": "{count} atvejai",
+          "single": "kategorija",
+          "plural": "kategorijos",
+          "noCategories": "Kategorijų nerasta",
+          "generateHint": "Sukurkite arba generuokite kategorijas, kad jas matytumėte čia"
+        },
+        "lastUpdated": {
+          "title": "Paskutinį kartą atnaujinta",
+          "tooltip": "Kada naudojimo atvejis šioje kategorijoje buvo paskutinį kartą keistas arba su juo sąveikaujama",
+          "updated": "Atnaujinta: {date}"
+        },
+        "users": {
+          "title": "Naudotojai",
+          "tooltip": "Unikalių naudotojų, kurie sąveikavo su naudojimo atvejais šioje kategorijoje, skaičius",
+          "count": "Naudotojai: {count}"
+        },
+        "timeSaved": {
+          "title": "Sutaupytas laikas",
+          "tooltip": "Apskaičiuotas bendras sutaupytas laikas visų naudojimo atvejų šioje kategorijoje",
+          "value": "Sutaupytas laikas: {time}"
+        },
+        "trend": {
+          "title": "Tendencija",
+          "tooltip": "Šios kategorijos naudojimo tendencija per laiką",
+          "value": "Tendencija: {value}",
+          "month": "Mėnuo",
+          "count": "Skaičius"
+        }
+      },
+      "search": {
+        "placeholder": "Ieškoti kategorijų arba naudojimo atvejų...",
+        "noResults": "Paieškos frazei {query} rezultatų nerasta",
+        "tryAnotherQuery": "Pabandykite kitą paieškos terminą arba naršykite visas kategorijas",
+        "found": "rasta",
+        "clear": "Išvalyti paiešką",
+        "filters": {
+          "categories": "Kategorijos",
+          "all": "Visos"
+        }
+      },
+      "actions": {
+        "generate": "Generuoti",
+        "generateShort": "Gen",
+        "refresh": "Atnaujinti",
+        "refreshShort": "Atn",
+        "view": "Peržiūrėti",
+        "viewChat": "Peržiūrėti pokalbį",
+        "showFullChat": "Rodyti visą pokalbį",
+        "showUseCaseOnly": "Rodyti tik naudojimo atvejį",
+        "previous": "Ankstesnis",
+        "next": "Kitas",
+        "itemsPerPage": "Elementų per puslapį:",
+        "cancel": "Atšaukti",
+        "close": "Uždaryti",
+        "retry": "Bandyti dar kartą",
+        "generateAgain": "Generuoti dar kartą"
+      },
+      "modal": {
+        "generate": {
+          "title": "Generuoti naudojimo atvejus",
+          "description": "Generuoti naudojimo atvejus analizuojant pokalbių istoriją. Šis procesas vykdomas fone.",
+          "progress": "Naudojimo atvejų generavimas",
+          "progressDesc": "Žinučių analizė ir naudojimo atvejų generavimas. Galite uždaryti šį langą ir patikrinti vėliau.",
+          "complete": "Generavimas baigtas",
+          "completeDesc": "Naudojimo atvejų generavimas baigtas. Štai rezultatų santrauka.",
+          "stage": "Etapas {current} iš {total}",
+          "initializing": "Inicijavimas...",
+          "pleaseWait": "Palaukite, kol procesas bus inicijuotas...",
+          "features": {
+            "analyze": "Analizuoja neapdorotas žinutes jūsų pokalbių istorijoje",
+            "group": "Grupuoja žinutes į susijusias temas",
+            "create": "Automatiškai kuria ir kategorizuoja naudojimo atvejus",
+            "consolidate": "Suvienija panašius naudojimo atvejus, kad išvengtų dublikatų"
+          },
+          "stats": {
+            "messagesProcessed": "Apdorotų žinučių",
+            "newUseCases": "Naujų naudojimo atvejų",
+            "messagesMerged": "Sujungtų žinučių",
+            "categoriesCreated": "Sukurtų kategorijų",
+            "categoryAssignments": "Kategorijų priskyrimų",
+            "existing": "Esamų",
+            "new": "Naujų",
+            "processingTime": "Bendras apdorojimo laikas",
+            "seconds": "sekundės",
+            "processed": "Apdorota",
+            "elapsed": "Praėjo"
+          },
+          "metrics": {
+            "elapsed": "Praėjęs laikas: {time}",
+            "processed": "Apdorota",
+            "speed": "Greitis",
+            "eta": "Likęs laikas"
+          },
+          "runningInBackground": "Vykdoma fone",
+          "runningInBackgroundDesc": "Generavimo procesas vykdomas fone. Galite uždaryti šį langą ir patikrinti vėliau.",
+          "actions": {
+            "cancel": "Atšaukti",
+            "generate": "Generuoti",
+            "processing": "Apdorojama...",
+            "close": "Uždaryti",
+            "retry": "Bandyti dar kartą",
+            "generateAgain": "Generuoti dar kartą"
+          },
+          "error": "Nepavyko sugeneruoti naudojimo atvejų. Pabandykite dar kartą."
+        },
+        "useCase": {
+          "fullChat": "Visa pokalbio istorija",
+          "useCaseMessages": "Naudojimo atvejo žinutės",
+          "noMessages": "Žinučių nerasta.",
+          "noUseCaseMessages": "Naudojimo atvejo žinučių nerasta.",
+          "errorLoading": "Klaida įkeliant žinutes: {error}",
+          "you": "Jūs",
+          "assistant": "Asistentas",
+          "useCase": "Naudojimo atvejis",
+          "showFullChat": "Rodyti visą pokalbį",
+          "showUseCaseOnly": "Rodyti tik naudojimo atvejį"
+        }
+      },
+      "viewModes": {
+        "table": "Lentelė",
+        "analytics": "Analitika"
+      },
+      "pagination": {
+        "page": "Puslapis {current} iš {total}",
+        "showing": "Rodoma {start}-{end} iš {total}"
+      }
+    },
+    "usageStats": {
+      "title": "Naudojimo Statistika",
+      "timeframes": {
+        "daily": "Kasdien",
+        "weekly": "Savaitinė",
+        "monthly": "Mėnesinė"
+      },
+      "metrics": {
+        "messages": "Žinutės",
+        "users": "Vartotojai"
+      }
+    },
+    "stats": {
+      "totalMessages": {
+        "title": "Viso Žinučių",
+        "description": "Žinutės visuose pokalbiuose"
+      },
+      "totalUsers": {
+        "title": "Viso Vartotojų",
+        "description": "Registruoti platformos vartotojai"
+      },
+      "positiveFeedback": {
+        "title": "Teigiami Atsiliepimai",
+        "description": "Pagrįsta {count} balsų",
+        "outOfTotal": "iš {count} visų pranešimų"
+      }
+    },
+    "tables": {
+      "userUsage": {
+        "title": "Vartotojų Aktyvumo Apžvalga",
+        "columns": {
+          "user": "Vartotojas",
+          "messages": "Pranešimai",
+          "lastActive": "Paskutinis Aktyvumas"
+        }
+      },
+      "flaggedMessages": {
+        "title": "Pažymėti Pranešimai",
+        "columns": {
+          "message": "Pranešimas",
+          "chat": "Pokalbis",
+          "user": "Vartotojas",
+          "date": "Data",
+          "downvotes": "Neigiami Balsai",
+          "userQuery": "Vartotojo užklausa",
+          "response": "Asistento atsakymas"
+        }
+      }
+    },
+    "loading": {
+      "title": "Kraunami valdymo skydelio duomenys..."
+    },
+    "error": {
+      "fetchFailed": "Nepavyko gauti valdymo skydelio duomenų"
+    }
+  },
+  "feedback": {
+    "sources": "Šaltiniai:",
+    "positive": {
+      "loading": "Įrašomas teigiamas atsiliepimas...",
+      "success": "Teigiamas atsiliepimas gautas!",
+      "tooltip": "Įvertinti teigiamai"
+    },
+    "negative": {
+      "loading": "Įrašomas neigiamas atsiliepimas...",
+      "success": "Neigiamas atsiliepimas gautas!",
+      "tooltip": "Įvertinti neigiamai"
+    }
+  },
+  "privacy": {
+    "private": {
+      "label": "Privatus",
+      "description": "Pokalbį pasieksite tik jūs"
+    },
+    "public": {
+      "label": "Viešas",
+      "description": "Pokalbis bus visiems prieinamas pasidalinta nuoroda"
+    }
+  },
+  "agents": {
+    "standard": {
+      "label": "Standartinis asistentas",
+      "description": "El. laiškų, ataskaitų ir paveikslėlių kūrimui, interneto analizei "
+    },
+    "sharepoint": {
+      "label": "Vidinių dokumentų asistentas",
+      "description": "Atsakymams iš verslo dokumentų rasti"
+    },
+    "web": {
+      "label": "Interneto asistentas",
+      "description": "Ieško internete ir atlieka tyrimus"
+    },
+    "csv": {
+      "label": "Duomenų analizės asistentas",
+      "description": "Duomenų bazių, .CSV ir Excel failų analizei"
+    },
+    "image": {
+      "label": "Vaizdų kūrimo asistentas",
+      "description": "Vaizdų kūrimui ir redagavimui"
+    },
+    "text2sql": {
+      "label": "Duomenų bazės asistentas",
+      "description": "Analizuoja ir pateikia įžvalgas remiantis duomenų bazės duomenimis"
+    }
+  },
+  "toggle": "Perjungti",
+  "locales": {
+    "en": "Anglų",
+    "lt": "Lietuvių"
+  },
+  "suggestions": {
+    "vacation": {
+      "policy": {
+        "title": "Kokia yra atostogų tvarka",
+        "label": "įmoneje?",
+        "action": "Kokia yra atostogų tvarka įmoneje?"
+      },
+      "responsibility": {
+        "title": "Kas yra atsakingas",
+        "label": "už atostogų priskyrimą",
+        "action": "Kas yra atsakingas už atostogų priskyrimą"
+      },
+      "request": {
+        "title": "Padėk man parašyti",
+        "label": "prašymą išeiti atostogų",
+        "action": "Padėk man parašyti prašymą išeiti atostogų"
+      },
+      "benefits": {
+        "title": "Gal galėtum surasti",
+        "label": "papildomus privalumus atostogų skyrime?",
+        "action": "Gal galėtum surasti papildomus privalumus atostogų skyrime?"
+      }
+    }
+  },
+  "csvSuccessFilesMerged": "Sėkmingai įkelti {originalCount} failai į {count} lenteles ({mergedCount} buvo sujungti)",
+  "csvInfoTableMerged": "Lentelė {tableName} sukurta iš {fileCount} sujungtų failų: {files}",
+  "dropzone": {
+    "fileEmpty": "Failas yra tuščias ir negali būti įkeltas"
+  },
+  "pagination": {
+    "label": "Puslapių Navigacija",
+    "previousPage": "Ankstesnis Puslapis",
+    "nextPage": "Kitas Puslapis"
+  },
+  "tooltips": {
+    "disabledDuringOperation": "Veiksmai išjungti, kol vyksta operacija"
+  },
+  "locale": "lt-LT",
+  "message": {
+    "sources": "Šaltiniai:",
+    "positive": {
+      "loading": "Įrašomas teigiamas atsiliepimas...",
+      "success": "Teigiamas atsiliepimas gautas!",
+      "tooltip": "Įvertinti teigiamai"
+    },
+    "negative": {
+      "loading": "Įrašomas neigiamas atsiliepimas...",
+      "success": "Neigiamas atsiliepimas gautas!",
+      "tooltip": "Įvertinti neigiamai"
+    },
+    "cost": {
+      "breakdown": "Kainos detalizavimas",
+      "assistant": "Asistentas",
+      "model": "Modelis",
+      "inputTokens": "Įvesties žetonai",
+      "outputTokens": "Išvesties žetonai",
+      "totalCost": "Bendra kaina"
+    }
+  }
+}

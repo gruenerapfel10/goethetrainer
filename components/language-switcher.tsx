@@ -1,14 +1,20 @@
-import React, { useState, useTransition, useEffect } from 'react';
-import { Languages, Check } from 'lucide-react';
-import { Locale } from '@/i18n/config';
+import React, { useTransition } from 'react';
+import { Languages } from 'lucide-react';
+import type { Locale } from '@/i18n/config';
 import { setUserLocale } from '@/services/locale';
 import { useLocale, useTranslations } from 'next-intl';
+import { useSidebar } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
 export default function LocaleSwitcherSelect() {
   const [isPending, startTransition] = useTransition();
-  const [isOpen, setIsOpen] = useState(false);
-
+  const { state } = useSidebar();
   const t = useTranslations();
   const locale = useLocale();
 
@@ -30,38 +36,36 @@ export default function LocaleSwitcherSelect() {
     startTransition(() => {
       setUserLocale(locale);
     });
-    setIsOpen(false);
   }
 
   return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        className="flex items-center gap-2 h-[35px]"
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isPending}
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full bg-transparent hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-foreground flex items-center justify-start gap-2 px-2 py-2 h-8 text-sm font-medium rounded-md transition-colors"
+          disabled={isPending}
+        >
+          <Languages className="h-4 w-4 shrink-0" />
+          <span className="truncate">{state === 'expanded' ? currentLanguage : ''}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={0}
+        className="min-w-[160px] bg-sidebar border-sidebar-border"
       >
-        <Languages className="h-4 w-4" />
-        <span className="text-sm hidden lg:block">{currentLanguage}</span>
-      </Button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-32 overflow-hidden rounded-md border bg-popover shadow-md z-50">
-          {items.map((item) => (
-            <button
-              key={item.value}
-              className="flex w-full items-center px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-              onClick={() => onChange(item.value)}
-            >
-              <div className="mr-2 w-4">
-                {item.value === locale && <Check className="h-4 w-4" />}
-              </div>
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+        {items.map((item) => (
+          <DropdownMenuItem
+            key={item.value}
+            className="text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent focus:bg-sidebar-accent cursor-pointer"
+            onClick={() => onChange(item.value)}
+          >
+            {item.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

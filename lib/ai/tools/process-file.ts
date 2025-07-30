@@ -143,7 +143,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
 
   const processMultipleFiles = async (
     messages: Array<UIMessage>,
-    baseSystemPrompt: string = '',
+    baseSystemPrompt = '',
   ): Promise<ProcessFilesResult> => {
     const fileAnalysisResults: string[] = [];
     let hasProcessedFiles = false;
@@ -218,6 +218,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
 
           // Fetch the file from the accessible URL
           const response = await fetch(accessibleUrl);
+          console.log('Response status:', response.status);
           if (!response.ok) {
             throw new Error(`Failed to fetch file: ${response.statusText}`);
           }
@@ -292,7 +293,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
             });
           }
 
-          // Create the input for the ConverseStreamCommand
+          // Create the input for the ConverseStreamCommand with enhanced API features
           const input = {
             modelId: 'eu.anthropic.claude-3-7-sonnet-20250219-v1:0',
             messages: [
@@ -319,62 +320,115 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
               topK: 40,
               stopSequences: [],
             },
+            // Add request metadata for tracking
+            requestMetadata: {
+              userId: session?.user?.id || 'anonymous',
+              operation: 'file-analysis',
+              fileType: fileType,
+              timestamp: new Date().toISOString(),
+            },
+            // Add additional model response field paths if needed
+            additionalModelResponseFieldPaths: [
+              '/stopReason',
+              '/usage',
+              '/metrics'
+            ],
           };
 
           const command = new ConverseStreamCommand(input as any);
           const bedrockResponse = await client.send(command);
 
           let accumulatedResponse = '';
+          let stopReason = '';
+          let usage = null;
+          let metrics = null;
 
-          // Process the stream
-          for await (const chunk of bedrockResponse.stream as AsyncIterable<any>) {
+          // Process the stream with enhanced event handling
+          for await (const event of bedrockResponse.stream as AsyncIterable<any>) {
             try {
-              // Handle text content from various response chunk types
-              let textChunk = '';
-
-              if (chunk.contentBlockDelta?.delta?.text) {
-                textChunk = chunk.contentBlockDelta.delta.text;
-              } else if (chunk.contentBlockStart?.contentBlock?.text) {
-                textChunk = chunk.contentBlockStart.contentBlock.text;
-              } else if (chunk.messageStart?.message?.content) {
-                // Handle message start content if it exists
-                for (const block of chunk.messageStart.message.content) {
-                  if (block.text) {
-                    textChunk += block.text;
-                  }
-                }
-              } else if (chunk.messageDelta?.delta?.content) {
-                // Handle message delta content
-                for (const block of chunk.messageDelta.delta.content) {
-                  if (block.text) {
-                    textChunk += block.text;
-                  }
-                }
-              }
-
-              if (textChunk) {
-                accumulatedResponse += textChunk;
-
-                // Stream the chunk to the client
+              // Handle different event types according to new API structure
+              if (event.messageStart) {
+                // Handle message start event
+                const role = event.messageStart.role;
                 dataStream.writeData({
-                  type: 'content',
-                  content: textChunk,
+                  type: 'messageStart',
+                  role: role,
+                });
+              } else if (event.contentBlockStart) {
+                // Handle content block start
+                const index = event.contentBlockStart.contentBlockIndex;
+                dataStream.writeData({
+                  type: 'contentBlockStart',
+                  index: index,
+                });
+              } else if (event.contentBlockDelta) {
+                // Handle content block delta (text chunks)
+                const delta = event.contentBlockDelta.delta;
+                if (delta.text) {
+                  accumulatedResponse += delta.text;
+                  dataStream.writeData({
+                    type: 'content',
+                    content: delta.text,
+                    contentBlockIndex: event.contentBlockDelta.contentBlockIndex,
+                  });
+                } else if (delta.reasoningContent) {
+                  // Handle reasoning content if present
+                  dataStream.writeData({
+                    type: 'reasoning',
+                    content: delta.reasoningContent,
+                    contentBlockIndex: event.contentBlockDelta.contentBlockIndex,
+                  });
+                }
+              } else if (event.contentBlockStop) {
+                // Handle content block stop
+                dataStream.writeData({
+                  type: 'contentBlockStop',
+                  index: event.contentBlockStop.contentBlockIndex,
+                });
+              } else if (event.messageStop) {
+                // Handle message stop event
+                stopReason = event.messageStop.stopReason;
+                dataStream.writeData({
+                  type: 'messageStop',
+                  stopReason: stopReason,
+                });
+              } else if (event.metadata) {
+                // Handle metadata event with usage and metrics
+                usage = event.metadata.usage;
+                metrics = event.metadata.metrics;
+                dataStream.writeData({
+                  type: 'metadata',
+                  usage: usage,
+                  metrics: metrics,
                 });
               }
             } catch (error) {
-              console.error('Error processing chunk:', error);
+              console.error('Error processing event:', error);
             }
           }
 
-          // Notify client that processing is complete
+          // Notify client that processing is complete with enhanced metadata
           dataStream.writeData({
             type: 'status',
             content: 'complete',
+            stopReason: stopReason,
+            usage: usage,
+            metrics: metrics,
           });
 
           dataStream.writeData({
             type: 'finish',
-            content: '',
+            content: accumulatedResponse,
+            metadata: {
+              stopReason: stopReason,
+              usage: usage,
+              metrics: metrics,
+              fileInfo: {
+                fileName: fileName,
+                fileType: fileType,
+                processingTime: metrics?.latencyMs || 0,
+              }
+            }
           });
 
           return {
@@ -436,7 +490,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
         );
 
         // Store the analysis result to include in the context
-        if (result && result.analysis) {
+        if (result?.analysis) {
           fileAnalysisResults.push(
             `Analysis of ${file.name}:\n${result.analysis}`,
           );
@@ -514,12 +568,8 @@ refer to the analysis results. Be specific and cite information from the documen
           content: 'processing',
         });
 
-        // Get accessible URL (presigned if S3, original if not)
         const accessibleUrl = await getAccessibleUrl(fileUrl);
-        console.log('Original fileUrl:', fileUrl);
-        console.log('Accessible URL:', accessibleUrl);
 
-        // Fetch the file from the accessible URL
         const response = await fetch(accessibleUrl);
         if (!response.ok) {
           throw new Error(`Failed to fetch file: ${response.statusText}`);
@@ -528,23 +578,18 @@ refer to the analysis results. Be specific and cite information from the documen
         const fileBuffer = await response.arrayBuffer();
         const fileBytes = new Uint8Array(fileBuffer);
 
-        // Sanitize the filename for AWS Bedrock compatibility
         const sanitizedFileName = sanitizeFilename(fileName);
 
-        // Create a timestamp suffix for unique filenames
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const fileNameParts = sanitizedFileName.split('.');
         const extension = fileNameParts.pop() || '';
         const baseName = fileNameParts.join('.');
         const uniqueFileName = `${baseName}_${timestamp}`;
 
-        // Prepare content blocks based on file type
         const contentBlocks = [];
 
-        // Add the analysis prompt as text
         contentBlocks.push({ text: analysisPrompt });
 
-        // Add the file as appropriate content type
         if (fileType.startsWith('image/')) {
           const format = fileType.split('/')[1];
           contentBlocks.push({
@@ -595,7 +640,6 @@ refer to the analysis results. Be specific and cite information from the documen
           });
         }
 
-        // Create the input for the ConverseStreamCommand
         const input = {
           modelId: 'eu.anthropic.claude-3-7-sonnet-20250219-v1:0',
           messages: [
@@ -622,46 +666,61 @@ refer to the analysis results. Be specific and cite information from the documen
             topK: 40,
             stopSequences: [],
           },
+          // Add request metadata for tracking
+          requestMetadata: {
+            userId: session?.user?.id || 'anonymous',
+            operation: 'single-file-analysis',
+            fileType: fileType,
+            timestamp: new Date().toISOString(),
+          },
+          // Add additional model response field paths
+          additionalModelResponseFieldPaths: [
+            '/stopReason',
+            '/usage',
+            '/metrics'
+          ],
         };
 
         const command = new ConverseStreamCommand(input as any);
         const bedrockResponse = await client.send(command);
 
         let accumulatedResponse = '';
+        let stopReason = '';
+        let usage = null;
+        let metrics = null;
 
-        // Process the stream
-        for await (const chunk of bedrockResponse.stream as AsyncIterable<any>) {
+        // Process the stream with enhanced event handling
+        for await (const event of bedrockResponse.stream as AsyncIterable<any>) {
           try {
-            // Handle text content from various response chunk types
-            let textChunk = '';
-
-            if (chunk.contentBlockDelta?.delta?.text) {
-              textChunk = chunk.contentBlockDelta.delta.text;
-            } else if (chunk.contentBlockStart?.contentBlock?.text) {
-              textChunk = chunk.contentBlockStart.contentBlock.text;
-            } else if (chunk.messageStart?.message?.content) {
-              // Handle message start content if it exists
-              for (const block of chunk.messageStart.message.content) {
-                if (block.text) {
-                  textChunk += block.text;
-                }
+            // Handle different event types according to new API structure
+            if (event.messageStart) {
+              // Message started
+              console.log('Analysis started for file:', fileName);
+            } else if (event.contentBlockDelta) {
+              // Handle content block delta (text chunks)
+              const delta = event.contentBlockDelta.delta;
+              if (delta.text) {
+                accumulatedResponse += delta.text;
+                // Stream the chunk to the client
+                dataStream.writeData({
+                  type: 'content',
+                  content: delta.text,
+                  contentBlockIndex: event.contentBlockDelta.contentBlockIndex,
+                });
               }
-            } else if (chunk.messageDelta?.delta?.content) {
-              // Handle message delta content
-              for (const block of chunk.messageDelta.delta.content) {
-                if (block.text) {
-                  textChunk += block.text;
-                }
-              }
-            }
-
-            if (textChunk) {
-              accumulatedResponse += textChunk;
-
-              // Stream the chunk to the client
-              dataStream.writeData({
-                type: 'content',
-                content: textChunk,
+            } else if (event.messageStop) {
+              // Handle message stop event
+              stopReason = event.messageStop.stopReason;
+            } else if (event.metadata) {
+              // Handle metadata event with usage and metrics
+              usage = event.metadata.usage;
+              metrics = event.metadata.metrics;
+              console.log('File analysis completed:', {
+                fileName,
+                stopReason,
+                inputTokens: usage?.inputTokens,
+                outputTokens: usage?.outputTokens,
+                latencyMs: metrics?.latencyMs
               });
             }
           } catch (error) {
@@ -669,7 +728,6 @@ refer to the analysis results. Be specific and cite information from the documen
           }
         }
 
-        // Notify client that processing is complete
         dataStream.writeData({
           type: 'status',
           content: 'complete',
@@ -713,7 +771,6 @@ refer to the analysis results. Be specific and cite information from the documen
     },
   });
 
-  // Add the processMultipleFiles function as a property of the tool
   const enhancedTool = Object.assign(toolInstance, { processMultipleFiles });
 
   return enhancedTool;

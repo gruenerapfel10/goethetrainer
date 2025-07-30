@@ -23,47 +23,55 @@ import { ExtractResults } from './extract-results';
 import { ScrapeResults } from './scrape-results';
 import { MessageReasoning } from './message-reasoning';
 import ReasonSearch from './reason-search';
-import { GeneralTimeline } from './general-timeline';
-import { MessageCost } from './message-cost';
 import ChartRenderer from './chart-renderer';
+import { ReasonTimeline } from '@/components/timeline';
+import { Text2sqlTimeline } from '@/components/timeline/components/text2sql-timeline';
+import { RunSqlPreview } from '@/components/sql/run-sql-preview';
 
 // Utils
-import { cn, extractHostname } from '@/lib/utils';
+import { cn, extractHostname, formatAIResponse } from '@/lib/utils';
 import { AlertCircleIcon } from 'lucide-react';
 
 // Animation variants
 const messageVariants = {
   initial: { y: 8, opacity: 0, scale: 0.98 },
-  animate: { 
-    y: 0, 
-    opacity: 1, 
+  animate: {
+    y: 0,
+    opacity: 1,
     scale: 1,
     transition: {
-      type: "spring",
+      type: 'spring',
       stiffness: 400,
       damping: 25,
-      mass: 0.8
-    }
+      mass: 0.8,
+    },
   },
-  exit: { 
-    y: -4, 
-    opacity: 0, 
+  exit: {
+    y: -4,
+    opacity: 1,
     scale: 0.98,
-    transition: { duration: 0.15 }
-  }
+    transition: { duration: 0.15 },
+  },
 };
 
 const avatarVariants = {
   initial: { scale: 0.9, opacity: 0 },
-  animate: { 
-    scale: 1, 
+  animate: {
+    scale: 1,
     opacity: 1,
-    transition: { delay: 0.1, duration: 0.2 }
-  }
+    transition: { delay: 0.1, duration: 0.2 },
+  },
 };
 
 // Tool result handlers
-const ToolResultHandler = ({ toolName, toolCallId, state, result, args, isLoading }: any) => {
+const ToolResultHandler = ({
+  toolName,
+  toolCallId,
+  state,
+  result,
+  args,
+  isLoading,
+}: any) => {
   const getHostname = (url: string) => {
     try {
       return url ? extractHostname(url) : 'unknown.source';
@@ -76,24 +84,34 @@ const ToolResultHandler = ({ toolName, toolCallId, state, result, args, isLoadin
   if (state === 'call') {
     const loadingComponents = {
       getWeather: <Weather />,
-      requestSuggestions: <DocumentToolCall type="request-suggestions" args={args} isReadonly={false} />,
+      requestSuggestions: (
+        <DocumentToolCall
+          type="request-suggestions"
+          args={args}
+          isReadonly={false}
+        />
+      ),
       extract: <ExtractResults results={[]} isLoading={true} />,
       scrape: <ScrapeResults url={args.url} data="" isLoading={true} />,
       chart: (
-        <motion.div 
+        <motion.div
           className="mb-4 p-4 border rounded-xl bg-muted/30 backdrop-blur-sm"
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
-            <span className="text-sm text-muted-foreground font-medium">Generating chart...</span>
+            <span className="text-sm text-muted-foreground font-medium">
+              Generating chart...
+            </span>
           </div>
         </motion.div>
-      )
+      ),
     };
 
-    return loadingComponents[toolName as keyof typeof loadingComponents] || null;
+    return (
+      loadingComponents[toolName as keyof typeof loadingComponents] || null
+    );
   }
 
   // Result states
@@ -101,52 +119,91 @@ const ToolResultHandler = ({ toolName, toolCallId, state, result, args, isLoadin
     const resultComponents = {
       search: (
         <SearchResults
-          results={result?.data?.map((item: any) => ({
-            title: item.title,
-            url: item.url,
-            description: item.description,
-            source: getHostname(item.url),
-          }))}
+          results={
+            Array.isArray(result?.data)
+              ? result.data.map((item: any) => ({
+                  title: item.title || '',
+                  url: item.url || '',
+                  description: item.description || '',
+                  source: getHostname(item.url || ''),
+                }))
+              : []
+          }
         />
       ),
       extract: (
         <ExtractResults
-          results={Array.isArray(result.data)
-            ? result.data.map((item: any) => ({ url: item.url, data: item.data }))
-            : [{ url: args.urls[0], data: result.data }]
+          results={
+            Array.isArray(result?.data)
+              ? result.data.map((item: any) => ({
+                  url: item.url,
+                  data: item.data,
+                }))
+              : [
+                  {
+                    url: Array.isArray(args?.urls) ? args.urls[0] : '',
+                    data: result?.data || '',
+                  },
+                ]
           }
           isLoading={false}
         />
       ),
-      scrape: <ScrapeResults url={args.url} data={result.data} isLoading={false} />,
-      chart: result.success && result.chartConfig ? (
-        <ChartRenderer config={result.chartConfig} />
-      ) : result.error ? (
-        <motion.div 
-          className="mb-4 p-4 border rounded-xl bg-destructive/5 border-destructive/10"
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="flex items-center gap-2">
-            <AlertCircleIcon className="h-4 w-4 text-destructive" />
-            <span className="text-sm text-destructive font-medium">Chart generation failed: {result.error}</span>
-          </div>
-        </motion.div>
-      ) : null,
+      scrape: (
+        <ScrapeResults url={args.url} data={result.data} isLoading={false} />
+      ),
+      chart:
+        result.success && result.chartConfig ? (
+          <ChartRenderer config={result.chartConfig} />
+        ) : result.error ? (
+          <motion.div
+            className="mb-4 p-4 border rounded-xl bg-destructive/5 border-destructive/10"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircleIcon className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-destructive font-medium">
+                Chart generation failed: {result.error}
+              </span>
+            </div>
+          </motion.div>
+        ) : null,
       getWeather: <Weather weatherAtLocation={result} />,
-      createDocument: <DocumentToolResult type="create" result={result} isReadonly={false} />,
-      updateDocument: <DocumentToolResult type="update" result={result} isReadonly={false} />,
-      requestSuggestions: <DocumentToolResult type="request-suggestions" result={result} isReadonly={false} />
+      createDocument: (
+        <DocumentToolResult type="create" result={result} isReadonly={false} />
+      ),
+      updateDocument: (
+        <DocumentToolResult type="update" result={result} isReadonly={false} />
+      ),
+      requestSuggestions: (
+        <DocumentToolResult
+          type="request-suggestions"
+          result={result}
+          isReadonly={false}
+        />
+      ),
     };
 
-    return resultComponents[toolName as keyof typeof resultComponents] || <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>;
+    return (
+      resultComponents[toolName as keyof typeof resultComponents] || (
+        <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>
+      )
+    );
   }
 
   return null;
 };
 
 // Message content renderer
-const MessageContent = ({ message, mode, isReadonly, setMode, setMessages, reload }: any) => {
+const MessageContent = ({
+  message,
+  mode,
+  isReadonly,
+  setMode,
+  setMessages,
+  reload,
+}: any) => {
   if (!message.parts) return null;
 
   return (
@@ -155,7 +212,13 @@ const MessageContent = ({ message, mode, isReadonly, setMode, setMessages, reloa
         const key = `message-${message.id}-part-${index}`;
 
         if (part.type === 'reasoning') {
-          return <MessageReasoning key={key} isLoading={false} reasoning={part.reasoning} />;
+          return (
+            <MessageReasoning
+              key={key}
+              isLoading={false}
+              reasoning={part.reasoning}
+            />
+          );
         }
 
         if (part.type === 'text' && part.text.length > 0) {
@@ -174,7 +237,10 @@ const MessageContent = ({ message, mode, isReadonly, setMode, setMessages, reloa
           }
 
           return (
-            <div key={key} className="flex flex-row gap-3 items-start group/content">
+            <div
+              key={key}
+              className="flex flex-row gap-3 items-start group/content"
+            >
               {message.role === 'user' && !isReadonly && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -191,10 +257,13 @@ const MessageContent = ({ message, mode, isReadonly, setMode, setMessages, reloa
                 </Tooltip>
               )}
 
-              <div className={cn('flex flex-col gap-4 min-w-0 flex-1', {
-                'bg-primary text-primary-foreground px-4 py-3 rounded-2xl shadow-sm': message.role === 'user',
-              })}>
-                <Markdown>{part.text}</Markdown>
+              <div
+                className={cn('flex flex-col gap-4 min-w-0 flex-1', {
+                  'bg-primary text-primary-foreground px-4 py-3 rounded-2xl shadow-sm':
+                    message.role === 'user',
+                })}
+              >
+                <Markdown>{message.role === 'assistant' ? formatAIResponse(part.text) : part.text}</Markdown>
               </div>
             </div>
           );
@@ -205,29 +274,63 @@ const MessageContent = ({ message, mode, isReadonly, setMode, setMessages, reloa
           const { toolName, toolCallId, state, result, args } = toolInvocation;
 
           // Special handling for reason_search and reason
-          if (toolName === 'reason_search' && (state === 'call' || state === 'result')) {
+          // Keep ReasonSearch for complex research data display
+          if (
+            toolName === 'reason_search' &&
+            (state === 'call' || state === 'result')
+          ) {
             return (
               <ReasonSearch
                 key={toolCallId}
-                updates={message?.annotations
-                  ?.filter((a: any) => a.type === 'research_update')
-                  .map((a: any) => a.data) || []}
+                updates={
+                  message?.annotations
+                    ?.filter((a: any) => a.type === 'research_update')
+                    .map((a: any) => a.data) || []
+                }
               />
             );
           }
 
+          // Use ReasonTimeline for regular reason tool calls
           if (toolName === 'reason') {
-            const agentUpdates = message.annotations
-              ?.filter((a: any) => a.type === 'agent_update')
-              .map((a: any) => a.data) || [];
+            const agentUpdates =
+              message.annotations
+                ?.filter((a: any) => a.type === 'agent_update')
+                .map((a: any) => a.data) || [];
 
             return (
-              <GeneralTimeline
-                key={toolCallId}
+              <ReasonTimeline
                 streamUpdates={agentUpdates.length > 0 ? agentUpdates : result}
+                key={toolCallId}
+                timelineId={toolCallId} // Use toolCallId for isolated UI state
+              />
+            );
+          }
+
+          if (toolName === 'text2sql') {
+            const agentUpdates =
+              message.annotations
+                ?.filter(
+                  (a: any) =>
+                    a.type === 'wren_update' && a.toolCallId === toolCallId,
+                )
+                .map((a: any) => a.data) || [];
+
+            return (
+              <Text2sqlTimeline
+                streamUpdates={
+                  (agentUpdates.length > 0
+                    ? agentUpdates
+                    : result?.stateUpdates) || []
+                }
+                key={toolCallId}
                 timelineId={toolCallId}
               />
             );
+          }
+
+          if (state === 'result' && toolName === 'run_sql') {
+            return <RunSqlPreview key={toolCallId} result={result} />;
           }
 
           return (
@@ -288,18 +391,16 @@ const PurePreviewMessage = ({
       data-role={message.role}
       data-testid={`message-${message.role}`}
     >
-      <div className={cn('flex gap-4 w-full relative', {
-        'ml-auto max-w-2xl': message.role === 'user' && mode !== 'edit',
-        'w-fit': message.role === 'user' && mode !== 'edit', // Added w-fit for user messages
-        'w-full': mode === 'edit',
-      })}>
+      <div
+        className={cn('flex gap-4 w-full relative', {
+          'ml-auto max-w-2xl': message.role === 'user' && mode !== 'edit',
+          'w-fit': message.role === 'user' && mode !== 'edit', // Added w-fit for user messages
+          'w-full': mode === 'edit',
+        })}
+      >
         {/* Assistant avatar with cost */}
         {message.role === 'assistant' && (
           <div className="flex flex-row items-center justify-end gap-3 absolute w-[160px] left-[-180px] top-0">
-            <MessageCost
-              message={message}
-              shouldFetch={completedMessageIds.has(message.id)}
-            />
             <motion.div
               className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border/50 bg-gradient-to-br from-background to-muted/50 shadow-sm"
               variants={avatarVariants}
@@ -312,22 +413,28 @@ const PurePreviewMessage = ({
         )}
 
         {/* Message content container */}
-        <div className={cn('flex flex-col gap-4 w-full', {
-          'min-h-96': message.role === 'assistant' && requiresScrollPadding,
-        })}>
+        <div
+          className={cn('flex flex-col gap-4 w-full', {
+            'min-h-96': message.role === 'assistant' && requiresScrollPadding,
+          })}
+        >
           {/* Attachments */}
-          {message.experimental_attachments && message.experimental_attachments.length > 0 && (
-            <motion.div
-              className="flex flex-row justify-end gap-2"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              {message.experimental_attachments.map((attachment) => (
-                <PreviewAttachment key={attachment.url} attachment={attachment} />
-              ))}
-            </motion.div>
-          )}
+          {message.experimental_attachments &&
+            message.experimental_attachments.length > 0 && (
+              <motion.div
+                className="flex flex-row justify-end gap-2"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                {message.experimental_attachments.map((attachment) => (
+                  <PreviewAttachment
+                    key={attachment.url}
+                    attachment={attachment}
+                  />
+                ))}
+              </motion.div>
+            )}
 
           {/* Message content */}
           <MessageContent
@@ -347,6 +454,7 @@ const PurePreviewMessage = ({
               message={message}
               vote={vote}
               isLoading={isLoading}
+              shouldCostFetch={completedMessageIds.has(message.id)}
             />
           )}
         </div>
@@ -356,12 +464,18 @@ const PurePreviewMessage = ({
 };
 
 // Loading message components
-const LoadingMessage = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
+const LoadingMessage = ({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) => (
   <motion.div
     className="w-full mx-auto max-w-3xl px-4 group/message"
     initial={{ y: 8, opacity: 0 }}
     animate={{ y: 0, opacity: 1 }}
-    transition={{ delay, type: "spring", stiffness: 400, damping: 25 }}
+    transition={{ delay, type: 'spring', stiffness: 400, damping: 25 }}
     data-role="assistant"
     data-testid="message-assistant-loading"
   >
@@ -381,15 +495,15 @@ const LoadingMessage = ({ children, delay = 0 }: { children: React.ReactNode; de
               <motion.div
                 key={i}
                 className="w-2 h-2 bg-muted-foreground/40 rounded-full"
-                animate={{ 
+                animate={{
                   opacity: [0.4, 1, 0.4],
-                  scale: [1, 1.1, 1]
+                  scale: [1, 1.1, 1],
                 }}
-                transition={{ 
+                transition={{
                   duration: 1.5,
                   delay: i * 0.2,
                   repeat: Number.POSITIVE_INFINITY,
-                  ease: "easeInOut"
+                  ease: 'easeInOut',
                 }}
               />
             ))}
@@ -403,28 +517,30 @@ const LoadingMessage = ({ children, delay = 0 }: { children: React.ReactNode; de
 
 export const PreviewMessage = memo(PurePreviewMessage);
 // Unified processing message that handles both thinking and processing states
-const UnifiedProcessingMessage = ({ 
+const UnifiedProcessingMessage = ({
   isProcessing = false,
-  delay = 0 
-}: { 
+  delay = 0,
+}: {
   isProcessing?: boolean;
   delay?: number;
 }) => {
   const t = useTranslations('chat');
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
-  const [currentPhase, setCurrentPhase] = useState<'thinking' | 'processing'>(isProcessing ? 'processing' : 'thinking');
-  
+  const [currentPhase, setCurrentPhase] = useState<'thinking' | 'processing'>(
+    isProcessing ? 'processing' : 'thinking',
+  );
+
   // Create combined message pool
-  const thinkingMessages = Array.from({ length: 12 }, (_, i) => 
-    t(`thinkingMessage${i + 1}` as any)
+  const thinkingMessages = Array.from({ length: 12 }, (_, i) =>
+    t(`thinkingMessage${i + 1}` as any),
   );
-  const processingMessages = Array.from({ length: 10 }, (_, i) => 
-    t(`processingMessage${i + 1}` as any)
+  const processingMessages = Array.from({ length: 10 }, (_, i) =>
+    t(`processingMessage${i + 1}` as any),
   );
-  
+
   // Combine all messages into one continuous cycle
   const allMessages = [...thinkingMessages, ...processingMessages];
-  
+
   useEffect(() => {
     // Update phase based on prop, but don't reset the cycle
     if (isProcessing && currentPhase === 'thinking') {
@@ -433,7 +549,7 @@ const UnifiedProcessingMessage = ({
       setCurrentPhase('thinking');
     }
   }, [isProcessing, currentPhase]);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentMessageIndex((prev) => (prev + 1) % allMessages.length);
@@ -447,7 +563,7 @@ const UnifiedProcessingMessage = ({
       className="w-full mx-auto max-w-3xl px-4 group/message"
       initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ delay, type: "spring", stiffness: 400, damping: 25 }}
+      transition={{ delay, type: 'spring', stiffness: 400, damping: 25 }}
       data-role="assistant"
       data-testid="message-assistant-loading"
     >
@@ -460,18 +576,18 @@ const UnifiedProcessingMessage = ({
         >
           <SparklesIcon size={14} />
         </motion.div>
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex items-center w-full">
           <div className="flex items-center gap-2">
             <AnimatePresence mode="wait">
               <motion.span
                 key={currentMessageIndex}
-                className="text-sm font-medium text-muted-foreground/80"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ 
-                  duration: 0.4,
-                  ease: [0.4, 0, 0.2, 1]
+                className="text-[15px] font-medium text-muted-foreground/80"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{
+                  duration: 0.3,
+                  ease: 'easeInOut',
                 }}
               >
                 {allMessages[currentMessageIndex].replace(/\.{3}$/, '')}
@@ -482,15 +598,15 @@ const UnifiedProcessingMessage = ({
                 <motion.div
                   key={i}
                   className="w-1 h-1 bg-muted-foreground/60 rounded-full"
-                  animate={{ 
+                  animate={{
                     opacity: [0.4, 1, 0.4],
-                    scale: [1, 1.2, 1]
+                    scale: [1, 1.2, 1],
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 1.5,
                     delay: i * 0.3,
                     repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut"
+                    ease: 'easeInOut',
                   }}
                 />
               ))}
@@ -502,5 +618,9 @@ const UnifiedProcessingMessage = ({
   );
 };
 
-export const ThinkingMessage = () => <UnifiedProcessingMessage isProcessing={false} />;
-export const ProcessingMessage = () => <UnifiedProcessingMessage isProcessing={true} delay={0.2} />;
+export const ThinkingMessage = () => (
+  <UnifiedProcessingMessage isProcessing={false} />
+);
+export const ProcessingMessage = () => (
+  <UnifiedProcessingMessage isProcessing={true} delay={0.2} />
+);

@@ -16,7 +16,7 @@ const bedrockConfig = {
 
 export const customModel = (
   apiIdentifier: string,
-  forReasoning: boolean = false,
+  forReasoning = false,
 ) => {
   if (forReasoning) {
     return wrapLanguageModel({

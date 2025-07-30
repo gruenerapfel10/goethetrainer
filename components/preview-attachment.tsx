@@ -1,9 +1,8 @@
 import type { Attachment } from 'ai';
 import { FileIcon } from 'lucide-react';
-import { LoaderIcon } from './icons';
 import { cn } from '@/lib/utils';
 import { Loader2, XIcon, ExternalLink } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
 export function PreviewAttachment({
@@ -21,9 +20,35 @@ export function PreviewAttachment({
   const isImage = contentType?.startsWith('image/');
   const extension = name?.split('.').pop()?.toUpperCase() || '';
   const truncatedName =
-    name && name.length > 15 ? name.slice(0, 12) + '...' : name;
+    name && name.length > 15 ? `${name.slice(0, 12)}...` : name;
 
   const [isDeleting, setIsDeleting] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+
+  // Fetch presigned URL for images
+  useEffect(() => {
+    if (isImage && url && !isUploading) {
+      setImageLoading(true);
+      fetch('/api/files/presigned-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ s3Url: url }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.presignedUrl) {
+            setImageUrl(data.presignedUrl);
+          }
+        })
+        .catch((error) => {
+          console.error('Error fetching presigned URL for image:', error);
+        })
+        .finally(() => {
+          setImageLoading(false);
+        });
+    }
+  }, [isImage, url, isUploading]);
 
   const handleOpenFile = async (e: any) => {
     e.stopPropagation();
@@ -99,15 +124,19 @@ export function PreviewAttachment({
         </div>
       ) : isImage ? (
         <div className="relative w-full h-full">
-          <img
-            src={url}
-            alt={name}
-            className={cn(
-              'absolute inset-0 w-full h-full object-cover',
-              isCompact ? 'p-0.5' : 'p-1',
-            )}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+          {imageUrl && (
+            <>
+              <img
+                src={imageUrl}
+                alt={name}
+                className={cn(
+                  'absolute inset-0 w-full h-full object-cover',
+                  isCompact ? 'p-0.5' : 'p-1',
+                )}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+            </>
+          )}
         </div>
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">

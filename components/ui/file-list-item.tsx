@@ -48,8 +48,6 @@ export default function FileListItem({ file }: FileListItemProps) {
   return (
     <li
       className="group flex items-center space-x-3 p-3 hover:bg-slate-100 dark:hover:bg-slate-700/60 rounded-lg cursor-pointer transition-all duration-200 ease-in-out transform hover:scale-[1.01] focus-within:bg-slate-100 dark:focus-within:bg-slate-700/60 focus-within:scale-[1.01]"
-      tabIndex={0} // Make it focusable
-      role="button" // Semantics for clickability
       aria-label={`File: ${file.name}, Type: ${file.type}, Size: ${file.size}, Last Modified: ${file.lastModified}`}
     >
       <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-slate-100 dark:bg-slate-700 rounded-md group-hover:bg-white dark:group-hover:bg-slate-600 transition-colors duration-200">

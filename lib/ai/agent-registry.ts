@@ -1,12 +1,16 @@
-import { tool } from 'ai';
+import type { UIMessage, DataStreamWriter } from 'ai';
 import { sharepointRetrieve } from '@/lib/ai/tools/sharepoint-retrieve';
 import { csvQuery } from '@/lib/ai/tools/csv-query';
 import { chartTool } from '@/lib/ai/tools/chart';
-import { FileSearchResult } from '@/components/chat-header';
-import { UIMessage, DataStreamWriter } from 'ai';
+import type { FileSearchResult } from '@/components/chat-header';
 
 // Define the agent type enum
-export type AgentType = 'sharepoint-agent-v1' | 'sharepoint-agent-v2' | 'csv-agent-v2';
+export enum AgentType {
+    SHAREPOINT_AGENT_V1 = 'sharepoint-agent-v1',
+    SHAREPOINT_AGENT_V2 = 'sharepoint-agent-v2',
+    CSV_AGENT_V2 = 'csv-agent-v2',
+    TEXT2SQL_AGENT = 'text2sql-agent-v1'
+}
 
 // Define the tool configuration interface
 interface ToolConfig {
@@ -29,8 +33,8 @@ interface AgentConfig {
 // Agent registry mapping
 const AGENT_REGISTRY: Record<AgentType, AgentConfig> = {
 
-  'sharepoint-agent-v1': {
-    agentType: 'sharepoint-agent-v1',
+  [AgentType.SHAREPOINT_AGENT_V1]: {
+    agentType: AgentType.SHAREPOINT_AGENT_V1,
     reasonTools: [],
     regularTools: [],
     defaultPromptModifications: {
@@ -49,8 +53,8 @@ Remember:
       `
     }
   },
-  'sharepoint-agent-v2': {
-    agentType: 'sharepoint-agent-v2',
+  [AgentType.SHAREPOINT_AGENT_V2]: {
+    agentType: AgentType.SHAREPOINT_AGENT_V2,
     reasonTools: [
       {
         toolName: 'sharepoint_retrieve',
@@ -87,8 +91,8 @@ Remember:
 4. Use charts to visualize data when appropriate`
     }
   },
-  'csv-agent-v2': {
-    agentType: 'csv-agent-v2',
+  [AgentType.CSV_AGENT_V2]: {
+    agentType: AgentType.CSV_AGENT_V2,
     reasonTools: [
       {
         toolName: 'csv_query',
@@ -120,7 +124,23 @@ CHART GENERATION:
 Example thought process:
 "The user wants to analyze order data. I see there's a table called 'orders_export_2___orders_export_2' in my available tables. I'll use that table to explore and analyze the data they're asking about."`
     }
-  }
+  },
+  [AgentType.TEXT2SQL_AGENT]: {
+    agentType: AgentType.TEXT2SQL_AGENT,
+    reasonTools: [
+    ],
+    regularTools: [
+      {
+        toolName: 'chart',
+        toolInstance: null, // Will be initialized with props
+        description: 'Creates beautiful, interactive charts from data with multiple chart types and themes'
+      }
+    ],
+    defaultPromptModifications: {
+      responseLanguageInstruction: false,
+      systemPromptSuffix: ``
+    }
+  },
 };
 
 // Props interface for tool initialization
@@ -128,6 +148,7 @@ interface ToolInitProps {
   dataStream?: DataStreamWriter;
   messages?: UIMessage[];
   deepResearch?: boolean;
+  deepSearch?: boolean;
   selectedFiles?: FileSearchResult[];
   session?: any;
 }
@@ -145,7 +166,7 @@ export function initializeReasonTools(agentType: AgentType, props: ToolInitProps
     switch (toolConfig.toolName) {
       case 'sharepoint_retrieve':
         initializedTools[toolConfig.toolName] = sharepointRetrieve({
-          deepResearch: props.deepResearch
+          deepResearch: props.deepSearch
         });
         break;
       case 'csv_query':
@@ -241,7 +262,14 @@ CHART GENERATION CAPABILITIES:
 
 TOOL USAGE:
 - Tool: sharepoint_retrieve (accessed through reason tool)
-- Parameters: query, topK, metadataFilter, minimumScore
+- Parameters: query, topK, metadataFilter, minimumScore, searchMode
+- searchMode options:
+  * 'semantic' (default): Content-based search for relevant information
+  * 'filename': Search for documents by filename (use when user mentions specific file names)
+  * 'hybrid': Combines both semantic and filename search
+
+IMPORTANT: When users mention specific file names or ask to find/summarize a particular file, use searchMode:'filename' for more accurate results.
+
 - Tool: chart (available directly to main agent)
 - Parameters: chartConfig (type, data, title, subtitle), reasoning
 

@@ -35,8 +35,11 @@ export function ImageEditor({
       ) : (
         <picture>
           <img
-            className={cn('w-full h-fit max-w-[800px]', {
-              'p-0 md:p-20': !isInline,
+            className={cn('object-contain', {
+              // Non-inline: allow natural sizing up to max-width, with padding
+              'max-w-[800px] max-h-full w-auto h-auto p-0 md:p-20': !isInline,
+              // Inline: scale to fill container while maintaining aspect ratio
+              'w-full h-full': isInline,
             })}
             src={`data:image/png;base64,${content}`}
             alt={title}

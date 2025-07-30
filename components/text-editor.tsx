@@ -4,7 +4,8 @@ import { exampleSetup } from 'prosemirror-example-setup';
 import { inputRules } from 'prosemirror-inputrules';
 import { EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef, useCallback } from 'react';
+import { useDebounceCallback } from 'usehooks-ts';
 
 import type { Suggestion } from '@/lib/db/schema';
 import {
@@ -40,6 +41,43 @@ function PureEditor({
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
+  const lastContentRef = useRef<string>('');
+  const saveContentRef = useRef(onSaveContent);
+
+  // Keep saveContent ref up to date
+  useEffect(() => {
+    saveContentRef.current = onSaveContent;
+  }, [onSaveContent]);
+
+  // Create a stable debounced save function
+  const debouncedSave = useDebounceCallback(
+    useCallback((content: string) => {
+      saveContentRef.current(content, false);
+    }, []),
+    2000
+  );
+
+  // Create the transaction handler
+  const handleTransactionWithDebounce = useCallback((transaction: any, editorRef: any) => {
+    handleTransaction({
+      transaction,
+      editorRef,
+      saveContent: (updatedContent: string, debounce: boolean) => {
+        // Update our cached content
+        if (!transaction.getMeta('no-save')) {
+          lastContentRef.current = updatedContent;
+          
+          if (debounce) {
+            // Use the debounced version
+            debouncedSave(updatedContent);
+          } else {
+            // Save immediately
+            saveContentRef.current(updatedContent, false);
+          }
+        }
+      },
+    });
+  }, [debouncedSave]);
 
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
@@ -64,10 +102,15 @@ function PureEditor({
       editorRef.current = new EditorView(containerRef.current, {
         state,
       });
+      
+      // Store initial content
+      lastContentRef.current = content;
     }
 
     return () => {
       if (editorRef.current) {
+        // Cancel any pending saves
+        debouncedSave.cancel();
         editorRef.current.destroy();
         editorRef.current = null;
       }
@@ -80,68 +123,74 @@ function PureEditor({
     if (editorRef.current) {
       editorRef.current.setProps({
         dispatchTransaction: (transaction) => {
-          handleTransaction({
-            transaction,
-            editorRef,
-            saveContent: onSaveContent,
-          });
+          handleTransactionWithDebounce(transaction, editorRef);
         },
       });
     }
-  }, [onSaveContent]);
+  }, [handleTransactionWithDebounce]);
 
   useEffect(() => {
-    if (editorRef.current && content) {
+    if (editorRef.current && content !== lastContentRef.current) {
       const currentContent = buildContentFromDocument(
         editorRef.current.state.doc,
       );
 
-      if (status === 'streaming') {
-        const newDocument = buildDocumentFromContent(content);
-
-        const transaction = editorRef.current.state.tr.replaceWith(
-          0,
-          editorRef.current.state.doc.content.size,
-          newDocument.content,
-        );
-
-        transaction.setMeta('no-save', true);
-        editorRef.current.dispatch(transaction);
-        return;
-      }
-
+      // Only update if content actually changed
       if (currentContent !== content) {
-        const newDocument = buildDocumentFromContent(content);
+        try {
+          const oldState = editorRef.current.state;
+          const newDocument = buildDocumentFromContent(content);
 
-        const transaction = editorRef.current.state.tr.replaceWith(
-          0,
-          editorRef.current.state.doc.content.size,
-          newDocument.content,
-        );
+          // Validate the new document is not empty or invalid
+          if (newDocument.content.size === 0 && content.trim().length > 0) {
+            console.warn('Failed to parse content, skipping update');
+            return;
+          }
 
-        transaction.setMeta('no-save', true);
-        editorRef.current.dispatch(transaction);
+          // Create transaction to update content
+          const transaction = oldState.tr.replaceWith(
+            0,
+            oldState.doc.content.size,
+            newDocument.content,
+          );
+
+          // Mark as external update to preserve cursor
+          transaction.setMeta('no-save', true);
+
+          // Dispatch transaction
+          editorRef.current.dispatch(transaction);
+          
+          // Update cached content
+          lastContentRef.current = content;
+        } catch (error) {
+          console.error('Error updating editor content:', error);
+        }
       }
     }
   }, [content, status]);
 
   useEffect(() => {
     if (editorRef.current?.state.doc && content) {
-      const projectedSuggestions = projectWithPositions(
-        editorRef.current.state.doc,
-        suggestions,
-      ).filter(
-        (suggestion) => suggestion.selectionStart && suggestion.selectionEnd,
-      );
+      try {
+        const projectedSuggestions = projectWithPositions(
+          editorRef.current.state.doc,
+          suggestions,
+        ).filter(
+          (suggestion) => suggestion.selectionStart && suggestion.selectionEnd,
+        );
 
-      const decorations = createDecorations(
-        projectedSuggestions,
-        editorRef.current,
-      );
+        const decorations = createDecorations(
+          projectedSuggestions,
+          editorRef.current,
+        );
 
-      const transaction = editorRef.current.state.tr;
-      transaction.setMeta(suggestionsPluginKey, { decorations });
-      editorRef.current.dispatch(transaction);
+        const transaction = editorRef.current.state.tr;
+        transaction.setMeta(suggestionsPluginKey, { decorations });
+        transaction.setMeta('no-save', true); // Mark as external update
+        editorRef.current.dispatch(transaction);
+      } catch (error) {
+        console.error('Error updating suggestions:', error);
+      }
     }
   }, [suggestions, content]);
 
@@ -153,15 +202,4 @@ function PureEditor({
   );
 }
 
-function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
-  return (
-    prevProps.suggestions === nextProps.suggestions &&
-    prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
-    prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === 'streaming' && nextProps.status === 'streaming') &&
-    prevProps.content === nextProps.content &&
-    prevProps.onSaveContent === nextProps.onSaveContent
-  );
-}
-
-export const Editor = memo(PureEditor, areEqual);
+export default memo(PureEditor);

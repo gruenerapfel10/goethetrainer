@@ -219,19 +219,59 @@ const EnhancedTable = ({ children, ...props }: any) => {
     if (!tableElement) return;
     
     const rows = Array.from(tableElement.querySelectorAll('tr'));
-    const textContent = rows.map(row => {
+    let markdownTable = '';
+    let headerRowCount = 0;
+    
+    rows.forEach((row, rowIndex) => {
       const cells = Array.from(row.querySelectorAll('th, td'));
-      return cells.map(cell => cell.textContent?.trim() || '').join('\t');
-    }).join('\n');
+      const isHeaderRow = cells.some(cell => cell.tagName === 'TH');
+      
+      // Build the row
+      const rowContent = cells.map(cell => {
+        const text = cell.textContent?.trim() || '';
+        // Escape pipe characters in cell content
+        return text.replace(/\|/g, '\\|');
+      }).join(' | ');
+      
+      markdownTable += `| ${rowContent} |\n`;
+      
+      // Add separator after header row(s)
+      if (isHeaderRow) {
+        headerRowCount++;
+        // Check if next row is also a header or if this is the last header row
+        const nextRow = rows[rowIndex + 1];
+        const nextRowIsHeader = nextRow && Array.from(nextRow.querySelectorAll('th, td')).some(cell => cell.tagName === 'TH');
+        
+        if (!nextRowIsHeader) {
+          // Add separator row after headers
+          const separatorRow = cells.map(() => '---').join(' | ');
+          markdownTable += `| ${separatorRow} |\n`;
+        }
+      }
+    });
+    
+    // If no header rows found, add separator after first row
+    if (headerRowCount === 0 && rows.length > 0) {
+      const lines = markdownTable.split('\n');
+      const firstRowCellCount = rows[0] ? rows[0].querySelectorAll('th, td').length : 0;
+      const separatorRow = Array(firstRowCellCount).fill('---').join(' | ');
+      lines.splice(1, 0, `| ${separatorRow} |`);
+      markdownTable = lines.join('\n');
+    }
     
     try {
-      await navigator.clipboard.writeText(textContent);
+      await navigator.clipboard.writeText(markdownTable.trim());
       toast({
-        title: "Copied to clipboard",
-        description: "Table data has been copied to your clipboard.",
+        title: "Copied as Markdown",
+        description: "Table has been copied in Markdown format.",
       });
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
+      toast({
+        title: "Copy failed",
+        description: "Failed to copy table to clipboard.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -246,7 +286,7 @@ const EnhancedTable = ({ children, ...props }: any) => {
               size="sm"
               onClick={copyToClipboard}
               className="h-7 w-7 p-0 hover:bg-muted"
-              title="Copy table data"
+              title="Copy as Markdown table"
             >
               <Copy className="h-3 w-3" />
             </Button>

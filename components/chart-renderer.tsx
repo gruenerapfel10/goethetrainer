@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { ChartConfig, ChartType } from '@/lib/ai/tools/chart';
+import type { ChartConfig, } from '@/lib/ai/tools/chart';
 import { Button } from '@/components/ui/button';
 import { 
   ChartContainer, 
@@ -10,7 +10,7 @@ import {
   ChartLegend, 
   ChartLegendContent 
 } from '@/components/ui/chart';
-import { Download, Maximize2, Minimize2, Palette } from 'lucide-react';
+import { Download, Maximize2, Minimize2, } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
 import {
@@ -35,7 +35,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
 } from 'recharts';
 
 interface ChartRendererProps {

@@ -1193,6 +1193,40 @@ export const LineChartIcon = ({ size = 16, className }: { size?: number; classNa
   </svg>
 );
 
+export const LayoutDashboardIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg
+    height={size}
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width={size}
+    className={className}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M1.5 1.5H7V7H1.5V1.5ZM0 1C0 0.447715 0.447715 0 1 0H7.5C8.05228 0 8.5 0.447715 8.5 1V7.5C8.5 8.05228 8.05228 8.5 7.5 8.5H1C0.447715 8.5 0 8.05228 0 7.5V1ZM9 1C9 0.447715 9.44772 0 10 0H15C15.5523 0 16 0.447715 16 1V4.5C16 5.05228 15.5523 5.5 15 5.5H10C9.44772 5.5 9 5.05228 9 4.5V1ZM10.5 1.5H14.5V4H10.5V1.5ZM1.5 9.5H7V14.5H1.5V9.5ZM1 8C0.447715 8 0 8.44772 0 9V15C0 15.5523 0.447715 16 1 16H7.5C8.05228 16 8.5 15.5523 8.5 15V9C8.5 8.44772 8.05228 8 7.5 8H1ZM10 8C9.44772 8 9 8.44772 9 9V15C9 15.5523 9.44772 16 10 16H15C15.5523 16 16 15.5523 16 15V9C16 8.44772 15.5523 8 15 8H10ZM10.5 9.5H14.5V14.5H10.5V9.5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const ShieldIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg
+    height={size}
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width={size}
+    className={className}
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M8 0L2 2V7.5C2 11.5 5.5 14.5 8 15C10.5 14.5 14 11.5 14 7.5V2L8 0ZM12.5 7.5C12.5 10.75 9.75 13.25 8 13.75C6.25 13.25 3.5 10.75 3.5 7.5V3L8 1.5L12.5 3V7.5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 export function EditIcon(props: IconProps) {
   return (
     <svg
@@ -1229,6 +1263,28 @@ export function PinIcon(props: IconProps) {
     >
       <path d="M12 2a8 8 0 0 0-8 8c0 5.4 7.4 11.5 7.6 11.7.3.2.7.2 1 0 .2-.2 7.6-6.3 7.6-11.7a8 8 0 0 0-8-8z" />
       <path d="M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+    </svg>
+  );
+}
+
+export function PinOffIcon(props: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={props.size || 24}
+      height={props.size || 24}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <line x1="2" y1="2" x2="22" y2="22" />
+      <path d="M12 17v5" />
+      <path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h12" />
+      <path d="M15 9.34V6h1a2 2 0 0 0 0-4H7.89" />
     </svg>
   );
 }

@@ -1,24 +1,219 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import { BedrockAgentRuntimeClient, RetrieveCommand, RetrieveCommandInput } from "@aws-sdk/client-bedrock-agent-runtime";
-import { calculateCost } from '@/lib/costs';
-import { StandardizedToolResult, TimelineItemUtils } from './types';
+import { BedrockAgentRuntimeClient, RetrieveCommand } from "@aws-sdk/client-bedrock-agent-runtime";
+import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { type StandardizedToolResult, TimelineItemUtils } from './types';
+import { filesMetadata } from '@/lib/db/schema';
+import { db } from "@/lib/db/client";
+import { ilike, or } from 'drizzle-orm';
 
-// Initialize AWS SDK client, ensuring it uses credentials from your environment
+// Initialize AWS SDK clients
 const bedrockAgentRuntimeClient = new BedrockAgentRuntimeClient({
+    region: process.env.AWS_REGION || 'eu-central-1',
+});
+
+const s3Client = new S3Client({
     region: process.env.AWS_REGION || 'eu-central-1',
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    }
+    },
 });
 
-// Define the parameters for the ultimate tool
+// Helper function to calculate relevance score (same as file-search.tsx)
+function calculateRelevanceScore(fileName: string, searchQuery: string): number {
+  const lowerFileName = fileName.toLowerCase();
+  const lowerQuery = searchQuery.toLowerCase();
+
+  // Exact match gets highest score
+  if (lowerFileName === lowerQuery) return 100;
+
+  // Starts with query gets high score
+  if (lowerFileName.startsWith(lowerQuery)) return 90;
+
+  // Contains query as a whole word gets medium score
+  if (lowerFileName.includes(lowerQuery)) return 80;
+
+  // Contains parts of query gets lower score
+  const queryParts = lowerQuery.split(/[\s_-]/);
+  let partialMatchScore = 0;
+  queryParts.forEach(part => {
+    if (lowerFileName.includes(part)) {
+      partialMatchScore += 10;
+    }
+  });
+
+  // Alphanumeric similarity (for numbers)
+  const fileNumbers = lowerFileName.match(/\d+/g);
+  const queryNumbers = lowerQuery.match(/\d+/g);
+  if (fileNumbers && queryNumbers) {
+    fileNumbers.forEach(fileNum => {
+      queryNumbers.forEach(queryNum => {
+        if (fileNum.includes(queryNum) || queryNum.includes(fileNum)) {
+          partialMatchScore += 15;
+        }
+      });
+    });
+  }
+
+  return partialMatchScore;
+}
+
+async function getS3ObjectMetadata(s3Url: string): Promise<{ sizeInBytes: number }> {
+    try {
+        const urlParts = s3Url.replace('s3://', '').split('/');
+        const bucketName = urlParts[0];
+        const key = urlParts.slice(1).join('/');
+
+        if (!bucketName || !key) {
+            console.warn(`Invalid S3 URL format for metadata retrieval: ${s3Url}`);
+            return { sizeInBytes: 0 };
+        }
+
+        const command = new HeadObjectCommand({
+            Bucket: bucketName,
+            Key: key,
+        });
+        
+        const response = await s3Client.send(command);
+        return { sizeInBytes: response.ContentLength || 0 };
+
+    } catch (error) {
+        console.error(`Error fetching metadata from S3 for ${s3Url}:`, error);
+        return { sizeInBytes: 0 };
+    }
+}
+
+async function searchFiles(fileNameQuery: string, searchMode: 'semantic' | 'filename' | 'hybrid' = 'hybrid', deepResearch = false) {
+    try {
+        // First, get exact and alphanumeric matches from the database
+        const dbFiles = await db
+            .select({
+                fileName: filesMetadata.fileName,
+                s3Key: filesMetadata.s3Key,
+                s3Bucket: filesMetadata.s3Bucket,
+                sizeBytes: filesMetadata.sizeBytes,
+                ingestionStatus: filesMetadata.ingestionStatus,
+            })
+            .from(filesMetadata)
+            .where(
+                or(
+                    ilike(filesMetadata.fileName, `%${fileNameQuery}%`),
+                    ilike(filesMetadata.s3Key, `%${fileNameQuery}%`)
+                )
+            )
+            .execute();
+
+        // Score and sort database results
+        const scoredDbResults = dbFiles
+            .map(file => ({
+                file,
+                score: calculateRelevanceScore(file.fileName || file.s3Key, fileNameQuery)
+            }))
+            .sort((a, b) => b.score - a.score)
+            .filter(({ score }) => score > 0)
+            .map(({ file }) => ({
+                title: file.fileName || file.s3Key.split('/').pop() || 'Unnamed File',
+                url: `s3://${file.s3Bucket}/${file.s3Key}`,
+                content: `File Status: ${file.ingestionStatus}`,
+                score: 1.0, // Max score for exact matches
+                sizeInBytes: file.sizeBytes || 0,
+                source: 'db'
+            }));
+
+        // Get semantic search results if needed
+        let semanticResults: any[] = [];
+        if (searchMode !== 'filename') {
+            let knowledgeBaseIds: string[] = [];
+            const kbId = process.env.SHAREPOINT_KNOWLEDGE_BASE_ID;
+            if (!kbId) {
+                throw new Error('SHAREPOINT_KNOWLEDGE_BASE_ID environment variable is not set');
+            }
+            knowledgeBaseIds = [kbId];
+
+            // Search across knowledge bases
+            const allRetrievalResults: any[] = [];
+            const numResults = deepResearch ? 50 : 25;
+
+            for (const kbId of knowledgeBaseIds) {
+                try {
+                    const command = new RetrieveCommand({
+                        knowledgeBaseId: kbId,
+                        retrievalQuery: { text: fileNameQuery },
+                        retrievalConfiguration: {
+                            vectorSearchConfiguration: { 
+                                numberOfResults: numResults
+                            }
+                        }
+                    });
+
+                    const response = await bedrockAgentRuntimeClient.send(command);
+                    if (response.retrievalResults) {
+                        allRetrievalResults.push(...response.retrievalResults);
+                    }
+                } catch (error) {
+                    console.error(`Error searching KB ${kbId}:`, error);
+                }
+            }
+
+            // Process semantic results
+            const semanticResultsPromises = allRetrievalResults.map(async (result) => {
+                const url = result.location?.s3Location?.uri || result.location?.webLocation?.url || '#';
+                const content = result.content?.text || '';
+                let sizeInBytes = 0;
+
+                if (url.startsWith('s3://')) {
+                    const metadata = await getS3ObjectMetadata(url);
+                    sizeInBytes = metadata.sizeInBytes;
+                }
+
+                return {
+                    title: url.split('/').pop() || 'Unknown',
+                    url: url,
+                    content: content,
+                    score: result.score || 0,
+                    sizeInBytes: sizeInBytes,
+                    source: 'semantic'
+                };
+            });
+
+            semanticResults = await Promise.all(semanticResultsPromises);
+        }
+
+        // Combine and deduplicate results
+        const allResults = [...scoredDbResults, ...semanticResults];
+        const uniqueResults = Array.from(
+            new Map(allResults.map(item => [item.url, item])).values()
+        );
+
+        // Sort results: exact matches first, then semantic
+        const exactMatches = uniqueResults.filter(r => r.source === 'db');
+        const semanticMatches = uniqueResults.filter(r => r.source === 'semantic')
+            .sort((a, b) => b.score - a.score);
+
+        // Return combined results with limits
+        const finalResults = [
+            ...exactMatches.slice(0, 5), // Top 5 exact matches
+            ...semanticMatches.slice(0, deepResearch ? 50 : 25) // Remaining semantic matches
+        ];
+
+        console.log(`[SharePoint Retrieve] Query: "${fileNameQuery}"`);
+        console.log(`[SharePoint Retrieve] Exact matches: ${exactMatches.length}`);
+        console.log(`[SharePoint Retrieve] Semantic matches: ${semanticMatches.length}`);
+
+        return finalResults;
+
+    } catch (error) {
+        console.error("Error searching files:", error);
+        throw error;
+    }
+}
+
+// Define the parameters for the tool
 const sharepointRetrieveParameters = z.object({
-    query: z.string().describe('A specific, targeted user query to search for relevant documents.'),
-    topK: z.number().optional().describe('The maximum number of top results to return if they meet the quality threshold. Defaults to 5.'),
-    metadataFilter: z.any().optional().describe('The metadata filter to apply to the retrieval.'),
-    minimumScore: z.number().optional().describe('The minimum relevance score (0.0 to 1.0) required for a document to be included. Defaults to 0.5.'),
+    query: z.string().describe('A specific filename or search query to find documents. For exact files like "9550-REP-001.pdf", just use the filename.'),
+    topK: z.number().optional().describe('The maximum number of top results to return. Defaults to 10.'),
+    searchMode: z.enum(['semantic', 'filename', 'hybrid']).optional().describe('Search mode: "filename" for exact filename search, "semantic" for content-based search, "hybrid" for both. Defaults to "hybrid".'),
 });
 
 interface SharepointRetrieveProps {
@@ -37,7 +232,7 @@ const createTimelineItemsFromResults = (results: any[]): StandardizedToolResult 
     );
 
     return {
-        data: results, // Keep original data for backward compatibility
+        data: results,
         timelineItems,
         summary: {
             message: `Retrieved ${results.length} relevant documents`,
@@ -55,11 +250,10 @@ const createTimelineItemsFromResults = (results: any[]): StandardizedToolResult 
 export const sharepointRetrieve = ({ deepResearch }: SharepointRetrieveProps) =>
     tool({
         description:
-            'Performs an intelligent, two-stage retrieval from SharePoint using the state-of-the-art Cohere Rerank v3.5 model. It retrieves candidates, then scores and aggressively filters them, returning ONLY the most relevant documents that meet a minimum confidence score.',
+            'EXACT FILENAME SEARCH that works just like the File Search button. Searches for files by exact filename first, then partial matches, then semantic content. Perfect for finding specific files like "9550-REP-001.pdf".',
         parameters: sharepointRetrieveParameters,
-        execute: async ({ query, topK, metadataFilter, minimumScore }: z.infer<typeof sharepointRetrieveParameters>): Promise<StandardizedToolResult> => {
+        execute: async ({ query, topK = 10, searchMode = 'hybrid' }: z.infer<typeof sharepointRetrieveParameters>): Promise<StandardizedToolResult> => {
             try {
-                // Validate required parameters first
                 if (!query || query.trim() === '') {
                     return {
                         data: [],
@@ -78,65 +272,14 @@ export const sharepointRetrieve = ({ deepResearch }: SharepointRetrieveProps) =>
                     };
                 }
 
-                const kbId = process.env.SHAREPOINT_KNOWLEDGE_BASE_ID;
-                if (!kbId) {
-                    console.error("CRITICAL: SHAREPOINT_KNOWLEDGE_BASE_ID environment variable is not set.");
-                    return { 
-                        data: [],
-                        timelineItems: [],
-                        summary: {
-                            message: 'SHAREPOINT_KNOWLEDGE_BASE_ID not set',
-                            itemCount: 0,
-                            successCount: 0,
-                            errorCount: 1,
-                        },
-                        metadata: { toolName: 'sharepoint_retrieve', resultType: 'document' },
-                        error: 'SHAREPOINT_KNOWLEDGE_BASE_ID not set'
-                    };
-                }
+                const results = await searchFiles(query, searchMode, deepResearch);
 
-                const initialNumberOfResults = deepResearch ? 100 : 50;
-                const finalNumberOfResults = topK ?? (deepResearch ? 10 : 5);
-                const relevanceThreshold = minimumScore ?? 0.5;
-
-                const retrievalConfiguration: RetrieveCommandInput['retrievalConfiguration'] = {
-                    vectorSearchConfiguration: {
-                        numberOfResults: initialNumberOfResults,
-                        filter: metadataFilter,
-                        rerankingConfiguration: {
-                            type: "BEDROCK_RERANKING_MODEL",
-                            bedrockRerankingConfiguration: {
-                                modelConfiguration: {
-                                    modelArn: `arn:aws:bedrock:${process.env.AWS_REGION || 'eu-central-1'}::foundation-model/cohere.rerank-v3-5:0`
-                                },
-                                numberOfRerankedResults: finalNumberOfResults,
-                            },
-                        },
-                    },
-                };
-
-                const command = new RetrieveCommand({
-                    knowledgeBaseId: kbId,
-                    retrievalQuery: { text: query },
-                    retrievalConfiguration,
-                });
-
-                const response = await bedrockAgentRuntimeClient.send(command);
-                
-                // Note: Cost tracking for reranking is handled by AWS Bedrock directly
-                // We don't need to estimate tokens or calculate costs here
-                
-                // Intelligent filtering based on the Cohere Rerank v3.5 score
-                const highQualityResults = (response.retrievalResults || []).filter(
-                    result => (result.score ?? 0) >= relevanceThreshold
-                );
-
-                if (highQualityResults.length === 0) {
+                if (results.length === 0) {
                     return {
                         data: [],
                         timelineItems: [],
                         summary: {
-                            message: `No documents found for query "${query}" with relevance score above ${relevanceThreshold}`,
+                            message: `No documents found for query "${query}" using ${searchMode} search`,
                             itemCount: 0,
                             successCount: 0,
                             errorCount: 0,
@@ -145,35 +288,11 @@ export const sharepointRetrieve = ({ deepResearch }: SharepointRetrieveProps) =>
                     };
                 }
 
-                const finalResults = highQualityResults.map(result => ({
-                    title: result.location?.s3Location?.uri || result.location?.webLocation?.url || 'Unknown Document',
-                    url: result.location?.webLocation?.url || result.location?.s3Location?.uri || '#',
-                    score: result.score || 0,
-                    content: result.content?.text || ''
-                }));
-
+                const finalResults = results.slice(0, topK);
                 return createTimelineItemsFromResults(finalResults);
 
             } catch (error) {
-                if (error instanceof Error && error.name === 'AccessDeniedException') {
-                    console.error("<<<<<<<<<< CRITICAL PERMISSION ERROR >>>>>>>>>>");
-                    console.error("RERANKING IS FAILING. The Knowledge Base service role is missing `bedrock:Rerank` permissions. Your results are unfiltered junk.");
-                    console.error("Fix this by adding the required IAM policy to the service role in AWS. The policy now also needs to allow invoking the Cohere model.", error);
-                    return { 
-                        data: [],
-                        timelineItems: [],
-                        summary: {
-                            message: "Reranking failed due to AWS IAM permissions",
-                            itemCount: 0,
-                            successCount: 0,
-                            errorCount: 1,
-                        },
-                        metadata: { toolName: 'sharepoint_retrieve', resultType: 'document' },
-                        error: "Reranking failed due to AWS IAM permissions. Check server logs for details."
-                    };
-                } else {
-                    console.error("Error during SharePoint retrieval:", error);
-                }
+                console.error("Error during SharePoint retrieval:", error);
                 return {
                     data: [],
                     timelineItems: [],

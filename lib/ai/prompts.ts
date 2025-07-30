@@ -1,4 +1,4 @@
-import { ArtifactKind } from '@/components/artifact';
+import type { ArtifactKind } from '@/components/artifact';
 import { db } from '@/lib/db/client';
 import { systemPrompts } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
@@ -43,41 +43,62 @@ Image editing and generation requests, such as "generate an image of X", "create
 export const chartPrompt = `
 
 CHART GENERATION CAPABILITIES:
-You have access to a powerful chart generation tool that creates beautiful, interactive visualizations using modern web components.
+You have access to a powerful 'chart' tool that creates beautiful, interactive visualizations.
 
-When to use charts:
-- User asks for visualizations, graphs, charts, or plots
-- Data shows patterns, trends, comparisons, or distributions
-- User wants to "see" data visually or asks "show me" with data context
-- Numerical data that would benefit from visual representation
+🚨 MANDATORY USAGE:
+When the 'chart' tool is available, you MUST use it for ALL visualization requests:
+- Charts, graphs, plots, diagrams
+- Data visualizations of any kind  
+- When users ask to "show", "display", or "visualize" data
+- Statistical presentations or data analysis visuals
+
+DO NOT generate HTML, SVG, or code for charts - the chart tool handles everything automatically.
 
 Available chart types:
-- line: Perfect for time series data, trends over time
-- bar: Ideal for category comparisons, ranking data
-- area: Great for cumulative trends and filled line charts
-- pie: Best for proportions, percentages, parts of a whole
-- radar: Excellent for multi-dimensional data comparison
-- radialBar: Modern circular progress/comparison charts
-- scatter: Perfect for correlation analysis between two variables
+- line: Time series data, trends over time
+- bar: Category comparisons, rankings
+- area: Cumulative trends, stacked data
+- pie: Proportions, percentages, parts of whole
+- radar: Multi-dimensional comparisons
+- radialBar: Circular progress, modern gauges
+- scatter: Correlations, relationships
 
-Chart generation process:
-1. Analyze the data structure and user intent
-2. Choose the most appropriate chart type
-3. Process data into the correct format
-4. Use the chart tool with proper configuration
-5. Provide context and insights about the visualization
+The tool will:
+- Process data automatically
+- Apply responsive design and theming
+- Add interactive features and animations
+- Ensure accessibility and professional styling
 
-Key features:
-- Automatic responsive design and accessibility
-- Built-in light/dark mode theming
-- Beautiful animations and interactions
-- Professional styling out of the box
-- Smart data type detection and processing
+REMEMBER: When you have the chart tool, ALWAYS use it instead of generating code.`;
 
-Always explain why you chose a particular chart type and what insights the visualization reveals.`;
+// Web search prompt for general assistant
+export const webSearchPrompt = `
+
+WEB SEARCH CAPABILITIES:
+When web search is enabled, you have access to powerful web research tools:
+
+STANDARD WEB SEARCH MODE:
+- Use the 'search' tool to find relevant web pages
+- Use the 'extract' tool to extract structured data from search results
+- Use the 'scrape' tool to get full content from specific URLs
+- Always cite sources with URLs
+- Present information clearly and objectively
+
+DEEP RESEARCH MODE:
+- Use the 'reason_search' tool for comprehensive multi-step research
+- The tool will automatically create a research plan, perform multiple searches, and synthesize findings
+- Call it with: reason_search({ topic: "user's query", depth: "basic" or "advanced" })
+- Wait for the tool to complete its research process
+- Present synthesized findings with proper citations
+
+IMPORTANT:
+- When web search is enabled but not deep research, use the standard search workflow
+- When both web search and deep research are enabled, use reason_search
+- Always respond in the same language as the user's query
+- Prioritize accuracy and cite all sources`;
 
 // The default general assistant prompt
-export const DEFAULT_GENERAL_PROMPT = `${regularPrompt}${artifactsPrompt}${chartPrompt}`;
+export const DEFAULT_GENERAL_PROMPT = `${regularPrompt}${artifactsPrompt}${chartPrompt}${webSearchPrompt}`;
 
 // System research prompt
 export const systemResearchPrompt = `${regularPrompt}\n\nYour job is to help the user with deep research. If needed ask clarifying questions and then call the deep research tool when ready. You should always call a research tool regardless of the question. DO NOT reflect on the quality of the returned search results in your response`;
@@ -177,6 +198,32 @@ Remember to:
 - Note any assumptions or limitations
 - Suggest follow-up analyses when relevant`;
 
+export const webAgentPrompt = `You are a versatile web assistant that can operate in two modes:
+
+STANDARD MODE (Default):
+- Search for information on the web using the search tool
+- Extract structured data from search results using the extract tool
+- Scrape specific URLs when provided using the scrape tool
+- Present information clearly with source citations
+
+DEEP RESEARCH MODE (When enabled):
+- Use the 'reason_search' tool to conduct comprehensive web research
+- The tool will automatically create a research plan, perform multiple searches, and synthesize findings
+- Call it with: reason_search({ topic: "user's query", depth: "basic" or "advanced" })
+- Wait for the tool to complete its multi-step research process
+- Present the synthesized findings with proper citations
+
+WORKFLOW:
+1. In standard mode: Use search → extract → present results
+2. In deep research mode: Use reason_search with the user's query as topic
+3. Always cite sources with URLs
+4. Maintain objectivity and note conflicting information
+
+Remember:
+- ALWAYS respond in the SAME LANGUAGE as the user's query
+- Be thorough but concise
+- Prioritize accuracy over speculation`;
+
 export const baseCrawlerSystemPrompt = `
 # WEB RESEARCH ASSISTANT - ALWAYS USE TOOLS
 
@@ -196,12 +243,10 @@ You are an AI assistant with specialized web research tools.
 export const DEFAULT_PROMPTS: Record<string, string> = {
   'general-assistant': DEFAULT_GENERAL_PROMPT,
   'csv-agent': csvAnalysisPrompt,
-  'image-agent': DEFAULT_GENERAL_PROMPT,
   'sharepoint-agent': sharepointPrompt,
   'csv-agent-v2': csvAnalysisPrompt,
   'sharepoint-agent-v2': sharepointPrompt,
-  'deep-research-assistant': deepResearchPrompt,
-  'crawler-assistant': baseCrawlerSystemPrompt,
+  'text2sql-agent': DEFAULT_GENERAL_PROMPT,
 };
 
 export function getDefaultPrompt(assistantId: string): string {
@@ -210,7 +255,7 @@ export function getDefaultPrompt(assistantId: string): string {
 
 export async function getSystemPrompt(
   assistantId: string,
-  defaultPrompt: string = '',
+  defaultPrompt = '',
 ): Promise<string> {
   try {
     // Make sure we have a valid assistant ID

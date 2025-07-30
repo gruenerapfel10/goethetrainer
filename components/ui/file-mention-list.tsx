@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils'
 import { memo } from 'react'
 import {
   FileIcon,
-  FileText,
   FileCode,
   FileImage,
   FileSpreadsheet,

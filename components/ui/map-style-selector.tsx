@@ -1,30 +1,36 @@
 "use client"
 
-import { Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import { cn } from '@/lib/utils'
+import { Map, Palette } from 'lucide-react'
 
-// Expanded and corrected list of Mapbox styles
-export const MAP_STYLES = {
+export type MapStyle = 
+  | 'Standard'
+  | 'Light'
+  | 'Dark'
+  | 'Streets'
+  | 'Outdoors'
+  | 'Satellite'
+  | 'Satellite Streets'
+  | 'Navigation Day'
+  | 'Navigation Night'
+
+export const MAP_STYLES: Record<MapStyle, string> = {
   'Standard': 'mapbox://styles/mapbox/standard',
-  'Streets': 'mapbox://styles/mapbox/streets-v12',
-  'Outdoors': 'mapbox://styles/mapbox/outdoors-v12',
   'Light': 'mapbox://styles/mapbox/light-v11',
   'Dark': 'mapbox://styles/mapbox/dark-v11',
+  'Streets': 'mapbox://styles/mapbox/streets-v12',
+  'Outdoors': 'mapbox://styles/mapbox/outdoors-v12',
   'Satellite': 'mapbox://styles/mapbox/satellite-v9',
   'Satellite Streets': 'mapbox://styles/mapbox/satellite-streets-v12',
   'Navigation Day': 'mapbox://styles/mapbox/navigation-day-v1',
   'Navigation Night': 'mapbox://styles/mapbox/navigation-night-v1',
-} as const
-
-export type MapStyle = keyof typeof MAP_STYLES
+}
 
 interface MapStyleSelectorProps {
   currentStyle: MapStyle
@@ -35,22 +41,20 @@ export function MapStyleSelector({ currentStyle, onStyleChange }: MapStyleSelect
   return (
     <div className="absolute top-4 right-4 z-10">
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-colors">
-          <Settings className="w-4 h-4" />
-          <span>Map Style</span>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="bg-background/80 backdrop-blur-sm">
+            <Palette className="h-4 w-4 mr-2" />
+            {currentStyle}
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-[200px] bg-background border-border">
-          <DropdownMenuLabel>Select Style</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {(Object.keys(MAP_STYLES) as MapStyle[]).map((style) => (
+        <DropdownMenuContent align="end" className="w-48">
+          {Object.keys(MAP_STYLES).map((style) => (
             <DropdownMenuItem
               key={style}
-              onClick={() => onStyleChange(style)}
-              className={cn(
-                "cursor-pointer",
-                currentStyle === style && "bg-accent text-accent-foreground"
-              )}
+              onClick={() => onStyleChange(style as MapStyle)}
+              className={currentStyle === style ? 'bg-accent' : ''}
             >
+              <Map className="h-4 w-4 mr-2" />
               {style}
             </DropdownMenuItem>
           ))}

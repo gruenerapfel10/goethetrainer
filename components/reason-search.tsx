@@ -5,14 +5,10 @@ import {
   Sparkles,
   ArrowRight,
   ChevronRight,
-  ChevronDown,
   Loader2,
-  X,
 } from 'lucide-react';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { cn, isValidUrl } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -21,7 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose,
 } from '@/components/ui/dialog';
 import {
   Drawer,
@@ -39,6 +34,8 @@ import {
 } from '@/components/ui/accordion';
 import { useIsMobile } from '../hooks/use-mobile';
 import { useArtifact } from '../hooks/use-artifact';
+import { GeneralTimeline } from '@/components/timeline';
+import type { TimelineStep } from '@/components/timeline/types';
 
 export interface StreamUpdate {
   id: string;
@@ -102,465 +99,119 @@ const getUrlSrc = (url: string) => {
   return '/public/icons/file.svg';
 };
 
-const ResearchStep = ({
-  update,
-  isExpanded,
-  onToggle,
-  id,
-}: {
-  update: StreamUpdate;
-  isExpanded: boolean;
-  onToggle: () => void;
-  id: string;
-}) => {
+// Convert StreamUpdate to TimelineStep format
+const convertStreamUpdateToTimelineStep = (update: StreamUpdate): TimelineStep => {
   const icons = {
-    plan: Search,
-    web: FileText,
-    progress: Loader2,
-    analysis: Sparkles,
-    'gap-search': Search,
+    plan: <Search className="h-4 w-4" />,
+    web: <FileText className="h-4 w-4" />,
+    progress: <Loader2 className="h-4 w-4" />,
+    analysis: <Sparkles className="h-4 w-4" />,
+    'gap-search': <Search className="h-4 w-4" />,
   } as const;
 
   const isGapSearch = update.id.startsWith('gap-search');
-  const Icon = isGapSearch ? icons['gap-search'] : icons[update.type];
+  
+  // For web results, try to use the first result's favicon
+  let icon = isGapSearch ? icons['gap-search'] : icons[update.type];
+  if (update.type === 'web' && update.results && update.results.length > 0 && isValidUrl(update.results[0].url)) {
+    const faviconUrl = getUrlSrc(update.results[0].url);
+    icon = (
+      <img 
+        src={faviconUrl} 
+        alt="" 
+        className="h-4 w-4 rounded"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          // Fallback to FileText icon
+          const parent = target.parentElement;
+          if (parent) {
+            const fallback = document.createElement('div');
+            fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>';
+            parent.appendChild(fallback.firstChild!);
+          }
+        }}
+      />
+    );
+  }
 
-  const { artifact } = useArtifact();
+  // Build children for expandable content
+  const children: TimelineStep[] = [];
 
-  const isArtifactVisible = artifact.isVisible;
-
-  return (
-    <div id={id} className="group">
-      <motion.div
-        className={cn(
-          'flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors duration-200',
-          isExpanded
-            ? 'bg-neutral-50 dark:bg-neutral-800/50'
-            : 'hover:bg-neutral-50 dark:hover:bg-neutral-800/50',
-          isArtifactVisible && 'px-1 py-1'
-        )}
-        layout
-      >
-        <div
-          className={cn(
-            'flex-shrink-0 rounded-full flex items-center justify-center transition-colors duration-300',
-            update.status === 'completed'
-              ? 'bg-neutral-900 text-neutral-50 dark:bg-neutral-50 dark:text-neutral-900'
-              : 'bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400',
-            isArtifactVisible ? 'w-5 h-5' : 'w-6 h-6 sm:w-8 sm:h-8'
-          )}
-        >
-          {update.status === 'running' ? (
-            <Loader2
-              className={cn(
-                'animate-spin',
-                isArtifactVisible ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-4 sm:w-4'
-              )}
-            />
-          ) : (
-            <Icon
-              className={cn(
-                isArtifactVisible ? 'h-2.5 w-2.5' : 'h-3 w-3 sm:h-4 sm:w-4'
-              )}
-            />
-          )}
-        </div>
-
-        <button
-          onClick={onToggle}
-          className="flex items-center justify-between flex-1 text-left min-w-0"
-        >
-          <div
-            className={cn(
-              'space-y-0.5 min-w-0 flex-1',
-              isArtifactVisible && 'space-y-0'
-            )}
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-wrap">
-              <span
-                className={cn(
-                  'font-medium break-words hyphens-auto',
-                  isArtifactVisible ? 'text-xs' : 'text-sm'
-                )}
-              >
-                {update.title ||
-                  (update.type === 'plan' ? 'Research Plan' : 'Analysis')}
-              </span>
-              {update.type === 'plan' && update.plan && (
-                <span
-                  className={cn(
-                    'text-neutral-500 flex-shrink-0',
-                    isArtifactVisible ? 'text-[10px]' : 'text-xs'
-                  )}
-                >
-                  ({update.plan.search_queries.length} queries,{' '}
-                  {update.plan.required_analyses.length} analyses
-                  {update.advancedSteps
-                    ? `, +${update.advancedSteps} advanced`
-                    : ''}
-                  )
-                </span>
-              )}
-            </div>
-            {update.message && (
-              <p
-                className={cn(
-                  'text-neutral-500 break-words hyphens-auto',
-                  isArtifactVisible ? 'text-[10px]' : 'text-xs'
-                )}
-              >
-                {isGapSearch ? (
-                  <span className="flex items-center gap-1">
-                    <Search
-                      className={isArtifactVisible ? 'w-2.5 h-2.5' : 'w-3 h-3'}
-                    />
-
-                    {update.message}
-                  </span>
-                ) : (
-                  update.message
-                )}
-              </p>
-            )}
-          </div>
-
-          <ChevronRight
-            className={cn(
-              'text-neutral-400 flex-shrink-0 ml-2 transition-transform',
-              isExpanded && 'rotate-90',
-              isArtifactVisible ? 'h-3 w-3' : 'h-4 w-4'
-            )}
-          />
-        </button>
-      </motion.div>
-
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{
-              height: 'auto',
-              opacity: 1,
-              transition: {
-                height: { duration: 0.2, ease: 'easeOut' },
-                opacity: { duration: 0.15, delay: 0.05 },
-              },
-            }}
-            exit={{
-              height: 0,
-              opacity: 0,
-              transition: {
-                height: { duration: 0.2, ease: 'easeIn' },
-                opacity: { duration: 0.1 },
-              },
-            }}
-            className="overflow-hidden"
-          >
-            <div
-              className={cn(
-                'py-2 space-y-2',
-                isArtifactVisible ? 'pl-6 pr-1' : 'pl-8 pr-2'
-              )}
-            >
-              {update.type === 'plan' && update.plan && (
-                <div className="space-y-2">
-                  {update.plan.search_queries.map((query, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={cn(
-                        'rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800',
-                        isArtifactVisible ? 'p-1.5' : 'p-2'
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        <Search
-                          className={cn(
-                            'text-neutral-500 mt-1',
-                            isArtifactVisible ? 'h-3 w-3' : 'h-3.5 w-3.5'
-                          )}
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                'font-medium',
-                                isArtifactVisible ? 'text-xs' : 'text-sm'
-                              )}
-                            >
-                              {query.query}
-                            </span>
-                            <Badge
-                              variant="secondary"
-                              className={
-                                isArtifactVisible ? 'text-[9px]' : 'text-[10px]'
-                              }
-                            >
-                              {query.source}
-                            </Badge>
-                          </div>
-                          <p
-                            className={cn(
-                              'text-neutral-500 mt-1',
-                              isArtifactVisible ? 'text-[10px]' : 'text-xs'
-                            )}
-                          >
-                            {query.rationale}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              {update.type === 'web' && update.results && (
-                <div className="space-y-2">
-                  {update.results.map((result, idx) => (
-                    <motion.a
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      href={result.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        'flex items-start gap-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors',
-                        isArtifactVisible ? 'p-1.5' : 'p-2'
-                      )}
-                    >
-                      <div className="flex-shrink-0 mt-1">
-                        <img
-                          src={getUrlSrc(result.url)}
-                          alt=""
-                          className={isArtifactVisible ? 'w-3 h-3' : 'w-4 h-4'}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove(
-                              'hidden'
-                            );
-                          }}
-                        />
-                        <div className="hidden">
-                          <FileText
-                            className={
-                              isArtifactVisible ? 'h-3 w-3' : 'h-4 w-4'
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <h4
-                          className={cn(
-                            'font-medium leading-tight',
-                            isArtifactVisible ? 'text-xs' : 'text-sm'
-                          )}
-                        >
-                          {result.title}
-                        </h4>
-                        <p
-                          className={cn(
-                            'text-neutral-500 mt-1 line-clamp-2',
-                            isArtifactVisible ? 'text-[10px]' : 'text-xs'
-                          )}
-                        >
-                          {result.content}
-                        </p>
-                      </div>
-                    </motion.a>
-                  ))}
-                </div>
-              )}
-
-              {update.type === 'analysis' && update.findings && (
-                <div className="space-y-2">
-                  {update.findings.map((finding, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      className={cn(
-                        'rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800',
-                        isArtifactVisible ? 'p-1.5' : 'p-2'
-                      )}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={cn(
-                            'flex-shrink-0',
-                            isArtifactVisible ? 'mt-1' : 'mt-1.5'
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              'rounded-full',
-                              finding.confidence > 0.7
-                                ? 'bg-neutral-900 dark:bg-neutral-50'
-                                : 'bg-neutral-400 dark:bg-neutral-600',
-                              isArtifactVisible ? 'w-1 h-1' : 'w-1.5 h-1.5'
-                            )}
-                          />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                          <p
-                            className={cn(
-                              'font-medium',
-                              isArtifactVisible ? 'text-xs' : 'text-sm'
-                            )}
-                          >
-                            {finding.insight}
-                          </p>
-                          {finding.evidence.length > 0 && (
-                            <div
-                              className={cn(
-                                'border-l-2 border-neutral-200 dark:border-neutral-700 space-y-1.5',
-                                isArtifactVisible ? 'pl-3' : 'pl-4'
-                              )}
-                            >
-                              {finding.evidence.map((evidence, i) => (
-                                <p
-                                  key={i}
-                                  className={cn(
-                                    'text-neutral-500',
-                                    isArtifactVisible
-                                      ? 'text-[10px]'
-                                      : 'text-xs'
-                                  )}
-                                >
-                                  {evidence}
-                                </p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
-  const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
-  const [lastScrollTop, setLastScrollTop] = useState(0);
-  const autoScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isAutoScrollingRef = useRef(false);
-
-  const handleScroll = useCallback(() => {
-    if (!scrollContainerRef.current || isAutoScrollingRef.current) return;
-
-    const container = scrollContainerRef.current;
-    const currentScrollTop = container.scrollTop;
-    const scrollHeight = container.scrollHeight;
-    const clientHeight = container.clientHeight;
-
-    const isAtBottom =
-      Math.abs(scrollHeight - clientHeight - currentScrollTop) < 10;
-    const hasScrolledUp = currentScrollTop < lastScrollTop;
-
-    if (hasScrolledUp || !isAtBottom) {
-      setUserHasScrolled(true);
-
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-      }
-
-      autoScrollTimeoutRef.current = setTimeout(() => {
-        setUserHasScrolled(false);
-      }, 8000);
-    }
-
-    setLastScrollTop(currentScrollTop);
-  }, [lastScrollTop]);
-
-  const handleToggle = (stepId: string) => {
-    setExpandedSteps((current) => {
-      const newSet = new Set(current);
-      if (newSet.has(stepId)) {
-        newSet.delete(stepId);
-      } else {
-        newSet.add(stepId);
-      }
-      return newSet;
+  if (update.type === 'plan' && update.plan) {
+    children.push({
+      id: `${update.id}-queries`,
+      title: 'Search Queries',
+      status: update.status === 'completed' ? 'completed' : 'running',
+      timestamp: update.timestamp,
+      type: 'unified',
+      message: update.plan.search_queries.map(q => `• ${q.query}: ${q.rationale}`).join('\n'),
+      small: true,
     });
-  };
+  }
 
-  useEffect(() => {
-    if (userHasScrolled) return;
-
-    const runningStep = updates.find((update) => update.status === 'running');
-    if (!runningStep) return;
-
-    const stepElement = document.getElementById(`step-${runningStep.id}`);
-    if (!stepElement || !scrollContainerRef.current) return;
-
-    const containerRect = scrollContainerRef.current.getBoundingClientRect();
-    const stepRect = stepElement.getBoundingClientRect();
-
-    const isVisible =
-      stepRect.top >= containerRect.top && stepRect.top <= containerRect.bottom;
-
-    if (!isVisible) {
-      isAutoScrollingRef.current = true;
-
-      stepElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'nearest',
+  if (update.type === 'web' && update.results) {
+    update.results.forEach((result, idx) => {
+      const resultIcon = isValidUrl(result.url) ? (
+        <img 
+          src={getUrlSrc(result.url)} 
+          alt="" 
+          className="h-4 w-4 rounded"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+          }}
+        />
+      ) : <FileText className="h-4 w-4" />;
+      
+      children.push({
+        id: `${update.id}-result-${idx}`,
+        title: result.title,
+        status: 'completed',
+        timestamp: update.timestamp,
+        type: 'unified',
+        message: result.content,
+        icon: resultIcon,
+        small: true,
       });
+    });
+  }
 
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 600);
+  if (update.type === 'analysis' && update.findings) {
+    children.push({
+      id: `${update.id}-findings`,
+      title: 'Analysis Findings',
+      status: 'completed',
+      timestamp: update.timestamp,
+      type: 'unified',
+      message: update.findings.map(f => `• ${f.insight}`).join('\n'),
+      small: true,
+    });
+  }
+
+  const title = update.title || (update.type === 'plan' ? 'Research Plan' : 'Analysis');
+  let badgeText = undefined;
+
+  if (update.type === 'plan' && update.plan) {
+    badgeText = `${update.plan.search_queries.length} queries, ${update.plan.required_analyses.length} analyses`;
+    if (update.advancedSteps) {
+      badgeText += `, +${update.advancedSteps} advanced`;
     }
-  }, [updates, userHasScrolled]);
+  }
 
-  useEffect(() => {
-    return () => {
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div className="relative">
-
-      <div
-        ref={scrollContainerRef}
-        className="h-[300px] overflow-y-auto"
-        onScroll={handleScroll}
-      >
-        {updates.map((update) => {
-          const isExpanded =
-            update.status === 'running' || expandedSteps.has(update.id);
-
-          return (
-            <ResearchStep
-              key={update.id}
-              id={`step-${update.id}`}
-              update={update}
-              isExpanded={isExpanded}
-              onToggle={() => handleToggle(update.id)}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
+  return {
+    id: update.id,
+    title: title,
+    message: isGapSearch ? `🔍 ${update.message}` : update.message,
+    status: update.status === 'completed' ? 'completed' : update.status === 'running' ? 'running' : 'pending',
+    timestamp: update.timestamp,
+    icon: icon,
+    badgeText: badgeText,
+    children: children.length > 0 ? children : undefined,
+    data: update
+  };
 };
+
 
 const SourcesList = ({ sources }: { sources: StreamUpdate['results'] }) => {
   return (
@@ -665,7 +316,7 @@ const AnimatedTabContent = ({
 }) => (
   <motion.div
     role="tabpanel"
-    initial={{ opacity: 0, x: 10 }}
+    initial={{ opacity: 1, x: 10 }}
     animate={{
       opacity: value === selected ? 1 : 0,
       x: value === selected ? 0 : 10,
@@ -707,7 +358,6 @@ const EmptyState = ({ type }: { type: 'web' | 'analysis' }) => {
 };
 
 const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedTab, setSelectedTab] = useState('web');
 
   const planUpdateFromUpdates = React.useMemo(() => {
@@ -854,83 +504,16 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     );
   }, [dedupedUpdates]);
 
-  useEffect(() => {
-    if (finalSynthesisDone) {
-      setIsCollapsed(true);
-    }
-  }, [finalSynthesisDone]);
-
   const { artifact } = useArtifact();
 
   const isArtifactVisible = artifact.isVisible;
 
   return (
     <div className="space-y-8 mx-auto w-full">
-      <Card className="w-full m-auto overflow-hidden shadow-none hover:shadow-none">
-        <div
-          className={cn(
-            'flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-xl',
-            isComplete && 'cursor-pointer',
-            isComplete &&
-              'hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors'
-          )}
-          onClick={() => isComplete && setIsCollapsed(!isCollapsed)}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-sm font-medium">
-                {isComplete ? 'Research Complete' : 'Research Progress'}
-              </h3>
-              {isComplete ? (
-                <Badge
-                  variant="secondary"
-                  className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400"
-                >
-                  Complete
-                </Badge>
-              ) : (
-                showRunningIndicators && (
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                  >
-                    In Progress
-                  </Badge>
-                )
-              )}
-            </div>
-            <Progress
-              value={progress}
-              className={cn(
-                'h-1 w-24 sm:w-32',
-                showRunningIndicators && 'animate-pulse'
-              )}
-            />
-          </div>
-          {isComplete && (
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 text-neutral-500 transition-transform flex-shrink-0',
-                isCollapsed ? 'rotate-180' : ''
-              )}
-            />
-          )}
-        </div>
-
-        <motion.div
-          initial={false}
-          animate={{
-            height: isCollapsed ? 0 : 'auto',
-            opacity: isCollapsed ? 0 : 1,
-          }}
-          transition={{ duration: 0.2 }}
-          className="overflow-hidden w-full"
-        >
-          <CardContent className="px-2 sm:px-4 pt-2 sm:pt-4 w-full max-w-full m-0">
-            <StepCarousel updates={sortedUpdates} />
-          </CardContent>
-        </motion.div>
-      </Card>
+      <GeneralTimeline 
+        steps={sortedUpdates.map(convertStreamUpdateToTimelineStep)} 
+        timelineId="reason-search-timeline"
+      />
 
       {finalSynthesisDone &&
         (sourceGroups.web.length > 0 || sourceGroups.analysis.length > 0) && (

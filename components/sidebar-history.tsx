@@ -3,7 +3,7 @@
 import { isToday, isYesterday, subMonths, subWeeks } from 'date-fns';
 import { useParams, useRouter } from 'next/navigation';
 import type { User } from 'next-auth';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import {
@@ -25,11 +25,10 @@ import {
 import type { Chat } from '@/lib/db/schema';
 import { fetcher } from '@/lib/utils';
 import useSWRInfinite from 'swr/infinite';
-import { LoaderIcon, PlusIcon } from './icons';
+import { LoaderIcon, PinIcon } from './icons';
 import { ChatItem } from './sidebar-history-item';
 import { useTranslations } from 'next-intl';
-import { Button } from './ui/button';
-import Link from 'next/link';
+import { Search } from 'lucide-react';
 
 type GroupedChats = {
   pinned: Chat[];
@@ -52,38 +51,48 @@ const groupChatsByDate = (chats: Chat[]): GroupedChats => {
   const oneWeekAgo = subWeeks(now, 1);
   const oneMonthAgo = subMonths(now, 1);
 
-  return chats.reduce(
-    (groups, chat) => {
-      if (chat.isPinned) {
-        groups.pinned.push(chat);
-        return groups;
-      }
+  // Initialize groups with empty arrays and sorting function
+  const groups: GroupedChats = {
+    pinned: [],
+    today: [],
+    yesterday: [],
+    lastWeek: [],
+    lastMonth: [],
+    older: [],
+  };
 
-      const chatDate = new Date(chat.createdAt);
+  // Group and sort chats in one pass
+  chats.forEach(chat => {
+    const group = chat.isPinned ? 'pinned'
+      : isToday(new Date(chat.updatedAt)) ? 'today'
+      : isYesterday(new Date(chat.updatedAt)) ? 'yesterday'
+      : new Date(chat.updatedAt) > oneWeekAgo ? 'lastWeek'
+      : new Date(chat.updatedAt) > oneMonthAgo ? 'lastMonth'
+      : 'older';
+    
+    groups[group].push(chat);
+  });
 
-      if (isToday(chatDate)) {
-        groups.today.push(chat);
-      } else if (isYesterday(chatDate)) {
-        groups.yesterday.push(chat);
-      } else if (chatDate > oneWeekAgo) {
-        groups.lastWeek.push(chat);
-      } else if (chatDate > oneMonthAgo) {
-        groups.lastMonth.push(chat);
-      } else {
-        groups.older.push(chat);
-      }
-
-      return groups;
-    },
-    {
-      pinned: [],
-      today: [],
-      yesterday: [],
-      lastWeek: [],
-      lastMonth: [],
-      older: [],
-    } as GroupedChats,
+  // Sort all groups by date
+  Object.values(groups).forEach(group => 
+    group.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
   );
+
+  return groups;
+};
+
+const updateAndSortChats = (chatHistory: ChatHistory, chatId: string, isPinned: boolean): ChatHistory => {
+  // Update pin status and resort in one pass
+  const updatedChats = chatHistory.chats.map(chat => 
+    chat.id === chatId ? { ...chat, isPinned } : chat
+  );
+  
+  const { pinned, today, yesterday, lastWeek, lastMonth, older } = groupChatsByDate(updatedChats);
+  
+  return {
+    ...chatHistory,
+    chats: [...pinned, ...today, ...yesterday, ...lastWeek, ...lastMonth, ...older],
+  };
 };
 
 export function getChatHistoryPaginationKey(
@@ -103,7 +112,15 @@ export function getChatHistoryPaginationKey(
   return `/api/history?ending_before=${firstChatFromPage.id}&limit=${PAGE_SIZE}`;
 }
 
-export function SidebarHistory({ user }: { user: User | undefined }) {
+export function SidebarHistory({ 
+  user, 
+  searchQuery = '',
+  onSearchResultsChange
+}: { 
+  user: User | undefined; 
+  searchQuery?: string;
+  onSearchResultsChange?: (count: number) => void;
+}) {
   const { setOpenMobile } = useSidebar();
   const { id } = useParams();
   const t = useTranslations();
@@ -128,6 +145,25 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const hasEmptyChatHistory = paginatedChatHistories
     ? paginatedChatHistories.every((page) => page.chats.length === 0)
     : false;
+
+  // Calculate filtered chats for search results count
+  React.useEffect(() => {
+    if (!paginatedChatHistories || !onSearchResultsChange) return;
+    
+    let filteredChats = paginatedChatHistories.flatMap(
+      (paginatedChatHistory) => paginatedChatHistory.chats,
+    );
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filteredChats = filteredChats.filter(chat => {
+        const title = (chat.customTitle || chat.title || '').toLowerCase();
+        return title.includes(query);
+      });
+    }
+
+    onSearchResultsChange(filteredChats.length);
+  }, [paginatedChatHistories, searchQuery, onSearchResultsChange]);
 
   const handleDelete = async () => {
     const deletePromise = fetch(`/api/chat?id=${deleteId}`, {
@@ -188,32 +224,27 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   };
 
   const handleTogglePin = async (chatId: string, isPinned: boolean) => {
-    const pinnedPromise = fetch(`/api/chat/pin`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ chatId, isPinned }),
-    });
+    // Optimistically update
+    mutate(
+      chatHistories => chatHistories?.map(history => updateAndSortChats(history, chatId, isPinned)),
+      false
+    );
 
-    toast.promise(pinnedPromise, {
-      loading: isPinned ? 'Pinning chat...' : 'Unpinning chat...',
-      success: () => {
-        mutate((chatHistories) => {
-          if (chatHistories) {
-            return chatHistories.map((chatHistory) => ({
-              ...chatHistory,
-              chats: chatHistory.chats.map((chat) =>
-                chat.id === chatId ? { ...chat, isPinned } : chat
-              ),
-            }));
-          }
-        });
-
-        return isPinned ? 'Chat pinned successfully' : 'Chat unpinned successfully';
-      },
-      error: isPinned ? 'Failed to pin chat' : 'Failed to unpin chat',
-    });
+    try {
+      await fetch('/api/chat/pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId, isPinned }),
+      });
+      mutate(); // Revalidate on success
+    } catch (error) {
+      // Revert on error
+      mutate(
+        chatHistories => chatHistories?.map(history => updateAndSortChats(history, chatId, !isPinned)),
+        false
+      );
+      toast.error(isPinned ? 'Failed to pin chat' : 'Failed to unpin chat');
+    }
   };
 
   if (!user) {
@@ -257,58 +288,70 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     );
   }
 
-  // New Chat Button
-  const NewChatButton = () => (
-    <div className="px-2 pb-3 pt-2">
-      <Button
-        asChild
-        variant="outline"
-        className="w-full flex gap-2 items-center justify-center bg-background border-border hover:bg-accent hover:text-accent-foreground"
-      >
-        <Link href="/" onClick={() => setOpenMobile(false)}>
-          <PlusIcon className="h-4 w-4" />
-          <span>{t('chat.newChat')}</span>
-        </Link>
-      </Button>
-    </div>
-  );
-
   if (hasEmptyChatHistory) {
     return (
-      <>
-        <NewChatButton />
-        <SidebarGroup className="pt-1">
-          <SidebarGroupContent>
-            <div className="px-2 text-zinc-500 w-full flex flex-row justify-center items-center text-sm gap-2">
-              Your conversations will appear here once you start chatting!
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <div className="px-2 text-zinc-500 w-full flex flex-row justify-center items-center text-sm gap-2">
+            Your conversations will appear here once you start chatting!
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
     );
   }
 
   return (
     <>
-      <NewChatButton />
 
       <SidebarGroup className="pt-1">
         <SidebarGroupContent>
           <SidebarMenu>
             {paginatedChatHistories &&
               (() => {
-                const chatsFromHistory = paginatedChatHistories.flatMap(
+                let chatsFromHistory = paginatedChatHistories.flatMap(
                   (paginatedChatHistory) => paginatedChatHistory.chats,
                 );
 
+                // Filter chats based on search query
+                if (searchQuery.trim()) {
+                  const query = searchQuery.toLowerCase();
+                  chatsFromHistory = chatsFromHistory.filter(chat => {
+                    const title = (chat.customTitle || chat.title || '').toLowerCase();
+                    return title.includes(query);
+                  });
+                }
+
                 const groupedChats = groupChatsByDate(chatsFromHistory);
                 const pinnedCount = groupedChats.pinned.length;
+
+                // Show empty state if searching and no results
+                if (searchQuery.trim() && chatsFromHistory.length === 0) {
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex flex-col items-center justify-center py-8 px-4 text-center"
+                    >
+                      <div className="rounded-full bg-sidebar-accent/30 p-3 mb-3">
+                        <Search className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {t('chat.noSearchResults')}
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">
+                        &ldquo;{searchQuery}&rdquo;
+                      </p>
+                    </motion.div>
+                  );
+                }
 
                 return (
                   <div className="flex flex-col gap-6">
                     {groupedChats.pinned.length > 0 && (
                       <div>
-                        <div className="px-2 py-1 text-xs text-sidebar-foreground/50">
+                        <div className="px-2 py-1 text-xs text-sidebar-foreground/50 flex items-center gap-1.5">
+                          <PinIcon className="h-3 w-3" />
                           {t('chat.pinnedChats')}
                         </div>
                         {groupedChats.pinned.map((chat) => (
