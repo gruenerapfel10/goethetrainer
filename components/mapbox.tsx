@@ -97,6 +97,27 @@ export const mapController = {
       });
     }
   },
+  flyToCity: (coordinates: [number, number], zoom: number = 12, boundingBox?: [[number, number], [number, number]]) => {
+    if (window.globalMapInstance) {
+      if (boundingBox) {
+        // Use fitBounds for better framing of the city
+        window.globalMapInstance.fitBounds(boundingBox, {
+          padding: { top: 50, bottom: 50, left: 50, right: 50 },
+          maxZoom: zoom,
+          duration: 3000,
+        });
+      } else {
+        window.globalMapInstance.flyTo({
+          center: coordinates,
+          zoom: zoom,
+          pitch: 45,
+          bearing: 0,
+          duration: 3000,
+          essential: true,
+        });
+      }
+    }
+  },
   setMapStyle: (style: MapStyle) => {
     if (window.globalMapSetStyle) {
       window.globalMapSetStyle(style);
@@ -105,6 +126,30 @@ export const mapController = {
   selectCountry: (iso: string, center: [number, number]) => {
     if (window.globalMapSelectCountry) {
       window.globalMapSelectCountry({ iso, center });
+    }
+  },
+  addCityMarker: (city: { name: string; coordinates: [number, number]; country: string }) => {
+    if (window.globalMapInstance) {
+      // Create a custom marker element
+      const el = document.createElement('div');
+      el.className = 'city-marker';
+      el.style.backgroundColor = '#d2361e';
+      el.style.width = '12px';
+      el.style.height = '12px';
+      el.style.borderRadius = '50%';
+      el.style.border = '2px solid white';
+      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      el.style.cursor = 'pointer';
+      
+      // Add popup
+      const popup = new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`<h3 style="margin: 0; font-weight: bold;">${city.name}</h3><p style="margin: 0; color: #666;">${city.country}</p>`);
+      
+      // Add marker to map
+      new mapboxgl.Marker(el)
+        .setLngLat(city.coordinates)
+        .setPopup(popup)
+        .addTo(window.globalMapInstance);
     }
   }
 };

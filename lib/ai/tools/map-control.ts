@@ -1,6 +1,7 @@
 import type { DataStreamWriter } from 'ai';
 import { z } from 'zod';
 import type { Session } from 'next-auth';
+import { MAJOR_CITIES, findCityByName, searchCities, type CityData } from '@/lib/mapbox/city-data';
 
 interface MapControlProps {
   session: Session;
@@ -66,16 +67,18 @@ export const mapControl = ({
   dataStream,
 }: MapControlProps) => {
   return {
-    description: 'Control the interactive globe map - zoom to countries, locations, or change map styles',
+    description: 'Control the interactive globe map - zoom to countries, cities, specific locations, or change map styles. Now supports city-level detail with major cities worldwide.',
     parameters: z.object({
-      action: z.enum(['flyToCountry', 'flyToLocation', 'setStyle']).describe('The action to perform on the map'),
+      action: z.enum(['flyToCountry', 'flyToCity', 'flyToLocation', 'setStyle', 'searchCities']).describe('The action to perform on the map'),
       country: z.string().optional().describe('Country name to fly to (e.g., "United States", "China", "Germany")'),
+      city: z.string().optional().describe('City name to fly to (e.g., "New York City", "London", "Tokyo")'),
       longitude: z.number().optional().describe('Longitude coordinate for location (-180 to 180)'),
       latitude: z.number().optional().describe('Latitude coordinate for location (-90 to 90)'),
       zoom: z.number().optional().default(5).describe('Zoom level (1-20, default 5)'),
       style: z.enum(['Standard', 'Light', 'Dark', 'Streets', 'Outdoors', 'Satellite', 'Satellite Streets', 'Navigation Day', 'Navigation Night']).optional().describe('Map style to apply'),
+      query: z.string().optional().describe('Search query for cities'),
     }),
-    execute: async ({ action, country, longitude, latitude, zoom, style }: any) => {
+    execute: async ({ action, country, city, longitude, latitude, zoom, style, query }: any) => {
       try {
         switch (action) {
           case 'flyToCountry': {
@@ -114,6 +117,107 @@ export const mapControl = ({
                 country: countryData.name,
                 iso: countryData.iso,
                 center: countryData.center,
+              }
+            };
+          }
+          
+          case 'flyToCity': {
+            if (!city) {
+              return {
+                error: 'City name is required for flyToCity action',
+                success: false,
+              };
+            }
+            
+            const cityData = findCityByName(city);
+            if (!cityData) {
+              // Try searching for partial matches
+              const searchResults = searchCities(city);
+              if (searchResults.length > 0) {
+                const suggestions = searchResults.slice(0, 5).map(c => `${c.name}, ${c.country}`).join(', ');
+                return {
+                  error: `City "${city}" not found. Did you mean: ${suggestions}?`,
+                  success: false,
+                  suggestions: searchResults.slice(0, 5),
+                };
+              }
+              
+              return {
+                error: `City "${city}" not found. Try major cities like "New York City", "London", "Tokyo", etc.`,
+                success: false,
+              };
+            }
+            
+            // Send map control command to client via dataStream
+            dataStream.writeData({
+              type: 'map-control',
+              content: JSON.stringify({
+                action: 'flyToCity',
+                data: {
+                  city: cityData.name,
+                  country: cityData.country,
+                  coordinates: cityData.coordinates,
+                  zoom: cityData.zoomLevel,
+                  boundingBox: cityData.boundingBox
+                }
+              })
+            });
+            
+            return {
+              success: true,
+              message: `Flying to ${cityData.name}, ${cityData.country}`,
+              data: {
+                city: cityData.name,
+                country: cityData.country,
+                coordinates: cityData.coordinates,
+                zoom: cityData.zoomLevel,
+                population: cityData.population,
+              }
+            };
+          }
+          
+          case 'searchCities': {
+            if (!query) {
+              return {
+                error: 'Query is required for searchCities action',
+                success: false,
+              };
+            }
+            
+            const results = searchCities(query);
+            if (results.length === 0) {
+              return {
+                success: false,
+                message: `No cities found matching "${query}"`,
+                data: {
+                  results: [],
+                }
+              };
+            }
+            
+            // Send search results to client
+            dataStream.writeData({
+              type: 'map-control',
+              content: JSON.stringify({
+                action: 'searchResults',
+                data: {
+                  query,
+                  results: results.slice(0, 10).map(city => ({
+                    name: city.name,
+                    country: city.country,
+                    coordinates: city.coordinates,
+                    population: city.population,
+                  }))
+                }
+              })
+            });
+            
+            return {
+              success: true,
+              message: `Found ${results.length} cities matching "${query}"`,
+              data: {
+                totalResults: results.length,
+                results: results.slice(0, 10),
               }
             };
           }

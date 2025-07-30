@@ -54,6 +54,27 @@ export function MapDataStreamHandler({ dataStream, chatId }: MapDataStreamHandle
                   mapController.setMapStyle(data.style as MapStyle);
                 }
                 break;
+                
+              case 'flyToCity':
+                if (data.coordinates && data.city) {
+                  console.log('Flying to city:', data.city, data.coordinates, data.zoom);
+                  mapController.flyToCity(data.coordinates, data.zoom || 12, data.boundingBox);
+                  
+                  // Add city marker after flying
+                  setTimeout(() => {
+                    mapController.addCityMarker({
+                      name: data.city,
+                      coordinates: data.coordinates,
+                      country: data.country
+                    });
+                  }, 3500);
+                }
+                break;
+                
+              case 'searchResults':
+                // Handle search results if needed in future
+                console.log('City search results:', data.results);
+                break;
             }
           }, 100);
         } catch (error) {
