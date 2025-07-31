@@ -356,13 +356,9 @@ export class WorkflowEngine {
 
     try {
       const connectorRegistry = ConnectorRegistry.getInstance();
-      const connector = connectorRegistry.getConnector(connectorId);
-      
-      if (connector && typeof connector[method] === 'function') {
-        const result = await connector[method](params || {});
-        execution.variables[`${action.id}_result`] = result;
-        this.addLog(execution, 'info', `Connector action completed`, result);
-      }
+      const result = await connectorRegistry.executeConnectorMethod(connectorId, method, params || {});
+      execution.variables[`${action.id}_result`] = result;
+      this.addLog(execution, 'info', `Connector action completed`, result);
     } catch (error) {
       this.addLog(execution, 'error', `Connector action failed: ${error}`);
       throw error;
