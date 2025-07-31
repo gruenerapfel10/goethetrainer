@@ -48,10 +48,11 @@ import {
 import { FeatureToggles } from './feature-toggles';
 import { SettingsButton } from './settings-button';
 import { VoiceInput } from '@/components/voice-input';
-import { Code2, Shield } from 'lucide-react';
+import { Code2, Shield, BarChart3 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { CodeAssistantComponent } from '@/components/code-assistant';
 import { SecureMessaging } from '@/components/secure-messaging';
+import { VisualizationDashboard } from '@/components/visualization-dashboard';
 
 function PureMultimodalInput({
   selectedModelId,
@@ -754,6 +755,22 @@ function PureMultimodalInput({
                           userId={chatId}
                           recipientId={selectedModelId}
                         />
+                      </DialogContent>
+                    </Dialog>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="relative"
+                          disabled={status === 'submitted' || status === 'streaming'}
+                        >
+                          <BarChart3 className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                        <VisualizationDashboard chatId={chatId} />
                       </DialogContent>
                     </Dialog>
                     
