@@ -210,7 +210,11 @@ export class GoogleMapsConnector extends BaseConnector {
           break;
         
         case 'searchPlaces':
-          data = await this.searchPlaces(request.params);
+          data = await this.searchPlaces({
+            query: request.params.query || '',
+            location: request.params.location,
+            radius: request.params.radius
+          });
           break;
         
         case 'getDirections':
@@ -222,7 +226,11 @@ export class GoogleMapsConnector extends BaseConnector {
           break;
         
         case 'calculateDistance':
-          data = await this.calculateDistance(request.params);
+          data = await this.calculateDistance({
+            origins: request.params.origins || [],
+            destinations: request.params.destinations || [],
+            mode: request.params.mode || 'driving'
+          });
           break;
         
         case 'getPlaceDetails':

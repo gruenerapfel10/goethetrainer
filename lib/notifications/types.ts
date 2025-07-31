@@ -1,4 +1,4 @@
-export interface Notification {
+export interface AppNotification {
   id: string;
   type: 'info' | 'success' | 'warning' | 'error' | 'mention' | 'task' | 'reminder';
   title: string;
@@ -24,8 +24,8 @@ export interface NotificationAction {
 }
 
 export interface NotificationFilter {
-  types?: Notification['type'][];
-  priorities?: Notification['priority'][];
+  types?: AppNotification['type'][];
+  priorities?: AppNotification['priority'][];
   sources?: string[];
   read?: boolean;
   dateRange?: {
@@ -40,8 +40,8 @@ export interface NotificationPreferences {
   desktop: boolean;
   email: boolean;
   filters: {
-    types: Record<Notification['type'], boolean>;
-    priorities: Record<Notification['priority'], boolean>;
+    types: Record<AppNotification['type'], boolean>;
+    priorities: Record<AppNotification['priority'], boolean>;
   };
   quietHours?: {
     enabled: boolean;

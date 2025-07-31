@@ -152,7 +152,13 @@ export class WorkflowEngine {
     // Listen for message events
     window.addEventListener('message', (event) => {
       if (event.data.type === 'workflow-trigger') {
-        this.handleTrigger(event.data.triggerId, event.data.data);
+        // Handle workflow trigger events
+        const workflow = Array.from(this.workflows.values()).find(w => 
+          w.triggers.some(t => t.id === event.data.triggerId)
+        );
+        if (workflow) {
+          this.executeWorkflow(workflow.id, event.data.triggerId, event.data.data);
+        }
       }
     });
 

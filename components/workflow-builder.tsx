@@ -200,7 +200,6 @@ export function WorkflowBuilder() {
                               <Switch
                                 checked={workflow.enabled}
                                 onCheckedChange={(enabled) => handleToggleWorkflow(workflow.id, enabled)}
-                                size="sm"
                               />
                             </div>
 

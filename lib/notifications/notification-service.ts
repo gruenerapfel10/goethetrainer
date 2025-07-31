@@ -1,5 +1,5 @@
 import { 
-  Notification, 
+  AppNotification, 
   NotificationFilter, 
   NotificationPreferences,
   NotificationRule,
@@ -10,11 +10,11 @@ import { toast } from 'sonner';
 
 export class NotificationService {
   private static instance: NotificationService;
-  private notifications: Map<string, Notification> = new Map();
+  private notifications: Map<string, AppNotification> = new Map();
   private preferences: NotificationPreferences;
   private rules: Map<string, NotificationRule> = new Map();
   private channels: Map<string, NotificationChannel> = new Map();
-  private listeners: Set<(notifications: Notification[]) => void> = new Set();
+  private listeners: Set<(notifications: AppNotification[]) => void> = new Set();
   private soundEnabled: boolean = true;
   private notificationSound: HTMLAudioElement;
 
@@ -142,7 +142,7 @@ export class NotificationService {
     }
   }
 
-  private async showDesktopNotification(notification: Notification) {
+  private async showDesktopNotification(notification: AppNotification) {
     if (!this.preferences.desktop || !('Notification' in window)) {
       return;
     }
@@ -168,7 +168,7 @@ export class NotificationService {
     }
   }
 
-  private shouldNotify(notification: Notification): boolean {
+  private shouldNotify(notification: AppNotification): boolean {
     if (!this.preferences.enabled) return false;
 
     // Check type filter
@@ -198,7 +198,7 @@ export class NotificationService {
     return true;
   }
 
-  private async processRules(notification: Notification) {
+  private async processRules(notification: AppNotification) {
     for (const rule of this.rules.values()) {
       if (!rule.enabled) continue;
 
@@ -217,7 +217,7 @@ export class NotificationService {
     }
   }
 
-  private getFieldValue(notification: Notification, field: string): any {
+  private getFieldValue(notification: AppNotification, field: string): any {
     const parts = field.split('.');
     let value: any = notification;
     
@@ -259,7 +259,7 @@ export class NotificationService {
     }
   }
 
-  private async executeRuleAction(action: any, notification: Notification) {
+  private async executeRuleAction(action: any, notification: AppNotification) {
     switch (action.type) {
       case 'notify':
         // Already handled by default notification flow
@@ -287,8 +287,8 @@ export class NotificationService {
         break;
       case 'custom':
         // Execute custom action
-        if (action.config.handler && typeof window[action.config.handler] === 'function') {
-          window[action.config.handler](notification);
+        if (action.config.handler && typeof (window as any)[action.config.handler] === 'function') {
+          (window as any)[action.config.handler](notification);
         }
         break;
     }
@@ -336,9 +336,9 @@ export class NotificationService {
     return false;
   }
 
-  async notify(notification: Omit<Notification, 'id' | 'timestamp' | 'read'>): Promise<string> {
+  async notify(notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>): Promise<string> {
     const id = generateUUID();
-    const fullNotification: Notification = {
+    const fullNotification: AppNotification = {
       ...notification,
       id,
       timestamp: new Date(),
@@ -432,7 +432,7 @@ export class NotificationService {
     this.notifyListeners();
   }
 
-  getNotifications(filter?: NotificationFilter): Notification[] {
+  getNotifications(filter?: NotificationFilter): AppNotification[] {
     let notifications = Array.from(this.notifications.values());
 
     if (filter) {
@@ -508,7 +508,7 @@ export class NotificationService {
     return Array.from(this.rules.values());
   }
 
-  subscribe(listener: (notifications: Notification[]) => void) {
+  subscribe(listener: (notifications: AppNotification[]) => void) {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
@@ -531,8 +531,8 @@ export class NotificationService {
         }
         break;
       case 'callback':
-        if (action.data?.handler && typeof window[action.data.handler] === 'function') {
-          window[action.data.handler](notification, action);
+        if (action.data?.handler && typeof (window as any)[action.data.handler] === 'function') {
+          (window as any)[action.data.handler](notification, action);
         }
         break;
       default:

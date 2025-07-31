@@ -223,7 +223,7 @@ export function ChatModal({
                     exit={{ opacity: 0, y: 10 }}
                   >
                     <Button
-                      onClick={scrollToBottom}
+                      onClick={() => scrollToBottom()}
                       size="icon"
                       variant="outline"
                       className="h-8 w-8 rounded-full shadow-md"

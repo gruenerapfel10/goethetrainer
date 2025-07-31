@@ -61,7 +61,7 @@ export const SUPPORTED_FILE_TYPES = {
 };
 
 export function getFileCategory(mimeType: string): string {
-  const fileType = SUPPORTED_FILE_TYPES[mimeType];
+  const fileType = SUPPORTED_FILE_TYPES[mimeType as keyof typeof SUPPORTED_FILE_TYPES];
   return fileType?.category || 'unknown';
 }
 
@@ -111,7 +111,7 @@ export function validateFileType(file: File): { valid: boolean; error?: string }
     };
   }
   
-  if (!SUPPORTED_FILE_TYPES[file.type]) {
+  if (!SUPPORTED_FILE_TYPES[file.type as keyof typeof SUPPORTED_FILE_TYPES]) {
     return { 
       valid: false, 
       error: `Unsupported file type: ${file.type}` 

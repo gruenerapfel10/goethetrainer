@@ -48,6 +48,9 @@ import {
 import { FeatureToggles } from './feature-toggles';
 import { SettingsButton } from './settings-button';
 import { VoiceInput } from '@/components/voice-input';
+import { Code2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { CodeAssistantComponent } from '@/components/code-assistant';
 
 function PureMultimodalInput({
   selectedModelId,
@@ -713,6 +716,26 @@ function PureMultimodalInput({
                       onTranscript={(text) => setInput(text)}
                       autoSubmit={false}
                     />
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="relative"
+                          disabled={status === 'submitted' || status === 'streaming'}
+                        >
+                          <Code2 className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <CodeAssistantComponent 
+                          onInsertCode={(code) => {
+                            setInput(input + '\n```\n' + code + '\n```');
+                          }}
+                        />
+                      </DialogContent>
+                    </Dialog>
                     
                     <SettingsButton
                       status={status}

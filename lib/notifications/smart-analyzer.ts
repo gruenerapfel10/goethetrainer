@@ -1,9 +1,9 @@
 import type { UIMessage } from 'ai';
-import type { Notification } from './types';
+import type { AppNotification } from './types';
 
 export interface AnalysisResult {
   shouldNotify: boolean;
-  notifications: Omit<Notification, 'id' | 'timestamp' | 'read'>[];
+  notifications: Omit<AppNotification, 'id' | 'timestamp' | 'read'>[];
 }
 
 export class SmartNotificationAnalyzer {
@@ -42,7 +42,7 @@ export class SmartNotificationAnalyzer {
     isUserMentioned?: boolean;
     previousMessages?: UIMessage[];
   }): AnalysisResult {
-    const notifications: Omit<Notification, 'id' | 'timestamp' | 'read'>[] = [];
+    const notifications: Omit<AppNotification, 'id' | 'timestamp' | 'read'>[] = [];
     
     // Extract text content from message
     const textContent = this.extractTextFromMessage(message);
@@ -217,7 +217,7 @@ export class SmartNotificationAnalyzer {
   }
 
   analyzeChatSession(messages: UIMessage[], chatId: string): AnalysisResult {
-    const notifications: Omit<Notification, 'id' | 'timestamp' | 'read'>[] = [];
+    const notifications: Omit<AppNotification, 'id' | 'timestamp' | 'read'>[] = [];
 
     // Analyze conversation patterns
     const userMessages = messages.filter(m => m.role === 'user');

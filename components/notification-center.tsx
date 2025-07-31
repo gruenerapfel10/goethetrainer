@@ -15,12 +15,12 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { NotificationService } from '@/lib/notifications/notification-service';
-import type { Notification, NotificationFilter } from '@/lib/notifications/types';
+import type { AppNotification, NotificationFilter } from '@/lib/notifications/types';
 import { formatDistanceToNow } from 'date-fns';
 import { NotificationSettings } from './notification-settings';
 
 export function NotificationCenter() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<NotificationFilter>({});
@@ -40,7 +40,9 @@ export function NotificationCenter() {
     // Request permission
     notificationService.requestPermission();
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, [filter]);
 
   const updateNotifications = () => {
@@ -71,7 +73,7 @@ export function NotificationCenter() {
     notificationService.setSoundEnabled(newSoundEnabled);
   };
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = (type: AppNotification['type']) => {
     const icons = {
       info: '💡',
       success: '✅',
@@ -84,7 +86,7 @@ export function NotificationCenter() {
     return icons[type] || '📬';
   };
 
-  const getPriorityColor = (priority: Notification['priority']) => {
+  const getPriorityColor = (priority: AppNotification['priority']) => {
     const colors = {
       low: 'text-muted-foreground',
       medium: 'text-foreground',

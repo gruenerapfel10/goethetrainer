@@ -209,15 +209,27 @@ export class SlackConnector extends BaseConnector {
 
       switch (request.capability) {
         case 'searchMessages':
-          data = await this.searchMessages(request.params);
+          data = await this.searchMessages({
+            query: request.params.query || '',
+            count: request.params.count,
+            sort: request.params.sort
+          });
           break;
         
         case 'getChannelMessages':
-          data = await this.getChannelMessages(request.params);
+          data = await this.getChannelMessages({
+            channel: request.params.channel || '',
+            limit: request.params.limit,
+            latest: request.params.latest,
+            oldest: request.params.oldest
+          });
           break;
         
         case 'listChannels':
-          data = await this.listChannels(request.params);
+          data = await this.listChannels({
+            types: request.params.types || ['public_channel'],
+            limit: request.params.limit
+          });
           break;
         
         case 'getUserInfo':
@@ -225,11 +237,17 @@ export class SlackConnector extends BaseConnector {
           break;
         
         case 'getDirectMessages':
-          data = await this.getDirectMessages(request.params);
+          data = await this.getDirectMessages({
+            user: request.params.user || '',
+            limit: request.params.limit
+          });
           break;
         
         case 'getThreadMessages':
-          data = await this.getThreadMessages(request.params);
+          data = await this.getThreadMessages({
+            channel: request.params.channel || '',
+            thread_ts: request.params.thread_ts || ''
+          });
           break;
         
         case 'searchUsers':

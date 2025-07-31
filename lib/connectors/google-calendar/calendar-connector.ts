@@ -194,7 +194,11 @@ export class GoogleCalendarConnector extends BaseConnector {
           break;
         
         case 'searchEvents':
-          data = await this.searchEvents(request.params);
+          data = await this.searchEvents({
+            query: request.params.query || '',
+            timeMin: request.params.timeMin,
+            timeMax: request.params.timeMax
+          });
           break;
         
         case 'getUpcomingEvents':
@@ -205,7 +209,11 @@ export class GoogleCalendarConnector extends BaseConnector {
           break;
         
         case 'checkAvailability':
-          data = await this.checkAvailability(request.params);
+          data = await this.checkAvailability({
+            date: request.params.date || new Date().toISOString(),
+            startTime: request.params.startTime,
+            endTime: request.params.endTime
+          });
           break;
         
         case 'listCalendars':

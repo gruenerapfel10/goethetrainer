@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { NotificationService } from '@/lib/notifications/notification-service';
-import type { Notification, NotificationFilter } from '@/lib/notifications/types';
+import type { AppNotification, NotificationFilter } from '@/lib/notifications/types';
 
 export function useNotifications(filter?: NotificationFilter) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const notificationService = NotificationService.getInstance();
 
@@ -21,10 +21,12 @@ export function useNotifications(filter?: NotificationFilter) {
       updateState();
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+    };
   }, [filter]);
 
-  const notify = useCallback(async (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+  const notify = useCallback(async (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
     return await notificationService.notify(notification);
   }, []);
 
