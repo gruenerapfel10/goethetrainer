@@ -1,49 +1,82 @@
-import { motion } from 'framer-motion';
+"use client"
 
-export const Overview = () => {
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+
+const data = [
+  {
+    name: "Jan",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Feb",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Mar",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Apr",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "May",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Jun",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Jul",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Aug",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Sep",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Oct",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Nov",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+  {
+    name: "Dec",
+    total: Math.floor(Math.random() * 5000) + 1000,
+  },
+]
+
+export function Overview() {
   return (
-    <motion.div
-      key="overview"
-      className="max-w-3xl mx-auto md:mt-20"
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      transition={{ delay: 0.5 }}
-    >
-      <div className="rounded-xl p-6 flex flex-col gap-8 leading-relaxed text-center max-w-xl">
-        {/*<p className="flex flex-row justify-center gap-4 items-center">*/}
-        {/*  <VercelIcon size={32} />*/}
-        {/*  <span>+</span>*/}
-        {/*  <MessageIcon size={32} />*/}
-        {/*</p>*/}
-        {/*<p>*/}
-        {/*  This is an{' '}*/}
-        {/*  <Link*/}
-        {/*    className="font-medium underline underline-offset-4"*/}
-        {/*    href="https://github.com/vercel/ai-chatbot"*/}
-        {/*    target="_blank"*/}
-        {/*  >*/}
-        {/*    open source*/}
-        {/*  </Link>{' '}*/}
-        {/*  chatbot template built with Next.js and the AI SDK by Vercel. It uses*/}
-        {/*  the{' '}*/}
-        {/*  <code className="rounded-md bg-muted px-1 py-0.5">streamText</code>{' '}*/}
-        {/*  function in the server and the{' '}*/}
-        {/*  <code className="rounded-md bg-muted px-1 py-0.5">useChat</code> hook*/}
-        {/*  on the client to create a seamless chat experience.*/}
-        {/*</p>*/}
-        {/*<p>*/}
-        {/*  You can learn more about the AI SDK by visiting the{' '}*/}
-        {/*  <Link*/}
-        {/*    className="font-medium underline underline-offset-4"*/}
-        {/*    href="https://sdk.vercel.ai/docs"*/}
-        {/*    target="_blank"*/}
-        {/*  >*/}
-        {/*    docs*/}
-        {/*  </Link>*/}
-        {/*  .*/}
-        {/*</p>*/}
-      </div>
-    </motion.div>
-  );
-};
+    <ResponsiveContainer width="100%" height={350}>
+      <BarChart data={data}>
+        <XAxis
+          dataKey="name"
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+        />
+        <YAxis
+          stroke="#888888"
+          fontSize={12}
+          tickLine={false}
+          axisLine={false}
+          tickFormatter={(value) => `$${value}`}
+        />
+        <Bar
+          dataKey="total"
+          fill="#4169E1"
+          radius={[8, 8, 0, 0]}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}

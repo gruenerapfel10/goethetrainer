@@ -54,7 +54,7 @@ const initialState: LogoState = {
   availableLogos: [],
   isLoading: false,
   error: null,
-  defaultLogoUrl: '/moterra-logo.svg', // Default logo URL
+  defaultLogoUrl: '/mua-logo-128x128-blue.png', // Default logo URL
 };
 
 // Default logo factory

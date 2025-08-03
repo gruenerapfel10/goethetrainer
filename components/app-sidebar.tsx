@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { PlusIcon, LayoutDashboardIcon, ShieldIcon } from './icons';
+import { PlusIcon, LayoutDashboardIcon, ShieldIcon, GraduationCapIcon } from './icons';
 import { LogoComponent } from './logo-component';
 import LanguageSwitcher from './language-switcher';
 import { cn } from '@/lib/utils';
@@ -132,6 +132,33 @@ function DashboardNav({ user }: { user: User | undefined }) {
   );
 }
 
+// Universities Navigation Component
+function UniversitiesNav({ user }: { user: User | undefined }) {
+  const { setOpenMobile, state } = useSidebar();
+
+  if (!user) return null;
+
+  return (
+    <SidebarMenu>
+      <SidebarMenuItem>
+        <SidebarMenuButton tooltip="Universities" asChild>
+          <Link 
+            href="/universities" 
+            onClick={() => setOpenMobile(false)}
+            className={cn(
+              "flex items-center gap-2 text-sm font-medium w-full px-2 py-2",
+              "hover:bg-sidebar-accent/50 rounded-md transition-colors"
+            )}
+          >
+            <GraduationCapIcon className="h-4 w-4" />
+            <span>Universities</span>
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
+  );
+}
+
 // Language Switcher Component
 function LanguageNav() {
   const { state } = useSidebar();
@@ -189,7 +216,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             onOpenModal={() => setIsSearchModalOpen(true)}
           />
           <div className="space-y-1">
-            <AdminNav user={user} />
+            <UniversitiesNav user={user} />
             <DashboardNav user={user} />
             <LanguageNav />
           </div>

@@ -3,9 +3,8 @@ import { getToken } from 'next-auth/jwt';
 
 const PUBLIC_FILES = [
   '/favicon.ico',
-  '/moterra-logo.svg',
-  '/logo.svg',
-  '/logo_white.png',
+  '/mua-logo-128x128-blue.png',
+  '/mua-logo-128x128-white.png',
   '/fonts/geist-mono.woff2',
   '/fonts/geist.woff2',
 ];

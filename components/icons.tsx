@@ -1193,6 +1193,23 @@ export const LineChartIcon = ({ size = 16, className }: { size?: number; classNa
   </svg>
 );
 
+export const GraduationCapIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg
+    height={size}
+    strokeLinejoin="round"
+    viewBox="0 0 16 16"
+    width={size}
+    className={className}
+  >
+    <path
+      fill="currentColor"
+      fillRule="evenodd"
+      d="M8 1.5L0.5 5.5L8 9.5L15.5 5.5L8 1.5ZM8 3.191L3.309 5.5L8 7.809L12.691 5.5L8 3.191ZM2.5 7.5V11.5C2.5 11.5 2.5 13.5 8 13.5C13.5 13.5 13.5 11.5 13.5 11.5V7.5L8 10.25L2.5 7.5Z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
 export const LayoutDashboardIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
   <svg
     height={size}

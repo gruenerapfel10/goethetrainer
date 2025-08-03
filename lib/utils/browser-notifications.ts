@@ -134,7 +134,7 @@ export function showNotification(options: NotificationOptions): Notification | n
   try {
     // Use PNG icons for better browser compatibility
     // SVG icons are not supported in most browser notifications
-    const defaultIcon = '/logo_white.png'; // Using existing PNG logo
+    const defaultIcon = '/mua-logo-128x128-white.png'; // Using MUA PNG logo
     const iconUrl = options.icon || defaultIcon;
     const absoluteIconUrl = typeof window !== 'undefined' 
       ? `${window.location.origin}${iconUrl.startsWith('/') ? iconUrl : `/${iconUrl}`}`

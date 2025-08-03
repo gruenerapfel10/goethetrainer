@@ -1,0 +1,500 @@
+[
+    {
+        "name": "Massachusetts Institute of Technology (MIT)",
+        "country": "United States of America",
+        "rank": 1,
+        "employer_reputation_rank": 2,
+        "academic_reputation_rank": 4
+    },
+    {
+        "name": "Imperial College London",
+        "country": "United Kingdom",
+        "rank": 2,
+        "employer_reputation_rank": 9,
+        "academic_reputation_rank": 22
+    },
+    {
+        "name": "Stanford University",
+        "country": "United States of America",
+        "rank": 3,
+        "employer_reputation_rank": 3,
+        "academic_reputation_rank": 5
+    },
+    {
+        "name": "University of Oxford",
+        "country": "United Kingdom",
+        "rank": 4,
+        "employer_reputation_rank": 4,
+        "academic_reputation_rank": 2
+    },
+    {
+        "name": "Harvard University",
+        "country": "United States of America",
+        "rank": 5,
+        "employer_reputation_rank": 1,
+        "academic_reputation_rank": 1
+    },
+    {
+        "name": "University of Cambridge",
+        "country": "United Kingdom",
+        "rank": 6,
+        "employer_reputation_rank": 5,
+        "academic_reputation_rank": 3
+    },
+    {
+        "name": "ETH Zurich (Swiss Federal Institute of Technology)",
+        "country": "Switzerland",
+        "rank": 7,
+        "employer_reputation_rank": 42,
+        "academic_reputation_rank": 18
+    },
+    {
+        "name": "National University of Singapore (NUS)",
+        "country": "Singapore",
+        "rank": 8,
+        "employer_reputation_rank": 32,
+        "academic_reputation_rank": 14
+    },
+    {
+        "name": "UCL (University College London)",
+        "country": "United Kingdom",
+        "rank": 9,
+        "employer_reputation_rank": 18,
+        "academic_reputation_rank": 15
+    },
+    {
+        "name": "California Institute of Technology (Caltech)",
+        "country": "United States of America",
+        "rank": 10,
+        "employer_reputation_rank": 23,
+        "academic_reputation_rank": 33
+    },
+    {
+        "name": "The University of Hong Kong",
+        "country": "Hong Kong SAR, China",
+        "rank": 11,
+        "employer_reputation_rank": 97,
+        "academic_reputation_rank": 27
+    },
+    {
+        "name": "Nanyang Technological University, Singapore (NTU Singapore)",
+        "country": "Singapore",
+        "rank": 12,
+        "employer_reputation_rank": 67,
+        "academic_reputation_rank": 42
+    },
+    {
+        "name": "University of Chicago",
+        "country": "United States of America",
+        "rank": 13,
+        "employer_reputation_rank": 21,
+        "academic_reputation_rank": 17
+    },
+    {
+        "name": "Peking University",
+        "country": "China (Mainland)",
+        "rank": 14,
+        "employer_reputation_rank": 17,
+        "academic_reputation_rank": 12
+    },
+    {
+        "name": "University of Pennsylvania",
+        "country": "United States of America",
+        "rank": 15,
+        "employer_reputation_rank": 28,
+        "academic_reputation_rank": 30
+    },
+    {
+        "name": "Cornell University",
+        "country": "United States of America",
+        "rank": 16,
+        "employer_reputation_rank": 27,
+        "academic_reputation_rank": 25
+    },
+    {
+        "name": "Tsinghua University",
+        "country": "China (Mainland)",
+        "rank": 17,
+        "employer_reputation_rank": 15,
+        "academic_reputation_rank": 16
+    },
+    {
+        "name": "University of California, Berkeley (UCB)",
+        "country": "United States of America",
+        "rank": 18,
+        "employer_reputation_rank": 6,
+        "academic_reputation_rank": 6
+    },
+    {
+        "name": "The University of Melbourne",
+        "country": "Australia",
+        "rank": 19,
+        "employer_reputation_rank": 35,
+        "academic_reputation_rank": 21
+    },
+    {
+        "name": "The University of New South Wales",
+        "country": "Australia",
+        "rank": 20,
+        "employer_reputation_rank": 59,
+        "academic_reputation_rank": 43
+    },
+    {
+        "name": "Yale University",
+        "country": "United States of America",
+        "rank": 21,
+        "employer_reputation_rank": 7,
+        "academic_reputation_rank": 9
+    },
+    {
+        "name": "École Polytechnique Fédérale de Lausanne",
+        "country": "Switzerland",
+        "rank": 22,
+        "employer_reputation_rank": 79,
+        "academic_reputation_rank": 55
+    },
+    {
+        "name": "Technical University of Munich",
+        "country": "Germany",
+        "rank": 23,
+        "employer_reputation_rank": 16,
+        "academic_reputation_rank": 60
+    },
+    {
+        "name": "Johns Hopkins University",
+        "country": "United States of America",
+        "rank": 24,
+        "employer_reputation_rank": 108,
+        "academic_reputation_rank": 51
+    },
+    {
+        "name": "Princeton University",
+        "country": "United States of America",
+        "rank": 25,
+        "employer_reputation_rank": 13,
+        "academic_reputation_rank": 10
+    },
+    {
+        "name": "The University of Sydney",
+        "country": "Australia",
+        "rank": 26,
+        "employer_reputation_rank": 53,
+        "academic_reputation_rank": 29
+    },
+    {
+        "name": "McGill University",
+        "country": "Canada",
+        "rank": 27,
+        "employer_reputation_rank": 58,
+        "academic_reputation_rank": 35
+    },
+    {
+        "name": "PSL University",
+        "country": "France",
+        "rank": 28,
+        "employer_reputation_rank": 31,
+        "academic_reputation_rank": 86
+    },
+    {
+        "name": "University of Toronto",
+        "country": "Canada",
+        "rank": 29,
+        "employer_reputation_rank": 25,
+        "academic_reputation_rank": 11
+    },
+    {
+        "name": "Fudan University",
+        "country": "China (Mainland)",
+        "rank": 30,
+        "employer_reputation_rank": 49,
+        "academic_reputation_rank": 50
+    },
+    {
+        "name": "King's College London (KCL)",
+        "country": "United Kingdom",
+        "rank": 31,
+        "employer_reputation_rank": 65,
+        "academic_reputation_rank": 44
+    },
+    {
+        "name": "Australian National University",
+        "country": "Australia",
+        "rank": 32,
+        "employer_reputation_rank": 96,
+        "academic_reputation_rank": 37
+    },
+    {
+        "name": "The Chinese University of Hong Kong",
+        "country": "Hong Kong SAR, China",
+        "rank": 33,
+        "employer_reputation_rank": 157,
+        "academic_reputation_rank": 48
+    },
+    {
+        "name": "University of Edinburgh",
+        "country": "United Kingdom",
+        "rank": 34,
+        "employer_reputation_rank": 33,
+        "academic_reputation_rank": 24
+    },
+    {
+        "name": "The University of Manchester",
+        "country": "United Kingdom",
+        "rank": 35,
+        "employer_reputation_rank": 26,
+        "academic_reputation_rank": 31
+    },
+    {
+        "name": "Monash University",
+        "country": "Australia",
+        "rank": 36,
+        "employer_reputation_rank": 81,
+        "academic_reputation_rank": 45
+    },
+    {
+        "name": "The University of Tokyo",
+        "country": "Japan",
+        "rank": 37,
+        "employer_reputation_rank": 10,
+        "academic_reputation_rank": 7
+    },
+    {
+        "name": "Columbia University",
+        "country": "United States of America",
+        "rank": 38,
+        "employer_reputation_rank": 11,
+        "academic_reputation_rank": 13
+    },
+    {
+        "name": "Seoul National University",
+        "country": "Republic of Korea",
+        "rank": 39,
+        "employer_reputation_rank": 24,
+        "academic_reputation_rank": 20
+    },
+    {
+        "name": "University of British Columbia",
+        "country": "Canada",
+        "rank": 40,
+        "employer_reputation_rank": 41,
+        "academic_reputation_rank": 23
+    },
+    {
+        "name": "Institut Polytechnique de Paris",
+        "country": "France",
+        "rank": 41,
+        "employer_reputation_rank": 14,
+        "academic_reputation_rank": 185
+    },
+    {
+        "name": "Northwestern University",
+        "country": "United States of America",
+        "rank": 42,
+        "employer_reputation_rank": 74,
+        "academic_reputation_rank": 59
+    },
+    {
+        "name": "The University of Queensland",
+        "country": "Australia",
+        "rank": 43,
+        "employer_reputation_rank": 105,
+        "academic_reputation_rank": 46
+    },
+    {
+        "name": "The Hong Kong University of Science and Technology",
+        "country": "Hong Kong SAR, China",
+        "rank": 44,
+        "employer_reputation_rank": 149,
+        "academic_reputation_rank": 69
+    },
+    {
+        "name": "University of Michigan-Ann Arbor",
+        "country": "United States of America",
+        "rank": 45,
+        "employer_reputation_rank": 30,
+        "academic_reputation_rank": 26
+    },
+    {
+        "name": "University of California, Los Angeles (UCLA)",
+        "country": "United States of America",
+        "rank": 46,
+        "employer_reputation_rank": 8,
+        "academic_reputation_rank": 8
+    },
+    {
+        "name": "Delft University of Technology",
+        "country": "Netherlands",
+        "rank": 47,
+        "employer_reputation_rank": 71,
+        "academic_reputation_rank": 76
+    },
+    {
+        "name": "Shanghai Jiao Tong University",
+        "country": "China (Mainland)",
+        "rank": 48,
+        "employer_reputation_rank": 56,
+        "academic_reputation_rank": 56
+    },
+    {
+        "name": "Zhejiang University",
+        "country": "China (Mainland)",
+        "rank": 49,
+        "employer_reputation_rank": 36,
+        "academic_reputation_rank": 75
+    },
+    {
+        "name": "Yonsei University",
+        "country": "Republic of Korea",
+        "rank": 50,
+        "employer_reputation_rank": 34,
+        "academic_reputation_rank": 64
+    },
+    {
+        "name": "University of Bristol",
+        "country": "United Kingdom",
+        "rank": 51,
+        "employer_reputation_rank": 75,
+        "academic_reputation_rank": 73
+    },
+    {
+        "name": "Carnegie Mellon University",
+        "country": "United States of America",
+        "rank": 52,
+        "employer_reputation_rank": 52,
+        "academic_reputation_rank": 98
+    },
+    {
+        "name": "The University of Amsterdam",
+        "country": "Netherlands",
+        "rank": 53,
+        "employer_reputation_rank": 135,
+        "academic_reputation_rank": 57
+    },
+    {
+        "name": "The Hong Kong Polytechnic University",
+        "country": "Hong Kong SAR, China",
+        "rank": 54,
+        "employer_reputation_rank": 275,
+        "academic_reputation_rank": 93
+    },
+    {
+        "name": "New York University (NYU)",
+        "country": "United States of America",
+        "rank": 55,
+        "employer_reputation_rank": 12,
+        "academic_reputation_rank": 32
+    },
+    {
+        "name": "London School of Economics and Political Science (LSE)",
+        "country": "United Kingdom",
+        "rank": 56,
+        "employer_reputation_rank": 20,
+        "academic_reputation_rank": 96
+    },
+    {
+        "name": "Kyoto University",
+        "country": "Japan",
+        "rank": 57,
+        "employer_reputation_rank": 22,
+        "academic_reputation_rank": 19
+    },
+    {
+        "name": "Ludwig-Maximilians-Universität München",
+        "country": "Germany",
+        "rank": 58,
+        "employer_reputation_rank": 47,
+        "academic_reputation_rank": 41
+    },
+    {
+        "name": "Universiti Malaya (UM)",
+        "country": "Malaysia",
+        "rank": 59,
+        "employer_reputation_rank": 40,
+        "academic_reputation_rank": 58
+    },
+    {
+        "name": "KU Leuven",
+        "country": "Belgium",
+        "rank": 60,
+        "employer_reputation_rank": 169,
+        "academic_reputation_rank": 53
+    },
+    {
+        "name": "Korea University",
+        "country": "Republic of Korea",
+        "rank": 61,
+        "employer_reputation_rank": 48,
+        "academic_reputation_rank": 70
+    },
+    {
+        "name": "Duke University",
+        "country": "United States of America",
+        "rank": 62,
+        "employer_reputation_rank": 68,
+        "academic_reputation_rank": 54
+    },
+    {
+        "name": "City University of Hong Kong",
+        "country": "Hong Kong SAR, China",
+        "rank": 63,
+        "employer_reputation_rank": 284,
+        "academic_reputation_rank": 109
+    },
+    {
+        "name": "National Taiwan University (NTU)",
+        "country": "Taiwan",
+        "rank": 64,
+        "employer_reputation_rank": 54,
+        "academic_reputation_rank": 38
+    },
+    {
+        "name": "The University of Auckland",
+        "country": "New Zealand",
+        "rank": 65,
+        "employer_reputation_rank": 220,
+        "academic_reputation_rank": 63
+    },
+    {
+        "name": "University of California, San Diego (UCSD)",
+        "country": "United States of America",
+        "rank": 66,
+        "employer_reputation_rank": 103,
+        "academic_reputation_rank": 49
+    },
+    {
+        "name": "King Fahd University of Petroleum & Minerals",
+        "country": "Saudi Arabia",
+        "rank": 67,
+        "employer_reputation_rank": 124,
+        "academic_reputation_rank": 206
+    },
+    {
+        "name": "University of Texas at Austin",
+        "country": "United States of America",
+        "rank": 68,
+        "employer_reputation_rank": 38,
+        "academic_reputation_rank": 39
+    },
+    {
+        "name": "Brown University",
+        "country": "United States of America",
+        "rank": 69,
+        "employer_reputation_rank": 166,
+        "academic_reputation_rank": 126
+    },
+    {
+        "name": "Université Paris-Saclay",
+        "country": "France",
+        "rank": 70,
+        "employer_reputation_rank": 19,
+        "academic_reputation_rank": 112
+    },
+    {
+        "name": "University of Illinois at Urbana-Champaign",
+        "country": "United States of America",
+        "rank": 71,
+        "employer_reputation_rank": 66,
+        "academic_reputation_rank": 62
+    },
+    {
+        "name": "Lund University",

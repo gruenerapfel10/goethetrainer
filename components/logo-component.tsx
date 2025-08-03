@@ -9,7 +9,7 @@ export function LogoComponent({ collapsed }: { collapsed?: boolean }) {
   if (collapsed) {
     return (
       <Image
-        src="/moterra-logo-s.svg"
+        src="/mua-logo-128x128-blue.png"
         alt="Logo"
         width={32}
         height={32}

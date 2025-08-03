@@ -116,9 +116,9 @@
     }
   },
   "chat": {
-    "title": "Moterra Chat",
-    "description": "Moterra Chat",
-    "brand": "Moterra",
+    "title": "MUA",
+    "description": "Masinis Universitetų Prašymai",
+    "brand": "MUA",
     "newChat": "Naujas pokalbis",
     "searchChats": "Ieškoti pokalbių",
     "noSearchResults": "Pokalbių nerasta",
@@ -241,7 +241,7 @@
     "setLogo": "Pasirinkti logotipą",
     "currentLogo": "Dabartinis logotipas",
     "poweredBy": "Powered by",
-    "brand": "Moterra",
+    "brand": "MUA",
     "preview": "Peržiūra",
     "uploadedLogos": "Įkelti logotipai",
     "resetToDefault": "Iš naujo nustatyti logotipą",

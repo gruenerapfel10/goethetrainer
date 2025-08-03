@@ -116,9 +116,9 @@
     }
   },
   "chat": {
-    "title": "Moterra Chat",
-    "description": "Moterra Chat",
-    "brand": "Moterra",
+    "title": "MUA",
+    "description": "Mass University Applications",
+    "brand": "MUA",
     "newChat": "New chat",
     "searchChats": "Search chats",
     "noSearchResults": "No chats found",
@@ -241,7 +241,7 @@
     "setLogo": "Set Logo",
     "currentLogo": "Current Logo",
     "poweredBy": "Powered by",
-    "brand": "Moterra",
+    "brand": "MUA",
     "preview": "Preview",
     "uploadedLogos": "Uploaded logos",
     "resetToDefault": "Reset to default",

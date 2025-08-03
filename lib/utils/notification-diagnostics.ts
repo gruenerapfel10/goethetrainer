@@ -58,17 +58,17 @@ export async function runNotificationDiagnostics(): Promise<void> {
   try {
     const testNotification = showNotification({
       title: 'Test Notification 🧪',
-      body: 'Check if the Moterra logo appears as the icon!',
+      body: 'Check if the MUA logo appears as the icon!',
       requireInteraction: false,
     });
     
     if (testNotification) {
       console.log('✅ Notification created successfully!');
       console.log('   You should see a notification with your logo');
-      console.log('   Icon URL:', `${window.location.origin}/logo_white.png`);
+      console.log('   Icon URL:', `${window.location.origin}/mua-logo-128x128-white.png`);
       
       // Test if PNG exists
-      fetch('/logo_white.png')
+      fetch('/mua-logo-128x128-white.png')
         .then(res => {
           if (res.ok) {
             console.log('✅ Icon file exists and is accessible');

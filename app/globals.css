@@ -25,25 +25,36 @@
 @layer base {
     /* Base color definitions that will be referenced by theme variables */
     :root {
+        /* Primary Blue Theme Colors */
+        --primary-blue: 224 97% 58%; /* #4169E1 - Royal Blue */
+        --primary-blue-dark: 224 100% 45%; /* Darker blue for gradients */
+        --primary-blue-light: 224 90% 70%; /* Lighter blue */
+        --primary-blue-alpha: 224 97% 58% / 0.1; /* Blue with transparency */
+        
+        /* Background Blues */
+        --bg-blue-gradient-start: 220 95% 93%; /* Very light blue */
+        --bg-blue-gradient-end: 0 0% 100%; /* White */
+        --bg-blue-subtle: 220 95% 97%; /* Subtle blue tint */
+        
         /* Neutral colors */
         --white: 0 0% 100%;
         --white-alpha: 0 0% 100% / 0.5;
-        --off-white: 0 0% 98%;
-        --light-gray-1: 0 0% 96%;
-        --light-gray-2: 240 4.8% 95.9%;
-        --medium-gray-1: 240 5.9% 90%;
+        --off-white: 220 20% 98%; /* Slight blue tint */
+        --light-gray-1: 220 15% 96%;
+        --light-gray-2: 220 12% 95%;
+        --medium-gray-1: 220 10% 90%;
         --medium-gray-2: 220 13% 91%;
-        --dark-gray-1: 240 3.8% 46.1%;
-        --dark-gray-2: 240 5% 50%;
-        --dark-gray-3: 240 5% 65%;
-        --dark-gray-4: 240 5.3% 26.1%;
-        --light-zinc: 240 3.7% 15.9%;
-        --darker-zinc: 240 3.7% 7%;
-        --light-dark-zinc: 240 6% 10%;
-        --darkest-zinc: 240 3.7% 5.9%;
-        --near-black: 240 10% 3.9%;
-        --near-black-alpha: 240 10% 3.9% / 0.5;
-        --black-alpha-light: 240 10% 3.9% / 0.2;
+        --dark-gray-1: 220 10% 46%;
+        --dark-gray-2: 220 10% 50%;
+        --dark-gray-3: 220 10% 65%;
+        --dark-gray-4: 220 10% 26%;
+        --light-zinc: 220 10% 16%;
+        --darker-zinc: 220 10% 7%;
+        --light-dark-zinc: 220 10% 10%;
+        --darkest-zinc: 220 10% 6%;
+        --near-black: 220 20% 4%;
+        --near-black-alpha: 220 20% 4% / 0.5;
+        --black-alpha-light: 220 20% 4% / 0.2;
         --white-alpha-light: 0 0% 100% / 0.2;
 
         /* Accent colors */
@@ -585,6 +596,55 @@
     border-radius: 0.5rem;
     margin: 0.5rem;
     border: 1px solid hsla(var(--border) / 0.3);
+}
+
+/* Blue Theme Utilities */
+@layer utilities {
+    .bg-gradient-blue {
+        background: linear-gradient(135deg, hsl(var(--primary-blue)) 0%, hsl(var(--primary-blue-dark)) 100%);
+    }
+    
+    .bg-gradient-blue-light {
+        background: linear-gradient(135deg, hsl(var(--bg-blue-gradient-start)) 0%, hsl(var(--bg-blue-gradient-end)) 100%);
+    }
+    
+    .bg-blur-circle {
+        background: radial-gradient(circle at center, hsl(var(--primary-blue) / 0.3) 0%, transparent 70%);
+        filter: blur(40px);
+    }
+    
+    .bg-blur-circle-light {
+        background: radial-gradient(circle at center, hsl(var(--primary-blue) / 0.15) 0%, transparent 70%);
+        filter: blur(60px);
+    }
+    
+    .text-primary-blue {
+        color: hsl(var(--primary-blue));
+    }
+    
+    .border-primary-blue {
+        border-color: hsl(var(--primary-blue));
+    }
+    
+    .shadow-blue {
+        box-shadow: 0 4px 20px hsla(var(--primary-blue) / 0.15);
+    }
+    
+    .shadow-blue-lg {
+        box-shadow: 0 10px 40px hsla(var(--primary-blue) / 0.2);
+    }
+    
+    .backdrop-blur-xl {
+        backdrop-filter: blur(20px);
+    }
+    
+    .bg-white-90 {
+        background-color: hsla(var(--white) / 0.9);
+    }
+    
+    .bg-white-95 {
+        background-color: hsla(var(--white) / 0.95);
+    }
 }
 
 /* Pure CSS staggered grid animations */

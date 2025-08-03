@@ -13,6 +13,8 @@ import { themes } from '../types/constants';
 import { LogoProvider } from '../context/logo-context';
 import {cleanupStaleOperations} from "@/lib/db/queries";
 import { NotificationInitializer } from '@/components/notification-initializer';
+import { PageTransitionProvider } from '@/context/page-transition-context';
+import { PageTransitionOverlay } from '@/components/page-transition-overlay';
 
 const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
@@ -22,20 +24,20 @@ const dmSerif = DM_Serif_Display({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://chat.moterra.co.uk'),
-  title: 'Moterra Chat',
-  description: 'Moterra Chat - AI-powered assistant for your business',
+  metadataBase: new URL('https://mua.app'),
+  title: 'MUA - Mass University Applications',
+  description: 'MUA - Your smart assistant for university applications',
   openGraph: {
-    title: 'Moterra Chat',
-    description: 'AI-powered assistant for your business',
-    url: 'https://chat.moterra.co.uk',
-    siteName: 'Moterra Chat',
+    title: 'MUA - Mass University Applications',
+    description: 'Your smart assistant for university applications',
+    url: 'https://mua.app',
+    siteName: 'MUA',
     images: [
       {
-        url: '/opengraph-image.png',
+        url: '/mua-logo-128x128-blue.png',
         width: 1200,
         height: 630,
-        alt: 'Moterra Chat',
+        alt: 'MUA - Mass University Applications',
       },
     ],
     locale: 'en_US',
@@ -43,9 +45,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Moterra Chat',
-    description: 'AI-powered assistant for your business',
-    images: ['/twitter-image.png'],
+    title: 'MUA - Mass University Applications',
+    description: 'Your smart assistant for university applications',
+    images: ['/mua-logo-128x128-blue.png'],
   },
 };
 
@@ -121,7 +123,12 @@ export default async function RootLayout({
         >
           <Toaster position="top-center" />
           <NotificationInitializer />
-          <LogoProvider>{children}</LogoProvider>
+          <LogoProvider>
+            <PageTransitionProvider>
+              <PageTransitionOverlay />
+              {children}
+            </PageTransitionProvider>
+          </LogoProvider>
         </ThemeProvider>
       </SessionProvider>
     </NextIntlClientProvider>
