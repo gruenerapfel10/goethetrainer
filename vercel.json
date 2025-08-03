@@ -1,0 +1,15 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm build",
+  "devCommand": "pnpm dev",
+  "installCommand": "pnpm install",
+  "regions": ["iad1"],
+  "functions": {
+    "app/api/chat/route.ts": {
+      "maxDuration": 30
+    },
+    "app/(chat)/chat/[id]/page.tsx": {
+      "maxDuration": 10
+    }
+  }
+}

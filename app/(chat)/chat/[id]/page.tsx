@@ -9,6 +9,8 @@ import { DEFAULT_MODEL_NAME } from '../../../../lib/ai/models';
 import type { Attachment, UIMessage } from 'ai';
 import type { DBMessage } from '../../../../lib/db/schema';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;

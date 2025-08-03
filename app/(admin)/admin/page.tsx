@@ -4,6 +4,8 @@ import AdminDashboard from '@/components/admin/admin-dashboard';
 import { auth } from '../../(auth)/auth';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
   description: 'Admin dashboard for managing files and users',

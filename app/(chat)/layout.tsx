@@ -7,6 +7,8 @@ import { ArtifactProvider } from '@/components/artifact-provider';
 import { getServerSession } from '@/lib/firebase/auth-helpers';
 import Script from 'next/script';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Layout({
   children,
 }: {
