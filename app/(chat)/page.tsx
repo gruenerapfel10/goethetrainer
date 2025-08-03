@@ -24,7 +24,7 @@ export default async function Page() {
           selectedChatModel={DEFAULT_MODEL_NAME}
           selectedVisibilityType="private"
           isReadonly={false}
-          isAdmin={session?.user?.isAdmin || false}
+          isAdmin={false} // TODO: Implement Firebase admin roles
         />
         <DataStreamHandler id={id} />
       </>
@@ -40,7 +40,7 @@ export default async function Page() {
         selectedChatModel={modelIdFromCookie?.value || DEFAULT_MODEL_NAME}
         selectedVisibilityType="private"
         isReadonly={false}
-        isAdmin={session?.user?.isAdmin || false}
+        isAdmin={false} // TODO: Implement Firebase admin roles
       />
       <DataStreamHandler id={id} />
     </>

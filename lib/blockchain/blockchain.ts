@@ -43,20 +43,14 @@ export class BlockchainService {
   ): string {
     const dataString = JSON.stringify({ index, timestamp, data, previousHash, nonce });
     
-    // For browser compatibility, use Web Crypto API
-    if (typeof window !== 'undefined') {
-      // This is a simplified version - in production, use async hashing
-      let hash = 0;
-      for (let i = 0; i < dataString.length; i++) {
-        const char = dataString.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
-      }
-      return Math.abs(hash).toString(16).padStart(64, '0');
-    } else {
-      // Server-side - simplified for browser
-      return Math.abs(hash).toString(16).padStart(64, '0');
+    // This is a simplified version - in production, use async hashing
+    let hash = 0;
+    for (let i = 0; i < dataString.length; i++) {
+      const char = dataString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
     }
+    return Math.abs(hash).toString(16).padStart(64, '0');
   }
 
   // Get the latest block

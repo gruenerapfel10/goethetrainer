@@ -1,6 +1,6 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
+import type { Session } from '@/types/next-auth';
 import type { DataStreamWriter } from 'ai';
 import type { UIMessage } from 'ai';
 import {

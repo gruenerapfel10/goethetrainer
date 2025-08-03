@@ -1,5 +1,6 @@
 import { MuaLogo } from "@/components/mua-logo"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export function Header() {
   return (
@@ -9,9 +10,11 @@ export function Header() {
           <MuaLogo className="h-8 w-auto text-white" />
           <span className="text-xl font-medium">MUA</span>
         </div>
-        <Button variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white hover:text-black">
-          Get Started
-        </Button>
+        <Link href="/login">
+          <Button variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white hover:text-black">
+            Get Started
+          </Button>
+        </Link>
       </div>
     </header>
   )

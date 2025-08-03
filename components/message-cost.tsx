@@ -83,7 +83,7 @@ export function MessageCost({
     return () => {
       isCancelled = true;
     };
-  }, [shouldFetch, session?.user?.isAdmin, message.id]); // Added message.id as dependency
+  }, [shouldFetch, session?.user, message.id]); // Added message.id as dependency
 
   if (!costData) {
     return null;

@@ -275,7 +275,7 @@ export class TranscriptionService {
         segment.text.toLowerCase().includes(keyword)
       );
       
-      if (hasImportantKeyword || segment.keywords?.length > 3) {
+      if (hasImportantKeyword || (segment.keywords?.length ?? 0) > 3) {
         keyPoints.push(segment.text.substring(0, 100) + '...');
       }
     });
@@ -302,7 +302,7 @@ export class TranscriptionService {
         name: keyword.charAt(0).toUpperCase() + keyword.slice(1),
         duration: segmentIds.length * 10, // Estimated
         segments: segmentIds,
-        importance: segmentIds.length > 5 ? 'high' : segmentIds.length > 2 ? 'medium' : 'low',
+        importance: (segmentIds.length > 5 ? 'high' : segmentIds.length > 2 ? 'medium' : 'low') as 'high' | 'medium' | 'low',
         keywords: [keyword],
       }))
       .sort((a, b) => b.segments.length - a.segments.length)

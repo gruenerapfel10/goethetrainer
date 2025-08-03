@@ -1,7 +1,7 @@
 // Import Firecrawl instead of Tavily
 import { type DataStreamWriter, tool } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
+import type { Session } from '@/types/next-auth';
 // Add Firecrawl import
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 

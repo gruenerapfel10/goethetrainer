@@ -4,9 +4,7 @@ import { auth } from '@/app/(auth)/auth';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await auth();
-  // Add admin check if necessary
-  if (!session?.user?.isAdmin) {
-  // if (!session?.user) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

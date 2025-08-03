@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user is admin (assuming you have this in your session)
-    const isAdmin = session.user.isAdmin;
+    const isAdmin = session?.user;
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },

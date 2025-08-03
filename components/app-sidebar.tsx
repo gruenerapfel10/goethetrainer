@@ -1,6 +1,6 @@
 'use client';
 
-import type { User } from 'next-auth';
+import type { User } from '@/types/next-auth';
 import { useRouter } from 'next/navigation';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
@@ -81,7 +81,9 @@ function AdminNav({ user }: { user: User | undefined }) {
   const t = useTranslations();
   const { setOpenMobile, state } = useSidebar();
 
-  if (!user?.isAdmin) return null;
+  // TODO: Implement Firebase custom claims for admin check
+  // if (!user?.isAdmin) return null;
+  return null; // Temporarily disabled until admin roles are implemented
 
   return (
     <SidebarMenu>
@@ -109,7 +111,9 @@ function DashboardNav({ user }: { user: User | undefined }) {
   const t = useTranslations();
   const { setOpenMobile, state } = useSidebar();
 
-  if (!user?.isAdmin) return null;
+  // TODO: Implement Firebase custom claims for admin check
+  // if (!user?.isAdmin) return null;
+  return null; // Temporarily disabled until admin roles are implemented
 
   return (
     <SidebarMenu>

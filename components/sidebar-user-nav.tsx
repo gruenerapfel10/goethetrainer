@@ -1,8 +1,8 @@
 'use client';
 import { Check, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
-import type { User } from 'next-auth';
-import { signOut } from 'next-auth/react';
+import type { User } from '@/types/next-auth';
+import { useAuth } from '@/context/firebase-auth-context';
 import { useTheme } from 'next-themes';
 
 import {
@@ -25,6 +25,7 @@ import { themes } from '../types/constants';
 export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, theme } = useTheme();
   const t = useTranslations();
+  const { logout } = useAuth();
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -69,9 +70,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 type="button"
                 className="w-full cursor-pointer"
                 onClick={() => {
-                  signOut({
-                    redirectTo: '/',
-                  });
+                  logout();
                 }}
               >
                 {t('actions.signOut')}

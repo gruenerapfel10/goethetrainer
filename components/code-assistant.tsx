@@ -146,8 +146,8 @@ export function CodeAssistantComponent({ onInsertCode }: CodeAssistantProps) {
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    const colors = {
+  const getSeverityColor = (severity: string): "default" | "success" | "destructive" | "outline" | "secondary" => {
+    const colors: Record<string, "default" | "success" | "destructive" | "outline" | "secondary"> = {
       critical: 'destructive',
       high: 'destructive',
       medium: 'secondary',

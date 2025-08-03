@@ -8,13 +8,13 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 import './globals.css';
 import { getLocale, getMessages } from 'next-intl/server';
-import { SessionProvider } from 'next-auth/react';
 import { themes } from '../types/constants';
 import { LogoProvider } from '../context/logo-context';
 import {cleanupStaleOperations} from "@/lib/db/queries";
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { PageTransitionProvider } from '@/context/page-transition-context';
 import { PageTransitionOverlay } from '@/components/page-transition-overlay';
+import { FirebaseAuthProvider } from '@/context/firebase-auth-context';
 
 const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
@@ -113,24 +113,24 @@ export default async function RootLayout({
       dmSerif.variable
     )}>
     <NextIntlClientProvider messages={messages}>
-      <SessionProvider>
-        <ThemeProvider
-          themes={themes}
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Toaster position="top-center" />
-          <NotificationInitializer />
-          <LogoProvider>
+      <ThemeProvider
+        themes={themes}
+        attribute="class"
+        defaultTheme="light"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <Toaster position="top-center" />
+        <NotificationInitializer />
+        <LogoProvider>
+          <FirebaseAuthProvider>
             <PageTransitionProvider>
               <PageTransitionOverlay />
               {children}
             </PageTransitionProvider>
-          </LogoProvider>
-        </ThemeProvider>
-      </SessionProvider>
+          </FirebaseAuthProvider>
+        </LogoProvider>
+      </ThemeProvider>
     </NextIntlClientProvider>
     </body>
     </html>

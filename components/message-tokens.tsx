@@ -8,7 +8,7 @@
  * - MessagePrompt: Shows the complete raw prompt sent to the AI
  * 
  * VISIBILITY REQUIREMENTS:
- * - Only visible to admin users (session.user.isAdmin === true)
+ * - Only visible to authenticated users (TODO: add admin check with Firebase custom claims)
  * - Only visible when debug mode is enabled (NEXT_PUBLIC_DEBUG_MODE=true in .env)
  * 
  * To enable debug mode:
@@ -91,7 +91,8 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  if (!session?.user?.isAdmin || !isDebugMode) {
+  // TODO: Implement Firebase custom claims for admin check
+  if (!session?.user || !isDebugMode) {
     return null;
   }
 
@@ -159,7 +160,8 @@ export function MessageTokens({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  if (!session?.user?.isAdmin || !isDebugMode) {
+  // TODO: Implement Firebase custom claims for admin check
+  if (!session?.user || !isDebugMode) {
     return null;
   }
 

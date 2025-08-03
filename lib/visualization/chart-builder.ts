@@ -304,12 +304,12 @@ export class ChartBuilder {
     // Simple anomaly detection using standard deviation
     if (data.series && data.series[0] && Array.isArray(data.series[0].data)) {
       const values = data.series[0].data;
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const mean = values.reduce((a: number, b: number) => a + b, 0) / values.length;
       const stdDev = Math.sqrt(
-        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+        values.reduce((sum: number, val: number) => sum + Math.pow(val - mean, 2), 0) / values.length
       );
       
-      values.forEach((val, index) => {
+      values.forEach((val: number, index: number) => {
         const zScore = Math.abs((val - mean) / stdDev);
         if (zScore > 2) {
           insights.push({

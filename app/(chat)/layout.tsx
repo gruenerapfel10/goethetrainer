@@ -4,7 +4,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { ArtifactProvider } from '@/components/artifact-provider';
 
-import { auth } from '../(auth)/auth';
+import { getServerSession } from '@/lib/firebase/auth-helpers';
 import Script from 'next/script';
 
 export default async function Layout({
@@ -12,7 +12,7 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const [session, cookieStore] = await Promise.all([auth(), cookies()]);
+  const [session, cookieStore] = await Promise.all([getServerSession(), cookies()]);
   const isCollapsed = cookieStore.get('sidebar:state')?.value !== 'true';
 
   return (

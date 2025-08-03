@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user?.isAdmin) {
+  if (!session?.user) {
     redirect('/');
   }
+  // TODO: Implement Firebase admin role check
 
   return (
     <div className="flex-1 relative">

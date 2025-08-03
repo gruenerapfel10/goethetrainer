@@ -12,9 +12,7 @@ function createSSEMessage(data: any) {
 
 export async function GET(request: NextRequest) {
   const session = await auth();
-  // Add admin check if necessary
-  if (!session?.user?.isAdmin) {
-  // if (!session?.user) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

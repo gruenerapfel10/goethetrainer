@@ -1,6 +1,6 @@
 import type { DataStreamWriter } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
+import type { Session } from '@/types/next-auth';
 import { MAJOR_CITIES, findCityByName, searchCities, type CityData } from '@/lib/mapbox/city-data';
 
 interface MapControlProps {

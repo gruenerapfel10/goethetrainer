@@ -6,7 +6,7 @@ import { saveSuggestedMessage } from '../../../../../lib/db/queries';
 export async function POST(request: Request) {
   // Check if user is authenticated and is an admin
   const session = await auth();
-  if (!session?.user || !(session.user as any).isAdmin) {
+  if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 

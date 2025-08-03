@@ -82,7 +82,7 @@ export class EncryptionService {
     
     return {
       ciphertext: this.arrayBufferToBase64(encryptedData),
-      iv: this.arrayBufferToBase64(iv),
+      iv: this.arrayBufferToBase64(iv.buffer),
       algorithm: 'AES-GCM',
     };
   }

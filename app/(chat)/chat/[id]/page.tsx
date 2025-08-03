@@ -59,7 +59,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           selectedChatModel={chatModelFromCookie?.value || DEFAULT_MODEL_NAME}
           selectedVisibilityType={chat.visibility}
           isReadonly={session?.user?.id !== chat.userId}
-          isAdmin={session?.user?.isAdmin || false}
+          isAdmin={false} // TODO: Implement Firebase admin roles
           chat={{
             title: chat.title,
             customTitle: chat.customTitle

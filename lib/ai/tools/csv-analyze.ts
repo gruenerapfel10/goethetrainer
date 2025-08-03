@@ -1,6 +1,6 @@
 import { type DataStreamWriter, tool, generateObject } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
+import type { Session } from '@/types/next-auth';
 import { jsonrepair } from 'jsonrepair';
 
 import { myProvider } from '../models';

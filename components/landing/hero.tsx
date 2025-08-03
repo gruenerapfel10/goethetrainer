@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { MatrixRainBackground } from "./matrix-rain-background"
+import Link from "next/link"
 
 export function Hero() {
   return (
@@ -15,12 +16,14 @@ export function Hero() {
           education, from discovery to decision.
         </p>
         <div className="mt-8">
-          <Button
-            size="lg"
-            className="border-2 border-white bg-white text-blue-600 shadow-2xl transition-all hover:scale-105 hover:bg-transparent hover:text-white"
-          >
-            Start Your Free Application
-          </Button>
+          <Link href="/login">
+            <Button
+              size="lg"
+              className="border-2 border-white bg-white text-blue-600 shadow-2xl transition-all hover:scale-105 hover:bg-transparent hover:text-white"
+            >
+              Start Your Free Application
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

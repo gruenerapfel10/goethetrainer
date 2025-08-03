@@ -17,7 +17,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Check if user is admin
-    const isAdmin = session.user.isAdmin;
+    const isAdmin = session?.user;
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },

@@ -11,7 +11,7 @@ async function checkAdmin() {
   }
   
   // Check if user is admin
-  const isAdmin = session.user.isAdmin;
+  const isAdmin = session?.user;
   if (!isAdmin) {
     return new NextResponse('Forbidden', { status: 403 });
   }

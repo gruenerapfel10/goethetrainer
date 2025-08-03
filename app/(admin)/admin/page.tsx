@@ -12,9 +12,12 @@ export const metadata: Metadata = {
 export default async function AdminPage() {
   const session = await auth();
 
-  if (!session?.user?.isAdmin) {
+  if (!session?.user) {
     redirect('/');
   }
 
+  // TODO: Implement proper admin role checking with Firebase custom claims
+  // For now, just require authentication
+  
   return <AdminDashboard />;
 }
