@@ -87,13 +87,13 @@ export function FeatureMatrix() {
                       <td className="p-4 text-zinc-300">
                         <div className="flex items-center gap-2">
                           <span>{item.name}</span>
-                          {item.tooltip && (
+                          {'tooltip' in item && item.tooltip && (
                             <Tooltip delayDuration={0}>
                               <TooltipTrigger>
                                 <Info className="h-4 w-4 text-zinc-500" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{item.tooltip}</p>
+                                <p>{'tooltip' in item ? item.tooltip : ''}</p>
                               </TooltipContent>
                             </Tooltip>
                           )}

@@ -17,33 +17,31 @@ export const dynamic = 'force-dynamic';
 async function runSingleDeletionAndProcessInBackground(operationId: number, documentId: string) {
   try {
     console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Flagging file ${documentId} for deletion.`);
-    // flagSingleFileForDeletion does not update system_operations, it returns success/message
-    const flagResult = await flagSingleFileForDeletion(documentId);
-    console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Flag result for ${documentId}:`, flagResult);
-
-    if (!flagResult.success) {
+    // flagSingleFileForDeletion throws an error (migration to Gemini)
+    try {
+      await flagSingleFileForDeletion();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       await updateSystemOperation(operationId, 'FAILED', {
-        message: `Failed to flag file ${documentId} for deletion: ${flagResult.message}`,
-        flagResult
-      }, flagResult.message);
+        message: `Failed to flag file ${documentId} for deletion: ${errorMessage}`,
+        error: errorMessage
+      }, errorMessage);
       console.warn(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Failed to flag file ${documentId}. Operation marked FAILED.`);
       return;
     }
 
-    await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', { // Or more specific status
+    await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', {
       message: `File ${documentId} flagged for deletion. Processing with Bedrock.`,
-      flagResult
     });
 
     console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Starting Bedrock Processing for deletion of ${documentId}...`);
-    const bedrockProcessingResults = await processPendingBedrockOperations(operationId);
+    const bedrockProcessingResults = await processPendingBedrockOperations();
     console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Bedrock Processing complete for ${documentId}.`);
 
     const currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, operationId)).limit(1))[0];
     if (currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
       await updateSystemOperation(operationId, 'COMPLETED', {
         message: `File ${documentId} deletion and subsequent Bedrock processing completed.`,
-        flagResult,
         bedrockProcessingDetails: bedrockProcessingResults
       });
       console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Marked as COMPLETED.`);

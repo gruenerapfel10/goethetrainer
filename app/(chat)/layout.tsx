@@ -33,7 +33,7 @@ export default async function Layout({
         <ChatPanelProvider defaultOpen={!isChatPanelCollapsed}>
           <ArtifactProvider>
             <div className="flex w-full">
-              <AppSidebar user={null} />
+              <AppSidebar user={undefined} />
               <SidebarInset>
                 <ChatPanelInset>
                   {children}

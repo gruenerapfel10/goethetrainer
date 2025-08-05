@@ -23,7 +23,7 @@ async function runProcessPendingInBackground(operationId: number) {
     });
 
     // Process all pending operations
-    const bedrockProcessingResults = await processPendingBedrockOperations(operationId);
+    const bedrockProcessingResults = await processPendingBedrockOperations();
     console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Bedrock Processing complete:`, bedrockProcessingResults);
 
     // Check if operation is still not failed before marking as completed
@@ -32,13 +32,6 @@ async function runProcessPendingInBackground(operationId: number) {
       await updateSystemOperation(operationId, 'COMPLETED', {
         message: "Processing of pending documents completed successfully.",
         bedrockProcessingDetails: bedrockProcessingResults,
-        summary: {
-          totalLoops: bedrockProcessingResults.totalLoops,
-          ingestionsSubmitted: bedrockProcessingResults.ingestionsSubmittedThisRun,
-          deletionsSubmitted: bedrockProcessingResults.deletionsSubmittedThisRun,
-          statusesChecked: bedrockProcessingResults.statusesCheckedThisRun,
-          errorsEncountered: bedrockProcessingResults.totalProcessingErrorsThisRun
-        }
       });
       console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Marked as COMPLETED.`);
     } else {

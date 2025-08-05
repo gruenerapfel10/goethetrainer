@@ -33,13 +33,14 @@ export const streamCsvAgent = async (
                 let availableTablesList: Array<{ tableName: string; rowCount: number; columnCount: number }> = [];
 
                 try {
-                    availableTablesList = await listCsvTables();
+                    availableTablesList = await listCsvTables({});
                     if (availableTablesList.length > 0) {
                         const schemaPromises = availableTablesList.map(async (table) => {
                             const sampleQuery = `SELECT * FROM "${table.tableName}" LIMIT 5`;
                             const sampleData = await executeCsvQuery(sampleQuery);
-                            const columns = sampleData.length > 0 ? Object.keys(sampleData[0]) : [];
-                            const sampleDataString = JSON.stringify(sampleData, null, 2);
+                            const results = sampleData.results || [];
+                            const columns = results.length > 0 ? Object.keys(results[0]) : sampleData.columns || [];
+                            const sampleDataString = JSON.stringify(results, null, 2);
 
                             return `Table: "${table.tableName}" (${table.rowCount} rows, ${columns.length} columns)\nColumns: ${columns.join(', ')}\nSample Rows:\n${sampleDataString}\n---`;
                         });

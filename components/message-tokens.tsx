@@ -94,7 +94,7 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
 
   // Only show for admin users when debug mode is enabled
   // TODO: Implement Firebase custom claims for admin check
-  if (!session?.user || !isDebugMode) {
+  if (!isDebugMode) {
     return null;
   }
 
@@ -164,7 +164,7 @@ export function MessageTokens({ message, systemPrompt = '', attachedFiles }: Mes
 
   // Only show for admin users when debug mode is enabled
   // TODO: Implement Firebase custom claims for admin check
-  if (!session?.user || !isDebugMode) {
+  if (!isDebugMode) {
     return null;
   }
 

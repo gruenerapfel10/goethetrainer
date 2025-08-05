@@ -21,33 +21,33 @@ export const dynamic = 'force-dynamic';
 async function runManualUploadAndProcessInBackground(operationId: number, validatedFiles: File[]) {
   try {
     console.log(`[API Route UPLOAD BG] OpID ${operationId}: Starting manual file upload and registration...`);
-    // uploadAndRegisterManualFiles is designed to update systemOperation for UPLOADING_TO_S3 stage
-    const uploadFlagResults = await uploadAndRegisterManualFiles(validatedFiles, operationId);
-    console.log(`[API Route UPLOAD BG] OpID ${operationId}: Files S3 upload & DB registration complete:`, uploadFlagResults);
+    // uploadAndRegisterManualFiles throws an error (migration to Gemini)
+    try {
+      await uploadAndRegisterManualFiles();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await updateSystemOperation(operationId, 'FAILED', {
+        message: `Manual file upload failed: ${errorMessage}`,
+        error: errorMessage
+      }, errorMessage);
+      console.warn(`[API Route UPLOAD BG] OpID ${operationId}: Manual file upload failed. Operation marked FAILED.`);
+      return;
+    }
 
     // Update status after S3 upload and DB flagging, before Bedrock processing
-    // uploadAndRegisterManualFiles should handle intermediate updates. This is a summary before Bedrock.
     await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', {
-      message: `${uploadFlagResults.uploadedFileCount} files uploaded, ${uploadFlagResults.failedFileCount} failed. Triggering Bedrock processing if needed.`,
-      uploadFlagDetails: uploadFlagResults // Keep the detailed results
+      message: `Files flagged for Bedrock processing.`,
     });
 
-    let bedrockProcessingResults;
-    if (uploadFlagResults.uploadedFileCount > 0) {
-      console.log(`[API Route UPLOAD BG] OpID ${operationId}: Starting Bedrock Processing for manual uploads...`);
-      bedrockProcessingResults = await processPendingBedrockOperations(operationId);
-      console.log(`[API Route UPLOAD BG] OpID ${operationId}: Bedrock Processing complete:`, bedrockProcessingResults);
-    } else {
-      console.log(`[API Route UPLOAD BG] OpID ${operationId}: No files successfully uploaded, skipping Bedrock Processing.`);
-      bedrockProcessingResults = "No Bedrock processing triggered as no files were successfully uploaded.";
-    }
+    console.log(`[API Route UPLOAD BG] OpID ${operationId}: Starting Bedrock Processing for manual uploads...`);
+    const bedrockProcessingResults = await processPendingBedrockOperations();
+    console.log(`[API Route UPLOAD BG] OpID ${operationId}: Bedrock Processing complete:`, bedrockProcessingResults);
 
     // Final Success Update (if not already FAILED by sub-processes)
     const currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, operationId)).limit(1))[0];
     if (currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
       await updateSystemOperation(operationId, 'COMPLETED', {
         message: "Manual upload and Bedrock processing completed.",
-        uploadFlagResults: uploadFlagResults, // Final results from upload phase
         bedrockProcessingDetails: bedrockProcessingResults
       });
       console.log(`[API Route UPLOAD BG] OpID ${operationId}: Marked as COMPLETED.`);

@@ -90,7 +90,7 @@ const ToolResultHandler = ({
   if (state === 'call') {
     const loadingComponents = {
       // Main tools
-      searchUniversities: <UniversitySearchHandler isLoading={true} result={{}} args={args} />,
+      searchUniversities: <UniversitySearchHandler isLoading={true} result={{}} />,
       webSearch: <WebSearchHandler isLoading={true} result={{}} args={args} />,
       search: <WebSearchHandler isLoading={true} result={{}} args={args} />,
       deepResearch: <DeepResearchHandler isLoading={true} result={{}} args={args} />,
@@ -130,7 +130,7 @@ const ToolResultHandler = ({
   if (state === 'result' && result) {
     const resultComponents = {
       // Main tools
-      searchUniversities: <UniversitySearchHandler result={result} isLoading={false} args={args} />,
+      searchUniversities: <UniversitySearchHandler result={result} isLoading={false} />,
       webSearch: <WebSearchHandler result={result} isLoading={false} args={args} />,
       search: <WebSearchHandler result={result} isLoading={false} args={args} />,
       deepResearch: <DeepResearchHandler result={result} isLoading={false} args={args} />,

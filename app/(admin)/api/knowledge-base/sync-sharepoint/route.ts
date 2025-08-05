@@ -18,36 +18,29 @@ export const dynamic = 'force-dynamic';
 async function runSharePointSyncAndProcessInBackground(opId: number) {
   try {
     console.log(`[API Route SYNC BG] OpID ${opId}: Starting S3 Sync & DB Flagging...`);
-    // syncSharepointToS3AndFlagForBedrock is designed to update systemOperation with its progress
-    const s3SyncResults = await syncSharepointToS3AndFlagForBedrock(opId);
-    console.log(`[API Route SYNC BG] OpID ${opId}: Phase 1 (S3 & DB Flagging) complete:`, s3SyncResults);
+    // syncSharepointToS3AndFlagForBedrock throws an error (migration to Gemini)
+    try {
+      await syncSharepointToS3AndFlagForBedrock();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      await updateSystemOperation(opId, 'FAILED', {
+        message: `SharePoint sync failed: ${errorMessage}`,
+        error: errorMessage
+      }, errorMessage);
+      console.warn(`[API Route SYNC BG] OpID ${opId}: SharePoint sync failed. Operation marked FAILED.`);
+      return;
+    }
 
-    // Check status before proceeding, as syncSharepointToS3AndFlagForBedrock might have set it to FAILED
+    // Check status before proceeding
     let currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, opId)).limit(1))[0];
 
     if (currentOp?.currentStatus === operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
-      console.log(`[API Route SYNC BG] OpID ${opId}: Aborting Bedrock processing due to earlier failure during S3 sync/flagging phase.`);
+      console.log(`[API Route SYNC BG] OpID ${opId}: Aborting due to earlier failure.`);
       return;
     }
-
-    // If there were S3 errors and no files were processed/flagged by the S3 sync stage,
-    // and the status hasn't already been set to FAILED by syncSharepointToS3AndFlagForBedrock
-    if (s3SyncResults.errorsInS3Sync > 0 &&
-      s3SyncResults.dbRecordsUpdatedOrCreated === 0 &&
-      s3SyncResults.dbRecordsMarkedForDeletion === 0 &&
-      currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
-      console.warn(`[API Route SYNC BG] OpID ${opId}: S3 sync phase had errors and processed no files. Marking operation as FAILED.`);
-      await updateSystemOperation(opId, 'FAILED', {
-        message: "SharePoint sync phase failed: Errors encountered and no files were processed.",
-        s3SyncDetails: s3SyncResults
-      }, "S3 sync errors with no files processed.");
-      return;
-    }
-
 
     console.log(`[API Route SYNC BG] OpID ${opId}: Starting Phase 2 (Bedrock Processing of all pending documents)...`);
-    // processPendingBedrockOperations should use opId for its internal status updates related to this specific operation type
-    const bedrockProcessingResults = await processPendingBedrockOperations(opId);
+    const bedrockProcessingResults = await processPendingBedrockOperations();
     console.log(`[API Route SYNC BG] OpID ${opId}: Phase 2 (Bedrock Processing) complete:`, bedrockProcessingResults);
 
     // Final success update (if not already set to FAILED by sub-processes)
@@ -55,7 +48,6 @@ async function runSharePointSyncAndProcessInBackground(opId: number) {
     if (currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
       await updateSystemOperation(opId, 'COMPLETED', {
         message: "SharePoint sync and Bedrock processing completed successfully.",
-        s3SyncDetails: s3SyncResults,
         bedrockProcessingDetails: bedrockProcessingResults
       });
       console.log(`[API Route SYNC BG] OpID ${opId}: Marked as COMPLETED.`);

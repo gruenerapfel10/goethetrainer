@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatPanelProvider, ChatPanel, ChatPanelTrigger, ChatPanelInset } from '@/components/chat-panel';
+import { ChatPanelProvider, ChatPanel, ChatPanelTrigger, ChatPanelInset, useChatPanel } from '@/components/chat-panel';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/app-sidebar';
 import type { User } from '@/types/next-auth';

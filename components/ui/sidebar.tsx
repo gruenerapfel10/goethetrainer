@@ -311,7 +311,7 @@ const Sidebar = React.forwardRef<
             }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            {...props}
+            {...(({ onDrag, onDragEnd, onDragStart, onAnimationStart, onAnimationEnd, onAnimationIteration, ...rest }) => rest)(props)}
           >
             <div
               data-sidebar="sidebar"

@@ -18,35 +18,33 @@ async function runMultipleDeletionAndProcessInBackground(operationId: number, do
   try {
     console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Flagging ${documentIds.length} files for deletion.`);
 
-    // flagMultipleFilesForDeletion returns detailed results
-    const flagResult = await flagMultipleFilesForDeletion(documentIds);
-    console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Flag result for ${documentIds.length} files:`, flagResult);
-
-    if (!flagResult.success) {
+    // flagMultipleFilesForDeletion throws an error (migration to Gemini)
+    try {
+      await flagMultipleFilesForDeletion();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       await updateSystemOperation(operationId, 'FAILED', {
-        message: `Failed to flag files for deletion: ${flagResult.message}`,
-        flagResult
-      }, flagResult.message);
+        message: `Failed to flag files for deletion: ${errorMessage}`,
+        error: errorMessage
+      }, errorMessage);
       console.warn(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Failed to flag files. Operation marked FAILED.`);
       return;
     }
 
     // Update status after flagging
     await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', {
-      message: `${flagResult.markedForDeletionCount} files flagged for deletion${flagResult.notFoundCount > 0 ? `, ${flagResult.notFoundCount} not found` : ''}. Processing with Bedrock.`,
-      flagResult
+      message: `Files flagged for deletion. Processing with Bedrock.`,
     });
 
-    console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Starting Bedrock Processing for deletion of ${flagResult.markedForDeletionCount} files...`);
-    const bedrockProcessingResults = await processPendingBedrockOperations(operationId);
+    console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Starting Bedrock Processing for deletion of files...`);
+    const bedrockProcessingResults = await processPendingBedrockOperations();
     console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Bedrock Processing complete for multiple file deletion.`);
 
     // Check if operation is still not failed before marking as completed
     const currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, operationId)).limit(1))[0];
     if (currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
       await updateSystemOperation(operationId, 'COMPLETED', {
-        message: `Multiple file deletion completed. ${flagResult.markedForDeletionCount} files processed, ${flagResult.notFoundCount} not found.`,
-        flagResult,
+        message: `Multiple file deletion completed.`,
         bedrockProcessingDetails: bedrockProcessingResults
       });
       console.log(`[API Route DELETE-MULTIPLE BG] OpID ${operationId}: Marked as COMPLETED.`);

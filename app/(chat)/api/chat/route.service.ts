@@ -41,7 +41,15 @@ export async function streamAgent(json: any) {
   const { messages, id, selectedChatModel, deepResearch, selectedFiles, webSearch, imageGeneration } = json;
   try {
     // Auth removed - no authentication needed
-    const session = { user: { id: 'anonymous-user', email: 'anonymous@example.com' } };
+    const session = { 
+      user: { 
+        id: 'anonymous-user', 
+        email: 'anonymous@example.com',
+        name: 'Anonymous User',
+        image: null
+      },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+    };
 
     const userMessage = getMostRecentUserMessage(messages);
     if (!userMessage) {

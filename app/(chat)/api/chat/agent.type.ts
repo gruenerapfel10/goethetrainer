@@ -9,6 +9,6 @@ export type AgentMeta = {
     userMessage: UIMessage,
     titleInputTokens: number,
     titleOutputTokens: number,
-    chat: InferSelectModel<typeof chat>,
+    chat: InferSelectModel<typeof chat> | null,
     model: LanguageModelV1
 }

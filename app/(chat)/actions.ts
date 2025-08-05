@@ -42,18 +42,21 @@ export async function generateTitleFromUserMessage({
 export async function deleteTrailingMessages({ id }: { id: string }) {
   const messages = await getMessageById({ id });
 
-  // Return early if no message is found
-  if (!messages || messages.length === 0) {
-    console.warn(`No message found with id: ${id}`);
+  // Return early if no message is found (database operations are stubbed)
+  if (!messages) {
+    console.warn(`No message found with id: ${id} (database operations disabled)`);
     return;
   }
 
-  const message = messages[0]; // Get the first message since we know it exists
+  const message = Array.isArray(messages) ? messages[0] : messages;
 
-  await deleteMessagesByChatIdAfterTimestamp({
-    chatId: message.chatId,
-    timestamp: message.createdAt,
-  });
+  // Only proceed if message has the required properties (won't happen with stub)
+  if (message && typeof message === 'object' && 'chatId' in message && 'createdAt' in message) {
+    await deleteMessagesByChatIdAfterTimestamp({
+      chatId: (message as any).chatId,
+      timestamp: (message as any).createdAt,
+    });
+  }
 }
 
 export async function updateChatVisibility({
