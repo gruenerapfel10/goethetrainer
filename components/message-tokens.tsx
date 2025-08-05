@@ -19,7 +19,8 @@
 
 import type { UIMessage } from 'ai';
 import { useMemo } from 'react';
-import { useSession } from 'next-auth/react';
+// Auth removed - no sessions needed
+// import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { FileTextIcon, AlertTriangleIcon, CodeIcon } from 'lucide-react';
@@ -48,7 +49,8 @@ const calculateTokensFromWords = (text: string) => {
 const isDebugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true';
 
 export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: MessagePromptProps) {
-  const { data: session } = useSession();
+  // Auth removed - no sessions needed
+  const session = null;
   
   const fullPrompt = useMemo(() => {
     const totalTokens = calculateTokensFromWords(systemPrompt) + 
@@ -114,7 +116,8 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
 }
 
 export function MessageTokens({ message, systemPrompt = '', attachedFiles }: MessageTokensProps) {
-  const { data: session } = useSession();
+  // Auth removed - no sessions needed
+  const session = null;
   
   const tokenDetails = useMemo(() => {
     // Calculate tokens for user message content

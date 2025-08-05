@@ -54,7 +54,6 @@ interface Degree {
 type ApplicationStatus = 'not_applied' | 'applied' | 'accepted' | 'rejected';
 
 export default function UniversitiesPage() {
-  const { startTransition, isTransitioning } = usePageTransition();
   const [universities, setUniversities] = useState<University[]>([]);
   const [degrees, setDegrees] = useState<Degree[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -108,28 +107,28 @@ export default function UniversitiesPage() {
     switch (status) {
       case 'applied':
         return (
-          <Badge className="bg-blue-500 text-white border-0 flex items-center gap-1">
+          <Badge className="bg-blue-500 text-white dark:bg-blue-600 border-0 flex items-center gap-1">
             <Clock className="h-3 w-3" />
             Applied
           </Badge>
         );
       case 'accepted':
         return (
-          <Badge className="bg-green-500 text-white border-0 flex items-center gap-1">
+          <Badge className="bg-green-500 text-white dark:bg-green-600 border-0 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
             Accepted
           </Badge>
         );
       case 'rejected':
         return (
-          <Badge className="bg-red-500 text-white border-0 flex items-center gap-1">
+          <Badge className="bg-red-500 text-white dark:bg-red-600 border-0 flex items-center gap-1">
             <XCircle className="h-3 w-3" />
             Rejected
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="border-gray-300 text-gray-600">
+          <Badge variant="outline" className="text-muted-foreground">
             Not Applied
           </Badge>
         );
@@ -138,71 +137,90 @@ export default function UniversitiesPage() {
 
   const handleCardClick = (e: React.MouseEvent, university: University) => {
     e.preventDefault();
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-    
-    startTransition(`/universities/${university.rank}`, {
-      university,
-      position: {
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height
-      }
-    });
+    window.location.href = `/universities/${university.rank}`;
   };
 
   const UniversityCard = ({ university }: { university: University }) => {
     const status = applicationStatuses[university.rank];
     const isHovered = hoveredCard === university.rank;
     
+    // Generate subtle gradient based on rank
+    const getRankGradient = (rank: number) => {
+      if (rank <= 50) return 'from-blue-500/5 to-transparent';
+      if (rank <= 100) return 'from-slate-500/5 to-transparent';
+      return 'from-slate-400/5 to-transparent';
+    };
+    
+    // Convert university name to file path format
+    const getUniversityImagePath = (name: string) => {
+      return name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
+    };
+    
+    const universityPath = getUniversityImagePath(university.name);
+    const emblemPath = `/university-images/${universityPath}/emblem_${universityPath}.svg`;
+    
     return (
       <div 
         onClick={(e) => handleCardClick(e, university)}
         onMouseEnter={() => setHoveredCard(university.rank)}
         onMouseLeave={() => setHoveredCard(null)}
-        className="relative"
+        className="relative h-full"
       >
-        <Card className={`bg-white/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300 cursor-pointer group transform-gpu ${
-          isHovered ? 'scale-[1.02] -translate-y-1' : ''
-        } ${
-          isTransitioning ? 'opacity-90' : ''
-        }`}>
-          <CardHeader className="pb-3">
+        <Card className={`h-full flex flex-col relative overflow-hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300 cursor-pointer group transform-gpu`}>
+          {/* University emblem background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-8">
+            <img 
+              src={emblemPath} 
+              alt=""
+              className={`w-full h-full max-w-[70%] max-h-[70%] object-contain opacity-[0.03] dark:opacity-[0.04] select-none transition-all duration-500 ${
+                isHovered ? 'scale-105' : 'scale-100'
+              }`}
+              onError={(e) => {
+                // Hide the image if it doesn't exist
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+          
+          {/* Subtle background gradient */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${getRankGradient(university.rank)}`} />
+          <CardHeader className="pb-3 relative z-10">
             <div className="flex items-start justify-between">
               <div className="flex flex-col gap-2">
-                <Badge className="w-fit bg-gradient-blue text-white border-0">
+                <Badge className="w-fit bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-0">
                   #{university.rank}
                 </Badge>
                 {getApplicationStatusBadge(status)}
               </div>
-              <div className="h-8 w-8 rounded-full bg-gradient-blue flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Building className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-full bg-primary dark:bg-blue-600 flex items-center justify-center">
+                <Building className="h-4 w-4 text-primary-foreground" />
               </div>
             </div>
-            <CardTitle className="text-lg line-clamp-2 mt-2">{university.name}</CardTitle>
-            <CardDescription className="flex items-center gap-1">
+            <CardTitle className="text-lg line-clamp-2 mt-2 text-foreground min-h-[3.5rem]">{university.name}</CardTitle>
+            <CardDescription className="flex items-center gap-1 text-muted-foreground">
               <MapPin className="h-3 w-3" />
               {university.country}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
+          <CardContent className="flex-1 flex flex-col relative z-10">
+            <div className="flex-1 space-y-2 text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Employer Rep</span>
-                <Badge variant="outline" className="border-primary-blue text-primary-blue">#{university.employer_reputation_rank}</Badge>
+                <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.employer_reputation_rank}</Badge>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Academic Rep</span>
-                <Badge variant="outline" className="border-primary-blue text-primary-blue">#{university.academic_reputation_rank}</Badge>
+                <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.academic_reputation_rank}</Badge>
               </div>
-              {university.supported_degrees && selectedDegree !== 'all' && (
-                <div className="pt-2 mt-2 border-t">
-                  <Badge className={university.supported_degrees.includes(selectedDegree) ? "bg-green-100 text-green-800 border-green-300" : "bg-gray-100 text-gray-600 border-gray-300"}>
+              <div className="pt-2 mt-2 border-t min-h-[32px]">
+                {university.supported_degrees && selectedDegree !== 'all' ? (
+                  <Badge className={university.supported_degrees.includes(selectedDegree) ? "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30" : "bg-muted text-muted-foreground border-muted"}>
                     {university.supported_degrees.includes(selectedDegree) ? "✓ Offers selected degree" : "× Degree not available"}
                   </Badge>
-                </div>
-              )}
+                ) : (
+                  <div className="h-[22px]"></div>
+                )}
+              </div>
               <div className="pt-2 mt-2 border-t">
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <Calendar className="h-3 w-3" />
@@ -227,7 +245,7 @@ export default function UniversitiesPage() {
   }
 
   return (
-    <div className="flex-1 relative">
+    <div className="flex-1 relative bg-background">
       {/* Background blur effects */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-blur-circle"></div>
@@ -238,7 +256,7 @@ export default function UniversitiesPage() {
       <div className="relative z-10 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Universities</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Universities</h2>
             <p className="text-muted-foreground">
               Browse and apply to top 500 universities worldwide
             </p>
@@ -248,7 +266,7 @@ export default function UniversitiesPage() {
             variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('grid')}
-            className={viewMode === 'grid' ? 'bg-gradient-blue border-0 text-white' : ''}
+            className={viewMode === 'grid' ? 'bg-primary dark:bg-blue-600 border-0 text-primary-foreground dark:text-white' : ''}
           >
             <Grid3X3 className="h-4 w-4" />
           </Button>
@@ -256,7 +274,7 @@ export default function UniversitiesPage() {
             variant={viewMode === 'table' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('table')}
-            className={viewMode === 'table' ? 'bg-gradient-blue border-0 text-white' : ''}
+            className={viewMode === 'table' ? 'bg-primary dark:bg-blue-600 border-0 text-primary-foreground dark:text-white' : ''}
           >
             <List className="h-4 w-4" />
           </Button>
@@ -327,7 +345,7 @@ export default function UniversitiesPage() {
 
       {/* Table View */}
       {viewMode === 'table' && (
-        <Card className="bg-white/95 backdrop-blur-xl border-0 shadow-blue">
+        <Card className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-0 shadow-blue">
           <Table>
             <TableHeader>
               <TableRow>
@@ -347,7 +365,7 @@ export default function UniversitiesPage() {
                 return (
                   <TableRow key={`${university.rank}-${university.name}`}>
                     <TableCell>
-                      <Badge className="bg-gradient-blue text-white border-0">#{university.rank}</Badge>
+                      <Badge className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-0">#{university.rank}</Badge>
                     </TableCell>
                     <TableCell className="font-medium">{university.name}</TableCell>
                     <TableCell>{university.country}</TableCell>
@@ -359,10 +377,10 @@ export default function UniversitiesPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="border-primary-blue text-primary-blue">#{university.employer_reputation_rank}</Badge>
+                      <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.employer_reputation_rank}</Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline" className="border-primary-blue text-primary-blue">#{university.academic_reputation_rank}</Badge>
+                      <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.academic_reputation_rank}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button 
@@ -370,7 +388,7 @@ export default function UniversitiesPage() {
                         size="sm"
                         onClick={(e) => {
                           e.preventDefault();
-                          startTransition(`/universities/${university.rank}`, { university });
+                          window.location.href = `/universities/${university.rank}`;
                         }}
                       >
                         View Details

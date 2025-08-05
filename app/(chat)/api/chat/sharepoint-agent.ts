@@ -1,13 +1,13 @@
 import type { UIMessage } from 'ai';
 
 import { generateUUID } from '@/lib/utils';
-import { saveMessages } from '@/lib/db/queries';
-import { BedrockAgentClient } from '@/lib/bedrock/bedrock-client';
+// Database import using stub function (no persistence)
+import { saveMessages } from '@/lib/db/queries-stub';
 import { getSystemPrompt } from '@/lib/ai/prompts';
 import { calculateCost } from '@/lib/costs';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
-
-const bedrockClient = new BedrockAgentClient();
+import { generateText } from 'ai';
+import { google } from '@ai-sdk/google';
 
 function prepareResponseText(text: string): string {
   const hasCitations = /\[\d+\]/g.test(text);
@@ -33,23 +33,29 @@ async function invokeWithRetry(
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-  // If system prompt is set, add it to the input
-  // const combinedInput = systemPrompt
-  //   ? `${systemPrompt}\n\nUser Query: ${input}`
-  //   : input;
+  // Combine system prompt with input for Gemini
+  const prompt = systemPrompt
+    ? `${systemPrompt}\n\nUser Query: ${input}`
+    : input;
 
   for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
     try {
-      const { text, usage } = await bedrockClient.invoke({
-        input: input,
-        sessionId,
+      const { text, usage } = await generateText({
+        model: google('gemini-2.5-flash'),
+        prompt: prompt,
       });
 
-      return { text, usage };
+      return { 
+        text, 
+        usage: {
+          inputTokens: usage.promptTokens,
+          outputTokens: usage.completionTokens
+        }
+      };
     } catch (error) {
       if (
         error instanceof Error &&
-        error.message.includes('resuming after being auto-paused') &&
+        error.message.includes('429') && // Rate limit error
         attempt <= maxRetries
       ) {
         await delay(delayMs);
@@ -117,8 +123,8 @@ export const streamSharePointAgent = async (
 
         // Save the assistant message
         if (session.user?.id) {
-          // Track cost for the legacy sharepoint agent
-          const modelId = 'anthropic.claude-3-5-sonnet-20240620-v1:0'; // legacy agent model
+          // Track cost for the sharepoint agent using Gemini
+          const modelId = 'gemini-2.5-flash'; // now using Gemini
           const cost = calculateCost(modelId, (usage?.inputTokens ?? 0), (usage?.outputTokens ?? 0));
           
           console.log(`Legacy SharePoint Agent Cost: $${cost?.toFixed(6) ?? 'N/A'}`);
@@ -137,6 +143,7 @@ export const streamSharePointAgent = async (
             encoder.encode(`2:[{"type":"cost_update","data":${JSON.stringify(costData)}}]\n`)
           );
 
+          // Database save using stub function (no persistence)
           await saveMessages({
             messages: [
               {
@@ -151,12 +158,9 @@ export const streamSharePointAgent = async (
                   },
                 ],
                 attachments: [],
-                // selectedFiles removed
-                // annotations removed
                 useCaseId: null,
                 agentType: selectedChatModel,
-                //since the model attached to agent is set in aws bedrock, we hardcoded it here - might be needed to adjust later
-                modelId: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+                modelId: 'gemini-2.5-flash',
                 inputTokens: (usage?.inputTokens ?? 0) + titleInputTokens,
                 outputTokens: (usage?.outputTokens ?? 0) + titleOutputTokens,
                 processed: false,

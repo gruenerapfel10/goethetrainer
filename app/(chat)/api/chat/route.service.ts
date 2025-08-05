@@ -4,9 +4,11 @@ import { streamSharePointAgent as streamSharePointAgentV2 } from './sharepoint-a
 import { streamCsvAgent } from '@/app/(chat)/api/chat/csv-agent';
 import { streamCsvAgent as streamCsvAgentV2 } from '@/app/(chat)/api/chat/csv-agent-v2';
 import { streamText2SqlAgent } from "@/app/(chat)/api/chat/text2sql-agent";
-import {auth} from "@/app/(auth)/auth";
+// Auth removed - no authentication needed
+// import {auth} from "@/app/(auth)/auth";
 import {generateUUID, getMostRecentUserMessage} from "@/lib/utils";
-import {getChatById, saveChat, saveMessages} from "@/lib/db/queries";
+// Database imports disabled - using stub functions instead
+import {getChatById, saveChat, saveMessages} from "@/lib/db/queries-stub";
 import {generateTitleFromUserMessage} from "@/app/(chat)/actions";
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 import {myProvider} from "@/lib/ai/models";
@@ -38,11 +40,8 @@ export type AgentType = (typeof agentTypes)[keyof typeof agentTypes];
 export async function streamAgent(json: any) {
   const { messages, id, selectedChatModel, deepResearch, selectedFiles, webSearch, imageGeneration } = json;
   try {
-    const session = await auth();
-    if (!session || !session.user || !session.user.id) {
-      console.error(`streamAgent: Unauthorized - No session or user ID`);
-      return new Response('Unauthorized', { status: 401 });
-    }
+    // Auth removed - no authentication needed
+    const session = { user: { id: 'anonymous-user', email: 'anonymous@example.com' } };
 
     const userMessage = getMostRecentUserMessage(messages);
     if (!userMessage) {
@@ -52,6 +51,7 @@ export async function streamAgent(json: any) {
 
     let titleInputTokens = 0;
     let titleOutputTokens = 0;
+    // Database operations using stub functions (no persistence)
     const chat = await getChatById({ id });
     if (!chat) {
       const { title, inputTokens, outputTokens } =
@@ -63,6 +63,7 @@ export async function streamAgent(json: any) {
 
     const model = myProvider.languageModel(selectedChatModel);
 
+    // Database save using stub function (no persistence)
     await saveMessages({
       messages: [
         {

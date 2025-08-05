@@ -2,7 +2,6 @@
 
 import type { User } from '@/types/next-auth';
 import { useRouter } from 'next/navigation';
-import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import {
   Sidebar,
@@ -18,15 +17,11 @@ import {
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { PlusIcon, LayoutDashboardIcon, ShieldIcon, GraduationCapIcon } from './icons';
+import { Rocket } from 'lucide-react';
 import { LogoComponent } from './logo-component';
 import LanguageSwitcher from './language-switcher';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
-import { SidebarSearch } from './sidebar-search';
-import { SearchModal } from './search-modal';
-import useSWRInfinite from 'swr/infinite';
-import { fetcher } from '@/lib/utils';
-import { getChatHistoryPaginationKey } from './sidebar-history';
 
 // Logo Header Component
 function LogoHeader() {
@@ -111,9 +106,8 @@ function DashboardNav({ user }: { user: User | undefined }) {
   const t = useTranslations();
   const { setOpenMobile, state } = useSidebar();
 
-  // TODO: Implement Firebase custom claims for admin check
-  // if (!user?.isAdmin) return null;
-  return null; // Temporarily disabled until admin roles are implemented
+  // Auth removed - always show dashboard
+  // if (!user) return null;
 
   return (
     <SidebarMenu>
@@ -140,7 +134,8 @@ function DashboardNav({ user }: { user: User | undefined }) {
 function UniversitiesNav({ user }: { user: User | undefined }) {
   const { setOpenMobile, state } = useSidebar();
 
-  if (!user) return null;
+  // Auth removed - always show universities
+  // if (!user) return null;
 
   return (
     <SidebarMenu>
@@ -180,32 +175,6 @@ function LanguageNav() {
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const { state } = useSidebar();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResultCount, setSearchResultCount] = useState<number | undefined>();
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-
-  // Fetch chats for search modal
-  const { data: paginatedChatHistories } = useSWRInfinite(
-    getChatHistoryPaginationKey,
-    fetcher,
-    { fallbackData: [] }
-  );
-
-  // Flatten all chats for search modal
-  const allChats = paginatedChatHistories?.flatMap(page => page.chats) || [];
-
-  // Keyboard shortcut to open search modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsSearchModalOpen(prev => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
   
   return (
     <Sidebar collapsible="icon">
@@ -213,39 +182,41 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <LogoHeader />
         <div className="space-y-2">
           <NewChatButton />
-          <SidebarSearch 
-            value={searchQuery} 
-            onChange={setSearchQuery}
-            resultCount={searchQuery ? searchResultCount : undefined}
-            onOpenModal={() => setIsSearchModalOpen(true)}
-          />
           <div className="space-y-1">
-            <UniversitiesNav user={user} />
             <DashboardNav user={user} />
+            <UniversitiesNav user={user} />
             <LanguageNav />
           </div>
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {state === 'expanded' && (
-          <SidebarHistory 
-            user={user} 
-            searchQuery={searchQuery}
-            onSearchResultsChange={setSearchResultCount}
-          />
-        )}
       </SidebarContent>
       <SidebarFooter>
-        {user && <SidebarUserNav user={user} />}
+        {/* Upgrade Button */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white border-0 transition-all duration-300 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30"
+            >
+              <Link href="/offer" className="flex items-center gap-2">
+                <Rocket className="h-4 w-4" />
+                {state === 'expanded' && (
+                  <span className="font-medium">Upgrade to Navigator</span>
+                )}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        {/* Auth removed - always show user nav with dummy user */}
+        <SidebarUserNav user={{ 
+          id: 'anonymous', 
+          email: 'anonymous@example.com', 
+          name: 'Anonymous User',
+          image: null 
+        }} />
       </SidebarFooter>
       <SidebarRail />
-      
-      {/* Search Modal */}
-      <SearchModal
-        isOpen={isSearchModalOpen}
-        onClose={() => setIsSearchModalOpen(false)}
-        chats={allChats}
-      />
     </Sidebar>
   );
 }

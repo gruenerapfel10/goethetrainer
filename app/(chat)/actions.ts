@@ -3,11 +3,12 @@
 import { generateText, type Message } from 'ai';
 import { cookies } from 'next/headers';
 
+// Database imports using stub functions (no persistence)
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
   updateChatVisiblityById,
-} from '@/lib/db/queries';
+} from '@/lib/db/queries-stub';
 import type { VisibilityType } from '@/components/visibility-selector';
 import { myProvider } from '@/lib/ai/models';
 

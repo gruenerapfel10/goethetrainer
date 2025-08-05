@@ -119,30 +119,30 @@ export const defaultSuggestions: SuggestedActionsConfig = {
     },
   ],
   'general-bedrock-agent': [
-    // Smart AI Assistant
+    // MUA University Application Assistant
     {
-      title: "Let's create a proposal",
-      label: 'for a new client.',
+      title: "Help me choose universities",
+      label: 'that match my profile.',
       action:
-        "I need to draft a proposal for a new client. Before drafting, ask me step by step for key details like the client's name, website, services/products of interest, and any specific requirements. Then, generate a structured proposal.",
+        "Help me find universities that match my academic profile and career goals. Ask me about my intended major, GPA, test scores, location preferences, and career aspirations. Then recommend suitable universities from the top 500.",
     },
     {
-      title: 'Help me create a timeline',
-      label: 'for a project.',
+      title: 'Create my application timeline',
+      label: 'with all important deadlines.',
       action:
-        'Help me create a project timeline. First, ask about key milestones and deliverables, then confirm deadlines and dependencies before generating a structured plan.',
+        'Create a personalized application timeline with all important deadlines. Ask me about my target universities, application types (EA, ED, RD), and current academic year. Then generate a comprehensive timeline with key milestones.',
     },
     {
-      title: 'Brainstorm a campaign',
-      label: 'with creative ideas.',
+      title: 'Review my personal statement',
+      label: 'and provide feedback.',
       action:
-        "Let's brainstorm a creative marketing campaign. Before suggesting ideas, ask me for details like the campaign's objective, target audience, product focus, and preferred tone. Then, generate three creative directions.",
+        "Review and improve my personal statement or essays. Ask me to share my draft and tell me about my target universities and intended major. Then provide detailed feedback on content, structure, and impact.",
     },
     {
-      title: 'Draft a response',
-      label: 'to a customer complaint.',
+      title: 'Compare university programs',
+      label: 'to help me decide.',
       action:
-        'I need to draft a response to a customer complaint. First, ask for details about the issue and any prior interactions. Then, confirm our typical resolution approach before generating a professional response.',
+        'Compare different university programs to help me make an informed decision. Tell me which universities and programs you want me to compare, and what factors are most important to you (rankings, location, cost, culture, etc.).',
     },
   ],
   'chat-model-reasoning': [

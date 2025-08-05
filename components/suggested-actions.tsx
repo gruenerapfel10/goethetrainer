@@ -245,7 +245,8 @@ function PureSuggestedActions({
           <Button
             variant="ghost"
             onClick={async () => {
-              window.history.replaceState({}, '', `/chat/${chatId}`);
+              // Navigation disabled - stay in current chat panel
+              // window.history.replaceState({}, '', `/chat/${chatId}`);
 
               append({
                 role: 'user',

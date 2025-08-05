@@ -47,13 +47,6 @@ import {
 } from './mention-utils';
 import { FeatureToggles } from './feature-toggles';
 import { SettingsButton } from './settings-button';
-import { VoiceInput } from '@/components/voice-input';
-import { Code2, Shield, BarChart3, Users } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { CodeAssistantComponent } from '@/components/code-assistant';
-import { SecureMessaging } from '@/components/secure-messaging';
-import { VisualizationDashboard } from '@/components/visualization-dashboard';
-import { MeetingAssistant } from '@/components/meeting-assistant';
 
 function PureMultimodalInput({
   selectedModelId,
@@ -259,7 +252,8 @@ function PureMultimodalInput({
       return;
     }
 
-    window.history.replaceState({}, '', `/chat/${chatId}`);
+    // Navigation disabled - stay in current chat panel
+    // window.history.replaceState({}, '', `/chat/${chatId}`);
 
     const currentInput = editorRef.current?.innerText ?? input;
     const textToSend = currentInput.replace(
@@ -491,7 +485,7 @@ function PureMultimodalInput({
           >
             <Button
               data-testid="scroll-to-bottom-button"
-              className="rounded-full"
+              className="rounded-full bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl shadow-blue hover:shadow-blue-lg border-primary/20"
               size="icon"
               variant="outline"
               onClick={(event) => {
@@ -539,7 +533,7 @@ function PureMultimodalInput({
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
               data-testid="attachments-preview"
-              className="flex flex-row gap-2 overflow-x-scroll items-end scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent bg-muted/30 rounded-xl p-2"
+              className="flex flex-row gap-2 overflow-x-scroll items-end scrollbar-thin scrollbar-thumb-primary/30 scrollbar-track-transparent bg-primary/5 rounded-xl p-2 border border-primary/10"
             >
               {attachments.map((attachment, index) => (
                 <motion.div
@@ -618,14 +612,14 @@ function PureMultimodalInput({
           <PopoverTrigger asChild>
             <motion.div
               className={classNames(
-                'relative rounded-[14px] bg-background/90 backdrop-blur-sm transition-all duration-300 group',
+                'relative rounded-[14px] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl transition-all duration-300 group',
                 isDragOver && hasFileAttachment
-                  ? 'border-2 border-dashed border-muted-foreground/40 bg-muted/20 shadow-lg'
-                  : 'border border-border/50',
+                  ? 'border-2 border-dashed border-primary/40 bg-primary/10 shadow-blue-lg'
+                  : 'border-0 shadow-blue',
                 isFocused && !isDragOver
-                  ? 'shadow-xl shadow-orange-500/5 ring-1 ring-orange-500/10 border-orange-500/20 bg-background/95'
+                  ? 'shadow-blue-lg ring-1 ring-primary/20 border-primary/20 bg-white/98 dark:bg-zinc-900/98'
                   : !isDragOver &&
-                      'shadow-lg shadow-black/5 hover:shadow-xl hover:shadow-black/5 hover:border-border/70',
+                      'hover:shadow-blue-lg hover:ring-1 hover:ring-primary/10',
                 className,
               )}
               animate={{
@@ -636,9 +630,9 @@ function PureMultimodalInput({
             >
               <div
                 className={classNames(
-                  'absolute inset-0 rounded-[32px] opacity-0 transition-opacity duration-500',
-                  'bg-gradient-to-r from-orange-500/5 via-primary/5 to-orange-500/5 blur-md',
-                  isFocused && 'opacity-70',
+                  'absolute inset-0 rounded-[14px] opacity-0 transition-opacity duration-500',
+                  'bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 blur-md',
+                  isFocused && 'opacity-60',
                 )}
               />
 
@@ -697,7 +691,7 @@ function PureMultimodalInput({
                       'w-full min-h-[40px] max-h-[400px] overflow-y-auto resize-none',
                       'text-foreground caret-primary whitespace-pre-wrap break-words',
                       'focus:outline-none',
-                      'scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent',
+                      'scrollbar-thin scrollbar-thumb-primary/30 scrollbar-track-transparent',
                       !input &&
                         !isDragOver &&
                         'before:content-[attr(data-placeholder)] before:absolute before:text-muted-foreground/60 before:pointer-events-none',
@@ -708,89 +702,6 @@ function PureMultimodalInput({
 
                 <div className="flex flex-row items-center pt-3">
                   <div className="flex items-center gap-2">
-                    {hasFileAttachment && (
-                      <AttachmentsButton
-                        fileInputRef={fileInputRef}
-                        status={status}
-                      />
-                    )}
-                    
-                    <VoiceInput
-                      onTranscript={(text) => setInput(text)}
-                      autoSubmit={false}
-                    />
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="relative"
-                          disabled={status === 'submitted' || status === 'streaming'}
-                        >
-                          <Code2 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <CodeAssistantComponent 
-                          onInsertCode={(code) => {
-                            setInput(input + '\n```\n' + code + '\n```');
-                          }}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="relative"
-                          disabled={status === 'submitted' || status === 'streaming'}
-                        >
-                          <Shield className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <SecureMessaging 
-                          userId={chatId}
-                          recipientId={selectedModelId}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="relative"
-                          disabled={status === 'submitted' || status === 'streaming'}
-                        >
-                          <BarChart3 className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                        <VisualizationDashboard chatId={chatId} />
-                      </DialogContent>
-                    </Dialog>
-                    
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="relative"
-                          disabled={status === 'submitted' || status === 'streaming'}
-                        >
-                          <Users className="h-4 w-4" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                        <MeetingAssistant userId={chatId} userName="User" />
-                      </DialogContent>
-                    </Dialog>
-                    
                     <SettingsButton
                       status={status}
                       selectedModelId={selectedModelId}
@@ -803,21 +714,6 @@ function PureMultimodalInput({
                       isImageGenerationEnabled={isImageGenerationEnabled}
                       onImageGenerationChange={onImageGenerationChange}
                     />
-                    
-                    <div className="hidden md:block">
-                      <FeatureToggles
-                        selectedModelId={selectedModelId}
-                        isDeepResearchEnabled={isDeepResearchEnabled}
-                        onDeepResearchChange={onDeepResearchChange}
-                        isFileSearchEnabled={isFileSearchEnabled}
-                        onFileSearchChange={onFileSearchChange}
-                        isWebSearchEnabled={isWebSearchEnabled}
-                        onWebSearchChange={onWebSearchChange}
-                        isImageGenerationEnabled={isImageGenerationEnabled}
-                        onImageGenerationChange={onImageGenerationChange}
-                        isDragOver={isDragOver}
-                      />
-                    </div>
                   </div>
 
                   <motion.div

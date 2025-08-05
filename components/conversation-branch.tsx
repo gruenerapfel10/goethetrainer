@@ -99,8 +99,8 @@ export function ConversationBranch({
     // Save branch messages
     localStorage.setItem(`messages-${branchId}`, JSON.stringify(branchMessages));
 
-    // Navigate to new branch
-    router.push(`/chat/${branchId}`);
+    // Navigation disabled - stay in current chat panel
+    // router.push(`/chat/${branchId}`);
   };
 
   const deleteBranch = (branchId: string) => {
@@ -113,10 +113,10 @@ export function ConversationBranch({
     // Remove branch messages
     localStorage.removeItem(`messages-${branchId}`);
     
-    // If deleting current branch, go to main
-    if (currentBranch?.id === branchId) {
-      router.push(`/chat/${currentChatId}`);
-    }
+    // Navigation disabled - stay in current chat panel
+    // if (currentBranch?.id === branchId) {
+    //   router.push(`/chat/${currentChatId}`);
+    // }
   };
 
   const switchBranch = (branchId: string) => {
@@ -129,7 +129,8 @@ export function ConversationBranch({
         sessionStorage.setItem('branch-id', branchId);
       }
     }
-    router.push(`/chat/${branchId}`);
+    // Navigation disabled - stay in current chat panel
+    // router.push(`/chat/${branchId}`);
   };
 
   return (

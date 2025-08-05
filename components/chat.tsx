@@ -16,7 +16,6 @@ import { ArtifactPanel } from './artifact-panel';
 import { ArtifactInset } from './artifact-inset';
 import { useArtifactSelector } from '../hooks/use-artifact';
 import { toast } from 'sonner';
-import { getChatHistoryPaginationKey } from './sidebar-history';
 import { motion } from 'framer-motion';
 import { getCapabilitiesToDisable, getExclusionMessage } from '@/lib/ai/capability-exclusions';
 import { ConversationBranch } from './conversation-branch';
@@ -174,7 +173,6 @@ export function Chat({
     generateId: generateUUID,
     onFinish: (message) => {
       console.log('message', messages[messages.length - 1]);
-      mutate(unstable_serialize(getChatHistoryPaginationKey));
       
       if (message.id && message.role === 'assistant') {
         // Add a small delay to ensure the message is saved

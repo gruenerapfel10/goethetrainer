@@ -7,18 +7,8 @@ export function useChatModal() {
   const closeModal = useCallback(() => setIsOpen(false), []);
   const toggleModal = useCallback(() => setIsOpen(prev => !prev), []);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
-        event.preventDefault();
-        toggleModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleModal]);
+  // Keyboard shortcut handling removed from hook - should be handled by the component that uses this hook
+  // This prevents conflicts with other keyboard shortcuts like ChatPanel
 
   return {
     isOpen,

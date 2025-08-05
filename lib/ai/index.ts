@@ -1,18 +1,7 @@
-import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
+import { google } from '@ai-sdk/google';
 import { experimental_wrapLanguageModel as wrapLanguageModel } from 'ai';
 import { customMiddleware } from './custom-middleware';
 import { togetherai } from '@ai-sdk/togetherai';
-
-// Configure AWS Bedrock client
-const bedrockConfig = {
-  region:
-    process.env.GENERAL_AWS_REGION || process.env.AWS_REGION || 'eu-central-1',
-  accessKeyId:
-    process.env.GENERAL_AWS_ACCESS_KEY_ID! || process.env.AWS_ACCESS_KEY_ID!,
-  secretAccessKey:
-    process.env.GENERAL_AWS_SECRET_ACCESS_KEY! ||
-    process.env.GENERAL_AWS_SECRET_ACCESS_KEY!,
-};
 
 export const customModel = (
   apiIdentifier: string,
@@ -26,11 +15,9 @@ export const customModel = (
     });
   }
 
-  const bedrock = createAmazonBedrock(bedrockConfig);
-
+  // Default to Google Gemini for all non-reasoning models
   return wrapLanguageModel({
-    // @ts-ignore
-    model: bedrock(apiIdentifier),
+    model: google('gemini-2.5-flash'),
     middleware: customMiddleware,
   });
 };

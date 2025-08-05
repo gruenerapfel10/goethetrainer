@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Hover Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+        }
+        .feature-list li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        .demo-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+        .demo-link:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .instructions ol {
+            color: #495057;
+            line-height: 1.8;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Sidebar Hover Functionality - Rebuilt!</h1>
+        
+        <p>The sidebar hover-to-open functionality has been completely rebuilt from scratch with the following improvements:</p>
+        
+        <ul class="feature-list">
+            <li><strong>Framer Motion Integration:</strong> Smooth, performant animations using Framer Motion library</li>
+            <li><strong>Simplified State Management:</strong> Removed complex nested state tracking that was causing issues</li>
+            <li><strong>Better Hover Detection:</strong> Clean hover zones with proper mouse enter/leave handling</li>
+            <li><strong>Manual Toggle Tracking:</strong> Automatically disables hover when user manually toggles the sidebar</li>
+            <li><strong>Responsive Design:</strong> Works seamlessly on desktop while maintaining mobile sheet behavior</li>
+            <li><strong>Smooth Transitions:</strong> 200ms ease-in-out animations for all state changes</li>
+            <li><strong>Edge Case Handling:</strong> Proper delays to prevent flickering when moving between elements</li>
+        </ul>
+
+        <a href="http://localhost:3002" class="demo-link" target="_blank">Open Application →</a>
+
+        <div class="instructions">
+            <h3>How to Test the New Hover Functionality:</h3>
+            <ol>
+                <li>Open the application in your browser</li>
+                <li>Ensure the sidebar is in collapsed state (showing only icons)</li>
+                <li>Move your mouse to the left edge of the screen</li>
+                <li>The sidebar should smoothly expand showing full menu items</li>
+                <li>Move your mouse away from the sidebar to see it collapse</li>
+                <li>If you manually toggle the sidebar (using the rail or trigger button), hover will be disabled until page refresh</li>
+            </ol>
+            
+            <h3>Key Improvements:</h3>
+            <ul>
+                <li>✨ <strong>Framer Motion</strong> provides hardware-accelerated animations</li>
+                <li>🎯 <strong>Precise hover zones</strong> - 2px wide trigger area on the edge</li>
+                <li>⚡ <strong>150ms delay</strong> prevents accidental triggers and flickering</li>
+                <li>🔄 <strong>Clean state management</strong> - no more complex nested conditions</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

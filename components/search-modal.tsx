@@ -110,7 +110,8 @@ export function SearchModal({ isOpen, onClose, chats }: SearchModalProps) {
   }, [isOpen, filteredChats, selectedIndex, onClose]);
 
   const handleSelectChat = useCallback((chat: Chat) => {
-    router.push(`/chat/${chat.id}`);
+    // Navigation disabled - stay in current chat panel
+    // router.push(`/chat/${chat.id}`);
     onClose();
   }, [router, onClose]);
 

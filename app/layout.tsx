@@ -10,7 +10,8 @@ import './globals.css';
 import { getLocale, getMessages } from 'next-intl/server';
 import { themes } from '../types/constants';
 import { LogoProvider } from '../context/logo-context';
-import {cleanupStaleOperations} from "@/lib/db/queries";
+// Database cleanup removed - no database operations needed
+// import {cleanupStaleOperations} from "@/lib/db/queries";
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { PageTransitionProvider } from '@/context/page-transition-context';
 import { PageTransitionOverlay } from '@/components/page-transition-overlay';
@@ -85,7 +86,8 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   if (!hasRunCleanup) {
-    await cleanupStaleOperations();
+    // Database cleanup removed - no database operations needed
+    // await cleanupStaleOperations();
     hasRunCleanup = true;
   }
 

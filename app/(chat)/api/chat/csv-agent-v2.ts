@@ -1,7 +1,7 @@
 import {appendResponseMessages, createDataStreamResponse, streamText, type UIMessage} from 'ai';
 
 import {generateUUID, getTrailingMessageId, messagesWithoutFiles} from '@/lib/utils';
-import {executeCsvQuery, listCsvTables, saveMessages} from '@/lib/db/queries';
+import {executeCsvQuery, listCsvTables, saveMessages} from '@/lib/db/queries-stub';
 import {myProvider} from '@/lib/ai/models';
 import {reason} from '@/lib/ai/tools/reason';
 import {calculateCost} from '@/lib/costs';

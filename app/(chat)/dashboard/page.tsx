@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import React from 'react';
-import { auth } from '../../(auth)/auth';
+// Auth removed - no authentication needed
+// import { auth } from '../../(auth)/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarDateRangePicker } from "@/components/date-range-picker";
@@ -13,11 +14,13 @@ import { Button } from "@/components/ui/button";
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const session = await auth();
+  // Auth removed - no authentication needed
+  // const session = await auth();
 
-  if (!session?.user) {
-    redirect('/');
-  }
+  // No auth checks needed - always show dashboard
+  // if (!session?.user) {
+  //   redirect('/');
+  // }
   // TODO: Implement Firebase admin role check
 
   return (
@@ -45,7 +48,7 @@ export default async function DashboardPage() {
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           {/* University Applications Overview */}
-          <Card className="bg-gradient-blue text-white border-0 shadow-blue-lg">
+          <Card className="bg-gradient-to-br from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 text-white border-0 shadow-blue-lg">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -53,7 +56,7 @@ export default async function DashboardPage() {
                   <CardTitle className="text-white">University Applications</CardTitle>
                 </div>
                 <Link href="/universities">
-                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 text-white border-0">
+                  <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-0">
                     View All Universities
                   </Button>
                 </Link>
@@ -98,12 +101,12 @@ export default async function DashboardPage() {
           </Card>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="bg-white/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
+            <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Revenue
                 </CardTitle>
-                <div className="h-10 w-10 rounded-full bg-gradient-blue flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -125,12 +128,12 @@ export default async function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
+            <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Subscriptions
                 </CardTitle>
-                <div className="h-10 w-10 rounded-full bg-gradient-blue flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -154,10 +157,10 @@ export default async function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
+            <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                <div className="h-10 w-10 rounded-full bg-gradient-blue flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -180,12 +183,12 @@ export default async function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-white/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
+            <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Active Now
                 </CardTitle>
-                <div className="h-10 w-10 rounded-full bg-gradient-blue flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -209,7 +212,7 @@ export default async function DashboardPage() {
             </Card>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="col-span-4 bg-white/95 backdrop-blur-xl border-0 shadow-blue">
+            <Card className="col-span-4 backdrop-blur-xl border-0 shadow-blue">
               <CardHeader>
                 <CardTitle>Overview</CardTitle>
               </CardHeader>
@@ -217,7 +220,7 @@ export default async function DashboardPage() {
                 <Overview />
               </CardContent>
             </Card>
-            <Card className="col-span-3 bg-white/95 backdrop-blur-xl border-0 shadow-blue">
+            <Card className="col-span-3 backdrop-blur-xl border-0 shadow-blue">
               <CardHeader>
                 <CardTitle>Recent Sales</CardTitle>
                 <CardDescription>

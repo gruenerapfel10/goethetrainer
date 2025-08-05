@@ -2,7 +2,8 @@
 
 import type { UIMessage } from 'ai';
 import { useState, useEffect, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
+// Auth removed - no sessions needed
+// import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { CoinsIcon } from 'lucide-react';
@@ -30,7 +31,8 @@ export function MessageCost({
   message: UIMessage;
   shouldFetch?: boolean;
 }) {
-  const { data: session } = useSession();
+  // Auth removed - no sessions needed
+  const session = null;
   const [costData, setCostData] = useState<CostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

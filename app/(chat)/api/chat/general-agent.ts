@@ -5,7 +5,8 @@ import {
   smoothStream,
   streamText,
 } from 'ai';
-import { saveMessages } from '@/lib/db/queries';
+// Database import using stub function (no persistence)
+import { saveMessages } from '@/lib/db/queries-stub';
 import {
   generateUUID,
   getTrailingMessageId,
@@ -25,6 +26,7 @@ import { scrape } from '@/lib/ai/tools/scrape';
 import { deepResearch as deepResearchTool } from '@/lib/ai/tools/deep-research';
 import { mapControl } from '@/lib/ai/tools/map-control';
 import { connectorTool, listConnectorsTool } from '@/lib/ai/tools/connector-tool';
+import { searchUniversities, searchDegrees, getUniversitiesForDegree, getUniversityStats } from '@/lib/ai/tools/university-data';
 import { initializeConnectors } from '@/lib/connectors';
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
@@ -119,13 +121,13 @@ ${
       : enhancedSystemText;
     
     // Define available tools for this agent based on capabilities
-    const baseTools = ['getWeather', 'requestSuggestions', 'processFile', 'chart', 'createDocument', 'updateDocument', 'mapControl', 'connector', 'listConnectors'] as const;
+    const baseTools = ['getWeather', 'requestSuggestions', 'processFile', 'chart', 'createDocument', 'updateDocument', 'mapControl', 'connector', 'listConnectors', 'searchUniversities', 'searchDegrees', 'getUniversitiesForDegree', 'getUniversityStats'] as const;
     const webTools = webSearch && !deepResearch ? (['search', 'extract', 'scrape'] as const) : ([] as const);
     const deepResearchTools = deepResearch ? (['reason_search'] as const) : ([] as const);
     const availableTools = [...baseTools, ...webTools, ...deepResearchTools];
     
     // Create active tools list without reason_search for experimental_activeTools
-    type ActiveToolType = "search" | "getWeather" | "requestSuggestions" | "processFile" | "chart" | "createDocument" | "updateDocument" | "extract" | "scrape" | "mapControl" | "connector" | "listConnectors";
+    type ActiveToolType = "search" | "getWeather" | "requestSuggestions" | "processFile" | "chart" | "createDocument" | "updateDocument" | "extract" | "scrape" | "mapControl" | "connector" | "listConnectors" | "searchUniversities" | "searchDegrees" | "getUniversitiesForDegree" | "getUniversityStats";
     const activeToolsList: ActiveToolType[] = [...baseTools, ...webTools] as ActiveToolType[];
     
     // Add tool constraints to system prompt
@@ -329,6 +331,10 @@ ${
               }),
               connector: connectorTool,
               listConnectors: listConnectorsTool,
+              searchUniversities,
+              searchDegrees,
+              getUniversitiesForDegree,
+              getUniversityStats,
               ...(webSearch && !deepResearch ? {
                 search: search({
                   session,

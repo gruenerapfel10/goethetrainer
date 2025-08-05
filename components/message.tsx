@@ -19,15 +19,20 @@ import { Weather } from './weather';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { MessageEditor } from './message-editor';
-import { SearchResults } from './search-results';
-import { ExtractResults } from './extract-results';
-import { ScrapeResults } from './scrape-results';
 import { MessageReasoning } from './message-reasoning';
 import ReasonSearch from './reason-search';
 import ChartRenderer from './chart-renderer';
 import { ReasonTimeline } from '@/components/timeline';
 import { Text2sqlTimeline } from '@/components/timeline/components/text2sql-timeline';
 import { RunSqlPreview } from '@/components/sql/run-sql-preview';
+
+// Tool handlers
+import {
+  UniversitySearchHandler,
+  WebSearchHandler,
+  DeepResearchHandler,
+  ImageGenerationHandler,
+} from './tool-handlers';
 
 // Utils
 import { cn, extractHostname, formatAIResponse, generateUUID } from '@/lib/utils';
@@ -84,6 +89,14 @@ const ToolResultHandler = ({
   // Loading states
   if (state === 'call') {
     const loadingComponents = {
+      // Main tools
+      searchUniversities: <UniversitySearchHandler isLoading={true} result={{}} args={args} />,
+      webSearch: <WebSearchHandler isLoading={true} result={{}} args={args} />,
+      search: <WebSearchHandler isLoading={true} result={{}} args={args} />,
+      deepResearch: <DeepResearchHandler isLoading={true} result={{}} args={args} />,
+      generateImage: <ImageGenerationHandler isLoading={true} result={{}} args={args} />,
+      
+      // Legacy/existing tools
       getWeather: <Weather />,
       requestSuggestions: (
         <DocumentToolCall
@@ -92,8 +105,6 @@ const ToolResultHandler = ({
           isReadonly={false}
         />
       ),
-      extract: <ExtractResults results={[]} isLoading={true} />,
-      scrape: <ScrapeResults url={args.url} data="" isLoading={true} />,
       chart: (
         <motion.div
           className="mb-4 p-4 border rounded-xl bg-muted/30 backdrop-blur-sm"
@@ -118,41 +129,14 @@ const ToolResultHandler = ({
   // Result states
   if (state === 'result' && result) {
     const resultComponents = {
-      search: (
-        <SearchResults
-          results={
-            Array.isArray(result?.data)
-              ? result.data.map((item: any) => ({
-                  title: item.title || '',
-                  url: item.url || '',
-                  description: item.description || '',
-                  source: getHostname(item.url || ''),
-                }))
-              : []
-          }
-        />
-      ),
-      extract: (
-        <ExtractResults
-          results={
-            Array.isArray(result?.data)
-              ? result.data.map((item: any) => ({
-                  url: item.url,
-                  data: item.data,
-                }))
-              : [
-                  {
-                    url: Array.isArray(args?.urls) ? args.urls[0] : '',
-                    data: result?.data || '',
-                  },
-                ]
-          }
-          isLoading={false}
-        />
-      ),
-      scrape: (
-        <ScrapeResults url={args.url} data={result.data} isLoading={false} />
-      ),
+      // Main tools
+      searchUniversities: <UniversitySearchHandler result={result} isLoading={false} args={args} />,
+      webSearch: <WebSearchHandler result={result} isLoading={false} args={args} />,
+      search: <WebSearchHandler result={result} isLoading={false} args={args} />,
+      deepResearch: <DeepResearchHandler result={result} isLoading={false} args={args} />,
+      generateImage: <ImageGenerationHandler result={result} isLoading={false} args={args} />,
+      
+      // Legacy/existing tools
       chart:
         result.success && result.chartConfig ? (
           <ChartRenderer config={result.chartConfig} />
@@ -188,7 +172,18 @@ const ToolResultHandler = ({
 
     return (
       resultComponents[toolName as keyof typeof resultComponents] || (
-        <pre className="text-xs">{JSON.stringify(result, null, 2)}</pre>
+        <motion.div
+          className="mb-4 p-3 border rounded-lg bg-muted/10"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="text-xs text-muted-foreground mb-2">
+            Tool result ({toolName}):
+          </div>
+          <pre className="text-xs text-foreground/80 overflow-auto">
+            {JSON.stringify(result, null, 2)}
+          </pre>
+        </motion.div>
       )
     );
   }
@@ -406,8 +401,8 @@ const PurePreviewMessage = ({
       });
       localStorage.setItem(`branches-${chatId}`, JSON.stringify(branches));
       
-      // Navigate to the new branch
-      window.location.href = `/chat/${branchId}`;
+      // Navigation disabled - stay in current chat panel
+      // window.location.href = `/chat/${branchId}`;
     }
   };
 

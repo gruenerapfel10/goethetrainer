@@ -160,10 +160,10 @@ export class NotificationService {
         window.focus();
         this.markAsRead(notification.id);
         
-        // Handle notification actions
-        if (notification.source?.type === 'chat' && notification.source.id) {
-          window.location.href = `/chat/${notification.source.id}`;
-        }
+        // Navigation disabled - stay in current chat panel
+        // if (notification.source?.type === 'chat' && notification.source.id) {
+        //   window.location.href = `/chat/${notification.source.id}`;
+        // }
       };
     }
   }

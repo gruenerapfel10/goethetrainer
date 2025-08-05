@@ -32,6 +32,20 @@ export default function DashboardContent({
   const { isOpen, openModal, closeModal } = useChatModal();
   const [currentCoordinates, setCurrentCoordinates] = useState<{ lat: number; lng: number } | null>(null);
 
+  // Add keyboard shortcut handling for this component only
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+K (Mac) or Ctrl+K (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        openModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [openModal]);
+
   return (
     <div className="relative w-full h-[calc(100vh-64px)]">
       <MapboxMap className="w-full h-full" />

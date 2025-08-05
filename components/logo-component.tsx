@@ -18,26 +18,14 @@ export function LogoComponent({ collapsed }: { collapsed?: boolean }) {
     );
   }
 
-  // Always show the skeleton while loading
-  if (state.isLoading) {
-    return (
-      <div className="h-10 w-40 animate-pulse bg-gray-200 dark:bg-gray-700 rounded" />
-    );
-  }
-
-  // Only show the logo when we have a currentLogo and loading is complete
-  if (state.currentLogo) {
-    return (
-      <Image
-        src={state.currentLogo.url}
-        alt="Logo"
-        width={160}
-        height={40}
-        className="object-contain max-w-full max-h-full"
-      />
-    );
-  }
-
-  // If no logo is set yet but loading is done, show skeleton
-  return <div className="h-10 w-40 bg-gray-200 dark:bg-gray-700 rounded" />;
+  // Show the horizontal logo for expanded sidebar
+  return (
+    <Image
+      src="/mua-logo-horizontal-blue-bg.png"
+      alt="MUA Logo"
+      width={160}
+      height={40}
+      className="object-contain max-w-full max-h-full"
+    />
+  );
 }

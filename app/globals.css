@@ -494,6 +494,89 @@
     }
 }
 
+/* Sidebar hover improvements */
+@layer components {
+    /* Ensure sidebar has proper z-index hierarchy */
+    [data-sidebar="sidebar"] {
+        z-index: 40;
+    }
+    
+    /* Prevent sidebar from closing when interacting with focusable elements */
+    [data-sidebar="sidebar"]:focus-within {
+        pointer-events: auto !important;
+    }
+    
+    /* Smooth transitions for hover states */
+    [data-state="collapsed"] [data-sidebar="sidebar"] {
+        transition: width 200ms ease-in-out, transform 200ms ease-in-out;
+    }
+    
+    /* Ensure hover trigger zone doesn't interfere with main content */
+    .sidebar-hover-trigger {
+        pointer-events: auto;
+        background: transparent;
+        position: fixed;
+        inset-y: 0;
+        z-index: 30;
+    }
+}
+
+/* University Detail Page Enhancements */
+@layer components {
+    /* MUA Pattern Background */
+    .mua-pattern {
+        background-image: 
+            repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 20px,
+                rgba(65, 105, 225, 0.03) 20px,
+                rgba(65, 105, 225, 0.03) 21px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 20px,
+                rgba(65, 105, 225, 0.03) 20px,
+                rgba(65, 105, 225, 0.03) 21px
+            );
+    }
+    
+    /* Smooth scrollbar for data stream */
+    .data-stream-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    }
+    
+    .data-stream-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .data-stream-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .data-stream-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+    
+    .data-stream-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Radial vignette effect */
+    .bg-radial-vignette {
+        background: radial-gradient(
+            ellipse at center,
+            transparent 0%,
+            transparent 40%,
+            rgba(0, 0, 0, 0.2) 70%,
+            rgba(0, 0, 0, 0.6) 100%
+        );
+    }
+}
+
 @layer base {
     * {
         @apply border-border;
@@ -619,7 +702,7 @@
 /* Blue Theme Utilities */
 @layer utilities {
     .bg-gradient-blue {
-        background: linear-gradient(135deg, hsl(var(--primary-blue)) 0%, hsl(var(--primary-blue-dark)) 100%);
+        background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%);
     }
     
     .bg-gradient-blue-light {
@@ -627,29 +710,47 @@
     }
     
     .bg-blur-circle {
-        background: radial-gradient(circle at center, hsl(var(--primary-blue) / 0.3) 0%, transparent 70%);
+        background: radial-gradient(circle at center, hsl(var(--primary) / 0.3) 0%, transparent 70%);
+        filter: blur(40px);
+    }
+    
+    .dark .bg-blur-circle {
+        background: radial-gradient(circle at center, hsl(var(--primary) / 0.1) 0%, transparent 70%);
         filter: blur(40px);
     }
     
     .bg-blur-circle-light {
-        background: radial-gradient(circle at center, hsl(var(--primary-blue) / 0.15) 0%, transparent 70%);
+        background: radial-gradient(circle at center, hsl(var(--primary) / 0.15) 0%, transparent 70%);
+        filter: blur(60px);
+    }
+    
+    .dark .bg-blur-circle-light {
+        background: radial-gradient(circle at center, hsl(var(--primary) / 0.05) 0%, transparent 70%);
         filter: blur(60px);
     }
     
     .text-primary-blue {
-        color: hsl(var(--primary-blue));
+        color: hsl(var(--primary));
     }
     
     .border-primary-blue {
-        border-color: hsl(var(--primary-blue));
+        border-color: hsl(var(--primary));
     }
     
     .shadow-blue {
-        box-shadow: 0 4px 20px hsla(var(--primary-blue) / 0.15);
+        box-shadow: 0 4px 20px hsla(var(--primary) / 0.15);
+    }
+    
+    .dark .shadow-blue {
+        box-shadow: 0 4px 20px hsla(0 0% 0% / 0.3);
     }
     
     .shadow-blue-lg {
-        box-shadow: 0 10px 40px hsla(var(--primary-blue) / 0.2);
+        box-shadow: 0 10px 40px hsla(var(--primary) / 0.2);
+    }
+    
+    .dark .shadow-blue-lg {
+        box-shadow: 0 10px 40px hsla(0 0% 0% / 0.4);
     }
     
     .backdrop-blur-xl {

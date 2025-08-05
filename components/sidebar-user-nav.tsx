@@ -2,7 +2,8 @@
 import { Check, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
 import type { User } from '@/types/next-auth';
-import { useAuth } from '@/context/firebase-auth-context';
+// Auth removed - no authentication needed
+// import { useAuth } from '@/context/firebase-auth-context';
 import { useTheme } from 'next-themes';
 
 import {
@@ -25,7 +26,8 @@ import { themes } from '../types/constants';
 export function SidebarUserNav({ user }: { user: User }) {
   const { setTheme, theme } = useTheme();
   const t = useTranslations();
-  const { logout } = useAuth();
+  // Auth removed - no logout needed
+  // const { logout } = useAuth();
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -64,7 +66,8 @@ export function SidebarUserNav({ user }: { user: User }) {
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
-            <DropdownMenuSeparator />
+            {/* Auth removed - no logout needed */}
+            {/* <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <button
                 type="button"
@@ -75,7 +78,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               >
                 {t('actions.signOut')}
               </button>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

@@ -1,36 +1,37 @@
 import type { ModelPricing } from '@/lib/types';
 
 const modelIdMap: Record<string, string> = {
-    'haiku': 'anthropic.claude-3-haiku-20240307-v1:0',
-    'general-bedrock-agent': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'sharepoint-agent': 'anthropic.claude-3-sonnet-20240229-v1:0',
-    'sharepoint-agent-v2': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'artifact-model': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'bedrock-sonnet-latest': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'document-agent': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'csv-agent': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'csv-agent-v2': 'anthropic.claude-sonnet-4-20250514-v1:0',
-    'text2sql-agent': 'anthropic.claude-sonnet-4-20250514-v1:0',
+    // Legacy mappings now point to Gemini
+    'haiku': 'gemini-2.5-flash',
+    'general-bedrock-agent': 'gemini-2.5-flash',
+    'sharepoint-agent': 'gemini-2.5-flash',
+    'sharepoint-agent-v2': 'gemini-2.5-flash',
+    'artifact-model': 'gemini-2.5-flash',
+    'bedrock-sonnet-latest': 'gemini-2.5-flash',
+    'document-agent': 'gemini-2.5-flash',
+    'csv-agent': 'gemini-2.5-flash',
+    'csv-agent-v2': 'gemini-2.5-flash',
+    'text2sql-agent': 'gemini-2.5-flash',
     // Together AI models - pricing from their website, per 1M tokens
     'chat-model-reasoning': 'deepseek-ai/DeepSeek-R1', 
     'deepresearch-model-reasoning': 'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
 };
 
 const pricing: Record<string, ModelPricing> = {
-  // Amazon Bedrock pricing per 1M tokens (US region)
+  // Google Gemini pricing per 1M tokens (Google AI Studio pricing)
+  'gemini-2.5-flash': { inputCost: 0.075, outputCost: 0.30 },  // Very cost effective
+  'gemini-2.5-pro': { inputCost: 1.25, outputCost: 5.00 },    // More capable, higher cost
+  'gemini-2.0-flash': { inputCost: 0.075, outputCost: 0.30 }, // Fallback
+  'gemini-1.5-flash': { inputCost: 0.075, outputCost: 0.30 }, // Fallback
+  'gemini-1.5-pro': { inputCost: 1.25, outputCost: 5.00 },    // Fallback
+  
+  // Legacy Bedrock pricing (for cost comparison/migration)
   'anthropic.claude-sonnet-4-20250514-v1:0': { inputCost: 3.00, outputCost: 15.00 },
   'anthropic.claude-3-7-sonnet-20250219-v1:0': { inputCost: 3.00, outputCost: 15.00 },
   'anthropic.claude-3-sonnet-20240229-v1:0': { inputCost: 3.00, outputCost: 15.00 },
   'anthropic.claude-3-haiku-20240307-v1:0': { inputCost: 0.25, outputCost: 1.25 },
   'anthropic.claude-3-5-sonnet-20240620-v1:0': { inputCost: 3.00, outputCost: 15.00 },
-  // Amazon Bedrock pricing per 1M tokens (EU region)
-  'eu.anthropic.claude-sonnet-4-20250514-v1:0': { inputCost: 3.00, outputCost: 15.00 },
-  'eu.anthropic.claude-3-7-sonnet-20250219-v1:0': { inputCost: 3.00, outputCost: 15.00 },
-  'eu.anthropic.claude-3-sonnet-20240229-v1:0': { inputCost: 3.00, outputCost: 15.00 },
-  'eu.anthropic.claude-3-haiku-20240307-v1:0': { inputCost: 0.25, outputCost: 1.25 },
-  'eu.anthropic.claude-3-5-sonnet-20240620-v1:0': { inputCost: 3.00, outputCost: 15.00 },
-  // Other models
-  'cohere.rerank-v3-5:0': { inputCost: 1.00, outputCost: 0 }, // Based on cohere.rerank-english-v3.0
+  
   // TogetherAI pricing per 1M tokens
   'deepseek-ai/DeepSeek-R1': { inputCost: 0.14, outputCost: 0.28 },
   'deepseek-ai/DeepSeek-R1-Distill-Llama-70B': { inputCost: 0.14, outputCost: 0.28 }, 
@@ -59,6 +60,40 @@ export function calculateCost(modelId: string, inputTokens: number, outputTokens
     console.warn(`Pricing not found for model: ${modelId}`);
     return null;
   }
-  const cost = (inputTokens / 1_000_000) * modelPricing.inputCost + (outputTokens / 1_000_000) * modelPricing.outputCost;
-  return cost;
-} 
+  
+  // Ensure tokens are valid numbers
+  const safeInputTokens = isNaN(inputTokens) ? 0 : inputTokens;
+  const safeOutputTokens = isNaN(outputTokens) ? 0 : outputTokens;
+  
+  const cost = (safeInputTokens / 1_000_000) * modelPricing.inputCost + (safeOutputTokens / 1_000_000) * modelPricing.outputCost;
+  
+  // Ensure the result is a valid number
+  return isNaN(cost) ? 0 : cost;
+}
+
+/**
+ * Safely formats a cost value with error handling
+ * @param cost The cost value to format
+ * @returns Formatted cost string
+ */
+export function formatCost(cost: any): string {
+  // Handle null/undefined
+  if (cost === null || cost === undefined) {
+    return '$0.0000';
+  }
+  
+  // Convert to number if it's not already
+  const numericCost = typeof cost === 'number' ? cost : parseFloat(cost);
+  
+  // Handle invalid numbers
+  if (isNaN(numericCost)) {
+    return '$0.0000';
+  }
+  
+  // Handle very small costs
+  if (numericCost > 0 && numericCost < 0.0001) {
+    return '<$0.0001';
+  }
+  
+  return `$${numericCost.toFixed(4)}`;
+}

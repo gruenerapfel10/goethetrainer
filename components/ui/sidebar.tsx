@@ -4,6 +4,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { type VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -181,7 +182,37 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, setOpen } = useSidebar()
+    const [isHovered, setIsHovered] = React.useState(false)
+    const [hasBeenManuallyToggled, setHasBeenManuallyToggled] = React.useState(false)
+
+    // Track when sidebar is manually toggled
+    React.useEffect(() => {
+      const handleClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement
+        if (target.closest('[data-sidebar="rail"]') || target.closest('[data-sidebar="trigger"]')) {
+          setHasBeenManuallyToggled(true)
+        }
+      }
+
+      document.addEventListener('click', handleClick)
+      return () => document.removeEventListener('click', handleClick)
+    }, [])
+
+    // Handle hover logic
+    React.useEffect(() => {
+      if (!isMobile && isHovered && state === "collapsed" && !hasBeenManuallyToggled) {
+        setOpen(true)
+      } else if (!isMobile && !isHovered && state === "expanded" && !hasBeenManuallyToggled) {
+        // Small delay to prevent flickering when mouse moves between elements
+        const timeout = setTimeout(() => {
+          if (!isHovered) {
+            setOpen(false)
+          }
+        }, 150)
+        return () => clearTimeout(timeout)
+      }
+    }, [isHovered, state, isMobile, setOpen, hasBeenManuallyToggled])
 
     if (collapsible === "none") {
       return (
@@ -223,47 +254,85 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-      <div
-        ref={ref}
-        className="group peer hidden text-sidebar-foreground md:block"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
-        data-side={side}
-      >
-        {/* This is what handles the sidebar gap on desktop */}
+      <>
         <div
-          className={cn(
-            "relative w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear",
-            "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
-            variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
-          )}
-        />
-        <div
-          className={cn(
-            "fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex",
-            side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            // Adjust the padding for floating and inset variants.
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            className
-          )}
-          {...props}
+          ref={ref}
+          className="group peer hidden text-sidebar-foreground md:block"
+          data-state={state}
+          data-collapsible={state === "collapsed" ? collapsible : ""}
+          data-variant={variant}
+          data-side={side}
         >
-          <div
-            data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+          {/* This is what handles the sidebar gap on desktop */}
+          <motion.div
+            className={cn(
+              "relative bg-transparent",
+              variant === "floating" || variant === "inset"
+                ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
+                : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
+            )}
+            animate={{
+              width: state === "expanded" 
+                ? "var(--sidebar-width)" 
+                : collapsible === "offcanvas" 
+                  ? "0" 
+                  : "var(--sidebar-width-icon)"
+            }}
+            transition={{
+              duration: 0.2,
+              ease: "easeInOut"
+            }}
+          />
+          <motion.div
+            className={cn(
+              "fixed inset-y-0 z-10 hidden h-svh md:flex",
+              side === "left" ? "left-0" : "right-0",
+              // Adjust the padding for floating and inset variants.
+              variant === "floating" || variant === "inset"
+                ? "p-2"
+                : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+              className
+            )}
+            animate={{
+              width: state === "expanded" 
+                ? "var(--sidebar-width)" 
+                : variant === "floating" || variant === "inset"
+                  ? "calc(var(--sidebar-width-icon) + theme(spacing.4) + 2px)"
+                  : "var(--sidebar-width-icon)",
+              x: collapsible === "offcanvas" && state === "collapsed"
+                ? side === "left" 
+                  ? "calc(var(--sidebar-width) * -1)"
+                  : "calc(var(--sidebar-width))"
+                : 0
+            }}
+            transition={{
+              duration: 0.2,
+              ease: "easeInOut"
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            {...props}
           >
-            {children}
-          </div>
+            <div
+              data-sidebar="sidebar"
+              className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            >
+              {children}
+            </div>
+          </motion.div>
         </div>
-      </div>
+
+        {/* Hover trigger zone for collapsed sidebar */}
+        {!isMobile && state === "collapsed" && collapsible === "icon" && !hasBeenManuallyToggled && (
+          <div
+            className={cn(
+              "fixed inset-y-0 z-30 w-2 cursor-pointer",
+              side === "left" ? "left-0" : "right-0"
+            )}
+            onMouseEnter={() => setIsHovered(true)}
+          />
+        )}
+      </>
     )
   }
 )

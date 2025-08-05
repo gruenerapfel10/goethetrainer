@@ -9,7 +9,8 @@ import { getTrailingMessageId, messagesWithoutFiles } from '@/lib/utils';
 import { myProvider } from '@/lib/ai/models';
 import { getSystemPrompt } from '@/lib/ai/prompts';
 import { csvAnalyze } from '@/lib/ai/tools/csv-analyze';
-import { saveMessages } from '@/lib/db/queries';
+// Database import using stub function (no persistence)
+import { saveMessages } from '@/lib/db/queries-stub';
 import { generateUUID } from '@/lib/utils';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 

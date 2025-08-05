@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getMessageById } from '@/lib/db/queries';
-import { calculateCost } from '@/lib/costs';
+import { calculateCost, formatCost } from '@/lib/costs';
 import { chatModels } from '@/lib/ai/models';
 
 export async function GET(request: Request) {
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       agentType,
       agentName,
       cost: cost !== null ? cost : 0,
-      formattedCost: cost !== null ? `$${cost.toFixed(4)}` : '$0.0000'
+      formattedCost: formatCost(cost)
     });
   } catch (error) {
     console.error('Failed to calculate message cost:', error);

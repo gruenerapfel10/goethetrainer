@@ -135,6 +135,12 @@ function PureMessages({
       ref={messagesContainerRef}
       className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 transition-all duration-300 ease-in-out"
       style={{ paddingBottom: `${bottomPadding + 16}px` }}
+      onWheel={(e) => {
+        e.stopPropagation();
+      }}
+      onTouchMove={(e) => {
+        e.stopPropagation();
+      }}
     >
       {/* REMOVED AnimatePresence mode="wait" - this was causing all messages to disappear */}
       {/* Messages */}
