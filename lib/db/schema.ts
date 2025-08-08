@@ -303,3 +303,6 @@ export const systemPrompts = pgTable('system_prompts', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 export type SystemPrompt = InferSelectModel<typeof systemPrompts>;
+
+// Export all application-related schemas
+export * from './schema-applications';

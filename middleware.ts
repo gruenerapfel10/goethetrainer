@@ -72,6 +72,12 @@ export const config = {
     '/register',
     '/universities/:id*',
     '/dashboard/:id*',
+    '/profile/:path*',
+    '/applications/:path*',
+    '/documents/:path*',
+    '/admin/:path*',
+    '/counselor/:path*',
+    '/parent/:path*',
     '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };
