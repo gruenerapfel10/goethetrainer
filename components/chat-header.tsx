@@ -62,7 +62,7 @@ function PureChatHeader({
     <div className="sticky top-0">
       <header className="flex bg-background py-1.5 items-center px-2 md:px-2 gap-2 flex-wrap md:flex-nowrap justify-center md:justify-start">
         <div className="flex items-center gap-2">
-          <SidebarToggle />
+          <SidebarToggle isOpen={open} onToggle={() => {}} />
 
           {/* Model Selector */}
           {!isReadonly && <ModelSelector selectedModelId={selectedModelId} />}

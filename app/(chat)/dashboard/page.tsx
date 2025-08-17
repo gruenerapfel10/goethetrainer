@@ -1,5 +1,8 @@
+'use client';
+
 import { redirect } from 'next/navigation';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 // Auth removed - no authentication needed
 // import { auth } from '../../(auth)/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +16,7 @@ import { Button } from "@/components/ui/button";
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
+export default function DashboardPage() {
   // Auth removed - no authentication needed
   // const session = await auth();
 
@@ -22,6 +25,8 @@ export default async function DashboardPage() {
   //   redirect('/');
   // }
   // TODO: Implement Firebase admin role check
+
+  const t = useTranslations();
 
   return (
     <div className="flex-1 relative">
@@ -34,17 +39,17 @@ export default async function DashboardPage() {
       
       <div className="relative z-10 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t('dashboard.title')}</h2>
           <div className="flex items-center space-x-2">
             <CalendarDateRangePicker />
           </div>
         </div>
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="overview">{t('dashboard.overview')}</TabsTrigger>
+          <TabsTrigger value="analytics">{t('dashboard.analytics')}</TabsTrigger>
+          <TabsTrigger value="reports">{t('dashboard.reports')}</TabsTrigger>
+          <TabsTrigger value="notifications">{t('dashboard.notifications')}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
           {/* University Applications Overview */}
@@ -53,48 +58,48 @@ export default async function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <GraduationCap className="h-5 w-5 text-white" />
-                  <CardTitle className="text-white">University Applications</CardTitle>
+                  <CardTitle className="text-white">{t('dashboard.universityApplications')}</CardTitle>
                 </div>
                 <Link href="/universities">
                   <Button variant="secondary" size="sm" className="bg-white/20 hover:bg-white/30 dark:bg-white/10 dark:hover:bg-white/20 text-white border-0">
-                    View All Universities
+                    {t('dashboard.viewAllUniversities')}
                   </Button>
                 </Link>
               </div>
               <CardDescription className="text-white/80">
-                Track your applications to top 500 universities worldwide
+                {t('dashboard.trackApplications')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur">
                   <p className="text-3xl font-bold">500</p>
-                  <p className="text-sm text-white/80">Total Universities</p>
+                  <p className="text-sm text-white/80">{t('dashboard.totalUniversities')}</p>
                 </div>
                 <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur">
                   <p className="text-3xl font-bold">0</p>
-                  <p className="text-sm text-white/80">Applied</p>
+                  <p className="text-sm text-white/80">{t('dashboard.applied')}</p>
                 </div>
                 <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur">
                   <div className="flex items-center justify-center gap-1">
                     <Clock className="h-5 w-5 text-yellow-300" />
                     <p className="text-3xl font-bold">0</p>
                   </div>
-                  <p className="text-sm text-white/80">Pending</p>
+                  <p className="text-sm text-white/80">{t('dashboard.pending')}</p>
                 </div>
                 <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur">
                   <div className="flex items-center justify-center gap-1">
                     <FileCheck className="h-5 w-5 text-green-300" />
                     <p className="text-3xl font-bold">0</p>
                   </div>
-                  <p className="text-sm text-white/80">Offers</p>
+                  <p className="text-sm text-white/80">{t('dashboard.offers')}</p>
                 </div>
                 <div className="text-center bg-white/10 rounded-lg p-4 backdrop-blur">
                   <div className="flex items-center justify-center gap-1">
                     <XCircle className="h-5 w-5 text-red-300" />
                     <p className="text-3xl font-bold">0</p>
                   </div>
-                  <p className="text-sm text-white/80">Rejections</p>
+                  <p className="text-sm text-white/80">{t('dashboard.rejections')}</p>
                 </div>
               </div>
             </CardContent>
@@ -104,7 +109,7 @@ export default async function DashboardPage() {
             <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Total Revenue
+                  {t('dashboard.totalRevenue')}
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
@@ -124,14 +129,14 @@ export default async function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">$45,231.89</div>
                 <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
+                  +20.1% {t('dashboard.fromLastMonth')}
                 </p>
               </CardContent>
             </Card>
             <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Subscriptions
+                  {t('dashboard.subscriptions')}
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
@@ -153,13 +158,13 @@ export default async function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+2350</div>
                 <p className="text-xs text-muted-foreground">
-                  +180.1% from last month
+                  +180.1% {t('dashboard.fromLastMonth')}
                 </p>
               </CardContent>
             </Card>
             <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                <CardTitle className="text-sm font-medium">{t('dashboard.sales')}</CardTitle>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -179,14 +184,14 @@ export default async function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+12,234</div>
                 <p className="text-xs text-muted-foreground">
-                  +19% from last month
+                  +19% {t('dashboard.fromLastMonth')}
                 </p>
               </CardContent>
             </Card>
             <Card className="backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Active Now
+                  {t('dashboard.activeNow')}
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 flex items-center justify-center">
                   <svg
@@ -206,7 +211,7 @@ export default async function DashboardPage() {
               <CardContent>
                 <div className="text-2xl font-bold">+573</div>
                 <p className="text-xs text-muted-foreground">
-                  +201 since last hour
+                  +201 {t('dashboard.sinceLastHour')}
                 </p>
               </CardContent>
             </Card>
@@ -214,7 +219,7 @@ export default async function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4 backdrop-blur-xl border-0 shadow-blue">
               <CardHeader>
-                <CardTitle>Overview</CardTitle>
+                <CardTitle>{t('dashboard.overview')}</CardTitle>
               </CardHeader>
               <CardContent className="pl-2">
                 <Overview />
@@ -222,9 +227,9 @@ export default async function DashboardPage() {
             </Card>
             <Card className="col-span-3 backdrop-blur-xl border-0 shadow-blue">
               <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
+                <CardTitle>{t('dashboard.recentSales')}</CardTitle>
                 <CardDescription>
-                  You made 265 sales this month.
+                  {t('dashboard.salesThisMonth')}
                 </CardDescription>
               </CardHeader>
               <CardContent>

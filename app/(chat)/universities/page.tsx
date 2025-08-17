@@ -1,28 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePageTransition } from '@/context/page-transition-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from 'next-intl';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Grid3X3, List, Search, MapPin, Trophy, Building, Calendar, CheckCircle2, XCircle, Clock } from "lucide-react";
-import Link from 'next/link';
+import { Grid3X3, List, Search } from "lucide-react";
+import { useRouter } from 'next/navigation';
 import {
   Pagination,
   PaginationContent,
@@ -32,6 +16,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { UniversityCard } from '@/components/universities/university-card';
+import { UniversityFilters } from '@/components/universities/university-filters';
+import { UniversityTable } from '@/components/universities/university-table';
 
 interface University {
   name: string;
@@ -62,9 +49,11 @@ export default function UniversitiesPage() {
   const [selectedDegree, setSelectedDegree] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [applicationStatuses, setApplicationStatuses] = useState<Record<number, ApplicationStatus>>({});
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const itemsPerPage = 24;
+  const t = useTranslations();
+  const router = useRouter();
   
   // Hardcoded deadline for all universities
   const applicationDeadline = 'October 31';
@@ -81,6 +70,7 @@ export default function UniversitiesPage() {
       })
       .catch(err => {
         console.error('Failed to load data:', err);
+        setError('Failed to load universities data. Please try again later.');
         setLoading(false);
       });
   }, []);
@@ -103,162 +93,112 @@ export default function UniversitiesPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
 
-  const getApplicationStatusBadge = (status: ApplicationStatus | undefined) => {
-    switch (status) {
-      case 'applied':
-        return (
-          <Badge className="bg-blue-500 text-white dark:bg-blue-600 border-0 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Applied
-          </Badge>
-        );
-      case 'accepted':
-        return (
-          <Badge className="bg-green-500 text-white dark:bg-green-600 border-0 flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
-            Accepted
-          </Badge>
-        );
-      case 'rejected':
-        return (
-          <Badge className="bg-red-500 text-white dark:bg-red-600 border-0 flex items-center gap-1">
-            <XCircle className="h-3 w-3" />
-            Rejected
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="outline" className="text-muted-foreground">
-            Not Applied
-          </Badge>
-        );
-    }
+
+  const handleUniversityClick = (university: University) => {
+    router.push(`/universities/${university.rank}`);
   };
 
-  const handleCardClick = (e: React.MouseEvent, university: University) => {
-    e.preventDefault();
-    window.location.href = `/universities/${university.rank}`;
-  };
-
-  const UniversityCard = ({ university }: { university: University }) => {
-    const status = applicationStatuses[university.rank];
-    const isHovered = hoveredCard === university.rank;
-    
-    // Generate subtle gradient based on rank
-    const getRankGradient = (rank: number) => {
-      if (rank <= 50) return 'from-blue-500/5 to-transparent';
-      if (rank <= 100) return 'from-slate-500/5 to-transparent';
-      return 'from-slate-400/5 to-transparent';
-    };
-    
-    // Convert university name to file path format
-    const getUniversityImagePath = (name: string) => {
-      return name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
-    };
-    
-    const universityPath = getUniversityImagePath(university.name);
-    const emblemPath = `/university-images/${universityPath}/emblem_${universityPath}.svg`;
-    
-    return (
-      <div 
-        onClick={(e) => handleCardClick(e, university)}
-        onMouseEnter={() => setHoveredCard(university.rank)}
-        onMouseLeave={() => setHoveredCard(null)}
-        className="relative h-full"
-      >
-        <Card className={`h-full flex flex-col relative overflow-hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-0 shadow-blue hover:shadow-blue-lg transition-all duration-300 cursor-pointer group transform-gpu`}>
-          {/* University emblem background */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden p-8">
-            <img 
-              src={emblemPath} 
-              alt=""
-              className={`w-full h-full max-w-[70%] max-h-[70%] object-contain opacity-[0.03] dark:opacity-[0.04] select-none transition-all duration-500 ${
-                isHovered ? 'scale-105' : 'scale-100'
-              }`}
-              onError={(e) => {
-                // Hide the image if it doesn't exist
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </div>
-          
-          {/* Subtle background gradient */}
-          <div className={`absolute inset-0 bg-gradient-to-br ${getRankGradient(university.rank)}`} />
-          <CardHeader className="pb-3 relative z-10">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col gap-2">
-                <Badge className="w-fit bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-0">
-                  #{university.rank}
-                </Badge>
-                {getApplicationStatusBadge(status)}
-              </div>
-              <div className="h-8 w-8 rounded-full bg-primary dark:bg-blue-600 flex items-center justify-center">
-                <Building className="h-4 w-4 text-primary-foreground" />
-              </div>
-            </div>
-            <CardTitle className="text-lg line-clamp-2 mt-2 text-foreground min-h-[3.5rem]">{university.name}</CardTitle>
-            <CardDescription className="flex items-center gap-1 text-muted-foreground">
-              <MapPin className="h-3 w-3" />
-              {university.country}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col relative z-10">
-            <div className="flex-1 space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Employer Rep</span>
-                <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.employer_reputation_rank}</Badge>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Academic Rep</span>
-                <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.academic_reputation_rank}</Badge>
-              </div>
-              <div className="pt-2 mt-2 border-t min-h-[32px]">
-                {university.supported_degrees && selectedDegree !== 'all' ? (
-                  <Badge className={university.supported_degrees.includes(selectedDegree) ? "bg-green-500/20 text-green-600 dark:text-green-400 border-green-500/30" : "bg-muted text-muted-foreground border-muted"}>
-                    {university.supported_degrees.includes(selectedDegree) ? "✓ Offers selected degree" : "× Degree not available"}
-                  </Badge>
-                ) : (
-                  <div className="h-[22px]"></div>
-                )}
-              </div>
-              <div className="pt-2 mt-2 border-t">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Calendar className="h-3 w-3" />
-                  <span className="text-xs">Deadline: {applicationDeadline}</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
 
   if (loading) {
     return (
-      <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex-1 space-y-4 p-6">
+        <div className="space-y-4">
+          <div className="h-6 bg-muted animate-pulse rounded" />
+          <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Card key={i} className="h-[280px]">
+              <CardHeader>
+                <div className="space-y-2">
+                  <div className="h-4 bg-muted animate-pulse rounded w-16" />
+                  <div className="h-5 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-20" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded" />
+                  <div className="h-3 bg-muted animate-pulse rounded w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="text-center space-y-4">
+          <p className="text-destructive">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            {t('common.tryAgain')}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && filteredUniversities.length === 0) {
+    return (
+      <div className="flex-1 space-y-4 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">{t('universities.title')}</h2>
+            <p className="text-muted-foreground">{t('universities.subtitle')}</p>
+          </div>
+        </div>
+        <UniversityFilters
+          searchTerm={searchTerm}
+          onSearchChange={(value) => {
+            setSearchTerm(value);
+            setCurrentPage(1);
+          }}
+          selectedCountry={selectedCountry}
+          onCountryChange={(value) => {
+            setSelectedCountry(value);
+            setCurrentPage(1);
+          }}
+          selectedDegree={selectedDegree}
+          onDegreeChange={(value) => {
+            setSelectedDegree(value);
+            setCurrentPage(1);
+          }}
+          countries={countries}
+          degrees={degrees}
+        />
         <div className="flex items-center justify-center h-96">
-          <p className="text-muted-foreground">Loading universities...</p>
+          <div className="text-center space-y-4">
+            <p className="text-muted-foreground">{t('universities.noResults')}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSearchTerm('');
+                setSelectedCountry('all');
+                setSelectedDegree('all');
+                setCurrentPage(1);
+              }}
+            >
+              {t('universities.clearFilters')}
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 relative bg-background">
-      {/* Background blur effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blur-circle"></div>
-        <div className="absolute top-60 -left-20 w-80 h-80 bg-blur-circle-light"></div>
-        <div className="absolute bottom-40 right-40 w-72 h-72 bg-blur-circle-light"></div>
-      </div>
-      
-      <div className="relative z-10 space-y-4 p-8 pt-6">
+    <div className="flex-1 relative">
+      <div className="space-y-4 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Universities</h2>
-            <p className="text-muted-foreground">
-              Browse and apply to top 500 universities worldwide
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">{t('universities.title')}</h2>
+            <p className="text-foreground/80">
+              {t('universities.subtitle')}
             </p>
           </div>
         <div className="flex items-center gap-2">
@@ -282,124 +222,54 @@ export default function UniversitiesPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search universities or countries..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-10"
-          />
-        </div>
-        <Select value={selectedCountry} onValueChange={(value) => {
+      <UniversityFilters
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setCurrentPage(1);
+        }}
+        selectedCountry={selectedCountry}
+        onCountryChange={(value) => {
           setSelectedCountry(value);
           setCurrentPage(1);
-        }}>
-          <SelectTrigger className="w-full md:w-[200px]">
-            <SelectValue placeholder="Filter by country" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
-            {countries.map(country => (
-              <SelectItem key={country} value={country}>
-                {country}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={selectedDegree} onValueChange={(value) => {
+        }}
+        selectedDegree={selectedDegree}
+        onDegreeChange={(value) => {
           setSelectedDegree(value);
           setCurrentPage(1);
-        }}>
-          <SelectTrigger className="w-full md:w-[250px]">
-            <SelectValue placeholder="Filter by degree" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            <SelectItem value="all">All Degrees</SelectItem>
-            {degrees.sort((a, b) => a.popularity_rank - b.popularity_rank).map(degree => (
-              <SelectItem key={degree.id} value={degree.id}>
-                {degree.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        }}
+        countries={countries}
+        degrees={degrees}
+      />
 
       {/* Results count */}
-      <p className="text-sm text-muted-foreground">
-        Showing {paginatedUniversities.length} of {filteredUniversities.length} universities
+      <p className="text-sm text-foreground/70">
+        {t('universities.showingResults', { current: paginatedUniversities.length, total: filteredUniversities.length })}
       </p>
 
       {/* Grid View */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {paginatedUniversities.map((university) => (
-            <UniversityCard key={`${university.rank}-${university.name}`} university={university} />
+            <UniversityCard 
+              key={`${university.rank}-${university.name}`} 
+              university={university} 
+              status={applicationStatuses[university.rank]}
+              onClick={handleUniversityClick}
+              applicationDeadline={applicationDeadline}
+            />
           ))}
         </div>
       )}
 
       {/* Table View */}
       {viewMode === 'table' && (
-        <Card className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-0 shadow-blue">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">Rank</TableHead>
-                <TableHead>University</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead className="text-center">Employer Rep</TableHead>
-                <TableHead className="text-center">Academic Rep</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUniversities.map((university) => {
-                const status = applicationStatuses[university.rank];
-                return (
-                  <TableRow key={`${university.rank}-${university.name}`}>
-                    <TableCell>
-                      <Badge className="bg-primary text-primary-foreground dark:bg-blue-600 dark:text-white border-0">#{university.rank}</Badge>
-                    </TableCell>
-                    <TableCell className="font-medium">{university.name}</TableCell>
-                    <TableCell>{university.country}</TableCell>
-                    <TableCell>{getApplicationStatusBadge(status)}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span className="text-sm">{applicationDeadline}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.employer_reputation_rank}</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="border-primary text-primary dark:border-blue-600 dark:text-blue-400">#{university.academic_reputation_rank}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          window.location.href = `/universities/${university.rank}`;
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <UniversityTable
+          universities={paginatedUniversities}
+          applicationStatuses={applicationStatuses}
+          applicationDeadline={applicationDeadline}
+          onUniversityClick={handleUniversityClick}
+        />
       )}
 
       {/* Pagination */}

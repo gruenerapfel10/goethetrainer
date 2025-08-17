@@ -1,0 +1,79 @@
+{
+  "chat": {
+    "searchChats": "Поиск",
+    "search": "Поиск",
+    "noSearchResults": "Нет результатов поиска",
+    "recentChats": "Недавние чаты"
+  },
+  "keyboard": {
+    "shortcut": "⌘K"
+  },
+  "sidebar": {
+    "colorTheme": "Цветовая тема",
+    "lightMode": "Светлая",
+    "darkMode": "Тёмная",
+    "systemMode": "Системная"
+  },
+  "actions": {
+    "signOut": "Выйти"
+  },
+  "locales": {
+    "en": "Английский",
+    "lt": "Литовский",
+    "ru": "Русский"
+  },
+  "navigation": {
+    "dashboard": "Панель управления",
+    "universities": "Университеты",
+    "profile": "Профиль"
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "overview": "Обзор",
+    "analytics": "Аналитика", 
+    "reports": "Отчёты",
+    "notifications": "Уведомления",
+    "universityApplications": "Заявки в университеты",
+    "trackApplications": "Отслеживайте ваши заявки в топ 500 университетов мира",
+    "viewAllUniversities": "Просмотреть все университеты",
+    "totalUniversities": "Всего университетов",
+    "applied": "Подано",
+    "pending": "В ожидании", 
+    "offers": "Предложения",
+    "rejections": "Отказы",
+    "totalRevenue": "Общая прибыль",
+    "subscriptions": "Подписки",
+    "sales": "Продажи",
+    "activeNow": "Активно сейчас",
+    "fromLastMonth": "с прошлого месяца",
+    "sinceLastHour": "с прошлого часа",
+    "recentSales": "Недавние продажи",
+    "salesThisMonth": "Вы совершили 265 продаж в этом месяце."
+  },
+  "universities": {
+    "title": "Университеты",
+    "subtitle": "Просматривайте и подавайте заявки в топ 500 университетов мира",
+    "loading": "Загрузка университетов...",
+    "searchPlaceholder": "Поиск университетов или стран...",
+    "filterByCountry": "Фильтр по стране",
+    "filterByDegree": "Фильтр по степени", 
+    "allCountries": "Все страны",
+    "allDegrees": "Все степени",
+    "showingResults": "Показано {current} из {total} университетов",
+    "rank": "Рейтинг",
+    "university": "Университет",
+    "country": "Страна",
+    "status": "Статус",
+    "deadline": "Срок подачи",
+    "employerRep": "Репутация у работодателей",
+    "academicRep": "Академическая репутация",
+    "actions": "Действия",
+    "viewDetails": "Просмотреть детали",
+    "notApplied": "Не подано",
+    "applied": "Подано",
+    "accepted": "Принято",
+    "rejected": "Отклонено",
+    "offersSelectedDegree": "✓ Предлагает выбранную степень",
+    "degreeNotAvailable": "× Степень недоступна"
+  }
+}

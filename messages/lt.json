@@ -120,6 +120,10 @@
     "description": "Masinis Universitetų Prašymai",
     "brand": "MUA",
     "newChat": "Naujas pokalbis",
+    "search": "Paieška",
+    "searchChats": "Paieška",
+    "noSearchResults": "Paieškos rezultatų nėra",
+    "recentChats": "Paskutiniai pokalbiai",
     "adminPortal": "Admin'o portalas",
     "enableNotifications": "Įjungti pranešimus",
     "disableNotifications": "Išjungti pranešimus",
@@ -456,7 +460,65 @@
     "gilestaMode": "Gilesta",
     "blueMode": "Mėlynas",
     "mode": "rėžimą",
-    "colorTheme": "Spalvų rėžimas"
+    "colorTheme": "Spalvų rėžimas",
+    "systemMode": "Sistema"
+  },
+  "keyboard": {
+    "shortcut": "⌘K"
+  },
+  "navigation": {
+    "dashboard": "Valdymo skydas",
+    "universities": "Universitetai",
+    "profile": "Profilis"
+  },
+  "dashboard": {
+    "title": "Valdymo skydas",
+    "overview": "Apžvalga",
+    "analytics": "Analitika", 
+    "reports": "Ataskaitos",
+    "notifications": "Pranešimai",
+    "universityApplications": "Universitetų prašymai",
+    "trackApplications": "Sekite savo prašymus į geriausius 500 pasaulio universitetų",
+    "viewAllUniversities": "Peržiūrėti visus universitetus",
+    "totalUniversities": "Iš viso universitetų",
+    "applied": "Pateikta",
+    "pending": "Laukiama", 
+    "offers": "Pasiūlymai",
+    "rejections": "Atmetimai",
+    "totalRevenue": "Bendros pajamos",
+    "subscriptions": "Prenumeratos",
+    "sales": "Pardavimai",
+    "activeNow": "Aktyvūs dabar",
+    "fromLastMonth": "nuo praėjusio mėnesio",
+    "sinceLastHour": "nuo praėjusios valandos",
+    "recentSales": "Paskutiniai pardavimai",
+    "salesThisMonth": "Šį mėnesį atlikote 265 pardavimus."
+  },
+  "universities": {
+    "title": "Universitetai",
+    "subtitle": "Naršykite ir teikite prašymus į geriausius 500 pasaulio universitetų",
+    "loading": "Kraunami universitetai...",
+    "searchPlaceholder": "Ieškoti universitetų ar šalių...",
+    "filterByCountry": "Filtruoti pagal šalį",
+    "filterByDegree": "Filtruoti pagal specialybę", 
+    "allCountries": "Visos šalys",
+    "allDegrees": "Visos specialybės",
+    "showingResults": "Rodoma {current} iš {total} universitetų",
+    "rank": "Reitingas",
+    "university": "Universitetas",
+    "country": "Šalis",
+    "status": "Būsena",
+    "deadline": "Terminas",
+    "employerRep": "Darbdavių reputacija",
+    "academicRep": "Akademinė reputacija",
+    "actions": "Veiksmai",
+    "viewDetails": "Peržiūrėti detales",
+    "notApplied": "Nepateikta",
+    "applied": "Pateikta",
+    "accepted": "Priimta",
+    "rejected": "Atmesta",
+    "offersSelectedDegree": "✓ Siūlo pasirinktą specialybę",
+    "degreeNotAvailable": "× Specialybė nesiūloma"
   },
   "errors": {
     "fileListRefresh": "Nepavyko atnaujinti failų sąrašo",
@@ -746,7 +808,7 @@
       "invalidData": "Nepavyko patvirtinti jūsų duomenų!"
     }
   },
-  "dashboard": {
+  "dashboardAdmin": {
      "sharepointFailedSearches": "SharePoint nepavykusios paieškos",
     "noFailedSearches": "Nerasta nepavykusių SharePoint paieškų",
         "date": "Data",
@@ -1265,7 +1327,8 @@
   "toggle": "Perjungti",
   "locales": {
     "en": "Anglų",
-    "lt": "Lietuvių"
+    "lt": "Lietuvių",
+    "ru": "Rusų"
   },
   "suggestions": {
     "vacation": {

@@ -138,7 +138,7 @@ export function SearchModal({ isOpen, onClose, chats }: SearchModalProps) {
               {/* Search Header */}
               <div className="relative">
                 {/* Gradient border effect */}
-                <div className="absolute inset-0 rounded-t-2xl bg-gradient-to-r from-orange-500/5 via-primary/5 to-orange-500/5" />
+                <div className="absolute inset-0 rounded-t-2xl bg-gradient-to-r from-blue-500/10 via-blue-600/15 to-blue-500/10" />
                 
                 <div className="relative flex items-center gap-3 p-4 border-b border-border/50">
                   <Search className="h-5 w-5 text-muted-foreground" />
@@ -147,7 +147,7 @@ export function SearchModal({ isOpen, onClose, chats }: SearchModalProps) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t('chat.searchChats')}
+                    placeholder={t('chat.search')}
                     className="flex-1 bg-transparent outline-none text-lg placeholder:text-muted-foreground/70"
                   />
                   

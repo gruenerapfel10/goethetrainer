@@ -1,34 +1,37 @@
 import type { ComponentProps } from 'react';
-import { type SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from '@/components/ui/tooltip';
-import { SidebarLeftIcon } from './icons';
-import { Button } from './ui/button';
-import { useTranslations } from 'next-intl';
+import { PanelLeftClose, PanelLeft } from 'lucide-react';
 
-export function SidebarToggle({
-  className,
-}: ComponentProps<typeof SidebarTrigger>) {
-  const { toggleSidebar } = useSidebar();
-  const t = useTranslations();
+interface SidebarToggleProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  className?: string;
+}
 
+export function SidebarToggle({ isOpen, onToggle, className }: SidebarToggleProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          onClick={toggleSidebar}
-          variant="outline"
-          className="md:px-2 md:h-[34px]"
-        >
-          <SidebarLeftIcon size={16} />
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent align="start">
-        {t('actions.toggleSidebar')}
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            onClick={onToggle}
+            variant="ghost"
+            size="icon"
+            className="text-zinc-400 hover:bg-zinc-800 hover:text-white"
+          >
+            {isOpen ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent align="start">
+          {isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

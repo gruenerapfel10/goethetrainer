@@ -3,7 +3,6 @@ import { Languages } from 'lucide-react';
 import type { Locale } from '@/i18n/config';
 import { setUserLocale } from '@/services/locale';
 import { useLocale, useTranslations } from 'next-intl';
-import { useSidebar } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +11,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 
-export default function LocaleSwitcherSelect() {
+export default function NavbarLanguageSwitcher() {
   const [isPending, startTransition] = useTransition();
-  const { state } = useSidebar();
   const t = useTranslations();
   const locale = useLocale();
 
@@ -33,8 +31,6 @@ export default function LocaleSwitcherSelect() {
     },
   ];
 
-  const currentLanguage = items.find((item) => item.value === locale)?.label;
-
   function onChange(value: string) {
     const locale = value as Locale;
     startTransition(() => {
@@ -45,25 +41,20 @@ export default function LocaleSwitcherSelect() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full bg-transparent hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-foreground flex items-center justify-start gap-2 px-2 py-2 h-8 text-sm font-medium rounded-md transition-colors"
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           disabled={isPending}
         >
-          <Languages className="h-4 w-4 shrink-0" />
-          <span className="truncate">{state === 'expanded' ? currentLanguage : ''}</span>
+          <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        sideOffset={0}
-        className="min-w-[160px] bg-sidebar border-sidebar-border"
-      >
+      <DropdownMenuContent align="end" className="bg-popover border-border">
         {items.map((item) => (
           <DropdownMenuItem
             key={item.value}
-            className="text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent focus:bg-sidebar-accent cursor-pointer"
+            className="text-sm font-medium text-popover-foreground hover:bg-accent focus:bg-accent cursor-pointer"
             onClick={() => onChange(item.value)}
           >
             {item.label}

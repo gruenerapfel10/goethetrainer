@@ -267,9 +267,9 @@ export function Chat({
   }, [messages, id]);
 
   return (
-    <div className="flex h-dvh w-full">
+    <div className="flex h-dvh w-full bg-zinc-950">
       <ArtifactInset>
-        <div className="flex flex-col min-w-0 h-dvh bg-background self-center w-full">
+        <div className="flex flex-col min-w-0 h-dvh bg-zinc-900 rounded-lg m-4 overflow-hidden">
           <ChatHeader
           chatId={id}
           selectedModelId={selectedChatModel}
