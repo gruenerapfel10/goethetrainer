@@ -371,15 +371,13 @@ export default function ProfilePage() {
     return (
       <div className="p-6 max-w-7xl mx-auto">
         <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="max-w-md w-full">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Sign in Required</h2>
-                <p className="text-muted-foreground">Please sign in to view and edit your profile</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="max-w-md w-full p-6 border rounded-lg">
+            <div className="text-center">
+              <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Sign in Required</h2>
+              <p className="text-muted-foreground">Please sign in to view and edit your profile</p>
+            </div>
+          </div>
         </div>
       </div>
     );
