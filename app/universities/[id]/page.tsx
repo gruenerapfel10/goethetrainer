@@ -104,7 +104,7 @@ export default function UniversityDetailPage() {
       {/* Seamless Info Overlay - Top Left */}
       <div className="absolute top-8 left-8 space-y-4">
         <div>
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">{university.name}</h1>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2 max-w-md leading-tight">{university.name}</h1>
           <div className="flex items-center gap-2 text-lg text-white/90">
             <MapPin className="h-5 w-5" />
             {university.country}
@@ -152,6 +152,142 @@ export default function UniversityDetailPage() {
             <Bookmark className="h-4 w-4 mr-2" />
             Save
           </Button>
+        </div>
+      </div>
+
+      {/* Right Panel - Detailed Info */}
+      <div className="absolute top-8 right-8 w-96 max-h-[calc(100vh-4rem)] bg-white/10 dark:bg-black/15 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-white/10 shadow-2xl overflow-hidden">
+        <div className="h-full flex flex-col">
+          {/* Header */}
+          <div className="p-4 border-b border-white/20 dark:border-white/10">
+            <h3 className="text-lg font-semibold text-white">University Details</h3>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Cost Information */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-white/90 uppercase tracking-wider">Cost Information</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/70">Tuition 2025:</span>
+                  <span className="text-white font-medium">{university.cost_information?.tuition_2025 || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Total Cost:</span>
+                  <span className="text-white font-medium">{university.cost_information?.total_cost_of_attendance || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Living Expenses:</span>
+                  <span className="text-white font-medium">{university.cost_information?.living_expenses || "N/A"}</span>
+                </div>
+                {university.cost_information?.inr_conversion && (
+                  <div className="flex justify-between">
+                    <span className="text-white/70">INR Conversion:</span>
+                    <span className="text-white font-medium">{university.cost_information.inr_conversion}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Career Outcomes */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-white/90 uppercase tracking-wider">Career Outcomes</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/70">Employment Rate:</span>
+                  <span className="text-white font-medium">{university.career_outcomes?.employment_rate_6_months || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Starting Salary:</span>
+                  <span className="text-white font-medium">{university.career_outcomes?.average_starting_salary || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">10-Year Median:</span>
+                  <span className="text-white font-medium">{university.career_outcomes?.median_salary_10_years || "N/A"}</span>
+                </div>
+                {university.career_outcomes?.top_employers && (
+                  <div>
+                    <span className="text-white/70 block mb-1">Top Employers:</span>
+                    <div className="flex flex-wrap gap-1">
+                      {university.career_outcomes.top_employers.slice(0, 4).map((employer, index) => (
+                        <span key={index} className="px-2 py-1 bg-white/10 rounded text-xs text-white/90">
+                          {employer}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Location Details */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-white/90 uppercase tracking-wider">Location</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/70">City:</span>
+                  <span className="text-white font-medium">{university.location?.city || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Climate:</span>
+                  <span className="text-white font-medium text-xs">{university.location?.climate || "N/A"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Nearest Airport:</span>
+                  <span className="text-white font-medium text-xs">{university.location?.nearest_airport || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Indian Student Info */}
+            {university.indian_student_info && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold text-white/90 uppercase tracking-wider">Indian Students</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Total Indians:</span>
+                    <span className="text-white font-medium">{university.indian_student_info.total_indian_students}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Percentage:</span>
+                    <span className="text-white font-medium">{university.indian_student_info.indian_student_percentage}</span>
+                  </div>
+                  {university.indian_student_info.indian_food_availability && (
+                    <div>
+                      <span className="text-white/70 block mb-1">Food Availability:</span>
+                      <span className="text-white/90 text-xs">{university.indian_student_info.indian_food_availability}</span>
+                    </div>
+                  )}
+                  {university.indian_student_info.hindu_temple_nearby && (
+                    <div>
+                      <span className="text-white/70 block mb-1">Hindu Temple:</span>
+                      <span className="text-white/90 text-xs">{university.indian_student_info.hindu_temple_nearby}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Admission Stats */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-white/90 uppercase tracking-wider">Admission</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/70">Acceptance Rate:</span>
+                  <span className="text-white font-medium">{university.acceptance_rate}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">Total Enrollment:</span>
+                  <span className="text-white font-medium">{university.total_enrollment?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/70">International %:</span>
+                  <span className="text-white font-medium">{university.international_students_percentage}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

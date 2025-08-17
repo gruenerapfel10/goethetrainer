@@ -5,44 +5,6 @@
         "rank": 1,
         "employer_reputation_rank": 2,
         "academic_reputation_rank": 4,
-        "acceptance_rate": "4.1%",
-        "international_students_percentage": "29%",
-        "total_enrollment": 11858,
-        "location": {
-            "city": "Cambridge",
-            "state": "Massachusetts",
-            "country": "USA",
-            "climate": "Cold winters (-5 to 5°C), warm summers (20-30°C)",
-            "nearest_airport": "Boston Logan International Airport (BOS)",
-            "distance_from_airport": "5 miles"
-        },
-        "cost_information": {
-            "currency": "USD",
-            "tuition_2025": "$63,000",
-            "total_cost_of_attendance": "$85,960",
-            "living_expenses": "$21,694",
-            "health_insurance": "$3,606",
-            "books_supplies": "$840",
-            "personal_expenses": "$2,160",
-            "cost_trends": "3-5% annual increase",
-            "inr_conversion": "₹71,00,000 - ₹75,00,000 per year"
-        },
-        "career_outcomes": {
-            "employment_rate_6_months": "96%",
-            "average_starting_salary": "$126,000",
-            "median_salary_10_years": "$182,000",
-            "top_employers": ["Google", "Microsoft", "Apple", "Amazon", "McKinsey", "Goldman Sachs"],
-            "popular_industries": ["Technology", "Consulting", "Finance", "Research", "Aerospace"]
-        },
-        "indian_student_info": {
-            "total_indian_students": "~800",
-            "indian_student_percentage": "6.7%",
-            "indian_student_organizations": ["MIT Sangam", "MIT India Conference", "South Asian Association"],
-            "indian_food_availability": "Multiple Indian restaurants nearby",
-            "nearest_indian_grocery": "India Market, Cambridge (1 mile)",
-            "hindu_temple_nearby": "Sri Lakshmi Temple, Ashland (20 miles)",
-            "popular_programs_among_indians": ["Computer Science", "Electrical Engineering", "Data Science", "Business Analytics", "Mechanical Engineering"]
-        },
         "supported_degrees": [
             "aerospace-eng",
             "ai-ml",
@@ -336,44 +298,6 @@
         "rank": 2,
         "employer_reputation_rank": 9,
         "academic_reputation_rank": 22,
-        "acceptance_rate": "15%",
-        "international_students_percentage": "50%",
-        "total_enrollment": 17000,
-        "location": {
-            "city": "London",
-            "state": "England",
-            "country": "United Kingdom",
-            "climate": "Temperate oceanic, mild winters (2-7°C), cool summers (14-23°C)",
-            "nearest_airport": "Heathrow Airport (LHR)",
-            "distance_from_airport": "15 miles"
-        },
-        "cost_information": {
-            "currency": "GBP",
-            "tuition_2025": "£38,400-£54,500",
-            "total_cost_of_attendance": "£62,000-£78,000",
-            "living_expenses": "£15,600-£18,500",
-            "health_insurance": "£470",
-            "books_supplies": "£1,300",
-            "personal_expenses": "£3,200",
-            "cost_trends": "4-6% annual increase",
-            "inr_conversion": "₹52,00,000 - ₹68,00,000 per year"
-        },
-        "career_outcomes": {
-            "employment_rate_6_months": "94%",
-            "average_starting_salary": "£48,000",
-            "median_salary_10_years": "£92,000",
-            "top_employers": ["Google", "Microsoft", "Amazon", "Goldman Sachs", "McKinsey", "Rolls-Royce"],
-            "popular_industries": ["Technology", "Engineering", "Finance", "Consulting", "Research"]
-        },
-        "indian_student_info": {
-            "total_indian_students": "~1300",
-            "indian_student_percentage": "7.6%",
-            "indian_student_organizations": ["Imperial Indian Society", "South Asian Society", "Hindu Society"],
-            "indian_food_availability": "Southall (Little India) 30 mins by tube",
-            "nearest_indian_grocery": "Southall, West London",
-            "hindu_temple_nearby": "Neasden Temple (20 mins by tube)",
-            "popular_programs_among_indians": ["Computer Science", "Electrical Engineering", "Mechanical Engineering", "Data Science", "Medicine"]
-        },
         "supported_degrees": [
             "aerospace-eng",
             "biomedical-eng",
@@ -2903,6 +2827,119 @@
                     "private_foundations": ["various UK-based foundations"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "85-90% (CBSE/ISC)",
+                    "required_subjects": ["Subject-specific requirements"],
+                    "standardized_tests": ["A-levels", "IB", "SAT"],
+                    "a_levels": "ABB-AAA",
+                    "ib_score": "34+ points",
+                    "sat_scores": {
+                        "average": 1400,
+                        "range": "1350-1450"
+                    },
+                    "extracurriculars": "Strong academic record, relevant work experience valued"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["IELTS", "TOEFL", "Pearson PTE"],
+                    "minimum_scores": {
+                        "ielts": 6.5,
+                        "toefl": 92,
+                        "pte": 62
+                    },
+                    "exemptions": "English medium education for 2+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "UCAS (UG), UCL Application Portal (PG)",
+                    "personal_statement": "4000 characters (UG)",
+                    "letters_of_recommendation": 1,
+                    "interview": "Some programs require interview",
+                    "portfolio": "For arts/design programs",
+                    "application_fee": "£27.50 (UG), £75 (PG)",
+                    "document_verification": "Official transcripts required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "January 29, 2025",
+                    "postgraduate_deadline": "Varies by program",
+                    "decision_notification": "March-May 2025",
+                    "enrollment_deadline": "August 31, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "Student Visa (Tier 4)",
+                    "cas_processing_time": "2-3 weeks after admission",
+                    "visa_application_fee": "£348",
+                    "healthcare_surcharge": "£470 per year",
+                    "financial_proof_required": "£55,000 for first year",
+                    "visa_interview_tips": "Prepare for academic goals and career plans discussion",
+                    "success_rate": "~90% for UCL admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "Limited need-based support",
+                    "average_award": "£3,000-£10,000",
+                    "income_threshold": "Family income <£25,000 for maximum support",
+                    "application_required": true,
+                    "additional_forms": ["Financial Assessment Form"],
+                    "deadline": "March 31, 2025"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "UCL Global Undergraduate Scholarship",
+                            "amount": "£10,000",
+                            "criteria": "Outstanding international students"
+                        },
+                        {
+                            "name": "Dean's List Scholarship",
+                            "amount": "£5,000",
+                            "criteria": "Academic excellence"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to £100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        },
+                        {
+                            "name": "Chevening Scholarships",
+                            "amount": "Full funding",
+                            "deadline": "November 7"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "20 hours per week during studies",
+                    "hourly_wage": "£9-£13",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Campus support"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "60% of research positions are paid",
+                    "funding_available": "£1,000-£3,000 per project",
+                    "summer_programs": "UCL Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -2911,6 +2948,44 @@
         "rank": 10,
         "employer_reputation_rank": 23,
         "academic_reputation_rank": 33,
+        "acceptance_rate": "2.7%",
+        "international_students_percentage": "30%",
+        "total_enrollment": 2397,
+        "location": {
+            "city": "Pasadena",
+            "state": "California",
+            "country": "USA",
+            "climate": "Mediterranean climate, mild winters (8-20°C), warm summers (18-32°C)",
+            "nearest_airport": "Los Angeles International Airport (LAX)",
+            "distance_from_airport": "25 miles"
+        },
+        "cost_information": {
+            "currency": "USD",
+            "tuition_2025": "$65,898",
+            "total_cost_of_attendance": "$94,380",
+            "living_expenses": "$22,000",
+            "health_insurance": "$3,500",
+            "books_supplies": "$1,300",
+            "personal_expenses": "$2,500",
+            "cost_trends": "3-5% annual increase",
+            "inr_conversion": "₹78,00,000 - ₹82,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "91%",
+            "average_starting_salary": "$115,000",
+            "median_salary_10_years": "$158,000",
+            "top_employers": ["Google", "Apple", "Microsoft", "SpaceX", "Tesla", "JPL"],
+            "popular_industries": ["Technology", "Aerospace", "Research", "Finance", "Consulting"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~120",
+            "indian_student_percentage": "5%",
+            "indian_student_organizations": ["Caltech India Association", "South Asian Students Association"],
+            "indian_food_availability": "Little India in Artesia (20 mins drive)",
+            "nearest_indian_grocery": "India Sweets and Spices, Pasadena",
+            "hindu_temple_nearby": "Malibu Hindu Temple (45 mins drive)",
+            "popular_programs_among_indians": ["Physics", "Computer Science", "Engineering", "Applied Mathematics", "Chemistry"]
+        },
         "supported_degrees": [
             "aerospace-eng",
             "astronomy",
@@ -3082,6 +3157,107 @@
                 "external_scholarships": {
                     "government_programs": ["Education in Russia Foundation"],
                     "private_foundations": ["Open Society Foundations", "various technical foundations"]
+                }
+            }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "95%+ (CBSE/ISC)",
+                    "required_subjects": ["Mathematics", "Physics", "Chemistry"],
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "average": 1580,
+                        "math": "800",
+                        "evidence_based_reading": "770-800"
+                    },
+                    "act_scores": {
+                        "average": 36,
+                        "range": "35-36"
+                    },
+                    "subject_tests": "Math Level 2 and one science subject test recommended",
+                    "ap_courses": "5+ APs with score 5 strongly recommended",
+                    "extracurriculars": "Exceptional STEM achievements, research experience, olympiad participation highly valued"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    },
+                    "exemptions": "English medium education for 4+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "Common Application",
+                    "essays": ["Personal essay", "Supplemental essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "Not required",
+                    "portfolio": "Not required",
+                    "application_fee": "$100 (fee waiver available)",
+                    "document_verification": "Official transcripts required"
+                },
+                "deadlines": {
+                    "early_action": "November 1, 2024",
+                    "regular_decision": "January 3, 2025",
+                    "decision_notification": "Mid-March 2025",
+                    "enrollment_deadline": "May 1, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "F-1 Student Visa",
+                    "i20_processing_time": "2-3 weeks after admission",
+                    "sevis_fee": "$350",
+                    "visa_application_fee": "$185",
+                    "financial_proof_required": "$94,380 for first year",
+                    "visa_interview_tips": "Prepare for discussion about academic goals and research interests",
+                    "success_rate": "~97% for Caltech admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "100% of demonstrated need met",
+                    "average_award": "$58,000",
+                    "income_threshold": "Family income <$80,000 for maximum support",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "ISFAA"],
+                    "deadline": "February 15, 2025"
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Caltech does not offer merit-based scholarships"
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to $100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-10 hours per week",
+                    "hourly_wage": "$15-$20",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Lab work"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "90% of research positions are paid",
+                    "funding_available": "$3,000-$6,000 per semester",
+                    "summer_programs": "SURF (Summer Undergraduate Research Fellowship)"
                 }
             }
         }
