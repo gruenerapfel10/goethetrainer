@@ -1168,7 +1168,152 @@
             "physics",
             "software-eng",
             "statistics"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with excellent grades",
+                    "sat_act": "required",
+                    "sat_scores": {
+                        "minimum": 1480
+                    },
+                    "act_scores": {
+                        "minimum": 33
+                    },
+                    "ap_courses": "recommended",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "motivation_letter"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "application_deadline": "December 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "ETH Zurich has low tuition fees for all students"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["ETH Excellence Scholarship", "ESOP Scholarship"],
+                    "description": "Limited merit scholarships for exceptional students"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Research assistant positions",
+                    "funding_available": "CHF 1,000-3,000 per semester"
+                },
+                "international_funding": {
+                    "available": true,
+                    "sources": ["Swiss Government Excellence Scholarships", "various exchange programs"]
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "A*A*A in Mathematics and Sciences",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "42+ points with HL Mathematics and Sciences",
+                    "subject_requirements": ["Mathematics", "Physics or Chemistry"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.0,
+                        "toefl": 100
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": []
+                },
+                "deadlines": {
+                    "application_deadline": "December 15"
+                },
+                "additional_requirements": ["visa_requirements"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "Low tuition fees apply to all students"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["ETH Excellence Scholarship"],
+                    "description": "Partial tuition coverage for outstanding students"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "EU/EEA students pay same fees as Swiss students",
+                    "additional_requirements": ["EU citizenship verification"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 5%",
+                    "international_curriculum": "IB 42+ with HL Mathematics and Sciences"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "motivation_letter"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "international_deadline": "December 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "Moderate tuition fees for international students"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["ETH Excellence Scholarship", "Swiss Government Excellence Scholarships"],
+                    "description": "Competitive merit-based funding"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Various exchange and mobility programs",
+                    "additional_requirements": ["academic transcripts", "financial documentation"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Swiss Government Excellence Scholarships"],
+                    "private_foundations": ["various technical foundations"]
+                }
+            }
+        }
     },
     {
         "name": "National University of Singapore (NUS)",
@@ -1204,7 +1349,164 @@
             "real-estate",
             "sociology",
             "statistics"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with excellent grades",
+                    "sat_act": "required",
+                    "sat_scores": {
+                        "minimum": 1450
+                    },
+                    "act_scores": {
+                        "minimum": 32
+                    },
+                    "ap_courses": "recommended"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 6.5
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement"],
+                    "letters_of_recommendation": 2,
+                    "interview": "may_be_required",
+                    "portfolio": "subject_dependent"
+                },
+                "deadlines": {
+                    "application_deadline": "January 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "25%",
+                    "average_award": "$25,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["NUS Merit Scholarship", "President's Scholarship", "Global Scholarship"],
+                    "description": "Various merit scholarships covering partial to full costs"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Undergraduate Research Opportunities Programme",
+                    "funding_available": "S$2,000-S$5,000 per semester"
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "10-15 hours per week",
+                    "hourly_wage": "S$12-S$18"
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "AAA-A*A*A depending on course",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "38-42 points",
+                    "subject_requirements": "course specific"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 6.5,
+                        "toefl": 90
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "may_be_required",
+                    "admissions_test": "subject_dependent"
+                },
+                "deadlines": {
+                    "application_deadline": "January 15"
+                },
+                "additional_requirements": ["visa_requirements"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "20%",
+                    "average_award": "S$15,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Global Merit Scholarship", "ASEAN Undergraduate Scholarship"],
+                    "description": "Merit scholarships for outstanding international students"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Special scholarships for Commonwealth and ASEAN students",
+                    "additional_requirements": ["citizenship verification"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 5%",
+                    "international_curriculum": "IB 38+ or A-levels AAA"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 6.5
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement"],
+                    "letters_of_recommendation": 2,
+                    "interview": "may_be_required",
+                    "portfolio": "subject_dependent"
+                },
+                "deadlines": {
+                    "international_deadline": "January 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "30%",
+                    "average_award": "S$20,000",
+                    "income_threshold": "family income under $50,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["International Student Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Global Merit Scholarship", "President's Scholarship"],
+                    "description": "Comprehensive scholarships covering tuition and living costs"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Special support for students from developing countries",
+                    "additional_requirements": ["academic transcripts", "financial documentation"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Singapore Government Scholarships"],
+                    "private_foundations": ["various regional foundations"]
+                }
+            }
+        }
     },
     {
         "name": "UCL (University College London)",
@@ -1241,7 +1543,165 @@
             "sociology",
             "statistics",
             "urban-planning"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with exceptional grades",
+                    "sat_act": "strongly recommended",
+                    "sat_scores": {
+                        "minimum": 1450
+                    },
+                    "act_scores": {
+                        "minimum": 32
+                    },
+                    "ap_courses": "4+ AP tests at score 4-5"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.0,
+                        "ielts_minimum_component": 6.5,
+                        "toefl": 100
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": "may_be_required",
+                    "written_work": "subject_dependent"
+                },
+                "deadlines": {
+                    "application_deadline": "January 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "30%",
+                    "average_award": "$30,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["Financial Support Application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["UCL Global Excellence Scholarship", "UCL Undergraduate Scholarship"],
+                    "description": "Merit scholarships for outstanding academic achievement"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Summer research internships",
+                    "funding_available": "£1,500-£3,000 per project"
+                },
+                "external_funding": {
+                    "available": true,
+                    "sources": ["Various UK-based scholarships", "International foundation programs"]
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "AAA to A*A*A depending on course",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "38-42 points",
+                    "subject_requirements": "specific to course"
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "course_dependent",
+                    "admissions_test": "may_be_required",
+                    "written_work": "subject_dependent"
+                },
+                "deadlines": {
+                    "ucas_deadline": "January 26"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "40%",
+                    "average_award": "£9,000",
+                    "income_threshold": "household income under £25,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["UCL Bursary application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["UCL Excellence Scholarship", "Faculty-specific scholarships"],
+                    "description": "Merit-based scholarships covering partial costs"
+                },
+                "department_specific": {
+                    "available": true,
+                    "description": "Individual departments offer subject-specific scholarships",
+                    "examples": ["Engineering scholarships", "Arts scholarships"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 5%",
+                    "international_curriculum": "IB 38+ or A-levels AAA"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.0,
+                        "ielts_minimum_component": 6.5,
+                        "toefl": 100
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": "may_be_required",
+                    "written_work": "subject_dependent"
+                },
+                "deadlines": {
+                    "international_deadline": "January 15"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "35%",
+                    "average_award": "£12,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["International Student Financial Support application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["UCL Global Excellence Scholarship", "UCL-Russia Scholarship"],
+                    "description": "Merit scholarships covering partial to full costs"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Special support for students from developing countries",
+                    "additional_requirements": ["academic transcripts", "financial documentation"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["British Council Scholarships"],
+                    "private_foundations": ["various UK-based foundations"]
+                }
+            }
+        }
     },
     {
         "name": "California Institute of Technology (Caltech)",
@@ -1267,7 +1727,162 @@
             "mech-eng",
             "philosophy",
             "physics"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "gpa_minimum": "3.9/4.0",
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "minimum": 1540
+                    },
+                    "act_scores": {
+                        "minimum": 35
+                    },
+                    "required_tests": "SAT/ACT required",
+                    "ap_courses": "recommended",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native_or_equivalent",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "required",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 3"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "60%",
+                    "average_award": "$58,000",
+                    "income_threshold": "$80,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "FAFSA"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Caltech does not offer merit-based scholarships"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Summer Undergraduate Research Fellowships",
+                    "funding_available": "$6,000-$8,000 for 10-week program"
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-12 hours per week",
+                    "hourly_wage": "$15-$20"
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "A*A*A in Mathematics and Sciences",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "42-45 points with HL Mathematics and Sciences",
+                    "subject_requirements": ["Mathematics", "Physics", "Chemistry"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required",
+                    "admissions_test": []
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 3"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "55%",
+                    "average_award": "$55,000",
+                    "income_threshold": "family income under £60,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Caltech does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Same need-based aid available to international students",
+                    "additional_requirements": ["bank statements", "tax documents"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 2%",
+                    "international_curriculum": "IB 42+ with HL Mathematics and Sciences"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "required",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "international_deadline": "January 3"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "65%",
+                    "average_award": "$57,000",
+                    "income_threshold": "family income under $75,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "International Student Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Caltech does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Need-blind admissions with full aid for admitted students",
+                    "additional_requirements": ["certified financial documents", "bank statements"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Education in Russia Foundation"],
+                    "private_foundations": ["Open Society Foundations", "various technical foundations"]
+                }
+            }
+        }
     },
     {
         "name": "The University of Hong Kong",
