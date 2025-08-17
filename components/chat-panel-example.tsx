@@ -16,7 +16,14 @@ export function ExampleLayout({ user, children }: ExampleLayoutProps) {
       <ChatPanelProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           {/* Left sidebar */}
-          <AppSidebar user={user} />
+          <AppSidebar 
+            sidebarOpen={true} 
+            setSidebarOpen={() => {}} 
+            onOpenSearchModal={() => {}}
+          >
+            {/* Placeholder content for sidebar */}
+            <div></div>
+          </AppSidebar>
           
           {/* Main content area */}
           <ChatPanelInset>

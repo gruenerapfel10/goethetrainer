@@ -20,14 +20,17 @@ export default function NavbarLanguageSwitcher() {
     {
       value: 'lt',
       label: t('locales.lt'),
+      emoji: '🇱🇹',
     },
     {
       value: 'en',
       label: t('locales.en'),
+      emoji: '🇺🇸',
     },
     {
       value: 'ru',
       label: t('locales.ru'),
+      emoji: '🇷🇺',
     },
   ];
 
@@ -47,16 +50,21 @@ export default function NavbarLanguageSwitcher() {
           className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           disabled={isPending}
         >
-          <Languages className="h-4 w-4" />
+          <span className="text-lg">{items.find(item => item.value === locale)?.emoji || '🌐'}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-popover border-border">
+      <DropdownMenuContent align="end" className="border-border/30 rounded-xl bg-muted">
         {items.map((item) => (
           <DropdownMenuItem
             key={item.value}
-            className="text-sm font-medium text-popover-foreground hover:bg-accent focus:bg-accent cursor-pointer"
+            className={`text-sm font-medium cursor-pointer ${
+              locale === item.value
+                ? "bg-blue-500/20 text-blue-600 border border-blue-500/30"
+                : "text-popover-foreground hover:bg-accent focus:bg-accent"
+            }`}
             onClick={() => onChange(item.value)}
           >
+            <span className="text-lg mr-2">{item.emoji}</span>
             {item.label}
           </DropdownMenuItem>
         ))}

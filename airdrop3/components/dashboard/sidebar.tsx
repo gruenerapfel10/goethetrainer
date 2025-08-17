@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { MuaLogo } from "@/components/mua-logo"
+import { MuaLogoVertical } from "@/airdrop3/components/mua-logo-vertical"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { LayoutDashboard, FileText, Folder, User, Settings, LogOut } from "lucide-react"
@@ -23,7 +23,7 @@ export function DashboardSidebar() {
     <TooltipProvider>
       <aside className="sticky top-0 flex h-screen w-16 flex-col items-center border-r border-white/10 bg-gray-900/50 py-6">
         <Link href="/dashboard">
-          <MuaLogo className="h-8 w-auto text-white" />
+          <MuaLogoVertical className="h-10 w-8 text-white" />
         </Link>
         <nav className="mt-12 flex flex-1 flex-col items-center gap-4">
           {navItems.map((item) => (

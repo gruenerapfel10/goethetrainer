@@ -37,7 +37,158 @@
             "software-eng",
             "statistics",
             "theater"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "gpa_minimum": "3.9/4.0",
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "average": 1543
+                    },
+                    "act_scores": {
+                        "average": 35
+                    },
+                    "ap_courses": "recommended",
+                    "subject_tests": []
+                },
+                "language_requirements": {
+                    "english_proficiency": "native_or_equivalent",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 2,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "early_action": "November 30",
+                    "regular_decision": "December 31"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "58%",
+                    "average_award": "$59,000",
+                    "income_threshold": "$90,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "FAFSA"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "MIT does not offer merit-based scholarships"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "UROP program",
+                    "funding_available": "$1,500-$4,500 per semester"
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-12 hours per week",
+                    "hourly_wage": "$15-$20"
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "A*A*A or equivalent",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "42-45 points",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": []
+                },
+                "deadlines": {
+                    "early_action": "November 30",
+                    "regular_decision": "December 31"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "45%",
+                    "average_award": "$55,000",
+                    "income_threshold": "family income under £65,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "MIT does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Same need-based aid available to international students",
+                    "additional_requirements": ["bank statements", "tax documents"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 5%",
+                    "international_curriculum": "IB 42+ or A-levels A*A*A"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.5
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement"],
+                    "letters_of_recommendation": 2,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "international_deadline": "December 31"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "60%",
+                    "average_award": "$58,000",
+                    "income_threshold": "family income under $75,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "International Student Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "MIT does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Need-blind admissions with full aid for admitted students",
+                    "additional_requirements": ["certified financial documents", "bank statements"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Education in Russia Foundation"],
+                    "private_foundations": ["Open Society Foundations", "various regional scholarships"]
+                }
+            }
+        }
     },
     {
         "name": "Imperial College London",
@@ -67,7 +218,163 @@
             "physics",
             "software-eng",
             "statistics"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with top grades",
+                    "sat_act": "recommended but not required",
+                    "ap_courses": "5+ AP tests at score 5",
+                    "gpa_minimum": "3.8/4.0"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 6.5,
+                        "toefl": 92
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "may be required",
+                    "admissions_test": ["BMAT", "MAT"]
+                },
+                "deadlines": {
+                    "ucas_deadline": "January 31"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "description": "Imperial Bursary for international students",
+                    "average_award": "£5,000-£15,000",
+                    "income_threshold": "family income under $50,000",
+                    "application_required": true
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "President's Scholarships",
+                            "amount": "full tuition + £1,000 stipend",
+                            "criteria": "exceptional academic merit"
+                        },
+                        {
+                            "name": "Imperial Excellence Scholarships",
+                            "amount": "£5,000-£10,000",
+                            "criteria": "outstanding academic achievement"
+                        }
+                    ]
+                },
+                "department_specific": {
+                    "engineering": ["Dyson School of Design Engineering Scholarships"],
+                    "computing": ["Computing Excellence Scholarships"],
+                    "medicine": ["Faculty of Medicine Scholarships"]
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "AAA to A*A*A",
+                    "gcse": "Grade 5+ in English and Maths",
+                    "ib": "38-42 points",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "may be required",
+                    "admissions_test": ["BMAT", "MAT"]
+                },
+                "deadlines": {
+                    "ucas_deadline": "January 31"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "description": "Imperial Bursary for UK students",
+                    "average_award": "£3,000-£6,000",
+                    "income_threshold": "household income under £35,000",
+                    "application_required": false,
+                    "automatic_assessment": true
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "Imperial Scholarship",
+                            "amount": "£2,000",
+                            "criteria": "A*A*A+ grades"
+                        }
+                    ]
+                },
+                "government_funding": {
+                    "student_loans": "available through Student Finance England",
+                    "maintenance_grants": "based on household income"
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 10%",
+                    "international_curriculum": "IB 38+ or A-levels AAA"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.0,
+                        "toefl": 100
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "may be required",
+                    "admissions_test": ["BMAT", "MAT"]
+                },
+                "deadlines": {
+                    "international_deadline": "January 31"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "description": "Imperial International Bursary",
+                    "average_award": "£8,000-£20,000",
+                    "income_threshold": "family income under $40,000",
+                    "application_required": true
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "President's International Scholarships",
+                            "amount": "full tuition",
+                            "criteria": "exceptional academic merit for Russian students"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Russian Government Scholarships"],
+                    "private_foundations": ["Vladimir Potanin Foundation", "Alfa Fellowship Program"]
+                }
+            }
+        }
     },
     {
         "name": "Stanford University",
@@ -109,7 +416,164 @@
             "sociology",
             "statistics",
             "theater"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "gpa_minimum": "3.9/4.0",
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "average_range": "1480-1570"
+                    },
+                    "act_scores": {
+                        "average": 34
+                    },
+                    "test_optional": "yes for 2025",
+                    "ap_courses": "recommended"
+                },
+                "language_requirements": {
+                    "english_proficiency": "native_or_equivalent",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 5"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "55%",
+                    "average_award": "$56,000",
+                    "income_threshold": "$75,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "FAFSA"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Stanford Knight-Hennessy Scholars", "President's Scholarship"],
+                    "description": "Limited merit scholarships for exceptional students"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Stanford Undergraduate Research Programs",
+                    "funding_available": "$2,000-$5,000 per quarter"
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-15 hours per week",
+                    "hourly_wage": "$16-$22"
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "A*A*A or equivalent",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "42-45 points",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": []
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 5"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "50%",
+                    "average_award": "$52,000",
+                    "income_threshold": "family income under £60,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Knight-Hennessy Scholars"],
+                    "description": "Graduate-level merit scholarships available"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Same need-based aid available to international students",
+                    "additional_requirements": ["bank statements", "tax documents"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 5%",
+                    "international_curriculum": "IB 42+ or A-levels A*A*A"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "international_deadline": "January 5"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "58%",
+                    "average_award": "$55,000",
+                    "income_threshold": "family income under $70,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "International Student Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Knight-Hennessy Scholars"],
+                    "description": "Graduate fellowship program for exceptional international students"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Need-blind admissions with full aid for admitted students",
+                    "additional_requirements": ["certified financial documents", "bank statements"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Education in Russia Foundation"],
+                    "private_foundations": ["Open Society Foundations", "various regional scholarships"]
+                }
+            }
+        }
     },
     {
         "name": "University of Oxford",
@@ -143,7 +607,161 @@
             "sociology",
             "statistics",
             "theology"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with exceptional grades",
+                    "sat_act": "strongly recommended",
+                    "sat_scores": {
+                        "minimum": 1470
+                    },
+                    "act_scores": {
+                        "minimum": 32
+                    },
+                    "ap_courses": "5+ AP tests at score 5"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "ielts_minimum_component": 7.0,
+                        "toefl": 110
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams", "visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "Oxford primarily offers scholarships through other means"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Rhodes Scholarship", "Clarendon Scholarship", "Oxford-Weidenfeld Scholarship"],
+                    "description": "Highly competitive merit-based scholarships for graduate study"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Tutorial system with individual supervision",
+                    "funding_available": "Various research grants available"
+                },
+                "external_funding": {
+                    "available": true,
+                    "sources": ["Fulbright Program", "Marshall Scholarship", "Churchill Scholarship"]
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "AAA to A*A*A",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "38-42 points",
+                    "subject_requirements": "specific to course"
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "35%",
+                    "average_award": "£14,000",
+                    "income_threshold": "household income under £42,875",
+                    "application_required": true,
+                    "additional_forms": ["Oxford Bursary application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Clarendon Scholarship", "Oxford-Weidenfeld Scholarship", "Ertegun Scholarship"],
+                    "description": "Competitive scholarships covering full costs"
+                },
+                "college_specific": {
+                    "available": true,
+                    "description": "Each Oxford college offers various scholarships and bursaries",
+                    "examples": ["Balliol College scholarships", "Christ Church studentships"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 2%",
+                    "international_curriculum": "IB 40+ or A-levels AAA+"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "ielts_minimum_component": 7.0,
+                        "toefl": 110
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "international_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams", "visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "30%",
+                    "average_award": "£16,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["International Student Financial Support application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Clarendon Scholarship", "Oxford-Russia Fund", "Hill Foundation Scholarship"],
+                    "description": "Full scholarships covering tuition and living costs"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Reach Oxford Scholarships for students from developing countries",
+                    "additional_requirements": ["academic transcripts", "financial documentation"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Russian Government Scholarships", "British Council Scholarships"],
+                    "private_foundations": ["Oxford-Russia Fund", "various regional foundations"]
+                }
+            }
+        }
     },
     {
         "name": "Harvard University",
@@ -180,7 +798,161 @@
             "sociology",
             "statistics",
             "theater"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "gpa_minimum": "3.9/4.0",
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "minimum": 1500
+                    },
+                    "act_scores": {
+                        "minimum": 34
+                    },
+                    "required_tests": "SAT/ACT required for 2025",
+                    "ap_courses": "recommended"
+                },
+                "language_requirements": {
+                    "english_proficiency": "native_or_equivalent",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": "optional",
+                        "ielts": "optional"
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 1"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "55%",
+                    "average_award": "$65,000",
+                    "income_threshold": "$75,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "FAFSA"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Harvard does not offer merit-based scholarships"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Harvard College Research Program",
+                    "funding_available": "$1,200-$4,000 per semester"
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-12 hours per week",
+                    "hourly_wage": "$14-$18"
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "A*A*A or equivalent",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "42-45 points",
+                    "subject_requirements": ["Mathematics", "Sciences"]
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "optional",
+                    "admissions_test": []
+                },
+                "deadlines": {
+                    "early_action": "November 1",
+                    "regular_decision": "January 1"
+                },
+                "additional_requirements": []
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "48%",
+                    "average_award": "$62,000",
+                    "income_threshold": "family income under £55,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Harvard does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Same need-based aid available to international students",
+                    "additional_requirements": ["bank statements", "tax documents"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 2%",
+                    "international_curriculum": "IB 42+ or A-levels A*A*A"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["TOEFL", "IELTS"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.0
+                    }
+                },
+                "application_requirements": {
+                    "essays": ["personal_statement", "supplemental_essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "optional",
+                    "portfolio": false
+                },
+                "deadlines": {
+                    "international_deadline": "January 1"
+                },
+                "additional_requirements": ["visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "60%",
+                    "average_award": "$63,000",
+                    "income_threshold": "family income under $65,000 for full aid",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "International Student Financial Aid Application"]
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Harvard does not offer merit-based scholarships"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Need-blind admissions with full aid for admitted students",
+                    "additional_requirements": ["certified financial documents", "bank statements"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Education in Russia Foundation"],
+                    "private_foundations": ["Open Society Foundations", "various regional scholarships"]
+                }
+            }
+        }
     },
     {
         "name": "University of Cambridge",
@@ -217,7 +989,161 @@
             "sociology",
             "theology",
             "veterinary"
-        ]
+        ],
+        "us": {
+            "requirements": {
+                "academic_requirements": {
+                    "high_school_diploma": "required with exceptional grades",
+                    "sat_act": "strongly recommended",
+                    "sat_scores": {
+                        "minimum": 1470
+                    },
+                    "act_scores": {
+                        "minimum": 32
+                    },
+                    "ap_courses": "5+ AP tests at score 5"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "ielts_minimum_component": 7.0,
+                        "toefl": 110
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams", "visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "Cambridge primarily offers scholarships through other means"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Gates Cambridge Scholarship", "Cambridge Trust Scholarships", "Royce Scholarship"],
+                    "description": "Highly competitive merit-based scholarships for graduate study"
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "Supervision system with individual tutoring",
+                    "funding_available": "Various research grants and bursaries"
+                },
+                "external_funding": {
+                    "available": true,
+                    "sources": ["Fulbright Program", "Marshall Scholarship", "Churchill Scholarship"]
+                }
+            }
+        },
+        "gb": {
+            "requirements": {
+                "academic_requirements": {
+                    "a_levels": "top grades required",
+                    "gcse": "mostly A*/A grades",
+                    "ib": "40-42 points",
+                    "subject_requirements": "specific to course"
+                },
+                "language_requirements": {
+                    "english_proficiency": "native",
+                    "tests_required": [],
+                    "minimum_scores": {}
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "40%",
+                    "average_award": "£15,000",
+                    "income_threshold": "household income under £42,875",
+                    "application_required": true,
+                    "additional_forms": ["Cambridge Bursary application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Cambridge Trust Scholarships", "Gates Cambridge Scholarship", "Prince Philip Scholarship"],
+                    "description": "Competitive scholarships covering full costs"
+                },
+                "college_specific": {
+                    "available": true,
+                    "description": "Each Cambridge college offers various scholarships and awards",
+                    "examples": ["Trinity College scholarships", "King's College awards"]
+                }
+            }
+        },
+        "ru": {
+            "requirements": {
+                "academic_requirements": {
+                    "diploma": "Gold Medal or equivalent",
+                    "unified_state_exam": "top 2%",
+                    "international_curriculum": "IB 40+ or A-levels AAA+"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required",
+                    "tests_required": ["IELTS", "TOEFL"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "ielts_minimum_component": 7.0,
+                        "toefl": 110
+                    }
+                },
+                "application_requirements": {
+                    "personal_statement": true,
+                    "reference": true,
+                    "interview": "required for most courses",
+                    "admissions_test": "required for most courses",
+                    "written_work": "may be required"
+                },
+                "deadlines": {
+                    "international_deadline": "October 15"
+                },
+                "additional_requirements": ["entrance_exams", "visa_requirements", "financial_proof"]
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "35%",
+                    "average_award": "£18,000",
+                    "income_threshold": "family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["International Student Financial Support application"]
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": ["Gates Cambridge Scholarship", "Cambridge-Russia Scholarship", "Trinity College External Studentships"],
+                    "description": "Full scholarships covering tuition and living costs"
+                },
+                "international_specific": {
+                    "available": true,
+                    "description": "Cambridge Trust offers scholarships for developing countries",
+                    "additional_requirements": ["academic transcripts", "financial documentation"]
+                },
+                "external_scholarships": {
+                    "government_programs": ["Russian Government Scholarships", "British Council Scholarships"],
+                    "private_foundations": ["Cambridge-Russia Foundation", "various regional foundations"]
+                }
+            }
+        }
     },
     {
         "name": "ETH Zurich (Swiss Federal Institute of Technology)",
