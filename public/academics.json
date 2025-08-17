@@ -1,0 +1,532 @@
+{
+  "us": {
+    "education_system": "K-12 + Higher Education",
+    "grading_systems": {
+      "primary": {
+        "name": "GPA (Grade Point Average)",
+        "scale": "4.0",
+        "grades": {
+          "A+": 4.0,
+          "A": 4.0,
+          "A-": 3.7,
+          "B+": 3.3,
+          "B": 3.0,
+          "B-": 2.7,
+          "C+": 2.3,
+          "C": 2.0,
+          "C-": 1.7,
+          "D+": 1.3,
+          "D": 1.0,
+          "F": 0.0
+        }
+      },
+      "alternative": {
+        "name": "Percentage",
+        "scale": "100",
+        "conversion": {
+          "A": "90-100%",
+          "B": "80-89%",
+          "C": "70-79%",
+          "D": "60-69%",
+          "F": "0-59%"
+        }
+      }
+    },
+    "standardized_tests": {
+      "undergraduate": {
+        "sat": {
+          "full_name": "Scholastic Assessment Test",
+          "sections": ["Evidence-Based Reading and Writing", "Mathematics"],
+          "score_range": "400-1600",
+          "subject_tests": "discontinued"
+        },
+        "act": {
+          "full_name": "American College Testing",
+          "sections": ["English", "Mathematics", "Reading", "Science"],
+          "optional": ["Writing"],
+          "score_range": "1-36"
+        },
+        "ap": {
+          "full_name": "Advanced Placement",
+          "score_range": "1-5",
+          "passing_score": 3,
+          "college_credit": true
+        }
+      },
+      "graduate": {
+        "gre": {
+          "full_name": "Graduate Record Examinations",
+          "sections": ["Verbal Reasoning", "Quantitative Reasoning", "Analytical Writing"],
+          "score_range": "130-170 (V&Q), 0-6 (AW)"
+        },
+        "gmat": {
+          "full_name": "Graduate Management Admission Test",
+          "score_range": "200-800",
+          "for": "Business School"
+        },
+        "lsat": {
+          "full_name": "Law School Admission Test",
+          "score_range": "120-180",
+          "for": "Law School"
+        },
+        "mcat": {
+          "full_name": "Medical College Admission Test",
+          "score_range": "472-528",
+          "for": "Medical School"
+        }
+      }
+    },
+    "education_levels": {
+      "elementary": "Grades K-5",
+      "middle_school": "Grades 6-8",
+      "high_school": "Grades 9-12",
+      "undergraduate": "4 years (Bachelor's)",
+      "graduate": "1-3 years (Master's)",
+      "doctoral": "4-7 years (PhD)"
+    },
+    "common_qualifications": ["High School Diploma", "Bachelor's Degree", "Master's Degree", "PhD"]
+  },
+  "gb": {
+    "education_system": "Key Stages + A-Levels + Higher Education",
+    "grading_systems": {
+      "gcse": {
+        "name": "General Certificate of Secondary Education",
+        "grades": {
+          "9": "Exceptional",
+          "8": "Very Strong",
+          "7": "Strong",
+          "6": "Good",
+          "5": "Pass",
+          "4": "Standard Pass",
+          "3": "Below Standard",
+          "2": "Low",
+          "1": "Very Low",
+          "U": "Ungraded"
+        },
+        "legacy_grades": ["A*", "A", "B", "C", "D", "E", "F", "G", "U"]
+      },
+      "a_levels": {
+        "name": "Advanced Level",
+        "grades": ["A*", "A", "B", "C", "D", "E", "U"],
+        "ucas_points": {
+          "A*": 56,
+          "A": 48,
+          "B": 40,
+          "C": 32,
+          "D": 24,
+          "E": 16
+        }
+      },
+      "btec": {
+        "name": "Business and Technology Education Council",
+        "grades": ["D*", "D", "M", "P"],
+        "equivalency": "Alternative to A-Levels"
+      }
+    },
+    "standardized_tests": {
+      "admissions": {
+        "bmat": {
+          "full_name": "BioMedical Admissions Test",
+          "for": "Medicine, Veterinary Science, Biomedical Sciences"
+        },
+        "ukcat": {
+          "full_name": "UK Clinical Aptitude Test",
+          "for": "Medicine and Dentistry"
+        },
+        "mat": {
+          "full_name": "Mathematics Admissions Test",
+          "for": "Mathematics at Oxford and Imperial"
+        },
+        "pat": {
+          "full_name": "Physics Aptitude Test",
+          "for": "Physics at Oxford"
+        },
+        "tsa": {
+          "full_name": "Thinking Skills Assessment",
+          "for": "Various courses at Oxford and Cambridge"
+        }
+      }
+    },
+    "education_levels": {
+      "primary": "Ages 5-11 (Key Stages 1-2)",
+      "secondary": "Ages 11-16 (Key Stages 3-4, GCSEs)",
+      "sixth_form": "Ages 16-18 (A-Levels/BTECs)",
+      "undergraduate": "3 years (Bachelor's)",
+      "postgraduate": "1 year (Master's)",
+      "doctoral": "3-4 years (PhD)"
+    },
+    "common_qualifications": ["GCSEs", "A-Levels", "Bachelor's Degree", "Master's Degree", "PhD"]
+  },
+  "ru": {
+    "education_system": "11-Year School + Higher Education",
+    "grading_systems": {
+      "school": {
+        "name": "5-Point Scale",
+        "grades": {
+          "5": "Excellent (Отлично)",
+          "4": "Good (Хорошо)",
+          "3": "Satisfactory (Удовлетворительно)",
+          "2": "Unsatisfactory (Неудовлетворительно)",
+          "1": "Very Poor (Очень плохо)"
+        }
+      },
+      "higher_education": {
+        "name": "Traditional Russian System",
+        "grades": {
+          "5": "Excellent",
+          "4": "Good",
+          "3": "Satisfactory",
+          "2": "Fail"
+        }
+      }
+    },
+    "standardized_tests": {
+      "ege": {
+        "full_name": "Unified State Exam (Единый государственный экзамен)",
+        "subjects": ["Russian Language", "Mathematics", "Physics", "Chemistry", "Biology", "History", "Social Studies", "Geography", "Literature", "Foreign Languages", "Computer Science"],
+        "score_range": "0-100",
+        "mandatory": ["Russian Language", "Mathematics"],
+        "purpose": "University admission"
+      },
+      "oge": {
+        "full_name": "Basic State Exam (Основной государственный экзамен)",
+        "purpose": "9th grade completion",
+        "score_range": "2-5"
+      }
+    },
+    "education_levels": {
+      "primary": "Grades 1-4",
+      "basic_secondary": "Grades 5-9",
+      "complete_secondary": "Grades 10-11",
+      "bachelor": "4 years (Бакалавриат)",
+      "specialist": "5-6 years (Специалитет)",
+      "master": "2 years (Магистратура)",
+      "postgraduate": "3-4 years (Аспирантура)"
+    },
+    "diplomas": {
+      "school_certificate": "Certificate of Complete Secondary Education",
+      "gold_medal": "Gold Medal (for exceptional students)",
+      "silver_medal": "Silver Medal (discontinued)"
+    },
+    "common_qualifications": ["School Certificate", "Gold Medal", "Bachelor's Degree", "Master's Degree", "Candidate of Sciences", "Doctor of Sciences"]
+  },
+  "de": {
+    "education_system": "Dual Education System",
+    "grading_systems": {
+      "school": {
+        "name": "6-Point Scale",
+        "grades": {
+          "1": "Very Good (Sehr gut)",
+          "2": "Good (Gut)",
+          "3": "Satisfactory (Befriedigend)",
+          "4": "Sufficient (Ausreichend)",
+          "5": "Poor (Mangelhaft)",
+          "6": "Insufficient (Ungenügend)"
+        }
+      },
+      "abitur": {
+        "name": "Abitur Points System",
+        "scale": "0-15 points",
+        "conversion": {
+          "15": "1+ (Very Good Plus)",
+          "14": "1 (Very Good)",
+          "13": "1- (Very Good Minus)",
+          "12": "2+ (Good Plus)",
+          "11": "2 (Good)",
+          "10": "2- (Good Minus)"
+        }
+      }
+    },
+    "standardized_tests": {
+      "abitur": {
+        "full_name": "Allgemeine Hochschulreife",
+        "purpose": "University entrance qualification",
+        "subjects": ["German", "Mathematics", "Foreign Language", "Science", "Social Studies"],
+        "score_range": "1.0-4.0 (lower is better)"
+      },
+      "testdaf": {
+        "full_name": "Test Deutsch als Fremdsprache",
+        "purpose": "German language proficiency for international students",
+        "levels": ["TDN 3", "TDN 4", "TDN 5"]
+      }
+    },
+    "education_levels": {
+      "grundschule": "Primary School (Grades 1-4)",
+      "hauptschule": "Main School (Grades 5-9)",
+      "realschule": "Middle School (Grades 5-10)",
+      "gymnasium": "Academic Track (Grades 5-12/13)",
+      "bachelor": "3-4 years",
+      "master": "1-2 years",
+      "doctorate": "3-5 years"
+    },
+    "vocational_training": {
+      "ausbildung": {
+        "name": "Dual Education System",
+        "duration": "2-3.5 years",
+        "combines": "Theoretical education + Practical training"
+      }
+    },
+    "common_qualifications": ["Hauptschulabschluss", "Realschulabschluss", "Abitur", "Bachelor", "Master", "Dr."]
+  },
+  "fr": {
+    "education_system": "Centralized National System",
+    "grading_systems": {
+      "primary_secondary": {
+        "name": "20-Point Scale",
+        "scale": "0-20",
+        "grades": {
+          "18-20": "Excellent",
+          "16-17": "Very Good",
+          "14-15": "Good",
+          "12-13": "Satisfactory",
+          "10-11": "Sufficient",
+          "8-9": "Insufficient",
+          "0-7": "Very Insufficient"
+        }
+      }
+    },
+    "standardized_tests": {
+      "baccalaureat": {
+        "full_name": "Baccalauréat",
+        "types": ["Général", "Technologique", "Professionnel"],
+        "subjects": ["French", "Philosophy", "Mathematics", "Sciences", "History-Geography"],
+        "mentions": {
+          "Très bien": "16-20",
+          "Bien": "14-15.99",
+          "Assez bien": "12-13.99",
+          "Passable": "10-11.99"
+        }
+      }
+    },
+    "education_levels": {
+      "maternelle": "Kindergarten (Ages 3-6)",
+      "elementaire": "Primary School (Ages 6-11)",
+      "college": "Lower Secondary (Ages 11-15)",
+      "lycee": "Upper Secondary (Ages 15-18)",
+      "licence": "Bachelor's (3 years)",
+      "master": "Master's (2 years)",
+      "doctorat": "Doctorate (3-4 years)"
+    },
+    "grandes_ecoles": {
+      "description": "Elite higher education institutions",
+      "admission": "Competitive entrance exams (Concours)",
+      "examples": ["École Polytechnique", "HEC Paris", "École Normale Supérieure"]
+    },
+    "common_qualifications": ["Baccalauréat", "Licence", "Master", "Doctorat", "Grande École Diploma"]
+  },
+  "jp": {
+    "education_system": "6-3-3-4 System",
+    "grading_systems": {
+      "elementary_junior": {
+        "name": "Descriptive Assessment",
+        "levels": ["A", "B", "C"]
+      },
+      "high_school_university": {
+        "name": "Percentage + Letter Grades",
+        "scale": "0-100",
+        "grades": {
+          "A": "80-100",
+          "B": "70-79",
+          "C": "60-69",
+          "D": "50-59",
+          "F": "0-49"
+        }
+      }
+    },
+    "standardized_tests": {
+      "center_test": {
+        "full_name": "Common Test for University Admissions",
+        "subjects": ["Japanese", "Mathematics", "Science", "Social Studies", "Foreign Languages"],
+        "score_range": "0-900",
+        "purpose": "University entrance"
+      },
+      "eiken": {
+        "full_name": "Practical English Proficiency Test",
+        "levels": ["5", "4", "3", "Pre-2", "2", "Pre-1", "1"],
+        "purpose": "English proficiency certification"
+      },
+      "jlpt": {
+        "full_name": "Japanese Language Proficiency Test",
+        "levels": ["N5", "N4", "N3", "N2", "N1"],
+        "purpose": "Japanese proficiency for non-natives"
+      }
+    },
+    "education_levels": {
+      "shogakko": "Elementary School (6 years)",
+      "chugakko": "Junior High School (3 years)",
+      "koko": "High School (3 years)",
+      "daigaku": "University (4 years)",
+      "daigakuin": "Graduate School (2+ years)"
+    },
+    "entrance_exams": {
+      "juken": "Highly competitive entrance exam system",
+      "cram_schools": "Juku and Yobiko supplementary education"
+    },
+    "common_qualifications": ["High School Diploma", "Bachelor's Degree", "Master's Degree", "PhD"]
+  },
+  "in": {
+    "education_system": "10+2+3 System",
+    "grading_systems": {
+      "cbse": {
+        "name": "Central Board of Secondary Education",
+        "grades": {
+          "A1": "91-100",
+          "A2": "81-90",
+          "B1": "71-80",
+          "B2": "61-70",
+          "C1": "51-60",
+          "C2": "41-50",
+          "D": "33-40",
+          "E": "32 and below"
+        }
+      },
+      "icse": {
+        "name": "Indian Certificate of Secondary Education",
+        "scale": "0-100",
+        "grades": ["A", "B", "C", "D", "E", "F"]
+      },
+      "university": {
+        "name": "First Class/Second Class System",
+        "classifications": {
+          "First Class with Distinction": "75% and above",
+          "First Class": "60-74%",
+          "Second Class": "50-59%",
+          "Third Class": "40-49%",
+          "Fail": "Below 40%"
+        }
+      }
+    },
+    "standardized_tests": {
+      "jee": {
+        "full_name": "Joint Entrance Examination",
+        "types": ["JEE Main", "JEE Advanced"],
+        "for": "Engineering colleges"
+      },
+      "neet": {
+        "full_name": "National Eligibility cum Entrance Test",
+        "for": "Medical colleges"
+      },
+      "cat": {
+        "full_name": "Common Admission Test",
+        "for": "MBA programs"
+      },
+      "gate": {
+        "full_name": "Graduate Aptitude Test in Engineering",
+        "for": "Postgraduate engineering programs"
+      }
+    },
+    "education_levels": {
+      "primary": "Classes I-V",
+      "upper_primary": "Classes VI-VIII",
+      "secondary": "Classes IX-X",
+      "higher_secondary": "Classes XI-XII",
+      "undergraduate": "3-4 years",
+      "postgraduate": "2 years",
+      "doctoral": "3-5 years"
+    },
+    "boards": ["CBSE", "ICSE", "State Boards"],
+    "common_qualifications": ["Class X Certificate", "Class XII Certificate", "Bachelor's Degree", "Master's Degree", "PhD"]
+  },
+  "ca": {
+    "education_system": "Provincial Education Systems",
+    "grading_systems": {
+      "percentage": {
+        "name": "Percentage System",
+        "scale": "0-100",
+        "grades": {
+          "A+": "90-100",
+          "A": "85-89",
+          "A-": "80-84",
+          "B+": "77-79",
+          "B": "73-76",
+          "B-": "70-72",
+          "C+": "67-69",
+          "C": "63-66",
+          "C-": "60-62",
+          "D": "50-59",
+          "F": "0-49"
+        }
+      },
+      "gpa": {
+        "name": "Grade Point Average",
+        "scale": "4.0",
+        "common_in": "Universities"
+      }
+    },
+    "standardized_tests": {
+      "provincial_exams": {
+        "description": "Varies by province",
+        "examples": ["Ontario EQAO", "Alberta Provincial Achievement Tests"]
+      },
+      "sat_act": {
+        "description": "For US university applications",
+        "usage": "Optional for Canadian students"
+      }
+    },
+    "education_levels": {
+      "elementary": "Grades K/1-6/8 (varies by province)",
+      "secondary": "Grades 7/9-12",
+      "cegep": "Pre-university (Quebec only, 2 years)",
+      "undergraduate": "3-4 years",
+      "graduate": "1-2 years (Master's)",
+      "doctoral": "4-7 years"
+    },
+    "provincial_differences": {
+      "quebec": "Different system with CEGEP",
+      "ontario": "Grade 13 previously existed",
+      "alberta": "Provincial Achievement Tests"
+    },
+    "common_qualifications": ["High School Diploma", "CEGEP Diploma (Quebec)", "Bachelor's Degree", "Master's Degree", "PhD"]
+  },
+  "au": {
+    "education_system": "National Curriculum Framework",
+    "grading_systems": {
+      "atar": {
+        "name": "Australian Tertiary Admission Rank",
+        "scale": "0-99.95",
+        "purpose": "University admission ranking"
+      },
+      "hsc": {
+        "name": "Higher School Certificate (NSW)",
+        "bands": {
+          "Band 6": "90-100",
+          "Band 5": "80-89",
+          "Band 4": "70-79",
+          "Band 3": "60-69",
+          "Band 2": "50-59",
+          "Band 1": "Below 50"
+        }
+      },
+      "vce": {
+        "name": "Victorian Certificate of Education",
+        "study_scores": "0-50+ scale"
+      }
+    },
+    "standardized_tests": {
+      "naplan": {
+        "full_name": "National Assessment Program – Literacy and Numeracy",
+        "years": ["3", "5", "7", "9"],
+        "purpose": "National benchmarking"
+      },
+      "ucat": {
+        "full_name": "University Clinical Aptitude Test",
+        "for": "Medicine and Health Sciences"
+      }
+    },
+    "education_levels": {
+      "foundation": "Foundation/Prep",
+      "primary": "Years 1-6",
+      "secondary": "Years 7-12",
+      "undergraduate": "3-4 years",
+      "postgraduate": "1-2 years",
+      "doctoral": "3-4 years"
+    },
+    "state_differences": {
+      "nsw": "HSC system",
+      "vic": "VCE system",
+      "qld": "QCE system",
+      "wa": "WACE system"
+    },
+    "common_qualifications": ["Year 12 Certificate", "Bachelor's Degree", "Master's Degree", "PhD"]
+  }
+}

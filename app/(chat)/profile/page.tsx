@@ -1,174 +1,207 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/firebase-auth-context';
 import { 
   User, 
-  GraduationCap, 
-  Calendar, 
-  MapPin, 
-  Phone, 
   Mail,
-  Sparkles,
-  ArrowRight,
-  ArrowLeft,
-  Check,
+  Phone,
+  MapPin,
+  Calendar,
+  GraduationCap,
   Award,
-  Activity,
+  Settings,
+  Bell,
+  Shield,
   Globe,
-  Home,
-  BookOpen,
-  Trophy,
-  Heart,
-  Briefcase,
-  Music,
-  Palette,
-  Target,
-  ChevronRight,
+  Save,
   Upload,
+  Camera,
+  Edit3,
   Plus,
   X,
-  CheckCircle2,
-  Circle,
-  Zap
+  BookOpen,
+  Target,
+  Trophy
 } from 'lucide-react';
 
-// Step components with modern micro-interactions
-const steps = [
-  { id: 'welcome', title: 'Welcome', icon: Sparkles, color: 'from-purple-500 to-pink-500' },
-  { id: 'basics', title: 'Basics', icon: User, color: 'from-blue-500 to-cyan-500' },
-  { id: 'academic', title: 'Academic', icon: GraduationCap, color: 'from-green-500 to-emerald-500' },
-  { id: 'achievements', title: 'Achievements', icon: Trophy, color: 'from-orange-500 to-red-500' },
-  { id: 'activities', title: 'Activities', icon: Heart, color: 'from-pink-500 to-rose-500' },
-  { id: 'complete', title: 'Complete', icon: CheckCircle2, color: 'from-violet-500 to-purple-500' }
-];
-
-// Activity categories with icons
-const activityCategories = [
-  { value: 'sports', label: 'Sports', icon: '⚽', color: 'bg-green-100 text-green-700' },
-  { value: 'music', label: 'Music', icon: '🎵', color: 'bg-purple-100 text-purple-700' },
-  { value: 'volunteer', label: 'Volunteer', icon: '🤝', color: 'bg-blue-100 text-blue-700' },
-  { value: 'academic', label: 'Academic', icon: '📚', color: 'bg-orange-100 text-orange-700' },
-  { value: 'arts', label: 'Arts', icon: '🎨', color: 'bg-pink-100 text-pink-700' },
-  { value: 'leadership', label: 'Leadership', icon: '🏆', color: 'bg-yellow-100 text-yellow-700' },
-  { value: 'work', label: 'Work', icon: '💼', color: 'bg-gray-100 text-gray-700' },
-  { value: 'other', label: 'Other', icon: '✨', color: 'bg-indigo-100 text-indigo-700' }
-];
-
-// Test score types with visual indicators
-const testTypes = [
-  { value: 'SAT', label: 'SAT', maxScore: 1600, color: 'bg-blue-500' },
-  { value: 'ACT', label: 'ACT', maxScore: 36, color: 'bg-green-500' },
-  { value: 'TOEFL', label: 'TOEFL', maxScore: 120, color: 'bg-purple-500' },
-  { value: 'IELTS', label: 'IELTS', maxScore: 9, color: 'bg-orange-500' }
-];
-
-// Type definitions
-interface TestScore {
-  type: string;
-  score: string;
-  date: string;
-}
-
-interface Activity {
-  category: string;
-  name: string;
-  description: string;
-}
-
 interface ProfileData {
+  // Personal Information
   firstName: string;
   lastName: string;
   preferredName: string;
   email: string;
   phone: string;
   dateOfBirth: string;
+  nationality: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  
+  // Academic Information
   currentSchool: string;
   graduationYear: number;
   gpa: string;
   gpaScale: string;
   classRank: string;
   classSize: string;
-  testScores: TestScore[];
-  activities: Activity[];
-  achievements: any[];
+  intendedMajor: string;
+  secondMajor: string;
+  
+  // Test Scores
+  testScores: {
+    type: string;
+    score: string;
+    date: string;
+  }[];
+  
+  // Activities & Achievements
+  activities: {
+    name: string;
+    category: string;
+    description: string;
+    yearsParticipated: string;
+    hoursPerWeek: string;
+    position: string;
+  }[];
+  
+  achievements: {
+    title: string;
+    description: string;
+    date: string;
+    type: string;
+  }[];
+  
+  // Preferences
+  preferences: {
+    notifications: {
+      email: boolean;
+      sms: boolean;
+      deadlineReminders: boolean;
+      applicationUpdates: boolean;
+    };
+    privacy: {
+      profileVisibility: string;
+      shareDataWithPartners: boolean;
+    };
+    application: {
+      preferredApplicationSeason: string;
+      targetCountries: string[];
+      budgetRange: string;
+    };
+  };
 }
 
-export default function ModernProfilePage() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+const testTypes = [
+  { value: 'SAT', label: 'SAT', maxScore: 1600 },
+  { value: 'ACT', label: 'ACT', maxScore: 36 },
+  { value: 'TOEFL', label: 'TOEFL', maxScore: 120 },
+  { value: 'IELTS', label: 'IELTS', maxScore: 9 },
+  { value: 'AP', label: 'AP Exam', maxScore: 5 },
+  { value: 'IB', label: 'IB Diploma', maxScore: 45 },
+];
+
+const activityCategories = [
+  'Sports', 'Music', 'Volunteer Work', 'Academic Clubs', 'Arts', 
+  'Leadership', 'Work Experience', 'Research', 'Other'
+];
+
+const achievementTypes = [
+  'Academic Award', 'Competition Win', 'Scholarship', 'Publication', 
+  'Leadership Position', 'Community Service', 'Athletic Achievement', 'Other'
+];
+
+const countries = [
+  'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 
+  'France', 'Netherlands', 'Switzerland', 'Sweden', 'Other'
+];
+
+export default function ProfilePage() {
+  const t = useTranslations();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState('personal');
+  
   const [profileData, setProfileData] = useState<ProfileData>({
-    // Basic Info
+    // Personal Information
     firstName: '',
     lastName: '',
     preferredName: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     dateOfBirth: '',
+    nationality: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
+    },
     
-    // Academic
+    // Academic Information
     currentSchool: '',
     graduationYear: 2025,
     gpa: '',
     gpaScale: '4.0',
     classRank: '',
     classSize: '',
+    intendedMajor: '',
+    secondMajor: '',
     
     // Test Scores
     testScores: [],
     
-    // Activities
+    // Activities & Achievements
     activities: [],
+    achievements: [],
     
-    // Achievements
-    achievements: []
+    // Preferences
+    preferences: {
+      notifications: {
+        email: true,
+        sms: false,
+        deadlineReminders: true,
+        applicationUpdates: true,
+      },
+      privacy: {
+        profileVisibility: 'private',
+        shareDataWithPartners: false,
+      },
+      application: {
+        preferredApplicationSeason: 'fall',
+        targetCountries: [],
+        budgetRange: '',
+      },
+    },
   });
 
-  const [hoveredActivity, setHoveredActivity] = useState<number | null>(null);
-  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentStep(currentStep + 1);
-        setIsAnimating(false);
-      }, 300);
+  const handleSave = async () => {
+    setIsLoading(true);
+    try {
+      // Here you would typically save to your backend/database
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update profile. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentStep(currentStep - 1);
-        setIsAnimating(false);
-      }, 300);
-    }
-  };
-
-  const calculateProgress = () => {
-    const totalFields = 15; // Adjust based on required fields
-    let filledFields = 0;
-    
-    if (profileData.firstName) filledFields++;
-    if (profileData.lastName) filledFields++;
-    if (profileData.email) filledFields++;
-    if (profileData.currentSchool) filledFields++;
-    if (profileData.gpa) filledFields++;
-    if (profileData.testScores.length > 0) filledFields += 2;
-    if (profileData.activities.length > 0) filledFields += 3;
-    
-    return Math.round((filledFields / totalFields) * 100);
   };
 
   const addTestScore = () => {
@@ -178,491 +211,690 @@ export default function ModernProfilePage() {
     });
   };
 
-  const addActivity = (category: string) => {
-    if (!selectedActivities.includes(category)) {
-      setSelectedActivities([...selectedActivities, category]);
-      setProfileData({
-        ...profileData,
-        activities: [...profileData.activities, { category, name: '', description: '' }]
-      });
-    }
+  const removeTestScore = (index: number) => {
+    setProfileData({
+      ...profileData,
+      testScores: profileData.testScores.filter((_, i) => i !== index)
+    });
   };
 
-  const CurrentStepIcon = steps[currentStep].icon;
+  const addActivity = () => {
+    setProfileData({
+      ...profileData,
+      activities: [...profileData.activities, { 
+        name: '', category: 'Other', description: '', yearsParticipated: '', 
+        hoursPerWeek: '', position: '' 
+      }]
+    });
+  };
+
+  const removeActivity = (index: number) => {
+    setProfileData({
+      ...profileData,
+      activities: profileData.activities.filter((_, i) => i !== index)
+    });
+  };
+
+  const addAchievement = () => {
+    setProfileData({
+      ...profileData,
+      achievements: [...profileData.achievements, { 
+        title: '', description: '', date: '', type: 'Other' 
+      }]
+    });
+  };
+
+  const removeAchievement = (index: number) => {
+    setProfileData({
+      ...profileData,
+      achievements: profileData.achievements.filter((_, i) => i !== index)
+    });
+  };
+
+  const sections = [
+    { id: 'personal', label: 'Personal Info', icon: User },
+    { id: 'academic', label: 'Academic', icon: GraduationCap },
+    { id: 'tests', label: 'Test Scores', icon: Award },
+    { id: 'activities', label: 'Activities', icon: Target },
+    { id: 'preferences', label: 'Preferences', icon: Settings },
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-300/20 to-pink-300/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-blue-300/20 to-cyan-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-orange-300/10 to-red-300/10 rounded-full blur-3xl animate-pulse delay-2000" />
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground mb-2">Profile Settings</h1>
+            <p className="text-muted-foreground">Manage your personal information and preferences</p>
+          </div>
+          <Button onClick={handleSave} disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </div>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
-        {/* Modern Header with Glass Effect */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl rounded-2xl p-6 border border-gray-200/50 dark:border-gray-700/50 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
-                  Create Your Profile
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
-                  Let's make your application stand out ✨
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                  {calculateProgress()}%
-                </div>
-                <p className="text-sm text-gray-500">Complete</p>
-              </div>
-            </div>
-
-            {/* Modern Progress Bar */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                {steps.map((step, index) => (
-                  <motion.div
-                    key={step.id}
-                    className="flex items-center"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
+      <div className="flex gap-6">
+        {/* Sidebar Navigation */}
+        <div className="w-64 flex-shrink-0">
+          <Card>
+            <CardContent className="p-4">
+              <nav className="space-y-2">
+                {sections.map((section) => {
+                  const Icon = section.icon;
+                  return (
                     <button
-                      onClick={() => index <= currentStep && setCurrentStep(index)}
-                      className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
-                        index === currentStep 
-                          ? "bg-gradient-to-r " + step.color + " text-white shadow-lg scale-110"
-                          : index < currentStep
-                          ? "bg-green-500 text-white"
-                          : "bg-gray-200 dark:bg-gray-700 text-gray-400"
-                      )}
+                      key={section.id}
+                      onClick={() => setActiveSection(section.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                        activeSection === section.id
+                          ? 'bg-blue-600/10 text-blue-600 font-medium'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`}
                     >
-                      {index < currentStep ? (
-                        <Check className="w-5 h-5" />
-                      ) : (
-                        <step.icon className="w-5 h-5" />
-                      )}
+                      <Icon className="w-4 h-4" />
+                      {section.label}
                     </button>
-                    {index < steps.length - 1 && (
-                      <div className={cn(
-                        "w-full h-1 mx-2 rounded-full transition-all duration-500",
-                        index < currentStep
-                          ? "bg-gradient-to-r from-green-400 to-green-500"
-                          : "bg-gray-200 dark:bg-gray-700"
-                      )} />
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.div>
+                  );
+                })}
+              </nav>
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Main Content Area with Animations */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.3 }}
-            className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl rounded-2xl p-8 border border-gray-200/50 dark:border-gray-700/50 shadow-xl"
-          >
-            {/* Step 0: Welcome */}
-            {currentStep === 0 && (
-              <div className="text-center py-12">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", duration: 0.5 }}
-                  className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center"
-                >
-                  <Sparkles className="w-16 h-16 text-white" />
-                </motion.div>
-                <h2 className="text-3xl font-bold mb-4">Welcome to MUA! 🎉</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                  Let's build your profile together. This will help us match you with perfect universities and streamline your applications.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto mb-8">
-                  <motion.div 
-                    whileHover={{ scale: 1.05 }}
-                    className="p-6 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
-                  >
-                    <Target className="w-8 h-8 text-blue-600 mb-3" />
-                    <h3 className="font-semibold mb-2">Smart Matching</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered university recommendations</p>
-                  </motion.div>
-                  <motion.div 
-                    whileHover={{ scale: 1.05 }}
-                    className="p-6 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
-                  >
-                    <Zap className="w-8 h-8 text-green-600 mb-3" />
-                    <h3 className="font-semibold mb-2">Auto-Fill</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Save hours on repetitive forms</p>
-                  </motion.div>
-                  <motion.div 
-                    whileHover={{ scale: 1.05 }}
-                    className="p-6 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-                  >
-                    <Trophy className="w-8 h-8 text-purple-600 mb-3" />
-                    <h3 className="font-semibold mb-2">Track Progress</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Stay on top of deadlines</p>
-                  </motion.div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 1: Basic Information */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Let's start with the basics</h2>
-                  <p className="text-gray-600 dark:text-gray-400">We'll use this to personalize your experience</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
-                    <Label htmlFor="firstName" className="text-sm font-medium flex items-center gap-2">
-                      <User className="w-4 h-4 text-purple-500" />
-                      First Name
-                    </Label>
-                    <Input
-                      id="firstName"
-                      value={profileData.firstName}
-                      onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
-                      placeholder="John"
-                      className="h-12 text-lg border-gray-200 focus:border-purple-500 transition-colors"
-                    />
-                  </motion.div>
-
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium flex items-center gap-2">
-                      <User className="w-4 h-4 text-purple-500" />
-                      Last Name
-                    </Label>
-                    <Input
-                      id="lastName"
-                      value={profileData.lastName}
-                      onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
-                      placeholder="Doe"
-                      className="h-12 text-lg border-gray-200 focus:border-purple-500 transition-colors"
-                    />
-                  </motion.div>
-
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-blue-500" />
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                      placeholder="john@example.com"
-                      className="h-12 text-lg border-gray-200 focus:border-blue-500 transition-colors"
-                    />
-                  </motion.div>
-
-                  <motion.div whileHover={{ scale: 1.02 }} className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-green-500" />
-                      Phone
-                    </Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={profileData.phone}
-                      onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                      placeholder="+1 (555) 123-4567"
-                      className="h-12 text-lg border-gray-200 focus:border-green-500 transition-colors"
-                    />
-                  </motion.div>
-                </div>
-
-                {/* Fun Preferred Name Section */}
-                <motion.div 
-                  whileHover={{ scale: 1.01 }}
-                  className="p-6 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20"
-                >
-                  <Label htmlFor="preferredName" className="text-sm font-medium flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-purple-500" />
-                    What should we call you?
-                  </Label>
-                  <Input
-                    id="preferredName"
-                    value={profileData.preferredName}
-                    onChange={(e) => setProfileData({...profileData, preferredName: e.target.value})}
-                    placeholder="Your nickname (optional)"
-                    className="h-12 text-lg bg-white/80 dark:bg-gray-800/80 border-purple-200 focus:border-purple-500 transition-colors"
-                  />
-                </motion.div>
-              </div>
-            )}
-
-            {/* Step 2: Academic Information */}
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Academic Profile</h2>
-                  <p className="text-gray-600 dark:text-gray-400">Your academic achievements matter!</p>
-                </div>
-
-                <motion.div 
-                  whileHover={{ scale: 1.01 }}
-                  className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Main Content */}
+        <div className="flex-1">
+          {/* Personal Information */}
+          {activeSection === 'personal' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Personal Information
+                  </CardTitle>
+                  <CardDescription>
+                    Your basic personal details and contact information
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-blue-500" />
-                        Current School
-                      </Label>
+                      <Label htmlFor="firstName">First Name</Label>
                       <Input
+                        id="firstName"
+                        value={profileData.firstName}
+                        onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
+                        placeholder="John"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        value={profileData.lastName}
+                        onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
+                        placeholder="Doe"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="preferredName">Preferred Name (Optional)</Label>
+                      <Input
+                        id="preferredName"
+                        value={profileData.preferredName}
+                        onChange={(e) => setProfileData({...profileData, preferredName: e.target.value})}
+                        placeholder="Johnny"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={profileData.email}
+                        onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                      <Input
+                        id="dateOfBirth"
+                        type="date"
+                        value={profileData.dateOfBirth}
+                        onChange={(e) => setProfileData({...profileData, dateOfBirth: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Address</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="street">Street Address</Label>
+                        <Input
+                          id="street"
+                          value={profileData.address.street}
+                          onChange={(e) => setProfileData({
+                            ...profileData, 
+                            address: {...profileData.address, street: e.target.value}
+                          })}
+                          placeholder="123 Main Street"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input
+                          id="city"
+                          value={profileData.address.city}
+                          onChange={(e) => setProfileData({
+                            ...profileData, 
+                            address: {...profileData.address, city: e.target.value}
+                          })}
+                          placeholder="New York"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="state">State/Province</Label>
+                        <Input
+                          id="state"
+                          value={profileData.address.state}
+                          onChange={(e) => setProfileData({
+                            ...profileData, 
+                            address: {...profileData.address, state: e.target.value}
+                          })}
+                          placeholder="NY"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Academic Information */}
+          {activeSection === 'academic' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5" />
+                    Academic Information
+                  </CardTitle>
+                  <CardDescription>
+                    Your current school and academic performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentSchool">Current School</Label>
+                      <Input
+                        id="currentSchool"
                         value={profileData.currentSchool}
                         onChange={(e) => setProfileData({...profileData, currentSchool: e.target.value})}
                         placeholder="Lincoln High School"
-                        className="h-12 text-lg"
                       />
                     </div>
-
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-green-500" />
-                        Graduation Year
-                      </Label>
+                      <Label htmlFor="graduationYear">Graduation Year</Label>
                       <Select
                         value={profileData.graduationYear.toString()}
                         onValueChange={(value) => setProfileData({...profileData, graduationYear: parseInt(value)})}
                       >
-                        <SelectTrigger className="h-12 text-lg">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="2024">2024</SelectItem>
-                          <SelectItem value="2025">2025</SelectItem>
-                          <SelectItem value="2026">2026</SelectItem>
-                          <SelectItem value="2027">2027</SelectItem>
+                          {[2024, 2025, 2026, 2027, 2028].map(year => (
+                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                </motion.div>
-
-                {/* GPA Section with Visual Indicator */}
-                <motion.div 
-                  whileHover={{ scale: 1.01 }}
-                  className="p-6 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20"
-                >
-                  <Label className="flex items-center gap-2 mb-4">
-                    <Trophy className="w-4 h-4 text-green-500" />
-                    GPA
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={profileData.gpa}
-                      onChange={(e) => setProfileData({...profileData, gpa: e.target.value})}
-                      placeholder="3.85"
-                      className="h-12 text-lg w-32"
-                    />
-                    <span className="text-lg text-gray-600">out of</span>
-                    <Select
-                      value={profileData.gpaScale}
-                      onValueChange={(value) => setProfileData({...profileData, gpaScale: value})}
-                    >
-                      <SelectTrigger className="h-12 text-lg w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="4.0">4.0</SelectItem>
-                        <SelectItem value="5.0">5.0</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {profileData.gpa && (
-                      <div className="flex-1">
-                        <Progress 
-                          value={(parseFloat(profileData.gpa) / parseFloat(profileData.gpaScale)) * 100} 
-                          className="h-3"
+                    <div className="space-y-2">
+                      <Label htmlFor="gpa">GPA</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="gpa"
+                          type="number"
+                          step="0.01"
+                          value={profileData.gpa}
+                          onChange={(e) => setProfileData({...profileData, gpa: e.target.value})}
+                          placeholder="3.85"
+                          className="flex-1"
                         />
+                        <Select
+                          value={profileData.gpaScale}
+                          onValueChange={(value) => setProfileData({...profileData, gpaScale: value})}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="4.0">4.0</SelectItem>
+                            <SelectItem value="5.0">5.0</SelectItem>
+                            <SelectItem value="100">100</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="classRank">Class Rank (Optional)</Label>
+                      <Input
+                        id="classRank"
+                        value={profileData.classRank}
+                        onChange={(e) => setProfileData({...profileData, classRank: e.target.value})}
+                        placeholder="15"
+                      />
+                    </div>
                   </div>
-                </motion.div>
-              </div>
-            )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-            {/* Step 3: Achievements & Test Scores */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Show Your Achievements</h2>
-                  <p className="text-gray-600 dark:text-gray-400">Test scores and accomplishments</p>
-                </div>
-
-                {/* Test Scores with Visual Cards */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <Label className="text-lg font-semibold flex items-center gap-2">
-                      <Award className="w-5 h-5 text-orange-500" />
-                      Test Scores
-                    </Label>
+          {/* Test Scores */}
+          {activeSection === 'tests' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Award className="w-5 h-5" />
+                        Test Scores
+                      </CardTitle>
+                      <CardDescription>
+                        Add your standardized test scores
+                      </CardDescription>
+                    </div>
                     <Button onClick={addTestScore} variant="outline" size="sm">
                       <Plus className="w-4 h-4 mr-2" />
                       Add Score
                     </Button>
                   </div>
-
+                </CardHeader>
+                <CardContent>
                   {profileData.testScores.length === 0 ? (
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="p-8 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-center cursor-pointer"
-                      onClick={addTestScore}
-                    >
+                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                       <Award className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 dark:text-gray-400">Add your test scores</p>
-                      <p className="text-sm text-gray-500 mt-2">SAT, ACT, TOEFL, IELTS, etc.</p>
-                    </motion.div>
+                      <p className="text-gray-600">No test scores added yet</p>
+                      <Button onClick={addTestScore} variant="outline" className="mt-3">
+                        Add Your First Score
+                      </Button>
+                    </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {testTypes.map((test) => (
-                        <motion.div
-                          key={test.value}
-                          whileHover={{ scale: 1.02 }}
-                          className={cn(
-                            "p-6 rounded-xl border-2 cursor-pointer transition-all",
-                            profileData.testScores.some(s => s.type === test.value)
-                              ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                              : "border-gray-200 dark:border-gray-700"
-                          )}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge className={cn("text-white", test.color)}>{test.label}</Badge>
-                            {profileData.testScores.some(s => s.type === test.value) && (
-                              <CheckCircle2 className="w-5 h-5 text-green-500" />
-                            )}
-                          </div>
-                          <div className="text-2xl font-bold">
-                            {profileData.testScores.find(s => s.type === test.value)?.score || '--'} 
-                            <span className="text-sm text-gray-500 ml-1">/ {test.maxScore}</span>
-                          </div>
-                        </motion.div>
+                    <div className="space-y-4">
+                      {profileData.testScores.map((score, index) => (
+                        <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
+                          <Select
+                            value={score.type}
+                            onValueChange={(value) => {
+                              const newScores = [...profileData.testScores];
+                              newScores[index].type = value;
+                              setProfileData({...profileData, testScores: newScores});
+                            }}
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {testTypes.map(test => (
+                                <SelectItem key={test.value} value={test.value}>{test.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            type="number"
+                            placeholder="Score"
+                            value={score.score}
+                            onChange={(e) => {
+                              const newScores = [...profileData.testScores];
+                              newScores[index].score = e.target.value;
+                              setProfileData({...profileData, testScores: newScores});
+                            }}
+                            className="w-24"
+                          />
+                          <Input
+                            type="date"
+                            value={score.date}
+                            onChange={(e) => {
+                              const newScores = [...profileData.testScores];
+                              newScores[index].date = e.target.value;
+                              setProfileData({...profileData, testScores: newScores});
+                            }}
+                            className="w-40"
+                          />
+                          <Button 
+                            onClick={() => removeTestScore(index)} 
+                            variant="ghost" 
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
                       ))}
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Activities */}
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold mb-2">Your Activities & Interests</h2>
-                  <p className="text-gray-600 dark:text-gray-400">What do you love to do?</p>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {activityCategories.map((category, index) => (
-                    <motion.div
-                      key={category.value}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => addActivity(category.value)}
-                      className={cn(
-                        "p-6 rounded-xl cursor-pointer transition-all border-2",
-                        selectedActivities.includes(category.value)
-                          ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
-                      )}
-                    >
-                      <div className="text-3xl mb-2 text-center">{category.icon}</div>
-                      <p className="text-sm font-medium text-center">{category.label}</p>
-                      {selectedActivities.includes(category.value) && (
-                        <CheckCircle2 className="w-4 h-4 text-purple-500 mx-auto mt-2" />
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-
-                {selectedActivities.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20"
-                  >
-                    <p className="text-sm font-medium text-purple-700 dark:text-purple-300">
-                      Great choices! You've selected {selectedActivities.length} activities
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            )}
-
-            {/* Step 5: Complete */}
-            {currentStep === 5 && (
-              <div className="text-center py-12">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", duration: 0.5 }}
-                  className="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center"
-                >
-                  <CheckCircle2 className="w-16 h-16 text-white" />
-                </motion.div>
-                <h2 className="text-3xl font-bold mb-4">Profile Complete! 🎊</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                  Awesome! Your profile is ready. Now let's find your dream universities.
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <Button size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                    Browse Universities
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                  <Button size="lg" variant="outline">
-                    View Dashboard
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8">
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                disabled={currentStep === 0}
-                className="min-w-[120px]"
-              >
-                <ArrowLeft className="mr-2 w-4 h-4" />
-                Back
-              </Button>
-              
-              <Button
-                onClick={handleNext}
-                disabled={currentStep === steps.length - 1}
-                className="min-w-[120px] bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-              >
-                {currentStep === steps.length - 2 ? 'Complete' : 'Next'}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Button>
+                </CardContent>
+              </Card>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          )}
+
+          {/* Activities */}
+          {activeSection === 'activities' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Target className="w-5 h-5" />
+                        Activities & Achievements
+                      </CardTitle>
+                      <CardDescription>
+                        Showcase your extracurricular activities and achievements
+                      </CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={addActivity} variant="outline" size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Activity
+                      </Button>
+                      <Button onClick={addAchievement} variant="outline" size="sm">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Achievement
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Activities Section */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Activities</h3>
+                    {profileData.activities.length === 0 ? (
+                      <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                        <Target className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">No activities added yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {profileData.activities.map((activity, index) => (
+                          <div key={index} className="p-4 border rounded-lg space-y-3">
+                            <div className="flex items-center gap-4">
+                              <Input
+                                placeholder="Activity name"
+                                value={activity.name}
+                                onChange={(e) => {
+                                  const newActivities = [...profileData.activities];
+                                  newActivities[index].name = e.target.value;
+                                  setProfileData({...profileData, activities: newActivities});
+                                }}
+                                className="flex-1"
+                              />
+                              <Select
+                                value={activity.category}
+                                onValueChange={(value) => {
+                                  const newActivities = [...profileData.activities];
+                                  newActivities[index].category = value;
+                                  setProfileData({...profileData, activities: newActivities});
+                                }}
+                              >
+                                <SelectTrigger className="w-40">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {activityCategories.map(category => (
+                                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button 
+                                onClick={() => removeActivity(index)} 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <Textarea
+                              placeholder="Describe your role and accomplishments..."
+                              value={activity.description}
+                              onChange={(e) => {
+                                const newActivities = [...profileData.activities];
+                                newActivities[index].description = e.target.value;
+                                setProfileData({...profileData, activities: newActivities});
+                              }}
+                              className="min-h-[80px]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Achievements Section */}
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Achievements</h3>
+                    {profileData.achievements.length === 0 ? (
+                      <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                        <Trophy className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">No achievements added yet</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {profileData.achievements.map((achievement, index) => (
+                          <div key={index} className="p-4 border rounded-lg space-y-3">
+                            <div className="flex items-center gap-4">
+                              <Input
+                                placeholder="Achievement title"
+                                value={achievement.title}
+                                onChange={(e) => {
+                                  const newAchievements = [...profileData.achievements];
+                                  newAchievements[index].title = e.target.value;
+                                  setProfileData({...profileData, achievements: newAchievements});
+                                }}
+                                className="flex-1"
+                              />
+                              <Select
+                                value={achievement.type}
+                                onValueChange={(value) => {
+                                  const newAchievements = [...profileData.achievements];
+                                  newAchievements[index].type = value;
+                                  setProfileData({...profileData, achievements: newAchievements});
+                                }}
+                              >
+                                <SelectTrigger className="w-40">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {achievementTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button 
+                                onClick={() => removeAchievement(index)} 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <Textarea
+                              placeholder="Describe your achievement..."
+                              value={achievement.description}
+                              onChange={(e) => {
+                                const newAchievements = [...profileData.achievements];
+                                newAchievements[index].description = e.target.value;
+                                setProfileData({...profileData, achievements: newAchievements});
+                              }}
+                              className="min-h-[60px]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Preferences */}
+          {activeSection === 'preferences' && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Notification Preferences
+                  </CardTitle>
+                  <CardDescription>
+                    Choose how you'd like to receive updates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                    </div>
+                    <Switch
+                      checked={profileData.preferences.notifications.email}
+                      onCheckedChange={(checked) => setProfileData({
+                        ...profileData,
+                        preferences: {
+                          ...profileData.preferences,
+                          notifications: {
+                            ...profileData.preferences.notifications,
+                            email: checked
+                          }
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Deadline Reminders</Label>
+                      <p className="text-sm text-muted-foreground">Get reminded about application deadlines</p>
+                    </div>
+                    <Switch
+                      checked={profileData.preferences.notifications.deadlineReminders}
+                      onCheckedChange={(checked) => setProfileData({
+                        ...profileData,
+                        preferences: {
+                          ...profileData.preferences,
+                          notifications: {
+                            ...profileData.preferences.notifications,
+                            deadlineReminders: checked
+                          }
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Application Updates</Label>
+                      <p className="text-sm text-muted-foreground">Receive updates on your application status</p>
+                    </div>
+                    <Switch
+                      checked={profileData.preferences.notifications.applicationUpdates}
+                      onCheckedChange={(checked) => setProfileData({
+                        ...profileData,
+                        preferences: {
+                          ...profileData.preferences,
+                          notifications: {
+                            ...profileData.preferences.notifications,
+                            applicationUpdates: checked
+                          }
+                        }
+                      })}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Privacy Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Control your data and privacy preferences
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Profile Visibility</Label>
+                    <Select
+                      value={profileData.preferences.privacy.profileVisibility}
+                      onValueChange={(value) => setProfileData({
+                        ...profileData,
+                        preferences: {
+                          ...profileData.preferences,
+                          privacy: {
+                            ...profileData.preferences.privacy,
+                            profileVisibility: value
+                          }
+                        }
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="private">Private</SelectItem>
+                        <SelectItem value="universities">Universities Only</SelectItem>
+                        <SelectItem value="public">Public</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Share Data with Partners</Label>
+                      <p className="text-sm text-muted-foreground">Allow sharing anonymous data with partner institutions</p>
+                    </div>
+                    <Switch
+                      checked={profileData.preferences.privacy.shareDataWithPartners}
+                      onCheckedChange={(checked) => setProfileData({
+                        ...profileData,
+                        preferences: {
+                          ...profileData.preferences,
+                          privacy: {
+                            ...profileData.preferences.privacy,
+                            shareDataWithPartners: checked
+                          }
+                        }
+                      })}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
