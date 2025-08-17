@@ -12,7 +12,8 @@
     "colorTheme": "Color theme",
     "lightMode": "Light",
     "darkMode": "Dark",
-    "systemMode": "System"
+    "systemMode": "System",
+    "starredUniversities": "Starred Universities"
   },
   "actions": {
     "signOut": "Sign out"
@@ -132,6 +133,8 @@
     "visaType": "Visa Type",
     "applicationFee": "Application Fee",
     "financialProof": "Financial Proof",
-    "successRate": "Success Rate"
+    "successRate": "Success Rate",
+    "saving": "Saving...",
+    "saved": "Saved"
   }
 }

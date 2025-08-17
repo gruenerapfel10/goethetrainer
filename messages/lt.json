@@ -461,7 +461,8 @@
     "blueMode": "Mėlynas",
     "mode": "rėžimą",
     "colorTheme": "Spalvų rėžimas",
-    "systemMode": "Sistema"
+    "systemMode": "Sistema",
+    "starredUniversities": "Mėgstami universitetai"
   },
   "keyboard": {
     "shortcut": "⌘K"
@@ -576,7 +577,9 @@
     "visaType": "Vizos tipas",
     "applicationFee": "Prašymo mokestis",
     "financialProof": "Finansinis įrodymas",
-    "successRate": "Sėkmės rodiklis"
+    "successRate": "Sėkmės rodiklis",
+    "saving": "Išsaugoma...",
+    "saved": "Išsaugota"
   },
   "errors": {
     "fileListRefresh": "Nepavyko atnaujinti failų sąrašo",

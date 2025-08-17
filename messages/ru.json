@@ -12,7 +12,8 @@
     "colorTheme": "Цветовая тема",
     "lightMode": "Светлая",
     "darkMode": "Тёмная",
-    "systemMode": "Системная"
+    "systemMode": "Системная",
+    "starredUniversities": "Избранные университеты"
   },
   "actions": {
     "signOut": "Выйти"
@@ -132,6 +133,8 @@
     "visaType": "Тип визы",
     "applicationFee": "Плата за заявку",
     "financialProof": "Финансовое подтверждение",
-    "successRate": "Процент успеха"
+    "successRate": "Процент успеха",
+    "saving": "Сохранение...",
+    "saved": "Сохранено"
   }
 }

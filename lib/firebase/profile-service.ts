@@ -23,6 +23,14 @@ if (typeof window !== 'undefined') {
     });
 }
 
+export interface StarredUniversity {
+  id: string;
+  name: string;
+  country: string;
+  rank: number;
+  starredAt: number; // Unix timestamp in milliseconds
+}
+
 export interface ProfileData {
   // Personal Information
   firstName?: string;
@@ -45,6 +53,9 @@ export interface ProfileData {
     zipCode: string;
     country: string;
   };
+  
+  // Starred Universities
+  starredUniversities?: StarredUniversity[];
   
   // Academic Information
   currentSchool?: string;
@@ -274,6 +285,78 @@ class ProfileService {
    */
   async saveDegree(userId: string, degree: { level: 'undergraduate' | 'graduate' | 'doctorate'; field: string; displayName: string; }): Promise<void> {
     return this.updateProfileFields(userId, { degree });
+  }
+
+  /**
+   * Add university to starred list
+   */
+  async starUniversity(userId: string, university: { id: string; name: string; country: string; rank: number; }): Promise<void> {
+    try {
+      const profile = await this.getProfile(userId);
+      const currentStarred = profile?.starredUniversities || [];
+      
+      // Check if already starred
+      const isAlreadyStarred = currentStarred.some(starred => starred.id === university.id);
+      if (isAlreadyStarred) {
+        return; // Already starred, no need to add again
+      }
+      
+      const newStarred: StarredUniversity = {
+        ...university,
+        starredAt: Date.now() // Use current timestamp in milliseconds
+      };
+      
+      const updatedStarred = [...currentStarred, newStarred];
+      
+      return this.updateProfileFields(userId, { starredUniversities: updatedStarred });
+    } catch (error) {
+      console.error('Error starring university:', error);
+      throw new Error('Failed to star university');
+    }
+  }
+
+  /**
+   * Remove university from starred list
+   */
+  async unstarUniversity(userId: string, universityId: string): Promise<void> {
+    try {
+      const profile = await this.getProfile(userId);
+      const currentStarred = profile?.starredUniversities || [];
+      
+      const updatedStarred = currentStarred.filter(starred => starred.id !== universityId);
+      
+      return this.updateProfileFields(userId, { starredUniversities: updatedStarred });
+    } catch (error) {
+      console.error('Error unstarring university:', error);
+      throw new Error('Failed to unstar university');
+    }
+  }
+
+  /**
+   * Get starred universities
+   */
+  async getStarredUniversities(userId: string): Promise<StarredUniversity[]> {
+    try {
+      const profile = await this.getProfile(userId);
+      return profile?.starredUniversities || [];
+    } catch (error) {
+      console.error('Error getting starred universities:', error);
+      throw new Error('Failed to get starred universities');
+    }
+  }
+
+  /**
+   * Check if university is starred
+   */
+  async isUniversityStarred(userId: string, universityId: string): Promise<boolean> {
+    try {
+      const profile = await this.getProfile(userId);
+      const starredUniversities = profile?.starredUniversities || [];
+      return starredUniversities.some(starred => starred.id === universityId);
+    } catch (error) {
+      console.error('Error checking if university is starred:', error);
+      return false;
+    }
   }
 }
 

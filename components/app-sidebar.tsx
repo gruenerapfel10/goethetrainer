@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react';
-import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings } from "lucide-react"
+import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { MuaLogoVertical } from '@/airdrop3/components/mua-logo-vertical';
@@ -16,7 +16,7 @@ import type { Locale } from '@/i18n/config';
 import NationalitySwitcher from '@/components/nationality-switcher';
 import DegreeSwitcher, { DegreeInfo } from '@/components/degree-switcher';
 import { Breadcrumb } from '@/components/breadcrumb';
-import { profileService } from '@/lib/firebase/profile-service';
+import { profileService, type StarredUniversity } from '@/lib/firebase/profile-service';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,8 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     displayName: 'Undergraduate Mechanical Engineering'
   })
   const [universityData, setUniversityData] = useState<{id: string, name: string} | null>(null)
+  const [starredUniversities, setStarredUniversities] = useState<StarredUniversity[]>([])
+  const [optimisticStarredUniversities, setOptimisticStarredUniversities] = useState<StarredUniversity[]>([])
 
   const languageItems = [
     { value: 'en', label: t('locales.en'), emoji: '🇺🇸' },
@@ -115,26 +117,74 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
             if (profile.degree) {
               setDegree(profile.degree)
             }
+            if (profile.starredUniversities) {
+              setStarredUniversities(profile.starredUniversities)
+              setOptimisticStarredUniversities(profile.starredUniversities)
+            }
           }
         })
         .catch(err => console.error('Failed to load user preferences:', err))
     }
   }, [user?.uid, locale])
 
+  // Listen for starred university changes from other components
+  useEffect(() => {
+    const handleStarredUniversityUpdate = (event: CustomEvent) => {
+      const { action, university } = event.detail
+      
+      if (action === 'star') {
+        const newStarred: StarredUniversity = {
+          ...university,
+          starredAt: Date.now()
+        }
+        setOptimisticStarredUniversities(prev => {
+          const isAlreadyStarred = prev.some(starred => starred.id === university.id)
+          if (!isAlreadyStarred) {
+            return [...prev, newStarred]
+          }
+          return prev
+        })
+      } else if (action === 'unstar') {
+        setOptimisticStarredUniversities(prev => 
+          prev.filter(starred => starred.id !== university.id)
+        )
+      }
+    }
+
+    window.addEventListener('starredUniversityUpdate', handleStarredUniversityUpdate as EventListener)
+    return () => {
+      window.removeEventListener('starredUniversityUpdate', handleStarredUniversityUpdate as EventListener)
+    }
+  }, [])
+
+  // Helper function to get university emblem path
+  const getUniversityEmblemPath = (name: string) => {
+    const path = name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '')
+    return `/university-images/${path}/emblem_${path}.svg`
+  }
+
   // Effect to fetch university data when on university detail page
   useEffect(() => {
-    const universityMatch = pathname.match(/^\/universities\/(\d+)$/)
+    const universityMatch = pathname.match(/^\/universities\/([^\/]+)$/)
     if (universityMatch) {
       const universityId = universityMatch[1]
-      fetch('/500.json')
-        .then(res => res.json())
-        .then(data => {
-          const university = data.find((u: any) => u.rank === Number(universityId))
-          if (university) {
+      // Fetch from individual university JSON file
+      fetch(`/${universityId}.json`)
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`University file not found: ${universityId}.json`)
+          }
+          return res.json()
+        })
+        .then(university => {
+          if (university && university.name) {
             setUniversityData({ id: universityId, name: university.name })
           }
         })
-        .catch(err => console.error('Failed to load university data:', err))
+        .catch(err => {
+          console.error('Failed to load university data:', err)
+          setUniversityData(null)
+        })
     } else {
       setUniversityData(null)
     }
@@ -244,7 +294,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
           </div>
 
           {/* Search */}
-          <div className={`${sidebarOpen ? "px-4" : "px-2"} pb-2`}>
+          <div className={`${sidebarOpen ? "px-4" : "px-2"} pb-6`}>
             {sidebarOpen ? (
               <div className="relative group">
                 <div className="absolute inset-0 rounded-xl opacity-0 blur-xl transition-opacity duration-300 bg-gradient-to-r from-blue-600/20 via-blue-500/30 to-blue-400/20 group-hover:opacity-100" />
@@ -269,6 +319,75 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
               </button>
             )}
           </div>
+
+          {/* Starred Universities */}
+          {user && optimisticStarredUniversities.length > 0 && (
+            <div className={`${sidebarOpen ? "px-4" : "px-2"} pb-2`}>
+              {sidebarOpen ? (
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground/70 px-2 pb-1 font-medium tracking-wide uppercase">
+                    {t('sidebar.starredUniversities')}
+                  </div>
+                  {optimisticStarredUniversities.slice(0, 3).map((university) => (
+                    <Link key={university.id} href={`/universities/${university.id}`}>
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                        <Image
+                          src={getUniversityEmblemPath(university.name)}
+                          alt={`${university.name} emblem`}
+                          width={12}
+                          height={12}
+                          className="flex-shrink-0 rounded-sm"
+                          onError={(e) => {
+                            // Fallback to star icon if emblem fails to load
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            const starIcon = target.nextElementSibling as HTMLElement
+                            if (starIcon) starIcon.style.display = 'block'
+                          }}
+                        />
+                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 flex-shrink-0" style={{display: 'none'}} />
+                        <span className="truncate text-xs">{university.name}</span>
+                      </div>
+                    </Link>
+                  ))}
+                  {optimisticStarredUniversities.length > 3 && (
+                    <Link href="/universities?tab=starred">
+                      <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
+                        <span className="truncate">+{optimisticStarredUniversities.length - 3} more</span>
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {optimisticStarredUniversities.slice(0, 2).map((university) => (
+                    <Link key={university.id} href={`/universities/${university.id}`}>
+                      <button
+                        className="relative group transition-all duration-200 w-full h-8 rounded-lg flex items-center justify-center bg-sidebar-accent/50 backdrop-blur-sm border border-sidebar-border/50 hover:bg-sidebar-accent/70"
+                        title={university.name}
+                      >
+                        <Image
+                          src={getUniversityEmblemPath(university.name)}
+                          alt={`${university.name} emblem`}
+                          width={16}
+                          height={16}
+                          className="rounded-sm"
+                          onError={(e) => {
+                            // Fallback to star icon if emblem fails to load
+                            const target = e.target as HTMLImageElement
+                            target.style.display = 'none'
+                            const starIcon = target.nextElementSibling as HTMLElement
+                            if (starIcon) starIcon.style.display = 'block'
+                          }}
+                        />
+                        <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" style={{display: 'none'}} />
+                      </button>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Navigation Items */}
           <nav className={`flex-1 ${sidebarOpen ? "pl-1 pr-4" : "px-2"}`}>
