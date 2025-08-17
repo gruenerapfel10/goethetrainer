@@ -149,6 +149,22 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                   {sidebarOpen && <span className="truncate">{t('navigation.universities')}</span>}
                 </Button>
               </Link>
+              <Link href="/profile">
+                <Button
+                  variant="ghost"
+                  className={`w-full gap-3 transition-all duration-200 ${
+                    pathname === '/profile' 
+                      ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  } ${
+                    sidebarOpen ? "justify-start" : "justify-center px-0"
+                  }`}
+                  title={!sidebarOpen ? "Profile" : undefined}
+                >
+                  <User className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="truncate">{t('navigation.profile')}</span>}
+                </Button>
+              </Link>
               <div className={sidebarOpen ? "pl-1 pr-4" : "px-2"}>
                 <SidebarToggle 
                   isOpen={sidebarOpen} 

@@ -127,12 +127,12 @@ export default function UniversityDetailPage() {
         </Link>
       </motion.div>
 
-      <div className="flex flex-col lg:flex-row h-screen">
+      <div className="relative h-screen overflow-hidden">
         <motion.div 
           ref={imageRef}
-          className="lg:w-[65%] w-full h-[50vh] lg:h-full relative overflow-hidden"
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
+          className="absolute inset-0 overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
@@ -208,16 +208,16 @@ export default function UniversityDetailPage() {
         </motion.div>
 
         <motion.div 
-          className="lg:w-[35%] w-full relative lg:p-6"
+          className="absolute top-8 right-8 bottom-8 w-96 z-40 pointer-events-auto hidden lg:block"
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div className="lg:absolute lg:inset-6 lg:top-8 lg:bottom-8 lg:right-8 bg-white/10 dark:bg-black/10 backdrop-blur-xl lg:rounded-[2rem] border border-white/20 dark:border-white/10 lg:shadow-2xl lg:shadow-black/10 dark:lg:shadow-black/30">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-transparent dark:from-white/10 dark:via-white/5 dark:to-transparent lg:rounded-[2rem]" />
+          <div className="h-full bg-white/10 dark:bg-black/10 backdrop-blur-xl rounded-[2rem] border border-white/20 dark:border-white/10 shadow-2xl shadow-black/10 dark:shadow-black/30">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-white/5 to-transparent dark:from-white/10 dark:via-white/5 dark:to-transparent rounded-[2rem]" />
             
-            <div className="relative h-full flex flex-col lg:rounded-[2rem]">
-              <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-8 lg:rounded-t-[2rem]">
+            <div className="relative h-full flex flex-col rounded-[2rem]">
+              <div className="flex-1 overflow-y-auto p-8 space-y-8 rounded-t-[2rem]">
                 <motion.div 
                   className="grid grid-cols-2 gap-4"
                   initial={{ y: 20, opacity: 0 }}
@@ -321,7 +321,7 @@ export default function UniversityDetailPage() {
               </div>
 
               <motion.div 
-                className="p-6 border-t border-white/20 dark:border-white/10 bg-white/10 dark:bg-black/10 backdrop-blur-sm lg:rounded-b-[2rem]"
+                className="p-6 border-t border-white/20 dark:border-white/10 bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-b-[2rem]"
                 initial={{ y: 50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9, duration: 0.6 }}
