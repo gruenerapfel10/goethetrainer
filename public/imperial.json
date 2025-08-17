@@ -28,12 +28,16 @@
         "software-eng",
         "statistics"
     ],
+    "tuition_2025_26": {
+        "international": "£24,910-£33,625",
+        "uk_domestic": "£9,250"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
-                "high_school_diploma": "required with top grades",
-                "sat_act": "recommended but not required",
-                "ap_courses": "5+ AP tests at score 5",
+                "high_school_diploma": "required with 85-90% average",
+                "sat_act": "not accepted for undergraduate admission",
+                "ap_courses": "3-4 AP tests with scores of 5 required",
                 "gpa_minimum": "3.8/4.0"
             },
             "language_requirements": {
@@ -51,9 +55,18 @@
                 "admissions_test": ["BMAT", "MAT"]
             },
             "deadlines": {
-                "ucas_deadline": "January 31"
+                "ucas_deadline": "January 31, 2026"
             },
-            "additional_requirements": ["visa_requirements", "financial_proof"]
+            "additional_requirements": ["visa_requirements", "financial_proof"],
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£60,000 for first year",
+                "visa_interview_tips": "Prepare for academic and career goals discussion",
+                "success_rate": "~90% for Imperial admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {
@@ -102,10 +115,11 @@
                 "personal_statement": true,
                 "reference": true,
                 "interview": "may be required",
-                "admissions_test": ["BMAT", "MAT"]
+                "admissions_test": ["ESAT", "TMUA"]
             },
             "deadlines": {
-                "ucas_deadline": "January 31"
+                "ucas_deadline": "January 15, 2026",
+                "medicine_deadline": "October 15, 2025"
             },
             "additional_requirements": []
         },
@@ -156,9 +170,18 @@
                 "admissions_test": ["BMAT", "MAT"]
             },
             "deadlines": {
-                "international_deadline": "January 31"
+                "international_deadline": "January 31, 2026"
             },
-            "additional_requirements": ["visa_requirements", "financial_proof"]
+            "additional_requirements": ["visa_requirements", "financial_proof"],
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£60,000 for first year",
+                "visa_interview_tips": "Prepare for academic and career goals discussion",
+                "success_rate": "~90% for Imperial admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {

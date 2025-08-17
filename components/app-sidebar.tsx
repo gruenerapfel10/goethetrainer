@@ -32,11 +32,9 @@ interface AppSidebarProps {
   setSidebarOpen: (open: boolean) => void;
   onOpenSearchModal: () => void;
   children: React.ReactNode;
-  activeProfileSection?: string;
-  setActiveProfileSection?: (section: string) => void;
 }
 
-export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, children, activeProfileSection, setActiveProfileSection }: AppSidebarProps) {
+export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, children }: AppSidebarProps) {
   const { user, logout } = useAuth()
   const { setTheme, theme } = useTheme()
   const t = useTranslations()
@@ -154,8 +152,35 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
       return [{ label: t('navigation.dashboard'), current: true }]
     } else if (pathname === '/universities') {
       return [{ label: t('navigation.universities'), current: true }]
-    } else if (pathname === '/profile') {
-      return [{ label: t('navigation.profile'), current: true }]
+    } else if (pathname === '/profile' || pathname.startsWith('/profile/')) {
+      if (pathname === '/profile/personal') {
+        return [
+          { label: t('navigation.profile'), href: '/profile' },
+          { label: 'Personal Info', current: true }
+        ]
+      } else if (pathname === '/profile/academic') {
+        return [
+          { label: t('navigation.profile'), href: '/profile' },
+          { label: 'Academic', current: true }
+        ]
+      } else if (pathname === '/profile/tests') {
+        return [
+          { label: t('navigation.profile'), href: '/profile' },
+          { label: 'Test Scores', current: true }
+        ]
+      } else if (pathname === '/profile/activities') {
+        return [
+          { label: t('navigation.profile'), href: '/profile' },
+          { label: 'Activities', current: true }
+        ]
+      } else if (pathname === '/profile/preferences') {
+        return [
+          { label: t('navigation.profile'), href: '/profile' },
+          { label: 'Preferences', current: true }
+        ]
+      } else {
+        return [{ label: t('navigation.profile'), current: true }]
+      }
     } else if (pathname === '/applications') {
       return [{ label: 'Applications', current: true }]
     } else if (pathname.startsWith('/universities/') && universityData) {
@@ -175,15 +200,15 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
 
   // Profile sections configuration
   const profileSections = [
-    { id: 'personal', label: 'Personal Info', icon: User },
-    { id: 'academic', label: 'Academic', icon: GraduationCap },
-    { id: 'tests', label: 'Test Scores', icon: Award },
-    { id: 'activities', label: 'Activities', icon: Target },
-    { id: 'preferences', label: 'Preferences', icon: Settings },
+    { id: 'personal', label: 'Personal Info', icon: User, href: '/profile/personal' },
+    { id: 'academic', label: 'Academic', icon: GraduationCap, href: '/profile/academic' },
+    { id: 'tests', label: 'Test Scores', icon: Award, href: '/profile/tests' },
+    { id: 'activities', label: 'Activities', icon: Target, href: '/profile/activities' },
+    { id: 'preferences', label: 'Preferences', icon: Settings, href: '/profile/preferences' },
   ];
 
-  // Check if we're on the profile page
-  const isProfilePage = pathname === '/profile'
+  // Check if we're on any profile page
+  const isProfilePage = pathname.startsWith('/profile')
 
   return (
     <div className="min-h-screen bg-background">
@@ -302,19 +327,20 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                 <div className="ml-4 space-y-1">
                   {profileSections.map((section) => {
                     const Icon = section.icon;
+                    const isActive = pathname === section.href;
                     return (
-                      <button
-                        key={section.id}
-                        onClick={() => setActiveProfileSection?.(section.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors text-sm ${
-                          activeProfileSection === section.id
-                            ? 'bg-blue-600/10 text-blue-600 font-medium border border-blue-500/20'
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                      >
-                        <Icon className="w-3 h-3" />
-                        {section.label}
-                      </button>
+                      <Link key={section.id} href={section.href}>
+                        <div
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors text-sm cursor-pointer ${
+                            isActive
+                              ? 'bg-blue-600/10 text-blue-600 font-medium border border-blue-500/20'
+                              : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          }`}
+                        >
+                          <Icon className="w-3 h-3" />
+                          {section.label}
+                        </div>
+                      </Link>
                     );
                   })}
                 </div>
@@ -451,7 +477,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
           </div>
 
           <div className="flex-1 relative">
-            <div className="absolute inset-0 bottom-4 right-4 bg-sidebar rounded-lg border border-border overflow-clip">
+            <div className="absolute inset-0 bottom-4 right-4 bg-sidebar rounded-lg border border-border overflow-auto">
               <div className="min-h-full">
                 {children}
               </div>

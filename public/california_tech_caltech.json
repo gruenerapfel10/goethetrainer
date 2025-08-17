@@ -23,6 +23,13 @@
         "philosophy",
         "physics"
     ],
+    "tuition_2025_26": {
+        "domestic": "$65,622",
+        "international": "$65,622",
+        "total_cost": "$89,000-$95,000",
+        "application_fee": "$75",
+        "room_board": "$18,000-$20,000"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
@@ -32,9 +39,13 @@
                     "ACT"
                 ],
                 "sat_scores": {
+                    "average": 1530,
+                    "range": "1500-1570",
                     "minimum": 1540
                 },
                 "act_scores": {
+                    "average": 36,
+                    "range": "35-36",
                     "minimum": 35
                 },
                 "required_tests": "SAT/ACT required",
@@ -48,11 +59,13 @@
                 "english_proficiency": "native_or_equivalent",
                 "tests_required": [
                     "TOEFL",
-                    "IELTS"
+                    "IELTS",
+                    "Duolingo"
                 ],
                 "minimum_scores": {
                     "toefl": 100,
-                    "ielts": 7.0
+                    "ielts": 7.0,
+                    "duolingo": 120
                 }
             },
             "application_requirements": {
@@ -65,8 +78,17 @@
                 "portfolio": false
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 3"
+                "early_action": "November 1, 2024",
+                "regular_decision": "January 3, 2025",
+                "decision_notification": "Mid-March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$89,000-$95,000 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": []
         },
@@ -122,8 +144,17 @@
                 "admissions_test": []
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 3"
+                "early_action": "November 1, 2024",
+                "regular_decision": "January 3, 2025",
+                "decision_notification": "Mid-March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$89,000-$95,000 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": []
         },
@@ -180,7 +211,16 @@
                 "portfolio": false
             },
             "deadlines": {
-                "international_deadline": "January 3"
+                "international_deadline": "January 3, 2025",
+                "decision_notification": "Mid-March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$89,000-$95,000 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": [
                 "visa_requirements",
@@ -283,7 +323,7 @@
                 "i20_processing_time": "2-3 weeks after admission",
                 "sevis_fee": "$350",
                 "visa_application_fee": "$185",
-                "financial_proof_required": "$94,380 for first year",
+                "financial_proof_required": "$89,000-$95,000 for first year",
                 "visa_interview_tips": "Prepare for discussion about academic goals and research interests",
                 "success_rate": "~97% for Caltech admits"
             }

@@ -38,6 +38,10 @@
         "statistics",
         "theater"
     ],
+    "tuition_2025_26": {
+        "estimated": "$60,100",
+        "total_cost": "$85,960"
+    },
     "in": {
         "requirements": {
             "academic_requirements": {
@@ -96,11 +100,11 @@
             "need_based": {
                 "available": true,
                 "percentage_receiving": "100% of demonstrated need met",
-                "average_award": "$53,000",
-                "income_threshold": "Family income <$200,000 for tuition-free (from 2025-26)",
+                "average_award": "$58,000",
+                "income_threshold": "Families under $200,000 tuition-free starting 2025-26",
                 "application_required": true,
                 "additional_forms": ["CSS Profile", "ISFAA"],
-                "deadline": "February 15, 2025"
+                "deadline": "February 15, 2026"
             },
             "merit_based": {
                 "available": false,
@@ -143,16 +147,18 @@
     "us": {
         "requirements": {
             "academic_requirements": {
-                "gpa_minimum": "3.9/4.0",
+                "gpa_minimum": "No minimum GPA (holistic review)",
                 "standardized_tests": ["SAT", "ACT"],
                 "sat_scores": {
-                    "average": 1543
+                    "average": 1540,
+                    "range": "1530-1570"
                 },
                 "act_scores": {
-                    "average": 35
+                    "average": 35,
+                    "range": "34-36"
                 },
-                "ap_courses": "recommended",
-                "subject_tests": []
+                "ap_courses": "Strong math and science background required",
+                "subject_tests": "Not required"
             },
             "language_requirements": {
                 "english_proficiency": "native_or_equivalent",
@@ -166,17 +172,17 @@
                 "portfolio": false
             },
             "deadlines": {
-                "early_action": "November 30",
-                "regular_decision": "December 31"
+                "early_action": "November 1, 2025",
+                "regular_decision": "January 5, 2026"
             },
             "additional_requirements": []
         },
         "scholarship_opportunities": {
             "need_based": {
                 "available": true,
-                "percentage_receiving": "58%",
-                "average_award": "$59,000",
-                "income_threshold": "$90,000 for full aid",
+                "percentage_receiving": "Need-blind admissions, meets 100% demonstrated need",
+                "average_award": "$60,000+",
+                "income_threshold": "Families under $200,000 tuition-free starting 2025-26",
                 "application_required": true,
                 "additional_forms": ["CSS Profile", "FAFSA"]
             },
@@ -216,10 +222,19 @@
                 "admissions_test": []
             },
             "deadlines": {
-                "early_action": "November 30",
-                "regular_decision": "December 31"
+                "early_action": "November 1, 2025",
+                "regular_decision": "January 5, 2026"
             },
-            "additional_requirements": []
+            "additional_requirements": ["visa_requirements", "financial_proof"],
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "i20_processing_time": "2-3 weeks after admission",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$85,960 for first year",
+                "visa_interview_tips": "Book early, prepare for technical questions",
+                "success_rate": "~95% for MIT admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {
@@ -263,9 +278,18 @@
                 "portfolio": false
             },
             "deadlines": {
-                "international_deadline": "December 31"
+                "international_deadline": "January 5, 2026"
             },
-            "additional_requirements": ["visa_requirements", "financial_proof"]
+            "additional_requirements": ["visa_requirements", "financial_proof"],
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "i20_processing_time": "2-3 weeks after admission",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$85,960 for first year",
+                "visa_interview_tips": "Book early, prepare for technical questions",
+                "success_rate": "~95% for MIT admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {

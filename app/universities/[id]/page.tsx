@@ -2,12 +2,14 @@
 
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft, Bookmark, MapPin, Star, Globe, Users, Award } from 'lucide-react'
+import { ArrowLeft, Bookmark, MapPin, Star, Globe, Users, Award, DollarSign, Clock, GraduationCap, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { BentoGrid, BentoGridItem } from '@/components/ui/bento-grid'
+import { SwipeableWidget } from '@/components/ui/swipeable-widget'
+import { useTranslations } from 'next-intl'
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
@@ -48,6 +50,7 @@ interface University {
 
 export default function UniversityDetailPage() {
   const params = useParams()
+  const t = useTranslations()
   const [university, setUniversity] = useState<University | null>(null)
   const [loading, setLoading] = useState(true)
   const [imageError, setImageError] = useState(false)
@@ -186,7 +189,7 @@ export default function UniversityDetailPage() {
           animate={{ opacity: 1 }}
         >
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading university details...</p>
+          <p className="text-muted-foreground">{t('university.loading')}</p>
         </motion.div>
       </div>
     )
@@ -196,11 +199,11 @@ export default function UniversityDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">University not found</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('university.notFound')}</h1>
           <Link href="/universities">
             <Button>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Universities
+              {t('university.backToUniversities')}
             </Button>
           </Link>
         </div>
@@ -243,10 +246,10 @@ export default function UniversityDetailPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <Button className="bg-blue-600/80 backdrop-blur-sm hover:bg-blue-700/80 border border-blue-500/30">Apply Now</Button>
+            <Button className="bg-blue-600/80 backdrop-blur-sm hover:bg-blue-700/80 border border-blue-500/30">{t('university.applyNow')}</Button>
             <Button variant="outline" className="gap-2 text-white border-white/30 hover:bg-white/20">
               <Bookmark className="h-4 w-4" />
-              Save
+              {t('university.save')}
             </Button>
           </div>
         </div>
@@ -286,78 +289,278 @@ export default function UniversityDetailPage() {
                 <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center">
                     <div className="text-7xl font-bold text-blue-400 mb-3 leading-none">#{university.rank}</div>
-                    <div className="text-sm font-medium text-white/80 uppercase tracking-widest">Global Rank</div>
+                    <div className="text-sm font-medium text-white/80 uppercase tracking-widest">{t('university.globalRank')}</div>
                   </div>
                 </div>
               }
             />
 
-            {/* Academic Requirements - Large */}
+            {/* Academic Requirements - Swipeable */}
             {getAcademicRequirements() && (
               <BentoGridItem
-                className="md:col-span-2"
-                title={
-                  <div className="flex items-center gap-3 text-white font-semibold">
-                    <Award className="h-5 w-5 text-blue-400" />
-                    Academic Requirements ({nationality.toUpperCase()})
-                  </div>
+                className=""
+                header={
+                  <SwipeableWidget
+                    title={
+                      <div className="flex items-center gap-3 text-white font-semibold">
+                        <Award className="h-5 w-5 text-blue-400" />
+                        {t('university.academicRequirements')}
+                      </div>
+                    }
+                    views={[
+                      // Grade Requirements View
+                      {
+                        id: 'grades',
+                        hasData: !!(getAcademicRequirements()?.gpa_minimum || getAcademicRequirements()?.class_12_percentage || getAcademicRequirements()?.a_levels || getAcademicRequirements()?.diploma),
+                        content: (
+                          <div className="text-center space-y-3">
+                            {getAcademicRequirements()?.gpa_minimum ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.gpa_minimum}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.gpaMinimum')}</div>
+                                <div className="text-xs text-white/50">US Students</div>
+                              </>
+                            ) : getAcademicRequirements()?.class_12_percentage ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.class_12_percentage}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.class12Percentage')}</div>
+                                <div className="text-xs text-white/50">Indian Students</div>
+                              </>
+                            ) : getAcademicRequirements()?.a_levels ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.a_levels}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.aLevels')}</div>
+                                <div className="text-xs text-white/50">UK Students</div>
+                              </>
+                            ) : getAcademicRequirements()?.diploma ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.diploma}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.diploma')}</div>
+                                <div className="text-xs text-white/50">Russian Students</div>
+                              </>
+                            ) : (
+                              <div className="text-white/70">No grade requirements</div>
+                            )}
+                          </div>
+                        )
+                      },
+                      // Standardized Tests View
+                      {
+                        id: 'tests',
+                        hasData: !!(getAcademicRequirements()?.sat_scores?.average || getAcademicRequirements()?.act_scores?.average || getAcademicRequirements()?.ib || getAcademicRequirements()?.unified_state_exam),
+                        content: (
+                          <div className="text-center space-y-3">
+                            {getAcademicRequirements()?.sat_scores?.average ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.sat_scores?.average}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.satAverage')}</div>
+                                <div className="text-xs text-white/50">SAT Score</div>
+                              </>
+                            ) : getAcademicRequirements()?.act_scores?.average ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.act_scores?.average}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.actAverage')}</div>
+                                <div className="text-xs text-white/50">ACT Score</div>
+                              </>
+                            ) : getAcademicRequirements()?.ib ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.ib}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.ibScore')}</div>
+                                <div className="text-xs text-white/50">IB Diploma</div>
+                              </>
+                            ) : getAcademicRequirements()?.unified_state_exam ? (
+                              <>
+                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.unified_state_exam}</div>
+                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.stateExam')}</div>
+                                <div className="text-xs text-white/50">Russian Exam</div>
+                              </>
+                            ) : (
+                              <div className="text-white/70">No test requirements</div>
+                            )}
+                          </div>
+                        )
+                      },
+                      // Summary View - Only show if we have multiple requirements
+                      {
+                        id: 'summary',
+                        hasData: [
+                          getAcademicRequirements()?.gpa_minimum,
+                          getAcademicRequirements()?.sat_scores?.average,
+                          getAcademicRequirements()?.act_scores?.average,
+                          getAcademicRequirements()?.ib,
+                          getAcademicRequirements()?.class_12_percentage,
+                          getAcademicRequirements()?.a_levels,
+                          getAcademicRequirements()?.unified_state_exam
+                        ].filter(Boolean).length >= 2,
+                        content: (
+                          <div className="text-center space-y-2">
+                            <div className="text-lg font-bold text-white mb-3">Requirements for {nationality.toUpperCase()}</div>
+                            <div className="space-y-1 text-sm">
+                              {getAcademicRequirements()?.gpa_minimum && (
+                                <div className="text-white/80">GPA: {getAcademicRequirements()?.gpa_minimum}</div>
+                              )}
+                              {getAcademicRequirements()?.sat_scores?.average && (
+                                <div className="text-white/80">SAT: {getAcademicRequirements()?.sat_scores?.average}</div>
+                              )}
+                              {getAcademicRequirements()?.act_scores?.average && (
+                                <div className="text-white/80">ACT: {getAcademicRequirements()?.act_scores?.average}</div>
+                              )}
+                              {getAcademicRequirements()?.ib && (
+                                <div className="text-white/80">IB: {getAcademicRequirements()?.ib}</div>
+                              )}
+                              {getAcademicRequirements()?.class_12_percentage && (
+                                <div className="text-white/80">Class 12: {getAcademicRequirements()?.class_12_percentage}</div>
+                              )}
+                              {getAcademicRequirements()?.a_levels && (
+                                <div className="text-white/80">A-Levels: {getAcademicRequirements()?.a_levels}</div>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      }
+                    ]}
+                  />
                 }
+              />
+            )}
+
+            {/* Tuition & Costs */}
+            <BentoGridItem
+              className=""
+              header={
+                <SwipeableWidget
+                  title={
+                    <div className="flex items-center gap-3 text-white font-semibold">
+                      <DollarSign className="h-5 w-5 text-blue-400" />
+                      Tuition & Costs
+                    </div>
+                  }
+                  views={[
+                    {
+                      id: 'annual',
+                      hasData: !!(university.tuition_2025_26?.international || university.tuition_2025_26?.estimated),
+                      content: (
+                        <div className="text-center space-y-3">
+                          {university.tuition_2025_26?.international ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.international}</div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Annual Tuition</div>
+                              <div className="text-xs text-white/50">International Students</div>
+                            </>
+                          ) : university.tuition_2025_26?.estimated ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.estimated}</div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Annual Tuition</div>
+                              <div className="text-xs text-white/50">Estimated</div>
+                            </>
+                          ) : (
+                            <div className="text-white/70">No tuition data</div>
+                          )}
+                        </div>
+                      )
+                    },
+                    {
+                      id: 'semester',
+                      hasData: !!(university.tuition_2025_26?.international || university.tuition_2025_26?.estimated),
+                      content: (
+                        <div className="text-center space-y-3">
+                          {university.tuition_2025_26?.international ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">
+                                ${(parseInt(university.tuition_2025_26.international.replace(/[$,]/g, '')) / 2).toLocaleString()}
+                              </div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Per Semester</div>
+                              <div className="text-xs text-white/50">International Students</div>
+                            </>
+                          ) : university.tuition_2025_26?.estimated ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">
+                                ${(parseInt(university.tuition_2025_26.estimated.replace(/[$,]/g, '')) / 2).toLocaleString()}
+                              </div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Per Semester</div>
+                              <div className="text-xs text-white/50">Estimated</div>
+                            </>
+                          ) : (
+                            <div className="text-white/70">No tuition data</div>
+                          )}
+                        </div>
+                      )
+                    },
+                    {
+                      id: 'total',
+                      hasData: !!(university.tuition_2025_26?.total_cost || getScholarshipData()?.need_based?.average_award),
+                      content: (
+                        <div className="text-center space-y-3">
+                          {university.tuition_2025_26?.total_cost ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.total_cost}</div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Total Cost</div>
+                              <div className="text-xs text-white/50">Including Living Expenses</div>
+                            </>
+                          ) : getScholarshipData()?.need_based?.average_award ? (
+                            <>
+                              <div className="text-4xl font-bold text-white">{getScholarshipData().need_based.average_award}</div>
+                              <div className="text-sm text-white/70 uppercase tracking-wide">Average Aid</div>
+                              <div className="text-xs text-white/50">Need-based</div>
+                            </>
+                          ) : (
+                            <div className="text-white/70">No total cost data</div>
+                          )}
+                        </div>
+                      )
+                    }
+                  ]}
+                />
+              }
+            />
+
+            {/* Rankings Secondary */}
+            <BentoGridItem
+              className=""
+              title={<span className="text-white font-semibold">{t('university.otherRankings')}</span>}
+              description={
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-white">#{university.employer_reputation_rank}</div>
+                    <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.employer')}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-white">#{university.academic_reputation_rank}</div>
+                    <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.academic')}</div>
+                  </div>
+                </div>
+              }
+            />
+
+            {/* Application Requirements */}
+            {getApplicationData() && (
+              <BentoGridItem
+                className=""
+                title={<span className="text-white font-semibold">{t('university.application')}</span>}
                 description={
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    {/* US/International: GPA */}
-                    {getAcademicRequirements()?.gpa_minimum && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.gpa_minimum}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">GPA Minimum</div>
+                  <div className="space-y-4 mt-3">
+                    {university.acceptance_rate && (
+                      <div>
+                        <div className="text-2xl font-bold text-white">{university.acceptance_rate}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.acceptanceRate')}</div>
                       </div>
                     )}
-                    {/* India: Class 12 percentage */}
-                    {getAcademicRequirements()?.class_12_percentage && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.class_12_percentage}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Class 12 %</div>
+                    {getApplicationData()?.letters_of_recommendation && (
+                      <div>
+                        <div className="text-2xl font-bold text-white">{getApplicationData()?.letters_of_recommendation}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.recLetters')}</div>
                       </div>
                     )}
-                    {/* UK: A-levels */}
-                    {getAcademicRequirements()?.a_levels && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.a_levels}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">A-levels</div>
+                    {getApplicationData()?.interview && (
+                      <div>
+                        <div className="text-lg font-bold text-white/90">{getApplicationData()?.interview}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.interview')}</div>
                       </div>
                     )}
-                    {/* Russia: Diploma */}
-                    {getAcademicRequirements()?.diploma && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.diploma}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Diploma</div>
-                      </div>
-                    )}
-                    {/* SAT Scores */}
-                    {getAcademicRequirements()?.sat_scores?.average && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.sat_scores?.average}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">SAT Average</div>
-                      </div>
-                    )}
-                    {/* ACT Scores */}
-                    {getAcademicRequirements()?.act_scores?.average && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.act_scores?.average}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">ACT Average</div>
-                      </div>
-                    )}
-                    {/* IB Score */}
-                    {getAcademicRequirements()?.ib && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.ib}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">IB Score</div>
-                      </div>
-                    )}
-                    {/* Russia: Unified State Exam */}
-                    {getAcademicRequirements()?.unified_state_exam && (
-                      <div className="space-y-1">
-                        <div className="text-2xl font-bold text-white">{getAcademicRequirements()?.unified_state_exam}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">State Exam</div>
+                    {getApplicationData()?.essays && Array.isArray(getApplicationData()?.essays) && (
+                      <div>
+                        <div className="text-2xl font-bold text-white">{getApplicationData()?.essays.length}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.essaysRequired')}</div>
                       </div>
                     )}
                   </div>
@@ -365,81 +568,14 @@ export default function UniversityDetailPage() {
               />
             )}
 
-            {/* Financial Information */}
-            <BentoGridItem
-              className=""
-              title={<span className="text-white font-semibold">Financial</span>}
-              description={
-                getCostData() ? (
-                  <div className="space-y-3">
-                    {getCostData()?.tuition_2025 && (
-                      <div>
-                        <div className="text-2xl font-bold text-green-400">{getCostData()?.tuition_2025}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Tuition 2025</div>
-                      </div>
-                    )}
-                  </div>
-                ) : getScholarshipData()?.need_based ? (
-                  <div className="space-y-3">
-                    <div>
-                      <div className="text-2xl font-bold text-green-400">{getScholarshipData()?.need_based?.average_award_amount || "Available"}</div>
-                      <div className="text-xs text-white/70 uppercase tracking-wide">Aid Available</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-white/70">No financial data available</div>
-                )
-              }
-            />
-
-            {/* Rankings Secondary */}
-            <BentoGridItem
-              className=""
-              title={<span className="text-white font-semibold">Other Rankings</span>}
-              description={
-                <div className="grid grid-cols-2 gap-4 mt-3">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-emerald-400">#{university.employer_reputation_rank}</div>
-                    <div className="text-xs text-white/70 uppercase tracking-wide">Employer</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-amber-400">#{university.academic_reputation_rank}</div>
-                    <div className="text-xs text-white/70 uppercase tracking-wide">Academic</div>
-                  </div>
-                </div>
-              }
-            />
-
-            {/* Admission Stats */}
-            <BentoGridItem
-              className=""
-              title={<span className="text-white font-semibold">Admission</span>}
-              description={
-                <div className="space-y-4 mt-3">
-                  {university.acceptance_rate && (
-                    <div>
-                      <div className="text-2xl font-bold text-red-400">{university.acceptance_rate}</div>
-                      <div className="text-xs text-white/70 uppercase tracking-wide">Acceptance Rate</div>
-                    </div>
-                  )}
-                  {university.international_students_percentage && (
-                    <div>
-                      <div className="text-xl font-bold text-white/90">{university.international_students_percentage}</div>
-                      <div className="text-xs text-white/70 uppercase tracking-wide">International %</div>
-                    </div>
-                  )}
-                </div>
-              }
-            />
-
             {/* Language Requirements */}
-            {getLanguageRequirements() && getLanguageRequirements()?.minimum_scores && (
+            {getLanguageRequirements() && (
               <BentoGridItem
                 className=""
                 title={
                   <div className="flex items-center gap-3 text-white font-semibold">
-                    <Globe className="h-5 w-5 text-green-400" />
-                    Language
+                    <Globe className="h-5 w-5 text-blue-400" />
+                    {t('university.language')}
                   </div>
                 }
                 description={
@@ -447,19 +583,31 @@ export default function UniversityDetailPage() {
                     {getLanguageRequirements()?.minimum_scores?.ielts && (
                       <div>
                         <div className="text-2xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.ielts}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">IELTS Minimum</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.ieltsMinimum')}</div>
                       </div>
                     )}
                     {getLanguageRequirements()?.minimum_scores?.toefl && (
                       <div>
                         <div className="text-2xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.toefl}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">TOEFL Minimum</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.toeflMinimum')}</div>
                       </div>
                     )}
                     {getLanguageRequirements()?.minimum_scores?.duolingo && (
                       <div>
                         <div className="text-2xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.duolingo}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Duolingo</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.duolingo')}</div>
+                      </div>
+                    )}
+                    {getLanguageRequirements()?.english_proficiency === 'native_or_equivalent' && (
+                      <div>
+                        <div className="text-2xl font-bold text-white">{t('university.notRequired')}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.forUSStudents')}</div>
+                      </div>
+                    )}
+                    {(!getLanguageRequirements()?.minimum_scores || Object.keys(getLanguageRequirements()?.minimum_scores).length === 0) && getLanguageRequirements()?.english_proficiency !== 'native_or_equivalent' && (
+                      <div>
+                        <div className="text-lg text-white/80">{t('university.checkWebsite')}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.forRequirements')}</div>
                       </div>
                     )}
                   </div>
@@ -467,37 +615,54 @@ export default function UniversityDetailPage() {
               />
             )}
 
-            {/* Deadlines - Wide Card */}
+            {/* Deadlines - Square Card */}
             {getDeadlinesData() && (
               <BentoGridItem
-                className="md:col-span-2"
-                title={
-                  <div className="flex items-center gap-3 text-white font-semibold">
-                    <span className="text-xl">⏰</span>
-                    Important Deadlines
-                  </div>
-                }
-                description={
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    {getDeadlinesData()?.early_action && (
-                      <div className="p-3 bg-red-500/20 backdrop-blur-sm rounded-lg border border-red-400/30">
-                        <div className="text-sm font-medium text-white">Early Action</div>
-                        <div className="text-lg font-bold text-red-300">{getDeadlinesData()?.early_action}</div>
+                className=""
+                header={
+                  <SwipeableWidget
+                    title={
+                      <div className="flex items-center gap-3 text-white font-semibold">
+                        <Clock className="h-5 w-5 text-blue-400" />
+                        {t('university.importantDeadlines')}
                       </div>
-                    )}
-                    {getDeadlinesData()?.regular_decision && (
-                      <div className="p-3 bg-orange-500/20 backdrop-blur-sm rounded-lg border border-orange-400/30">
-                        <div className="text-sm font-medium text-white">Regular Decision</div>
-                        <div className="text-lg font-bold text-orange-300">{getDeadlinesData()?.regular_decision}</div>
-                      </div>
-                    )}
-                    {getDeadlinesData()?.international_deadline && (
-                      <div className="p-3 bg-purple-500/20 backdrop-blur-sm rounded-lg border border-purple-400/30">
-                        <div className="text-sm font-medium text-white">International</div>
-                        <div className="text-lg font-bold text-purple-300">{getDeadlinesData()?.international_deadline}</div>
-                      </div>
-                    )}
-                  </div>
+                    }
+                    views={[
+                      {
+                        id: 'early',
+                        hasData: !!getDeadlinesData()?.early_action,
+                        content: (
+                          <div className="text-center space-y-3">
+                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.early_action}</div>
+                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.earlyAction')}</div>
+                            <div className="text-xs text-white/50">Application Deadline</div>
+                          </div>
+                        )
+                      },
+                      {
+                        id: 'regular',
+                        hasData: !!getDeadlinesData()?.regular_decision,
+                        content: (
+                          <div className="text-center space-y-3">
+                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.regular_decision}</div>
+                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.regularDecision')}</div>
+                            <div className="text-xs text-white/50">Application Deadline</div>
+                          </div>
+                        )
+                      },
+                      {
+                        id: 'international',
+                        hasData: !!getDeadlinesData()?.international_deadline,
+                        content: (
+                          <div className="text-center space-y-3">
+                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.international_deadline}</div>
+                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.international')}</div>
+                            <div className="text-xs text-white/50">Application Deadline</div>
+                          </div>
+                        )
+                      }
+                    ]}
+                  />
                 }
               />
             )}
@@ -506,23 +671,23 @@ export default function UniversityDetailPage() {
             {getScholarshipData() && (
               <BentoGridItem
                 className="md:col-span-3"
-                title={<span className="text-white font-semibold text-lg">Scholarship Opportunities</span>}
+                title={<span className="text-white font-semibold text-lg">{t('university.scholarshipOpportunities')}</span>}
                 description={
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                     {/* Need-based scholarships */}
                     {getScholarshipData()?.need_based?.available && (
                       <div className="p-4 bg-green-500/20 backdrop-blur-sm rounded-xl border border-green-400/30">
-                        <h4 className="font-semibold text-green-200 mb-3">Need-based Aid</h4>
+                        <h4 className="font-semibold text-green-200 mb-3">{t('university.needBasedAid')}</h4>
                         <div className="space-y-2 text-sm">
                           {getScholarshipData()?.need_based?.average_award && (
                             <div>
-                              <span className="text-green-200">Average: </span>
+                              <span className="text-green-200">{t('university.average')}: </span>
                               <span className="font-medium text-green-100">{getScholarshipData()?.need_based?.average_award}</span>
                             </div>
                           )}
                           {getScholarshipData()?.need_based?.percentage_receiving && (
                             <div>
-                              <span className="text-green-200">Receiving: </span>
+                              <span className="text-green-200">{t('university.receiving')}: </span>
                               <span className="font-medium text-green-100">{getScholarshipData()?.need_based?.percentage_receiving}</span>
                             </div>
                           )}
@@ -536,7 +701,7 @@ export default function UniversityDetailPage() {
                     {/* Merit-based scholarships */}
                     {getScholarshipData()?.merit_based?.available && (
                       <div className="p-4 bg-blue-500/20 backdrop-blur-sm rounded-xl border border-blue-400/30">
-                        <h4 className="font-semibold text-blue-200 mb-3">Merit-based</h4>
+                        <h4 className="font-semibold text-blue-200 mb-3">{t('university.meritBased')}</h4>
                         {getScholarshipData()?.merit_based?.scholarships ? (
                           <div className="space-y-2">
                             {getScholarshipData()?.merit_based?.scholarships.map((scholarship: any, index: number) => (
@@ -547,7 +712,7 @@ export default function UniversityDetailPage() {
                             ))}
                           </div>
                         ) : (
-                          <div className="text-blue-200 text-sm">{getScholarshipData()?.merit_based?.description || "Available"}</div>
+                          <div className="text-blue-200 text-sm">{getScholarshipData()?.merit_based?.description || t('university.available')}</div>
                         )}
                       </div>
                     )}
@@ -555,17 +720,17 @@ export default function UniversityDetailPage() {
                     {/* Work study */}
                     {getScholarshipData()?.work_study?.available && (
                       <div className="p-4 bg-purple-500/20 backdrop-blur-sm rounded-xl border border-purple-400/30">
-                        <h4 className="font-semibold text-purple-200 mb-3">Work Study</h4>
+                        <h4 className="font-semibold text-purple-200 mb-3">{t('university.workStudy')}</h4>
                         <div className="space-y-2 text-sm">
                           {getScholarshipData()?.work_study?.typical_hours && (
                             <div>
-                              <span className="text-purple-200">Hours/week: </span>
+                              <span className="text-purple-200">{t('university.hoursPerWeek')}: </span>
                               <span className="font-medium text-purple-100">{getScholarshipData()?.work_study?.typical_hours}</span>
                             </div>
                           )}
                           {getScholarshipData()?.work_study?.hourly_wage && (
                             <div>
-                              <span className="text-purple-200">Hourly wage: </span>
+                              <span className="text-purple-200">{t('university.hourlyWage')}: </span>
                               <span className="font-medium text-purple-100">{getScholarshipData()?.work_study?.hourly_wage}</span>
                             </div>
                           )}
@@ -576,7 +741,7 @@ export default function UniversityDetailPage() {
                     {/* Research opportunities */}
                     {getScholarshipData()?.research_opportunities?.undergraduate_research && (
                       <div className="p-4 bg-orange-500/20 backdrop-blur-sm rounded-xl border border-orange-400/30">
-                        <h4 className="font-semibold text-orange-200 mb-3">Research Opportunities</h4>
+                        <h4 className="font-semibold text-orange-200 mb-3">{t('university.researchOpportunities')}</h4>
                         <div className="space-y-2 text-sm">
                           {getScholarshipData()?.research_opportunities?.paid_positions && (
                             <div className="text-orange-100">{getScholarshipData()?.research_opportunities?.paid_positions}</div>
@@ -591,10 +756,10 @@ export default function UniversityDetailPage() {
                     {/* External scholarships */}
                     {getScholarshipData()?.external_scholarships && (
                       <div className="p-4 bg-amber-500/20 backdrop-blur-sm rounded-xl border border-amber-400/30">
-                        <h4 className="font-semibold text-amber-200 mb-3">External Scholarships</h4>
+                        <h4 className="font-semibold text-amber-200 mb-3">{t('university.externalScholarships')}</h4>
                         <div className="space-y-2 text-sm">
                           {getScholarshipData()?.external_scholarships?.private_foundations?.length > 0 && (
-                            <div className="text-amber-100">{getScholarshipData()?.external_scholarships?.private_foundations?.length} foundations available</div>
+                            <div className="text-amber-100">{getScholarshipData()?.external_scholarships?.private_foundations?.length} {t('university.foundationsAvailable')}</div>
                           )}
                         </div>
                       </div>
@@ -610,8 +775,8 @@ export default function UniversityDetailPage() {
                 className="md:col-span-2"
                 title={
                   <div className="flex items-center gap-3 text-white font-semibold">
-                    <span className="text-xl">🛂</span>
-                    Visa Requirements
+                    <FileText className="h-5 w-5 text-blue-400" />
+                    {t('university.visaRequirements')}
                   </div>
                 }
                 description={
@@ -619,25 +784,25 @@ export default function UniversityDetailPage() {
                     {getVisaData()?.visa_type && (
                       <div className="space-y-1">
                         <div className="text-lg font-bold text-white">{getVisaData()?.visa_type}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Visa Type</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.visaType')}</div>
                       </div>
                     )}
                     {getVisaData()?.visa_application_fee && (
                       <div className="space-y-1">
                         <div className="text-lg font-bold text-white">{getVisaData()?.visa_application_fee}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Application Fee</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.applicationFee')}</div>
                       </div>
                     )}
                     {getVisaData()?.financial_proof_required && (
                       <div className="space-y-1">
                         <div className="text-lg font-bold text-white">{getVisaData()?.financial_proof_required}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Financial Proof</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.financialProof')}</div>
                       </div>
                     )}
                     {getVisaData()?.success_rate && (
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-green-400">{getVisaData()?.success_rate}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">Success Rate</div>
+                        <div className="text-lg font-bold text-white">{getVisaData()?.success_rate}</div>
+                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.successRate')}</div>
                       </div>
                     )}
                   </div>

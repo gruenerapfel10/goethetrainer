@@ -34,15 +34,25 @@
         "statistics",
         "urban-planning"
     ],
+    "tuition_2025_26": {
+        "domestic": "£9,535",
+        "international": "£29,800-£43,500",
+        "application_fee": "£28.50-£90",
+        "living_expenses": "£15,000-£20,000 per year"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
                 "high_school_diploma": "required with exceptional grades",
                 "sat_act": "strongly recommended",
                 "sat_scores": {
+                    "average": 1480,
+                    "range": "1450-1520",
                     "minimum": 1450
                 },
                 "act_scores": {
+                    "average": 33,
+                    "range": "32-35",
                     "minimum": 32
                 },
                 "ap_courses": "4+ AP tests at score 4-5"
@@ -51,12 +61,14 @@
                 "english_proficiency": "required",
                 "tests_required": [
                     "IELTS",
-                    "TOEFL"
+                    "TOEFL",
+                    "PTE"
                 ],
                 "minimum_scores": {
-                    "ielts": 7.0,
-                    "ielts_minimum_component": 6.5,
-                    "toefl": 100
+                    "ielts": 6.5,
+                    "ielts_minimum_component": 6.0,
+                    "toefl": 92,
+                    "pte": 75
                 }
             },
             "application_requirements": {
@@ -67,7 +79,16 @@
                 "written_work": "subject_dependent"
             },
             "deadlines": {
-                "application_deadline": "January 15"
+                "application_deadline": "January 29, 2025",
+                "decision_notification": "May 14, 2025",
+                "enrollment_deadline": "August 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "processing_time": "3-4 weeks",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£45,000 for first year"
             },
             "additional_requirements": [
                 "visa_requirements",

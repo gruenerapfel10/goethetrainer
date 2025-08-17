@@ -33,15 +33,27 @@
         "sociology",
         "statistics"
     ],
+    "tuition_2025_26": {
+        "domestic": "SGD 8,250-9,650",
+        "international": "SGD 18,900-76,450",
+        "medicine": "SGD 32,200 per year",
+        "mba": "SGD 91,700",
+        "application_fee": "SGD 20",
+        "living_expenses": "SGD 10,900 per year"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
                 "high_school_diploma": "required with excellent grades",
                 "sat_act": "required",
                 "sat_scores": {
+                    "average": 1450,
+                    "range": "1400-1500",
                     "minimum": 1450
                 },
                 "act_scores": {
+                    "average": 32,
+                    "range": "30-34",
                     "minimum": 32
                 },
                 "ap_courses": "recommended"
@@ -50,11 +62,13 @@
                 "english_proficiency": "required",
                 "tests_required": [
                     "TOEFL",
-                    "IELTS"
+                    "IELTS",
+                    "PTE"
                 ],
                 "minimum_scores": {
-                    "toefl": 100,
-                    "ielts": 6.5
+                    "toefl": 92,
+                    "ielts": 6.5,
+                    "pte": 75
                 }
             },
             "application_requirements": {
@@ -66,7 +80,16 @@
                 "portfolio": "subject_dependent"
             },
             "deadlines": {
-                "application_deadline": "January 15"
+                "application_deadline": "February 26, 2026",
+                "decision_notification": "April 2026",
+                "enrollment_deadline": "June 30, 2026"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Pass",
+                "processing_time": "2-4 weeks",
+                "visa_application_fee": "SGD 90",
+                "financial_proof_required": "SGD 30,000 per year",
+                "medical_examination": "Required"
             },
             "additional_requirements": [
                 "visa_requirements",
@@ -192,7 +215,16 @@
                 "portfolio": "subject_dependent"
             },
             "deadlines": {
-                "international_deadline": "January 15"
+                "international_deadline": "February 26, 2026",
+                "decision_notification": "April 2026",
+                "enrollment_deadline": "June 30, 2026"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Pass",
+                "processing_time": "2-4 weeks",
+                "visa_application_fee": "SGD 90",
+                "financial_proof_required": "SGD 30,000 per year",
+                "medical_examination": "Required"
             },
             "additional_requirements": [
                 "visa_requirements",
@@ -232,6 +264,156 @@
                 ],
                 "private_foundations": [
                     "various regional foundations"
+                ]
+            }
+        }
+    },
+    "gb": {
+        "requirements": {
+            "academic_requirements": {
+                "a_levels": "AAA-A*AA",
+                "gcse": "mostly A*/A grades",
+                "ib": "38+ points",
+                "subject_requirements": [
+                    "Mathematics",
+                    "Science subjects"
+                ]
+            },
+            "language_requirements": {
+                "english_proficiency": "native",
+                "tests_required": [],
+                "minimum_scores": {}
+            },
+            "application_requirements": {
+                "personal_statement": true,
+                "reference": true,
+                "interview": "may be required",
+                "admissions_test": []
+            },
+            "deadlines": {
+                "application_deadline": "February 26, 2026",
+                "decision_notification": "April 2026",
+                "enrollment_deadline": "June 30, 2026"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Pass",
+                "processing_time": "2-4 weeks",
+                "visa_application_fee": "SGD 90",
+                "financial_proof_required": "SGD 30,000 per year",
+                "medical_examination": "Required"
+            },
+            "additional_requirements": [
+                "visa_requirements",
+                "financial_proof"
+            ]
+        },
+        "scholarship_opportunities": {
+            "need_based": {
+                "available": true,
+                "percentage_receiving": "25%",
+                "average_award": "SGD 15,000",
+                "income_threshold": "family income assessment required",
+                "application_required": true,
+                "additional_forms": [
+                    "Financial Assessment Form"
+                ]
+            },
+            "merit_based": {
+                "available": true,
+                "scholarships": [
+                    "Global Merit Scholarship",
+                    "NUS Merit Scholarship"
+                ],
+                "description": "Competitive merit-based scholarships"
+            },
+            "international_specific": {
+                "available": true,
+                "description": "Same opportunities as other international students",
+                "additional_requirements": [
+                    "academic transcripts",
+                    "financial documentation"
+                ]
+            }
+        }
+    },
+    "ru": {
+        "requirements": {
+            "academic_requirements": {
+                "diploma": "Gold Medal or equivalent",
+                "unified_state_exam": "top 5%",
+                "international_curriculum": "IB 38+ or A-levels AAA"
+            },
+            "language_requirements": {
+                "english_proficiency": "required",
+                "tests_required": [
+                    "TOEFL",
+                    "IELTS",
+                    "PTE"
+                ],
+                "minimum_scores": {
+                    "toefl": 92,
+                    "ielts": 6.5,
+                    "pte": 75
+                }
+            },
+            "application_requirements": {
+                "essays": [
+                    "personal_statement"
+                ],
+                "letters_of_recommendation": 2,
+                "interview": "may be required",
+                "portfolio": false
+            },
+            "deadlines": {
+                "international_deadline": "February 26, 2026",
+                "decision_notification": "April 2026",
+                "enrollment_deadline": "June 30, 2026"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Pass",
+                "processing_time": "2-4 weeks",
+                "visa_application_fee": "SGD 90",
+                "financial_proof_required": "SGD 30,000 per year",
+                "medical_examination": "Required"
+            },
+            "additional_requirements": [
+                "visa_requirements",
+                "financial_proof"
+            ]
+        },
+        "scholarship_opportunities": {
+            "need_based": {
+                "available": true,
+                "percentage_receiving": "30%",
+                "average_award": "SGD 18,000",
+                "income_threshold": "family income assessment required",
+                "application_required": true,
+                "additional_forms": [
+                    "International Student Financial Aid Application"
+                ]
+            },
+            "merit_based": {
+                "available": true,
+                "scholarships": [
+                    "Global Merit Scholarship",
+                    "NUS Merit Scholarship"
+                ],
+                "description": "Full scholarships covering tuition and living costs"
+            },
+            "international_specific": {
+                "available": true,
+                "description": "Special support programs available",
+                "additional_requirements": [
+                    "certified academic transcripts",
+                    "financial documentation"
+                ]
+            },
+            "external_scholarships": {
+                "government_programs": [
+                    "Singapore Government Scholarships"
+                ],
+                "private_foundations": [
+                    "various regional scholarships"
                 ]
             }
         }

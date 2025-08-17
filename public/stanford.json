@@ -1,4 +1,5 @@
 {
+    "id": "stanford",
     "name": "Stanford University",
     "country": "United States of America",
     "rank": 3,
@@ -39,22 +40,28 @@
         "statistics",
         "theater"
     ],
+    "tuition_2025_26": {
+        "estimated": "$60,000+",
+        "total_cost": "$85,000+"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
-                "gpa_minimum": "3.9/4.0",
+                "gpa_minimum": "3.94 average for admitted students",
                 "standardized_tests": [
                     "SAT",
                     "ACT"
                 ],
                 "sat_scores": {
-                    "average_range": "1480-1570"
+                    "average": 1540,
+                    "range": "1530-1570"
                 },
                 "act_scores": {
-                    "average": 34
+                    "average": 35,
+                    "range": "34-36"
                 },
-                "test_optional": "yes for 2025",
-                "ap_courses": "recommended"
+                "test_required": "Required starting 2025-26 (reinstated)",
+                "ap_courses": "Strong academic preparation required"
             },
             "language_requirements": {
                 "english_proficiency": "native_or_equivalent",
@@ -77,8 +84,8 @@
                 "portfolio": false
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 5"
+                "rea_deadline": "November 1, 2025",
+                "regular_decision": "January 5, 2026"
             },
             "additional_requirements": []
         },
@@ -137,10 +144,19 @@
                 "admissions_test": []
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 5"
+                "early_action": "November 1, 2025",
+                "regular_decision": "January 5, 2026"
             },
-            "additional_requirements": []
+            "additional_requirements": ["visa_requirements", "financial_proof"],
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "i20_processing_time": "2-3 weeks after admission",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$88,000 for first year",
+                "visa_interview_tips": "Prepare for academic goals and research interests discussion",
+                "success_rate": "~95% for Stanford admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {
@@ -198,12 +214,21 @@
                 "portfolio": false
             },
             "deadlines": {
-                "international_deadline": "January 5"
+                "international_deadline": "January 5, 2026"
             },
             "additional_requirements": [
                 "visa_requirements",
                 "financial_proof"
-            ]
+            ],
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "i20_processing_time": "2-3 weeks after admission",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$88,000 for first year",
+                "visa_interview_tips": "Prepare for academic goals and research interests discussion",
+                "success_rate": "~95% for Stanford admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {

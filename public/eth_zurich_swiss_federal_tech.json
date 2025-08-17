@@ -22,15 +22,26 @@
         "software-eng",
         "statistics"
     ],
+    "tuition_2025_26": {
+        "swiss_residents": "CHF 730 per semester",
+        "international_group_1": "CHF 730 per semester",
+        "international_group_2": "CHF 2,190 per semester (threefold fee)",
+        "application_fee": "CHF 150",
+        "living_expenses": "CHF 22,000 per year"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
                 "high_school_diploma": "required with excellent grades",
                 "sat_act": "required",
                 "sat_scores": {
+                    "average": 1480,
+                    "range": "1420-1540",
                     "minimum": 1480
                 },
                 "act_scores": {
+                    "average": 33,
+                    "range": "32-35",
                     "minimum": 33
                 },
                 "ap_courses": "recommended",
@@ -60,7 +71,16 @@
                 "portfolio": false
             },
             "deadlines": {
-                "application_deadline": "December 15"
+                "application_deadline": "December 15, 2024",
+                "decision_notification": "March 2025",
+                "enrollment_deadline": "July 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Permit (Type C/D)",
+                "processing_time": "8-12 weeks",
+                "visa_application_fee": "CHF 100",
+                "health_insurance": "Mandatory",
+                "financial_proof_required": "CHF 22,000 per year"
             },
             "additional_requirements": [
                 "visa_requirements",
@@ -123,7 +143,16 @@
                 "admissions_test": []
             },
             "deadlines": {
-                "application_deadline": "December 15"
+                "application_deadline": "December 15, 2024",
+                "decision_notification": "March 2025",
+                "enrollment_deadline": "July 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Permit (Type C/D)",
+                "processing_time": "8-12 weeks",
+                "visa_application_fee": "CHF 100",
+                "health_insurance": "Mandatory",
+                "financial_proof_required": "CHF 22,000 per year"
             },
             "additional_requirements": [
                 "visa_requirements"
@@ -178,7 +207,16 @@
                 "portfolio": false
             },
             "deadlines": {
-                "international_deadline": "December 15"
+                "international_deadline": "December 15, 2024",
+                "decision_notification": "March 2025",
+                "enrollment_deadline": "July 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Permit (Type C/D)",
+                "processing_time": "8-12 weeks",
+                "visa_application_fee": "CHF 100",
+                "health_insurance": "Mandatory",
+                "financial_proof_required": "CHF 22,000 per year"
             },
             "additional_requirements": [
                 "visa_requirements",

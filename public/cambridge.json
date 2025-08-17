@@ -34,15 +34,28 @@
         "theology",
         "veterinary"
     ],
+    "tuition_2025_26": {
+        "domestic": "£9,535",
+        "international": "£27,024-£41,000",
+        "group_1_humanities": "£27,024",
+        "group_2_mathematics": "£30,144", 
+        "group_3_design": "£35,358",
+        "group_4_stem": "£41,000+",
+        "college_fees": "£2,000-£5,000"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
                 "high_school_diploma": "required with exceptional grades",
                 "sat_act": "strongly recommended",
                 "sat_scores": {
+                    "average": 1500,
+                    "range": "1450-1550",
                     "minimum": 1470
                 },
                 "act_scores": {
+                    "average": 34,
+                    "range": "32-36",
                     "minimum": 32
                 },
                 "ap_courses": "5+ AP tests at score 5"
@@ -67,7 +80,16 @@
                 "written_work": "may be required"
             },
             "deadlines": {
-                "ucas_deadline": "October 15"
+                "ucas_deadline": "October 15, 2024",
+                "decision_notification": "January 2025",
+                "enrollment_deadline": "August 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£50,000 for first year"
             },
             "additional_requirements": [
                 "entrance_exams",
@@ -125,7 +147,9 @@
                 "written_work": "may be required"
             },
             "deadlines": {
-                "ucas_deadline": "October 15"
+                "ucas_deadline": "October 15, 2024",
+                "decision_notification": "January 2025",
+                "enrollment_deadline": "August 31, 2025"
             },
             "additional_requirements": [
                 "entrance_exams"
@@ -188,7 +212,16 @@
                 "written_work": "may be required"
             },
             "deadlines": {
-                "international_deadline": "October 15"
+                "international_deadline": "October 15, 2024",
+                "decision_notification": "January 2025",
+                "enrollment_deadline": "August 31, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£50,000 for first year"
             },
             "additional_requirements": [
                 "entrance_exams",

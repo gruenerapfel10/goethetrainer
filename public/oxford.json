@@ -31,6 +31,10 @@
         "statistics",
         "theology"
     ],
+    "tuition_2025_26": {
+        "international": "£28,370-£38,700",
+        "uk_domestic": "£9,250"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
@@ -64,13 +68,22 @@
                 "written_work": "may be required"
             },
             "deadlines": {
-                "ucas_deadline": "October 15"
+                "ucas_deadline": "October 15, 2025"
             },
             "additional_requirements": [
                 "entrance_exams",
                 "visa_requirements",
                 "financial_proof"
-            ]
+            ],
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£55,000 for first year",
+                "visa_interview_tips": "Prepare for academic goals and college choice discussion",
+                "success_rate": "~92% for Oxford admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {
@@ -185,13 +198,22 @@
                 "written_work": "may be required"
             },
             "deadlines": {
-                "international_deadline": "October 15"
+                "international_deadline": "October 15, 2025"
             },
             "additional_requirements": [
                 "entrance_exams",
                 "visa_requirements",
                 "financial_proof"
-            ]
+            ],
+            "visa_requirements": {
+                "visa_type": "Student Visa (Tier 4)",
+                "cas_processing_time": "2-3 weeks after admission",
+                "visa_application_fee": "£348",
+                "healthcare_surcharge": "£470 per year",
+                "financial_proof_required": "£55,000 for first year",
+                "visa_interview_tips": "Prepare for academic goals and college choice discussion",
+                "success_rate": "~92% for Oxford admits"
+            }
         },
         "scholarship_opportunities": {
             "need_based": {

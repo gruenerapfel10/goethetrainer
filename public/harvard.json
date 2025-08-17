@@ -34,6 +34,15 @@
         "statistics",
         "theater"
     ],
+    "tuition_2025_26": {
+        "domestic": "$59,320",
+        "international": "$59,320",
+        "total_cost": "$90,426-$95,426",
+        "housing": "$13,532",
+        "food": "$8,598",
+        "fees": "$5,476",
+        "health_insurance": "$4,308"
+    },
     "us": {
         "requirements": {
             "academic_requirements": {
@@ -43,9 +52,13 @@
                     "ACT"
                 ],
                 "sat_scores": {
+                    "average": 1520,
+                    "range": "1500-1580",
                     "minimum": 1500
                 },
                 "act_scores": {
+                    "average": 35,
+                    "range": "33-36",
                     "minimum": 34
                 },
                 "required_tests": "SAT/ACT required for 2025",
@@ -72,8 +85,17 @@
                 "portfolio": false
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 1"
+                "early_action": "November 1, 2024",
+                "regular_decision": "January 1, 2025",
+                "decision_notification": "Late March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$90,426-$95,426 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": []
         },
@@ -82,7 +104,7 @@
                 "available": true,
                 "percentage_receiving": "55%",
                 "average_award": "$65,000",
-                "income_threshold": "$75,000 for full aid",
+                "income_threshold": "$100,000 for free tuition, $200,000 for tuition-free",
                 "application_required": true,
                 "additional_forms": [
                     "CSS Profile",
@@ -128,8 +150,17 @@
                 "admissions_test": []
             },
             "deadlines": {
-                "early_action": "November 1",
-                "regular_decision": "January 1"
+                "early_action": "November 1, 2024",
+                "regular_decision": "January 1, 2025",
+                "decision_notification": "Late March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$90,426-$95,426 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": []
         },
@@ -138,7 +169,7 @@
                 "available": true,
                 "percentage_receiving": "48%",
                 "average_award": "$62,000",
-                "income_threshold": "family income under \u00a355,000 for full aid",
+                "income_threshold": "family income under \u00a365,000 for full aid",
                 "application_required": true,
                 "additional_forms": [
                     "CSS Profile"
@@ -186,7 +217,16 @@
                 "portfolio": false
             },
             "deadlines": {
-                "international_deadline": "January 1"
+                "international_deadline": "January 1, 2025",
+                "decision_notification": "Late March 2025",
+                "enrollment_deadline": "May 1, 2025"
+            },
+            "visa_requirements": {
+                "visa_type": "F-1 Student Visa",
+                "sevis_fee": "$350",
+                "visa_application_fee": "$185",
+                "financial_proof_required": "$90,426-$95,426 for first year",
+                "processing_time": "2-3 weeks after admission"
             },
             "additional_requirements": [
                 "visa_requirements",
@@ -198,7 +238,7 @@
                 "available": true,
                 "percentage_receiving": "60%",
                 "average_award": "$63,000",
-                "income_threshold": "family income under $65,000 for full aid",
+                "income_threshold": "family income under $100,000 for free tuition, under $200,000 for tuition-free",
                 "application_required": true,
                 "additional_forms": [
                     "CSS Profile",
@@ -263,7 +303,7 @@
                 "minimum_scores": {
                     "toefl": 100,
                     "ielts": 7.5,
-                    "duolingo": 125
+                    "duolingo": 130
                 },
                 "exemptions": "English medium education for 4+ years"
             },
@@ -290,7 +330,7 @@
                 "i20_processing_time": "2-3 weeks after admission",
                 "sevis_fee": "$350",
                 "visa_application_fee": "$185",
-                "financial_proof_required": "$87,866 for first year",
+                "financial_proof_required": "$90,426-$95,426 for first year",
                 "visa_interview_tips": "Prepare for academic goals and career plans discussion",
                 "success_rate": "~96% for Harvard admits"
             }
@@ -300,7 +340,7 @@
                 "available": true,
                 "percentage_receiving": "100% of demonstrated need met",
                 "average_award": "$65,000",
-                "income_threshold": "Family income <$100,000 for free tuition (from 2025-26)",
+                "income_threshold": "Family income <$100,000 for free tuition, <$200,000 for tuition-free (from 2025-26)",
                 "application_required": true,
                 "additional_forms": [
                     "CSS Profile",

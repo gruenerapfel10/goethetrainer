@@ -12,8 +12,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MoreHorizontal, MapPin, Trophy } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MapPin } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface University {
   id: string;
@@ -63,6 +64,12 @@ export default function UniversitiesPage() {
   const t = useTranslations();
   const router = useRouter();
   const locale = useLocale();
+
+  // Helper function to get university emblem path
+  const getUniversityEmblemPath = (name: string) => {
+    const path = name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
+    return `/university-images/${path}/emblem_${path}.svg`;
+  };
 
   // Map locale to requirements country code
   const getRequirementsCountryCode = (locale: string): string => {
@@ -283,9 +290,18 @@ export default function UniversitiesPage() {
                   onClick={() => router.push(`/universities/${university.id}?nationality=${requirementsCountryCode}`)}
                 >
                   <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src={getUniversityEmblemPath(university.name)}
+                        alt={`${university.name} emblem`}
+                        width={24}
+                        height={24}
+                        className="object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
                       <span className="font-mono text-sm text-foreground">#{university.rank}</span>
-                      {university.rank <= 10 && <Trophy className="h-3 w-3 text-amber-500" />}
                     </div>
                   </td>
                   <td className="py-4 px-4">
@@ -293,8 +309,8 @@ export default function UniversitiesPage() {
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {university.country}
+                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{university.country}</span>
                     </div>
                   </td>
                   <td className="py-4 px-4">
