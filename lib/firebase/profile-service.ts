@@ -32,6 +32,12 @@ export interface ProfileData {
   phone?: string;
   dateOfBirth?: string;
   nationality?: string;
+  language?: string;
+  degree?: {
+    level: 'undergraduate' | 'graduate' | 'doctorate';
+    field: string;
+    displayName: string;
+  };
   address?: {
     street: string;
     city: string;
@@ -247,6 +253,27 @@ class ProfileService {
    */
   async savePreferences(userId: string, preferences: any): Promise<void> {
     return this.updateProfileFields(userId, { preferences });
+  }
+
+  /**
+   * Save user nationality
+   */
+  async saveNationality(userId: string, nationality: string): Promise<void> {
+    return this.updateProfileFields(userId, { nationality });
+  }
+
+  /**
+   * Save user language
+   */
+  async saveLanguage(userId: string, language: string): Promise<void> {
+    return this.updateProfileFields(userId, { language });
+  }
+
+  /**
+   * Save user degree information
+   */
+  async saveDegree(userId: string, degree: { level: 'undergraduate' | 'graduate' | 'doctorate'; field: string; displayName: string; }): Promise<void> {
+    return this.updateProfileFields(userId, { degree });
   }
 }
 

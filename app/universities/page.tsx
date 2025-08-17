@@ -16,6 +16,7 @@ import { Search, Filter, MoreHorizontal, MapPin, Trophy } from "lucide-react";
 import { useRouter } from 'next/navigation';
 
 interface University {
+  id: string;
   name: string;
   country: string;
   rank: number;
@@ -279,7 +280,7 @@ export default function UniversitiesPage() {
                 <tr 
                   key={`${university.rank}-${university.name}`}
                   className="hover:bg-muted/50 cursor-pointer group"
-                  onClick={() => router.push(`/universities/${university.rank}?nationality=${requirementsCountryCode}`)}
+                  onClick={() => router.push(`/universities/${university.id}?nationality=${requirementsCountryCode}`)}
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">

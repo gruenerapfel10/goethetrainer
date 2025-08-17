@@ -14,7 +14,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { setUserLocale } from '@/services/locale';
 import type { Locale } from '@/i18n/config';
 import NationalitySwitcher from '@/components/nationality-switcher';
+import DegreeSwitcher, { DegreeInfo } from '@/components/degree-switcher';
 import { Breadcrumb } from '@/components/breadcrumb';
+import { profileService } from '@/lib/firebase/profile-service';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,11 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [nationality, setNationality] = useState('us')
+  const [degree, setDegree] = useState<DegreeInfo>({
+    level: 'undergraduate',
+    field: 'mechanical-engineering',
+    displayName: 'Undergraduate Mechanical Engineering'
+  })
   const [universityData, setUniversityData] = useState<{id: string, name: string} | null>(null)
 
   const languageItems = [
@@ -58,7 +65,63 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     startTransition(() => {
       setUserLocale(newLocale)
     })
+    // Save language preference to Firebase
+    if (user?.uid) {
+      profileService.saveLanguage(user.uid, value)
+        .catch(err => console.error('Failed to save language preference:', err))
+    }
   }
+
+  const handleNationalityChange = (value: string) => {
+    setNationality(value)
+    // Save nationality preference to Firebase
+    if (user?.uid) {
+      profileService.saveNationality(user.uid, value)
+        .catch(err => console.error('Failed to save nationality preference:', err))
+    }
+    
+    // If we're on a university detail page, update the URL with the new nationality
+    if (pathname.startsWith('/universities/')) {
+      const url = new URL(window.location.href)
+      url.searchParams.set('nationality', value)
+      window.history.pushState({}, '', url.toString())
+      // Trigger a custom event to notify the university page
+      window.dispatchEvent(new CustomEvent('nationalityChanged', { detail: value }))
+    }
+  }
+
+  const handleDegreeChange = (value: DegreeInfo) => {
+    setDegree(value)
+    // Save degree preference to Firebase
+    if (user?.uid) {
+      profileService.saveDegree(user.uid, value)
+        .catch(err => console.error('Failed to save degree preference:', err))
+    }
+  }
+
+  // Load user preferences from Firebase when user is available
+  useEffect(() => {
+    if (user?.uid) {
+      profileService.getProfile(user.uid)
+        .then(profile => {
+          if (profile) {
+            if (profile.nationality) {
+              setNationality(profile.nationality)
+            }
+            if (profile.language && profile.language !== locale) {
+              // Only update locale if different from saved language
+              startTransition(() => {
+                setUserLocale(profile.language as Locale)
+              })
+            }
+            if (profile.degree) {
+              setDegree(profile.degree)
+            }
+          }
+        })
+        .catch(err => console.error('Failed to load user preferences:', err))
+    }
+  }, [user?.uid, locale])
 
   // Effect to fetch university data when on university detail page
   useEffect(() => {
@@ -79,6 +142,12 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     }
   }, [pathname])
 
+  // Helper function to truncate university names for breadcrumb
+  const truncateUniversityName = (name: string, maxLength: number = 30) => {
+    if (name.length <= maxLength) return name
+    return name.substring(0, maxLength) + '...'
+  }
+
   // Generate breadcrumb items based on current path
   const getBreadcrumbItems = () => {
     if (pathname === '/dashboard') {
@@ -92,7 +161,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     } else if (pathname.startsWith('/universities/') && universityData) {
       return [
         { label: t('navigation.universities'), href: '/universities' },
-        { label: universityData.name, current: true }
+        { label: truncateUniversityName(universityData.name), current: true }
       ]
     } else if (pathname.startsWith('/chat/')) {
       return [{ label: 'Chat', current: true }]
@@ -270,10 +339,17 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Degree Switcher */}
+              <DegreeSwitcher 
+                value={degree} 
+                onChange={handleDegreeChange}
+                variant="sidebar"
+              />
+              
               {/* Nationality Switcher */}
               <NationalitySwitcher 
                 value={nationality} 
-                onChange={setNationality}
+                onChange={handleNationalityChange}
                 variant="sidebar"
               />
               
