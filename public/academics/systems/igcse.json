@@ -1,0 +1,222 @@
+{
+  "system_id": "igcse",
+  "name": "International General Certificate of Secondary Education",
+  "type": "international",
+  "version": "2024.11",
+  "authority": "Cambridge Assessment International Education",
+  "website": "https://www.cambridgeinternational.org",
+  "recognition": "global",
+  "last_updated": "2024-11-01",
+  "exam_boards": {
+    "cambridge": {
+      "name": "Cambridge Assessment International Education",
+      "code": "CAIE",
+      "grading_systems": {
+        "letter_grades": {
+          "scale": ["A*", "A", "B", "C", "D", "E", "F", "G", "U"],
+          "passing_grade": "G",
+          "good_pass": "C",
+          "descriptions": {
+            "A*": {
+              "percentage": "90-100%",
+              "description": "Exceptional performance"
+            },
+            "A": {
+              "percentage": "80-89%",
+              "description": "Excellent performance"
+            },
+            "B": {
+              "percentage": "70-79%",
+              "description": "Very good performance"
+            },
+            "C": {
+              "percentage": "60-69%",
+              "description": "Good performance"
+            },
+            "D": {
+              "percentage": "50-59%",
+              "description": "Satisfactory performance"
+            },
+            "E": {
+              "percentage": "40-49%",
+              "description": "Acceptable performance"
+            },
+            "F": {
+              "percentage": "30-39%",
+              "description": "Below average performance"
+            },
+            "G": {
+              "percentage": "20-29%",
+              "description": "Minimum satisfactory performance"
+            },
+            "U": {
+              "percentage": "0-19%",
+              "description": "Ungraded"
+            }
+          }
+        },
+        "numerical_grades": {
+          "scale": [9, 8, 7, 6, 5, 4, 3, 2, 1, "U"],
+          "passing_grade": 1,
+          "standard_pass": 4,
+          "strong_pass": 5,
+          "descriptions": {
+            "9": {
+              "equivalent": "Above A*",
+              "percentage": "90-100%",
+              "description": "Outstanding performance"
+            },
+            "8": {
+              "equivalent": "A*",
+              "percentage": "85-89%",
+              "description": "Excellent performance"
+            },
+            "7": {
+              "equivalent": "A",
+              "percentage": "75-84%",
+              "description": "Very good performance"
+            },
+            "6": {
+              "equivalent": "B",
+              "percentage": "65-74%",
+              "description": "Good performance"
+            },
+            "5": {
+              "equivalent": "High C",
+              "percentage": "55-64%",
+              "description": "Strong pass"
+            },
+            "4": {
+              "equivalent": "Low C",
+              "percentage": "45-54%",
+              "description": "Standard pass"
+            },
+            "3": {
+              "equivalent": "D",
+              "percentage": "35-44%",
+              "description": "Below standard"
+            },
+            "2": {
+              "equivalent": "E",
+              "percentage": "25-34%",
+              "description": "Low performance"
+            },
+            "1": {
+              "equivalent": "F/G",
+              "percentage": "15-24%",
+              "description": "Very low performance"
+            },
+            "U": {
+              "equivalent": "U",
+              "percentage": "0-14%",
+              "description": "Ungraded"
+            }
+          }
+        }
+      },
+      "tiered_papers": {
+        "core": {
+          "grade_range": ["C", "D", "E", "F", "G"],
+          "numerical_range": [5, 4, 3, 2, 1],
+          "target_ability": "Average to below average"
+        },
+        "extended": {
+          "grade_range": ["A*", "A", "B", "C", "D", "E"],
+          "numerical_range": [9, 8, 7, 6, 5, 4, 3],
+          "target_ability": "Average to high ability"
+        }
+      }
+    },
+    "edexcel": {
+      "name": "Pearson Edexcel",
+      "code": "Edexcel",
+      "grading_systems": {
+        "uses_same_scales": true,
+        "tiered_papers": {
+          "foundation": {
+            "grade_range": [5, 4, 3, 2, 1],
+            "target_ability": "Lower to middle ability"
+          },
+          "higher": {
+            "grade_range": [9, 8, 7, 6, 5, 4],
+            "target_ability": "Middle to high ability"
+          }
+        }
+      }
+    },
+    "oxford_aqa": {
+      "name": "Oxford AQA International",
+      "code": "OxfordAQA",
+      "grading_systems": {
+        "uses_9_1_scale": true
+      }
+    }
+  },
+  "subjects": {
+    "groups": {
+      "group_1": {
+        "name": "Languages",
+        "subjects": ["First Language English", "English Literature", "World Literature"]
+      },
+      "group_2": {
+        "name": "Humanities and Social Sciences",
+        "subjects": ["Geography", "History", "Global Perspectives", "Religious Studies", "Sociology"]
+      },
+      "group_3": {
+        "name": "Sciences",
+        "subjects": ["Biology", "Chemistry", "Physics", "Combined Science", "Environmental Management"]
+      },
+      "group_4": {
+        "name": "Mathematics",
+        "subjects": ["Mathematics", "Additional Mathematics", "International Mathematics"]
+      },
+      "group_5": {
+        "name": "Creative, Technical and Vocational",
+        "subjects": ["Art & Design", "Business Studies", "Computer Science", "Design & Technology", "Drama", "Economics", "Music", "Physical Education"]
+      }
+    },
+    "typical_load": "7-10 subjects",
+    "minimum_requirement": "5 subjects including English and Mathematics"
+  },
+  "assessment": {
+    "methods": [
+      "Written examinations",
+      "Coursework",
+      "Practical assessments",
+      "Oral examinations (languages)"
+    ],
+    "exam_sessions": ["May/June", "October/November", "January (limited)"],
+    "grade_boundaries": {
+      "set_by": "Subject experts after each exam session",
+      "factors": ["Difficulty of paper", "Student performance", "Historical data"],
+      "typical_variance": "3-5% between sessions"
+    }
+  },
+  "recognition": {
+    "uk_universities": {
+      "russell_group": "Minimum 5 IGCSEs at grade C/4 or above",
+      "standard": "Accepted as equivalent to UK GCSEs"
+    },
+    "us_universities": {
+      "acceptance": "Widely recognized",
+      "typical_requirement": "Complement with SAT/ACT or A-Levels/IB"
+    },
+    "global": {
+      "countries_recognized": "160+",
+      "universities": "Accepted worldwide as pre-university qualification"
+    }
+  },
+  "advantages": [
+    "International recognition",
+    "Flexible subject choices",
+    "Rigorous standards",
+    "Good preparation for A-Levels/IB",
+    "Multiple exam sessions per year"
+  ],
+  "statistics_2024": {
+    "global_candidates": "Over 1 million",
+    "countries": "145",
+    "schools": "10,000+",
+    "top_performing_regions": ["Singapore", "Hong Kong", "UAE", "Malaysia"]
+  }
+}
