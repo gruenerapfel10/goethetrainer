@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import { useAuth } from '@/context/firebase-auth-context';
 import { AcademicSection } from './academic-section';
+import { profileService, ProfileData as FirebaseProfileData } from '@/lib/firebase/profile-service';
 import { 
   User, 
   Mail,
@@ -136,6 +137,7 @@ export default function ProfilePage() {
   const t = useTranslations();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [activeSection, setActiveSection] = useState('personal');
   
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -192,13 +194,60 @@ export default function ProfilePage() {
     },
   });
 
+  // Load profile data when component mounts or user changes
+  useEffect(() => {
+    const loadProfile = async () => {
+      console.log('Loading profile for user:', user?.uid);
+      
+      if (!user?.uid) {
+        console.log('No user ID, stopping profile load');
+        setIsLoadingProfile(false);
+        return;
+      }
+      
+      try {
+        setIsLoadingProfile(true);
+        const savedProfile = await profileService.getProfile(user.uid);
+        console.log('Loaded profile:', savedProfile);
+        
+        if (savedProfile) {
+          // Don't spread profileData here - it causes infinite loop
+          setProfileData(prev => ({
+            ...prev,
+            ...savedProfile,
+            email: savedProfile.email || user.email || '',
+          }));
+        } else {
+          // If no profile exists, at least set the email
+          console.log('No saved profile, creating new with email:', user.email);
+          setProfileData(prev => ({
+            ...prev,
+            email: user.email || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast.error('Failed to load profile data');
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+    
+    loadProfile();
+  }, [user?.uid]); // Only depend on user.uid, not entire user object
+
   const handleSave = async () => {
+    if (!user?.uid) {
+      toast.error('You must be logged in to save your profile');
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      // Here you would typically save to your backend/database
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      await profileService.saveProfile(user.uid, profileData);
       toast.success('Profile updated successfully!');
     } catch (error) {
+      console.error('Error saving profile:', error);
       toast.error('Failed to update profile. Please try again.');
     } finally {
       setIsLoading(false);
@@ -259,6 +308,39 @@ export default function ProfilePage() {
     { id: 'activities', label: 'Activities', icon: Target },
     { id: 'preferences', label: 'Preferences', icon: Settings },
   ];
+
+  // Show loading state while fetching profile
+  if (isLoadingProfile) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
+  if (!user) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="max-w-md w-full">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <User className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Sign in Required</h2>
+                <p className="text-muted-foreground">Please sign in to view and edit your profile</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

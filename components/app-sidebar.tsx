@@ -13,6 +13,8 @@ import Image from 'next/image';
 import { useTranslations, useLocale } from 'next-intl';
 import { setUserLocale } from '@/services/locale';
 import type { Locale } from '@/i18n/config';
+import NationalitySwitcher from '@/components/nationality-switcher';
+import { Breadcrumb } from '@/components/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +39,8 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
   const locale = useLocale()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const [nationality, setNationality] = useState('us')
+  const [universityData, setUniversityData] = useState<{id: string, name: string} | null>(null)
 
   const languageItems = [
     { value: 'en', label: t('locales.en'), emoji: '🇺🇸' },
@@ -52,6 +56,50 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     startTransition(() => {
       setUserLocale(newLocale)
     })
+  }
+
+  // Effect to fetch university data when on university detail page
+  useEffect(() => {
+    const universityMatch = pathname.match(/^\/universities\/(\d+)$/)
+    if (universityMatch) {
+      const universityId = universityMatch[1]
+      fetch('/500.json')
+        .then(res => res.json())
+        .then(data => {
+          const university = data.find((u: any) => u.rank === Number(universityId))
+          if (university) {
+            setUniversityData({ id: universityId, name: university.name })
+          }
+        })
+        .catch(err => console.error('Failed to load university data:', err))
+    } else {
+      setUniversityData(null)
+    }
+  }, [pathname])
+
+  // Generate breadcrumb items based on current path
+  const getBreadcrumbItems = () => {
+    if (pathname === '/dashboard') {
+      return [{ label: t('navigation.dashboard'), current: true }]
+    } else if (pathname === '/universities') {
+      return [{ label: t('navigation.universities'), current: true }]
+    } else if (pathname === '/profile') {
+      return [{ label: t('navigation.profile'), current: true }]
+    } else if (pathname === '/applications') {
+      return [{ label: 'Applications', current: true }]
+    } else if (pathname.startsWith('/universities/') && universityData) {
+      return [
+        { label: t('navigation.universities'), href: '/universities' },
+        { label: universityData.name, current: true }
+      ]
+    } else if (pathname.startsWith('/chat/')) {
+      return [{ label: 'Chat', current: true }]
+    } else if (pathname === '/admin') {
+      return [{ label: 'Admin', current: true }]
+    }
+    
+    // Default fallback
+    return [{ label: 'Home', current: true }]
   }
 
   return (
@@ -181,10 +229,17 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
         <div className="flex-1 flex flex-col">
           <div className="h-16 bg-background flex items-center justify-between px-6">
             <div className="flex items-center gap-4">
-              <h1 className="text-sidebar-foreground font-medium">Dashboard</h1>
+              <Breadcrumb items={getBreadcrumbItems()} />
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Nationality Switcher */}
+              <NationalitySwitcher 
+                value={nationality} 
+                onChange={setNationality}
+                variant="sidebar"
+              />
+              
               {/* Language Switcher */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -194,6 +249,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                     className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-8 px-3 gap-2"
                     disabled={isPending}
                   >
+                    <Languages className="h-4 w-4" />
                     <span className="text-lg">{currentLanguageItem?.emoji}</span>
                     <span className="text-sm font-medium">{currentLanguage}</span>
                     <ChevronDown className="h-3 w-3 opacity-50" />
