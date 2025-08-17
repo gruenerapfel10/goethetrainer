@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import { useAuth } from '@/context/firebase-auth-context';
+import { AcademicSection } from './academic-section';
 import { 
   User, 
   Mail,
@@ -429,82 +430,10 @@ export default function ProfilePage() {
           {/* Academic Information */}
           {activeSection === 'academic' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <GraduationCap className="w-5 h-5" />
-                    Academic Information
-                  </CardTitle>
-                  <CardDescription>
-                    Your current school and academic performance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="currentSchool">Current School</Label>
-                      <Input
-                        id="currentSchool"
-                        value={profileData.currentSchool}
-                        onChange={(e) => setProfileData({...profileData, currentSchool: e.target.value})}
-                        placeholder="Lincoln High School"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="graduationYear">Graduation Year</Label>
-                      <Select
-                        value={profileData.graduationYear.toString()}
-                        onValueChange={(value) => setProfileData({...profileData, graduationYear: parseInt(value)})}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[2024, 2025, 2026, 2027, 2028].map(year => (
-                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gpa">GPA</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="gpa"
-                          type="number"
-                          step="0.01"
-                          value={profileData.gpa}
-                          onChange={(e) => setProfileData({...profileData, gpa: e.target.value})}
-                          placeholder="3.85"
-                          className="flex-1"
-                        />
-                        <Select
-                          value={profileData.gpaScale}
-                          onValueChange={(value) => setProfileData({...profileData, gpaScale: value})}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="4.0">4.0</SelectItem>
-                            <SelectItem value="5.0">5.0</SelectItem>
-                            <SelectItem value="100">100</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="classRank">Class Rank (Optional)</Label>
-                      <Input
-                        id="classRank"
-                        value={profileData.classRank}
-                        onChange={(e) => setProfileData({...profileData, classRank: e.target.value})}
-                        placeholder="15"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <AcademicSection 
+                profileData={profileData}
+                setProfileData={setProfileData}
+              />
             </div>
           )}
 

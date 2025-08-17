@@ -100,6 +100,60 @@ export default function UniversityDetailPage() {
           priority
         />
       )}
+      
+      {/* Seamless Info Overlay - Top Left */}
+      <div className="absolute top-8 left-8 space-y-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-2">{university.name}</h1>
+          <div className="flex items-center gap-2 text-lg text-white/90">
+            <MapPin className="h-5 w-5" />
+            {university.country}
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="text-white">
+            <div className="text-2xl font-bold text-blue-400">#{university.rank}</div>
+            <div className="text-xs uppercase tracking-wider opacity-80">Global Rank</div>
+          </div>
+          <div className="text-white">
+            <div className="text-lg font-bold text-emerald-400">#{university.employer_reputation_rank}</div>
+            <div className="text-xs uppercase tracking-wider opacity-80">Employer</div>
+          </div>
+          <div className="text-white">
+            <div className="text-lg font-bold text-amber-400">#{university.academic_reputation_rank}</div>
+            <div className="text-xs uppercase tracking-wider opacity-80">Academic</div>
+          </div>
+        </div>
+
+        {university.supported_degrees && university.supported_degrees.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {university.supported_degrees.slice(0, 3).map((degree, index) => (
+              <span 
+                key={index}
+                className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium border border-white/30"
+              >
+                {degree}
+              </span>
+            ))}
+            {university.supported_degrees.length > 3 && (
+              <span className="px-3 py-1 bg-white/10 backdrop-blur-sm rounded-full text-white/70 text-sm border border-white/20">
+                +{university.supported_degrees.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <Button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 h-10 px-6">
+            Apply Now
+          </Button>
+          <Button variant="ghost" className="text-white hover:bg-white/20 h-10 px-4">
+            <Bookmark className="h-4 w-4 mr-2" />
+            Save
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

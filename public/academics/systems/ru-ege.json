@@ -1,0 +1,288 @@
+{
+  "system_id": "ru-ege",
+  "name": "Единый государственный экзамен (Unified State Exam)",
+  "type": "national",
+  "country": "RU",
+  "version": "2024.11",
+  "authority": "Federal Service for Supervision in Education and Science (Rosobrnadzor)",
+  "recognition": "Russia, CIS countries, some European universities",
+  "last_updated": "2024-11-01",
+  "overview": {
+    "description": "Standardized state examination for secondary school graduates in Russia",
+    "purpose": "School graduation certification and university admission",
+    "date": "May-June (main period), July (additional period)",
+    "duration": "3-4 hours per subject",
+    "candidates_2024": 700000,
+    "importance": "Mandatory for university admission and school graduation",
+    "language": "Russian (with some subjects available in national languages)"
+  },
+  "education_system": {
+    "structure": "11-Year School System",
+    "levels": {
+      "primary": "Grades 1-4 (Начальная школа)",
+      "basic_secondary": "Grades 5-9 (Основная школа)",
+      "complete_secondary": "Grades 10-11 (Средняя школа)"
+    },
+    "grading_scale": {
+      "traditional": {
+        "5": "Excellent (Отлично)",
+        "4": "Good (Хорошо)",
+        "3": "Satisfactory (Удовлетворительно)",
+        "2": "Unsatisfactory (Неудовлетворительно)",
+        "1": "Very Poor (rarely used)"
+      }
+    }
+  },
+  "exam_structure": {
+    "mandatory_subjects": {
+      "russian_language": {
+        "name": "Русский язык",
+        "required_for": "All students",
+        "passing_score": 24,
+        "university_minimum": 36,
+        "max_score": 100
+      },
+      "mathematics": {
+        "name": "Математика",
+        "levels": {
+          "base": {
+            "name": "Базовая математика",
+            "scale": "2-5 grade scale",
+            "purpose": "School graduation only"
+          },
+          "profile": {
+            "name": "Профильная математика",
+            "scale": "0-100 points",
+            "purpose": "University admission",
+            "passing_score": 27,
+            "university_minimum": 39
+          }
+        }
+      }
+    },
+    "optional_subjects": {
+      "sciences": [
+        "Physics (Физика)",
+        "Chemistry (Химия)",
+        "Biology (Биология)",
+        "Geography (География)"
+      ],
+      "humanities": [
+        "History (История)",
+        "Social Studies (Обществознание)",
+        "Literature (Литература)"
+      ],
+      "languages": [
+        "English (Английский язык)",
+        "German (Немецкий язык)",
+        "French (Французский язык)",
+        "Spanish (Испанский язык)",
+        "Chinese (Китайский язык)"
+      ],
+      "technology": [
+        "Computer Science (Информатика и ИКТ)"
+      ]
+    }
+  },
+  "scoring_system": {
+    "scale": "0-100 primary points",
+    "conversion": {
+      "primary_to_test": "Uses scaling algorithm",
+      "minimum_passing": {
+        "russian": 24,
+        "mathematics_profile": 27,
+        "physics": 36,
+        "chemistry": 36,
+        "biology": 36,
+        "geography": 37,
+        "history": 32,
+        "social_studies": 42,
+        "literature": 32,
+        "foreign_languages": 22,
+        "computer_science": 40
+      }
+    },
+    "certificate_requirements": {
+      "attestat": {
+        "description": "Certificate of Complete Secondary Education",
+        "requirements": [
+          "Pass Russian Language EGE (min 24 points)",
+          "Pass Mathematics (base level min grade 3 or profile min 27 points)",
+          "Satisfactory grades in all school subjects"
+        ]
+      },
+      "gold_medal": {
+        "description": "Medal 'For Special Academic Success'",
+        "requirements": [
+          "All '5' grades in 10th and 11th grade",
+          "Minimum 70 points in Russian Language EGE",
+          "Minimum 70 points in Mathematics EGE (profile) or '5' in base"
+        ],
+        "benefits": "Additional points for university admission (up to 10)"
+      }
+    }
+  },
+  "university_admission": {
+    "top_universities": {
+      "msu": {
+        "name": "Moscow State University",
+        "typical_requirements": {
+          "minimum_total": 290,
+          "competitive_programs": "320-400 points (3-4 subjects)"
+        }
+      },
+      "spbu": {
+        "name": "Saint Petersburg State University",
+        "typical_requirements": {
+          "minimum_total": 280,
+          "competitive_programs": "300-380 points"
+        }
+      },
+      "mipt": {
+        "name": "Moscow Institute of Physics and Technology",
+        "typical_requirements": {
+          "mathematics": 95,
+          "physics": 95,
+          "russian": 75
+        }
+      }
+    },
+    "score_interpretation": {
+      "90-100": {
+        "level": "Excellent",
+        "percentile": "Top 2-3%",
+        "opportunities": "Top universities, full scholarships"
+      },
+      "80-89": {
+        "level": "Very Good",
+        "percentile": "Top 10%",
+        "opportunities": "Leading universities, partial scholarships"
+      },
+      "70-79": {
+        "level": "Good",
+        "percentile": "Top 25%",
+        "opportunities": "Good universities, competitive programs"
+      },
+      "60-69": {
+        "level": "Above Average",
+        "percentile": "Top 40%",
+        "opportunities": "Regional universities, standard programs"
+      },
+      "50-59": {
+        "level": "Average",
+        "percentile": "Middle range",
+        "opportunities": "Local universities, less competitive programs"
+      },
+      "36-49": {
+        "level": "Below Average",
+        "percentile": "Lower range",
+        "opportunities": "Limited university options, paid programs"
+      }
+    },
+    "admission_waves": {
+      "priority_admission": {
+        "quota": "Special quotas for olympiad winners",
+        "benefits": "Admission without exams or 100 points credit"
+      },
+      "first_wave": {
+        "percentage": "80% of places",
+        "timeline": "Late July"
+      },
+      "second_wave": {
+        "percentage": "20% of places",
+        "timeline": "Early August"
+      }
+    }
+  },
+  "special_categories": {
+    "olympiad_winners": {
+      "all_russian_olympiad": {
+        "benefits": "Admission without exams to relevant programs",
+        "validity": "4 years after winning"
+      },
+      "university_olympiads": {
+        "benefits": "100 points in relevant subject or admission without exams",
+        "requirement": "Must score at least 75 on EGE in that subject"
+      }
+    },
+    "target_admission": {
+      "description": "Целевой прием",
+      "purpose": "Training specialists for specific organizations",
+      "benefits": "Lower score requirements, guaranteed employment",
+      "obligation": "Must work for sponsor organization after graduation"
+    }
+  },
+  "preparation": {
+    "school_preparation": {
+      "regular_classes": "Standard curriculum in grades 10-11",
+      "elective_courses": "Additional subject-specific preparation",
+      "mock_exams": "Trial EGE exams throughout the year"
+    },
+    "additional_preparation": {
+      "repetitors": "Private tutors (very common)",
+      "preparation_courses": "University-run courses",
+      "online_platforms": "ФИПИ, Решу ЕГЭ, etc.",
+      "average_cost": "20,000-100,000 rubles per year"
+    }
+  },
+  "recent_changes": {
+    "2024": {
+      "digital_format": "Pilot program for computer-based testing",
+      "updated_content": "New topics in Social Studies and History",
+      "minimum_scores": "Adjusted minimum scores for some subjects"
+    },
+    "future_plans": {
+      "2025": "Gradual transition to digital format",
+      "2026": "Introduction of new subjects (e.g., AI basics)"
+    }
+  },
+  "international_recognition": {
+    "cis_countries": {
+      "recognition": "Fully recognized",
+      "countries": ["Belarus", "Kazakhstan", "Armenia", "Kyrgyzstan"]
+    },
+    "european_universities": {
+      "recognition": "Partially recognized",
+      "requirements": "Often require additional qualifications or foundation year",
+      "examples": ["Czech Republic", "Germany (with conditions)", "Finland"]
+    },
+    "conversion_guidelines": {
+      "to_gpa": {
+        "90-100": "4.0",
+        "80-89": "3.7",
+        "70-79": "3.3",
+        "60-69": "3.0"
+      },
+      "to_percentage": {
+        "formula": "Direct conversion (EGE score = percentage)"
+      }
+    }
+  },
+  "statistics_2024": {
+    "participants": 700000,
+    "average_scores": {
+      "russian_language": 71.0,
+      "mathematics_profile": 57.5,
+      "physics": 54.9,
+      "chemistry": 56.2,
+      "biology": 52.6,
+      "history": 58.0,
+      "social_studies": 59.9,
+      "english": 66.3,
+      "computer_science": 62.7,
+      "literature": 63.9
+    },
+    "perfect_scores": {
+      "russian_language": 3524,
+      "mathematics_profile": 579,
+      "physics": 423,
+      "chemistry": 831,
+      "total_100_scorers": "Approximately 7000 (all subjects)"
+    },
+    "passing_rates": {
+      "russian_language": "99.5%",
+      "mathematics_base": "95%",
+      "mathematics_profile": "89%"
+    }
+  }
+}

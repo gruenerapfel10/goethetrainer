@@ -678,6 +678,44 @@
         "rank": 3,
         "employer_reputation_rank": 3,
         "academic_reputation_rank": 5,
+        "acceptance_rate": "3.6%",
+        "international_students_percentage": "15%",
+        "total_enrollment": 17381,
+        "location": {
+            "city": "Stanford",
+            "state": "California",
+            "country": "USA",
+            "climate": "Mediterranean climate, mild winters (8-18°C), warm summers (15-28°C)",
+            "nearest_airport": "San Francisco International Airport (SFO)",
+            "distance_from_airport": "35 miles"
+        },
+        "cost_information": {
+            "currency": "USD",
+            "tuition_2025": "$65,755",
+            "total_cost_of_attendance": "$88,000",
+            "living_expenses": "$22,000",
+            "health_insurance": "$3,500",
+            "books_supplies": "$1,245",
+            "personal_expenses": "$2,500",
+            "cost_trends": "3-5% annual increase",
+            "inr_conversion": "₹74,00,000 - ₹78,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "93%",
+            "average_starting_salary": "$142,000",
+            "median_salary_10_years": "$189,000",
+            "top_employers": ["Google", "Apple", "Microsoft", "Meta", "Goldman Sachs", "McKinsey"],
+            "popular_industries": ["Technology", "Consulting", "Finance", "Healthcare", "Entrepreneurship"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~500",
+            "indian_student_percentage": "2.9%",
+            "indian_student_organizations": ["Stanford India Society", "South Asian Students Association", "Hindu Students Council"],
+            "indian_food_availability": "Multiple Indian restaurants in Palo Alto area",
+            "nearest_indian_grocery": "Vik's Chaat Corner, Berkeley (45 mins)",
+            "hindu_temple_nearby": "Sunnyvale Hindu Temple (20 mins drive)",
+            "popular_programs_among_indians": ["Computer Science", "Engineering", "Business", "Medicine", "Data Science"]
+        },
         "supported_degrees": [
             "aerospace-eng",
             "ai-ml",
@@ -869,6 +907,114 @@
                     "private_foundations": ["Open Society Foundations", "various regional scholarships"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "95%+ (CBSE/ISC)",
+                    "required_subjects": ["Mathematics", "Science subjects"],
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "average": 1570,
+                        "math": "790-800",
+                        "evidence_based_reading": "750-800"
+                    },
+                    "act_scores": {
+                        "average": 35,
+                        "range": "34-36"
+                    },
+                    "subject_tests": "Not required but recommended",
+                    "ap_courses": "5+ APs with score 5 recommended",
+                    "extracurriculars": "Research, leadership, innovation, community service highly valued"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["TOEFL", "IELTS", "Duolingo"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.5,
+                        "duolingo": 125
+                    },
+                    "exemptions": "English medium education for 4+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "Common Application",
+                    "essays": ["Personal essay", "Supplemental essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "Optional alumni interview",
+                    "portfolio": "For arts programs",
+                    "application_fee": "$90 (fee waiver available)",
+                    "document_verification": "Official transcripts required"
+                },
+                "deadlines": {
+                    "early_action": "November 1, 2024",
+                    "regular_decision": "January 5, 2025",
+                    "decision_notification": "Late March 2025",
+                    "enrollment_deadline": "May 1, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "F-1 Student Visa",
+                    "i20_processing_time": "2-3 weeks after admission",
+                    "sevis_fee": "$350",
+                    "visa_application_fee": "$185",
+                    "financial_proof_required": "$88,000 for first year",
+                    "visa_interview_tips": "Prepare for academic goals and research interests discussion",
+                    "success_rate": "~95% for Stanford admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "100% of demonstrated need met",
+                    "average_award": "$56,000",
+                    "income_threshold": "Family income <$75,000 for free tuition",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "ISFAA"],
+                    "deadline": "February 15, 2025"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "Knight-Hennessy Scholars",
+                            "amount": "Full funding",
+                            "criteria": "Graduate program exceptional merit"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to $100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-10 hours per week",
+                    "hourly_wage": "$16-$25",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Campus jobs"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "80% of research positions are paid",
+                    "funding_available": "$2,000-$5,000 per quarter",
+                    "summer_programs": "Stanford Summer Research Program, REU programs"
+                }
+            }
         }
     },
     {
@@ -877,6 +1023,44 @@
         "rank": 4,
         "employer_reputation_rank": 4,
         "academic_reputation_rank": 2,
+        "acceptance_rate": "16%",
+        "international_students_percentage": "43%",
+        "total_enrollment": 24912,
+        "location": {
+            "city": "Oxford",
+            "state": "England",
+            "country": "United Kingdom",
+            "climate": "Temperate oceanic, mild winters (2-8°C), warm summers (14-25°C)",
+            "nearest_airport": "Heathrow Airport (LHR)",
+            "distance_from_airport": "50 miles"
+        },
+        "cost_information": {
+            "currency": "GBP",
+            "tuition_2025": "£35,260-£59,260",
+            "total_cost_of_attendance": "£55,000-£75,000",
+            "living_expenses": "£14,000-£18,000",
+            "health_insurance": "£470",
+            "books_supplies": "£1,000",
+            "personal_expenses": "£3,500",
+            "cost_trends": "4-6% annual increase",
+            "inr_conversion": "₹46,00,000 - ₹68,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "91%",
+            "average_starting_salary": "£42,000",
+            "median_salary_10_years": "£78,000",
+            "top_employers": ["BBC", "Goldman Sachs", "McKinsey", "Google", "Government departments", "NHS"],
+            "popular_industries": ["Finance", "Consulting", "Academia", "Government", "Media", "Technology"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~508",
+            "indian_student_percentage": "2%",
+            "indian_student_organizations": ["Oxford India Society", "South Asian Society", "Hindu Society"],
+            "indian_food_availability": "Several Indian restaurants in Oxford city center",
+            "nearest_indian_grocery": "Covered Market, Oxford",
+            "hindu_temple_nearby": "Oxford Hindu Temple (5 miles)",
+            "popular_programs_among_indians": ["PPE", "Medicine", "Law", "Economics", "Engineering Science"]
+        },
         "supported_degrees": [
             "anthropology",
             "archaeology",
@@ -1057,6 +1241,124 @@
                     "private_foundations": ["Oxford-Russia Fund", "various regional foundations"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "90-95% (CBSE/ISC)",
+                    "required_subjects": ["Specific to course chosen"],
+                    "standardized_tests": ["A-levels", "IB", "SAT"],
+                    "a_levels": "AAA to A*A*A",
+                    "ib_score": "38-42 points",
+                    "sat_scores": {
+                        "average": 1520,
+                        "range": "1470-1570"
+                    },
+                    "entrance_exams": "Course-specific tests (MAT, TSA, etc.)",
+                    "extracurriculars": "Strong academic achievements, leadership, subject-specific activities"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["IELTS", "TOEFL", "Cambridge English"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "toefl": 110,
+                        "cambridge": "Advanced level"
+                    },
+                    "exemptions": "English medium education for 4+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "UCAS",
+                    "personal_statement": "4000 characters",
+                    "letters_of_recommendation": 1,
+                    "interview": "Required for shortlisted candidates",
+                    "written_work": "May be required for certain subjects",
+                    "application_fee": "£27.50",
+                    "document_verification": "Original transcripts required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15, 2024",
+                    "decision_notification": "January 2025",
+                    "enrollment_deadline": "August 31, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "Student Visa (Tier 4)",
+                    "cas_processing_time": "2-3 weeks after admission",
+                    "visa_application_fee": "£348",
+                    "healthcare_surcharge": "£470 per year",
+                    "financial_proof_required": "£55,000 for first year",
+                    "visa_interview_tips": "Prepare for academic goals and college choice discussion",
+                    "success_rate": "~92% for Oxford admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "Limited need-based support",
+                    "average_award": "£5,000-£15,000",
+                    "income_threshold": "Family income <£30,000 for maximum support",
+                    "application_required": true,
+                    "additional_forms": ["Financial Assessment Form"],
+                    "deadline": "March 31, 2025"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "Rhodes Scholarship",
+                            "amount": "Full funding",
+                            "criteria": "Exceptional academic and leadership merit"
+                        },
+                        {
+                            "name": "Clarendon Scholarship",
+                            "amount": "Full funding",
+                            "criteria": "Outstanding graduate students"
+                        },
+                        {
+                            "name": "India Oxford Scholarship",
+                            "amount": "Full funding",
+                            "criteria": "Exclusive to Indian students"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to £100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        },
+                        {
+                            "name": "Chevening Scholarships",
+                            "amount": "Full funding",
+                            "deadline": "November 7"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "20 hours per week during studies",
+                    "hourly_wage": "£10-£14",
+                    "types_of_work": ["Tutorial assistance", "Research support", "Library work"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "65% of research positions are paid",
+                    "funding_available": "£1,000-£3,500 per project",
+                    "summer_programs": "Oxford Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -1065,6 +1367,44 @@
         "rank": 5,
         "employer_reputation_rank": 1,
         "academic_reputation_rank": 1,
+        "acceptance_rate": "3.4%",
+        "international_students_percentage": "25%",
+        "total_enrollment": 23731,
+        "location": {
+            "city": "Cambridge",
+            "state": "Massachusetts",
+            "country": "USA",
+            "climate": "Humid continental, cold winters (-5 to 3°C), warm summers (18-28°C)",
+            "nearest_airport": "Boston Logan International Airport (BOS)",
+            "distance_from_airport": "8 miles"
+        },
+        "cost_information": {
+            "currency": "USD",
+            "tuition_2025": "$61,676",
+            "total_cost_of_attendance": "$87,866",
+            "living_expenses": "$21,190",
+            "health_insurance": "$4,308",
+            "books_supplies": "$1,000",
+            "personal_expenses": "$2,500",
+            "cost_trends": "3-5% annual increase",
+            "inr_conversion": "₹73,00,000 - ₹76,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "95%",
+            "average_starting_salary": "$95,000",
+            "median_salary_10_years": "$168,000",
+            "top_employers": ["Goldman Sachs", "McKinsey", "Google", "Microsoft", "Bain", "BCG"],
+            "popular_industries": ["Finance", "Consulting", "Technology", "Healthcare", "Academia", "Government"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~400",
+            "indian_student_percentage": "1.7%",
+            "indian_student_organizations": ["Harvard India Association", "South Asian Students Association", "Hindu Students Council"],
+            "indian_food_availability": "Multiple Indian restaurants in Cambridge/Boston area",
+            "nearest_indian_grocery": "Patel Brothers, Cambridge (3 miles)",
+            "hindu_temple_nearby": "Sri Lakshmi Temple, Ashland (20 miles)",
+            "popular_programs_among_indians": ["Medicine", "Business", "Computer Science", "Economics", "Public Health"]
+        },
         "supported_degrees": [
             "anthropology",
             "architecture",
@@ -1248,6 +1588,108 @@
                     "private_foundations": ["Open Society Foundations", "various regional scholarships"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "95%+ (CBSE/ISC)",
+                    "required_subjects": ["Mathematics", "Science subjects"],
+                    "standardized_tests": ["SAT", "ACT"],
+                    "sat_scores": {
+                        "average": 1580,
+                        "math": "790-800",
+                        "evidence_based_reading": "760-800"
+                    },
+                    "act_scores": {
+                        "average": 35,
+                        "range": "34-36"
+                    },
+                    "subject_tests": "Recommended for STEM programs",
+                    "ap_courses": "5+ APs with score 5 recommended",
+                    "extracurriculars": "Exceptional achievements in academics, research, leadership, community service"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["TOEFL", "IELTS", "Duolingo"],
+                    "minimum_scores": {
+                        "toefl": 100,
+                        "ielts": 7.5,
+                        "duolingo": 125
+                    },
+                    "exemptions": "English medium education for 4+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "Common Application",
+                    "essays": ["Personal essay", "Supplemental essays"],
+                    "letters_of_recommendation": 3,
+                    "interview": "Alumni interview (optional but recommended)",
+                    "portfolio": "For arts programs",
+                    "application_fee": "$85 (fee waiver available)",
+                    "document_verification": "Official transcripts required"
+                },
+                "deadlines": {
+                    "early_action": "November 1, 2024",
+                    "regular_decision": "January 1, 2025",
+                    "decision_notification": "Late March 2025",
+                    "enrollment_deadline": "May 1, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "F-1 Student Visa",
+                    "i20_processing_time": "2-3 weeks after admission",
+                    "sevis_fee": "$350",
+                    "visa_application_fee": "$185",
+                    "financial_proof_required": "$87,866 for first year",
+                    "visa_interview_tips": "Prepare for academic goals and career plans discussion",
+                    "success_rate": "~96% for Harvard admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "100% of demonstrated need met",
+                    "average_award": "$65,000",
+                    "income_threshold": "Family income <$100,000 for free tuition (from 2025-26)",
+                    "application_required": true,
+                    "additional_forms": ["CSS Profile", "ISFAA"],
+                    "deadline": "February 14, 2025"
+                },
+                "merit_based": {
+                    "available": false,
+                    "description": "Harvard does not offer merit-based scholarships"
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to $100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "8-12 hours per week",
+                    "hourly_wage": "$15-$22",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Campus jobs"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "85% of research positions are paid",
+                    "funding_available": "$3,000-$6,000 per semester",
+                    "summer_programs": "Harvard Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -1256,6 +1698,44 @@
         "rank": 6,
         "employer_reputation_rank": 5,
         "academic_reputation_rank": 3,
+        "acceptance_rate": "21%",
+        "international_students_percentage": "40%",
+        "total_enrollment": 24912,
+        "location": {
+            "city": "Cambridge",
+            "state": "England",
+            "country": "United Kingdom",
+            "climate": "Temperate oceanic, mild winters (2-8°C), warm summers (13-23°C)",
+            "nearest_airport": "Stansted Airport (STN)",
+            "distance_from_airport": "30 miles"
+        },
+        "cost_information": {
+            "currency": "GBP",
+            "tuition_2025": "£25,734-£67,194",
+            "total_cost_of_attendance": "£50,000-£75,000",
+            "living_expenses": "£13,500-£17,000",
+            "health_insurance": "£470",
+            "books_supplies": "£900",
+            "personal_expenses": "£3,200",
+            "cost_trends": "4-6% annual increase",
+            "inr_conversion": "₳42,00,000 - ₹68,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "89%",
+            "average_starting_salary": "£40,000",
+            "median_salary_10_years": "£75,000",
+            "top_employers": ["BBC", "Goldman Sachs", "McKinsey", "Google", "Civil Service", "NHS"],
+            "popular_industries": ["Finance", "Consulting", "Academia", "Government", "Technology", "Healthcare"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~508",
+            "indian_student_percentage": "2%",
+            "indian_student_organizations": ["Cambridge India Society", "South Asian Society", "Hindu Society"],
+            "indian_food_availability": "Multiple Indian restaurants in Cambridge city center",
+            "nearest_indian_grocery": "Saffron Store, Cambridge",
+            "hindu_temple_nearby": "Cambridge Hindu Temple (3 miles)",
+            "popular_programs_among_indians": ["Natural Sciences", "Engineering", "Medicine", "Mathematics", "Economics"]
+        },
         "supported_degrees": [
             "anthropology",
             "archaeology",
@@ -1439,6 +1919,119 @@
                     "private_foundations": ["Cambridge-Russia Foundation", "various regional foundations"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "90-95% (CBSE/ISC)",
+                    "required_subjects": ["Subject-specific requirements"],
+                    "standardized_tests": ["A-levels", "IB", "SAT"],
+                    "a_levels": "AAA to A*A*A",
+                    "ib_score": "40-42 points",
+                    "sat_scores": {
+                        "average": 1500,
+                        "range": "1450-1550"
+                    },
+                    "entrance_exams": "Subject-specific tests (STEP, MAT, etc.)",
+                    "extracurriculars": "Strong academic achievements, subject-specific activities"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["IELTS", "TOEFL", "Cambridge English"],
+                    "minimum_scores": {
+                        "ielts": 7.5,
+                        "toefl": 110,
+                        "cambridge": "Advanced level"
+                    },
+                    "exemptions": "English medium education for 4+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "UCAS",
+                    "personal_statement": "4000 characters",
+                    "letters_of_recommendation": 1,
+                    "interview": "Required for most courses",
+                    "written_work": "May be required for certain subjects",
+                    "application_fee": "£27.50",
+                    "document_verification": "Original transcripts required"
+                },
+                "deadlines": {
+                    "ucas_deadline": "October 15, 2024",
+                    "decision_notification": "January 2025",
+                    "enrollment_deadline": "August 31, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "Student Visa (Tier 4)",
+                    "cas_processing_time": "2-3 weeks after admission",
+                    "visa_application_fee": "£348",
+                    "healthcare_surcharge": "£470 per year",
+                    "financial_proof_required": "£50,000 for first year",
+                    "visa_interview_tips": "Prepare for academic goals and college choice discussion",
+                    "success_rate": "~93% for Cambridge admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "Limited need-based support",
+                    "average_award": "£3,000-£12,000",
+                    "income_threshold": "Family income <£25,000 for maximum support",
+                    "application_required": true,
+                    "additional_forms": ["Financial Assessment Form"],
+                    "deadline": "March 31, 2025"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "Gates Cambridge Scholarship",
+                            "amount": "Full funding",
+                            "criteria": "Outstanding graduate students"
+                        },
+                        {
+                            "name": "Cambridge Trust Scholarship",
+                            "amount": "£30,000-£60,000",
+                            "criteria": "Academic excellence for international students"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to £100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "Narotam Sekhsaria Scholarship",
+                            "amount": "Interest-free loan up to ₹20 lakhs",
+                            "deadline": "March 30"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        },
+                        {
+                            "name": "Chevening Scholarships",
+                            "amount": "Full funding",
+                            "deadline": "November 7"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "20 hours per week during studies",
+                    "hourly_wage": "£9-£13",
+                    "types_of_work": ["Supervision", "Research support", "College work"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "60% of research positions are paid",
+                    "funding_available": "£1,000-£3,000 per project",
+                    "summer_programs": "Cambridge Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -1447,6 +2040,44 @@
         "rank": 7,
         "employer_reputation_rank": 42,
         "academic_reputation_rank": 18,
+        "acceptance_rate": "27%",
+        "international_students_percentage": "35%",
+        "total_enrollment": 23000,
+        "location": {
+            "city": "Zurich",
+            "state": "Zurich Canton",
+            "country": "Switzerland",
+            "climate": "Oceanic climate, cool winters (-1 to 4°C), warm summers (13-24°C)",
+            "nearest_airport": "Zurich Airport (ZUR)",
+            "distance_from_airport": "10 km"
+        },
+        "cost_information": {
+            "currency": "CHF",
+            "tuition_2025": "CHF 2,190 per semester (international)",
+            "total_cost_of_attendance": "CHF 22,000-28,000",
+            "living_expenses": "CHF 18,000-24,000",
+            "health_insurance": "CHF 3,600",
+            "books_supplies": "CHF 1,200",
+            "personal_expenses": "CHF 2,400",
+            "cost_trends": "Stable, minimal increase",
+            "inr_conversion": "₹18,50,000 - ₹24,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "95%",
+            "average_starting_salary": "CHF 95,000",
+            "median_salary_10_years": "CHF 140,000",
+            "top_employers": ["Google", "Microsoft", "Roche", "Novartis", "ABB", "Credit Suisse"],
+            "popular_industries": ["Technology", "Engineering", "Pharmaceuticals", "Finance", "Research"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~450",
+            "indian_student_percentage": "2%",
+            "indian_student_organizations": ["ETH Indian Society", "South Asian Students Association"],
+            "indian_food_availability": "Several Indian restaurants in Zurich",
+            "nearest_indian_grocery": "Maharaja Store, Zurich",
+            "hindu_temple_nearby": "Hindu Temple Zurich (8 km)",
+            "popular_programs_among_indians": ["Computer Science", "Electrical Engineering", "Mechanical Engineering", "Materials Science", "Data Science"]
+        },
         "supported_degrees": [
             "architecture",
             "biology",
@@ -1609,6 +2240,103 @@
                     "private_foundations": ["various technical foundations"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "90%+ (CBSE/ISC)",
+                    "required_subjects": ["Mathematics", "Physics", "Chemistry"],
+                    "standardized_tests": ["SAT", "IB", "German Abitur"],
+                    "sat_scores": {
+                        "average": 1480,
+                        "range": "1420-1540"
+                    },
+                    "ib_score": "38+ points",
+                    "german_proficiency": "Required for German-taught programs (C1 level)",
+                    "extracurriculars": "Strong STEM background, research experience valued"
+                },
+                "language_requirements": {
+                    "program_language": "German (Bachelor's), English (Master's)",
+                    "tests_accepted": ["IELTS", "TOEFL", "Goethe Certificate"],
+                    "minimum_scores": {
+                        "ielts": 7.0,
+                        "toefl": 100,
+                        "german_c1": "Required for German programs"
+                    },
+                    "exemptions": "Native language speakers"
+                },
+                "application_requirements": {
+                    "application_portal": "ETH Online Application",
+                    "motivation_letter": "Required",
+                    "letters_of_recommendation": 2,
+                    "interview": "Not required",
+                    "portfolio": "For architecture programs",
+                    "application_fee": "CHF 150",
+                    "document_verification": "Certified translations required"
+                },
+                "deadlines": {
+                    "application_deadline": "March 31, 2025",
+                    "decision_notification": "May 2025",
+                    "enrollment_deadline": "August 31, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "Student Permit (Type C/D)",
+                    "processing_time": "8-12 weeks",
+                    "visa_application_fee": "CHF 100",
+                    "health_insurance": "Mandatory",
+                    "financial_proof_required": "CHF 22,000 per year",
+                    "visa_interview_tips": "Prepare for technical and career goals discussion",
+                    "success_rate": "~85% for ETH admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": false,
+                    "description": "Limited need-based support available"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "Excellence Scholarship",
+                            "amount": "CHF 12,000-36,000",
+                            "criteria": "Outstanding academic performance"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to CHF 100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        },
+                        {
+                            "name": "Swiss Government Excellence Scholarships",
+                            "amount": "Full funding",
+                            "deadline": "December 15"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "15 hours per week",
+                    "hourly_wage": "CHF 20-25",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Lab work"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "70% of research positions are paid",
+                    "funding_available": "CHF 2,000-8,000 per project",
+                    "summer_programs": "ETH Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -1617,6 +2345,44 @@
         "rank": 8,
         "employer_reputation_rank": 32,
         "academic_reputation_rank": 14,
+        "acceptance_rate": "5-10%",
+        "international_students_percentage": "26%",
+        "total_enrollment": 51000,
+        "location": {
+            "city": "Singapore",
+            "state": "Singapore",
+            "country": "Singapore",
+            "climate": "Tropical climate, warm and humid year-round (24-32°C)",
+            "nearest_airport": "Changi Airport (SIN)",
+            "distance_from_airport": "20 km"
+        },
+        "cost_information": {
+            "currency": "SGD",
+            "tuition_2025": "SGD 18,900-76,450",
+            "total_cost_of_attendance": "SGD 45,000-85,000",
+            "living_expenses": "SGD 12,000-18,000",
+            "health_insurance": "SGD 200",
+            "books_supplies": "SGD 1,000",
+            "personal_expenses": "SGD 3,600",
+            "cost_trends": "2-4% annual increase",
+            "inr_conversion": "₹25,00,000 - ₹55,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "88%",
+            "average_starting_salary": "SGD 55,000",
+            "median_salary_10_years": "SGD 85,000",
+            "top_employers": ["Google", "Microsoft", "DBS Bank", "Grab", "Shopee", "Government of Singapore"],
+            "popular_industries": ["Technology", "Finance", "Healthcare", "Government", "Consulting"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~1300",
+            "indian_student_percentage": "2.5%",
+            "indian_student_organizations": ["NUS Indian Society", "South Asian Students Association", "Hindu Society"],
+            "indian_food_availability": "Little India district (20 mins by MRT)",
+            "nearest_indian_grocery": "Mustafa Centre, Little India",
+            "hindu_temple_nearby": "Sri Mariamman Temple (15 mins)",
+            "popular_programs_among_indians": ["Computer Science", "Engineering", "Business", "Medicine", "Data Science"]
+        },
         "supported_degrees": [
             "accounting",
             "architecture",
@@ -1802,6 +2568,108 @@
                     "private_foundations": ["various regional foundations"]
                 }
             }
+        },
+        "in": {
+            "requirements": {
+                "academic_requirements": {
+                    "class_12_percentage": "90%+ (CBSE/ISC)",
+                    "required_subjects": ["Mathematics", "Science subjects"],
+                    "standardized_tests": ["SAT", "A-levels", "IB"],
+                    "sat_scores": {
+                        "average": 1450,
+                        "range": "1400-1500"
+                    },
+                    "a_levels": "AAA-A*AA",
+                    "ib_score": "38+ points",
+                    "extracurriculars": "Strong academic record, leadership, community service"
+                },
+                "language_requirements": {
+                    "english_proficiency": "required for non-English medium students",
+                    "tests_accepted": ["IELTS", "TOEFL", "Pearson PTE"],
+                    "minimum_scores": {
+                        "ielts": 6.5,
+                        "toefl": 92,
+                        "pte": 62
+                    },
+                    "exemptions": "English medium education for 2+ years"
+                },
+                "application_requirements": {
+                    "application_portal": "NUS Application System",
+                    "personal_statement": "Required",
+                    "letters_of_recommendation": 2,
+                    "interview": "May be required for certain programs",
+                    "portfolio": "For design/arts programs",
+                    "application_fee": "SGD 20",
+                    "document_verification": "Official transcripts required"
+                },
+                "deadlines": {
+                    "application_deadline": "February 28, 2025",
+                    "decision_notification": "May 2025",
+                    "enrollment_deadline": "July 31, 2025"
+                },
+                "visa_requirements": {
+                    "visa_type": "Student Pass",
+                    "processing_time": "4-6 weeks",
+                    "visa_application_fee": "SGD 60",
+                    "medical_examination": "Required",
+                    "financial_proof_required": "SGD 45,000 per year",
+                    "visa_interview_tips": "Prepare for academic goals discussion",
+                    "success_rate": "~88% for NUS admits"
+                }
+            },
+            "scholarship_opportunities": {
+                "need_based": {
+                    "available": true,
+                    "percentage_receiving": "Limited need-based support",
+                    "average_award": "SGD 8,000-15,000",
+                    "income_threshold": "Family income assessment required",
+                    "application_required": true,
+                    "additional_forms": ["Financial Assessment Form"],
+                    "deadline": "March 31, 2025"
+                },
+                "merit_based": {
+                    "available": true,
+                    "scholarships": [
+                        {
+                            "name": "NUS Merit Scholarship",
+                            "amount": "Full tuition + SGD 6,000 stipend",
+                            "criteria": "Outstanding academic performance"
+                        },
+                        {
+                            "name": "Global Merit Scholarship",
+                            "amount": "SGD 25,000 per year",
+                            "criteria": "Top international students"
+                        }
+                    ]
+                },
+                "external_scholarships": {
+                    "indian_government": ["National Overseas Scholarship", "J.N. Tata Endowment"],
+                    "private_foundations": [
+                        {
+                            "name": "Inlaks Scholarship",
+                            "amount": "Up to SGD 100,000",
+                            "deadline": "April 15"
+                        },
+                        {
+                            "name": "KC Mahindra Scholarship",
+                            "amount": "Up to ₹10 lakhs",
+                            "deadline": "March 15"
+                        }
+                    ]
+                },
+                "work_study": {
+                    "available": true,
+                    "typical_hours": "16 hours per week",
+                    "hourly_wage": "SGD 12-18",
+                    "types_of_work": ["Research assistant", "Teaching assistant", "Campus jobs"]
+                },
+                "research_opportunities": {
+                    "undergraduate_research": true,
+                    "paid_positions": "75% of research positions are paid",
+                    "funding_available": "SGD 3,000-8,000 per project",
+                    "summer_programs": "NUS Overseas Colleges, Summer Research Programme"
+                }
+            }
         }
     },
     {
@@ -1810,6 +2678,44 @@
         "rank": 9,
         "employer_reputation_rank": 18,
         "academic_reputation_rank": 15,
+        "acceptance_rate": "30%",
+        "international_students_percentage": "35%",
+        "total_enrollment": 43840,
+        "location": {
+            "city": "London",
+            "state": "England",
+            "country": "United Kingdom",
+            "climate": "Temperate oceanic, mild winters (2-7°C), cool summers (14-23°C)",
+            "nearest_airport": "Heathrow Airport (LHR)",
+            "distance_from_airport": "20 miles"
+        },
+        "cost_information": {
+            "currency": "GBP",
+            "tuition_2025": "£29,800-£65,500",
+            "total_cost_of_attendance": "£55,000-£75,000",
+            "living_expenses": "£15,000-£20,000",
+            "health_insurance": "£470",
+            "books_supplies": "£1,100",
+            "personal_expenses": "£3,400",
+            "cost_trends": "4-6% annual increase",
+            "inr_conversion": "₹48,00,000 - ₹68,00,000 per year"
+        },
+        "career_outcomes": {
+            "employment_rate_6_months": "87%",
+            "average_starting_salary": "£38,000",
+            "median_salary_10_years": "£70,000",
+            "top_employers": ["BBC", "Google", "Goldman Sachs", "Deloitte", "NHS", "Government departments"],
+            "popular_industries": ["Media", "Technology", "Finance", "Healthcare", "Academia", "Government"]
+        },
+        "indian_student_info": {
+            "total_indian_students": "~2200",
+            "indian_student_percentage": "5%",
+            "indian_student_organizations": ["UCL Indian Society", "South Asian Society", "Hindu Society"],
+            "indian_food_availability": "Brick Lane (30 mins), Southall (45 mins by tube)",
+            "nearest_indian_grocery": "Spitalfields Market, East London",
+            "hindu_temple_nearby": "Neasden Temple (30 mins by tube)",
+            "popular_programs_among_indians": ["Computer Science", "Engineering", "Medicine", "Economics", "Architecture"]
+        },
         "supported_degrees": [
             "anthropology",
             "archaeology",
