@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -403,21 +402,21 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content - Full Width */}
-      <div className="max-w-4xl mx-auto">
+      <div>
           {/* Personal Information */}
           {activeSection === 'personal' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold flex items-center gap-2">
                     <User className="w-5 h-5" />
                     Personal Information
-                  </CardTitle>
-                  <CardDescription>
+                  </h2>
+                  <p className="text-muted-foreground mt-1">
                     Your basic personal details and contact information
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                  </p>
+                </div>
+                <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name</Label>
@@ -520,8 +519,8 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
 
@@ -538,25 +537,23 @@ export default function ProfilePage() {
           {/* Test Scores */}
           {activeSection === 'tests' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Award className="w-5 h-5" />
-                        Test Scores
-                      </CardTitle>
-                      <CardDescription>
-                        Add your standardized test scores
-                      </CardDescription>
-                    </div>
-                    <Button onClick={addTestScore} variant="outline" size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Score
-                    </Button>
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-semibold flex items-center gap-2">
+                      <Award className="w-5 h-5" />
+                      Test Scores
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                      Add your standardized test scores
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
+                  <Button onClick={addTestScore} variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Score
+                  </Button>
+                </div>
+                <div>
                   {profileData.testScores.length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                       <Award className="w-12 h-12 text-gray-400 mx-auto mb-3" />
@@ -619,39 +616,37 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Activities */}
           {activeSection === 'activities' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Target className="w-5 h-5" />
-                        Activities & Achievements
-                      </CardTitle>
-                      <CardDescription>
-                        Showcase your extracurricular activities and achievements
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={addActivity} variant="outline" size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Activity
-                      </Button>
-                      <Button onClick={addAchievement} variant="outline" size="sm">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Achievement
-                      </Button>
-                    </div>
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-semibold flex items-center gap-2">
+                      <Target className="w-5 h-5" />
+                      Activities & Achievements
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                      Showcase your extracurricular activities and achievements
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                  <div className="flex gap-2">
+                    <Button onClick={addActivity} variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Activity
+                    </Button>
+                    <Button onClick={addAchievement} variant="outline" size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Achievement
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-6">
                   {/* Activities Section */}
                   <div>
                     <h3 className="text-lg font-medium mb-4">Activities</h3>
@@ -783,25 +778,25 @@ export default function ProfilePage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Preferences */}
           {activeSection === 'preferences' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-semibold flex items-center gap-2">
                     <Bell className="w-5 h-5" />
                     Notification Preferences
-                  </CardTitle>
-                  <CardDescription>
+                  </h2>
+                  <p className="text-muted-foreground mt-1">
                     Choose how you'd like to receive updates
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                  </p>
+                </div>
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <Label>Email Notifications</Label>
@@ -859,20 +854,19 @@ export default function ProfilePage() {
                       })}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="w-5 h-5" />
-                    Privacy Settings
-                  </CardTitle>
-                  <CardDescription>
-                    Control your data and privacy preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <div className="mt-8">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-semibold flex items-center gap-2">
+                      <Shield className="w-5 h-5" />
+                      Privacy Settings
+                    </h2>
+                    <p className="text-muted-foreground mt-1">
+                      Control your data and privacy preferences
+                    </p>
+                  </div>
+                  <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Profile Visibility</Label>
                     <Select
@@ -917,8 +911,9 @@ export default function ProfilePage() {
                       })}
                     />
                   </div>
-                </CardContent>
-              </Card>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
       </div>

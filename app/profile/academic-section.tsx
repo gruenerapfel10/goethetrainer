@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -208,29 +207,27 @@ export function AcademicSection({ profileData, setProfileData }: AcademicSection
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5" />
-              Academic Qualifications
-            </CardTitle>
-            <CardDescription>
-              Your academic results and qualifications
-            </CardDescription>
-          </div>
-          <Button 
-            onClick={addQualification}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Qualification
-          </Button>
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold flex items-center gap-2">
+            <GraduationCap className="w-5 h-5" />
+            Academic Qualifications
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            Your academic results and qualifications
+          </p>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+        <Button 
+          onClick={addQualification}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Add Qualification
+        </Button>
+      </div>
+      <div className="space-y-4">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b">
           <div className="space-y-2">
@@ -358,7 +355,7 @@ export function AcademicSection({ profileData, setProfileData }: AcademicSection
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
