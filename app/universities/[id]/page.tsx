@@ -149,11 +149,6 @@ export default function UniversityDetailPage() {
   };
 
   useEffect(() => {
-    // Get nationality from URL params
-    const urlParams = new URLSearchParams(window.location.search)
-    const nationalityParam = urlParams.get('nationality') || 'us'
-    setNationality(nationalityParam)
-    
     // Load individual university JSON file by ID
     fetch(`/${params.id}.json`)
       .then(res => {
@@ -171,6 +166,34 @@ export default function UniversityDetailPage() {
         setLoading(false)
       })
   }, [params.id])
+
+  // Load user's nationality preference from profile or URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const nationalityParam = urlParams.get('nationality')
+    
+    if (nationalityParam) {
+      // URL parameter takes priority
+      setNationality(nationalityParam)
+    } else if (user?.uid) {
+      // Load from user profile if no URL parameter
+      profileService.getProfile(user.uid)
+        .then(profile => {
+          if (profile?.nationality) {
+            setNationality(profile.nationality)
+          } else {
+            setNationality('us') // fallback if no saved nationality
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load user nationality preference:', err)
+          setNationality('us') // fallback on error
+        })
+    } else {
+      // No user logged in, default to 'us'
+      setNationality('us')
+    }
+  }, [user?.uid])
 
   // Listen for nationality changes from the sidebar
   useEffect(() => {

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '@/context/firebase-auth-context';
+import { profileService } from '@/lib/firebase/profile-service';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -60,10 +62,12 @@ export default function UniversitiesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applicationStatuses, setApplicationStatuses] = useState<Record<number, ApplicationStatus>>({});
+  const [userNationality, setUserNationality] = useState('us');
   const itemsPerPage = 50;
   const t = useTranslations();
   const router = useRouter();
   const locale = useLocale();
+  const { user } = useAuth();
 
   // Helper function to get university emblem path
   const getUniversityEmblemPath = (name: string) => {
@@ -103,6 +107,21 @@ export default function UniversitiesPage() {
         setLoading(false);
       });
   }, []);
+
+  // Load user's nationality preference
+  useEffect(() => {
+    if (user?.uid) {
+      profileService.getProfile(user.uid)
+        .then(profile => {
+          if (profile?.nationality) {
+            setUserNationality(profile.nationality);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load user nationality preference:', err);
+        });
+    }
+  }, [user?.uid]);
 
   const filteredUniversities = universities.filter(uni => {
     if (searchTerm) {
@@ -287,7 +306,7 @@ export default function UniversitiesPage() {
                 <tr 
                   key={`${university.rank}-${university.name}`}
                   className="hover:bg-muted/50 cursor-pointer group"
-                  onClick={() => router.push(`/universities/${university.id}?nationality=${requirementsCountryCode}`)}
+                  onClick={() => router.push(`/universities/${university.id}`)}
                 >
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
