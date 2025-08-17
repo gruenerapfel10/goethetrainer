@@ -4,6 +4,7 @@ import Script from 'next/script';
 import { useState, useEffect } from 'react';
 import { SearchModal } from '@/components/search-modal';
 import { AppSidebar } from '@/components/app-sidebar';
+import { ProfileProvider } from '@/context/profile-context';
 
 export default function ProfileLayout({
   children,
@@ -12,6 +13,12 @@ export default function ProfileLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false)
+  const [activeProfileSection, setActiveProfileSection] = useState('personal')
+  
+  // Sync the profile section state
+  const handleSetActiveProfileSection = (section: string) => {
+    setActiveProfileSection(section);
+  }
   
   const handleOpenSearchModal = () => {
     setIsSearchModalOpen(true)
@@ -40,13 +47,20 @@ export default function ProfileLayout({
         strategy="beforeInteractive"
       />
       
-      <AppSidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-        onOpenSearchModal={handleOpenSearchModal}
+      <ProfileProvider 
+        activeSection={activeProfileSection}
+        setActiveSection={handleSetActiveProfileSection}
       >
-        {children}
-      </AppSidebar>
+        <AppSidebar
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          onOpenSearchModal={handleOpenSearchModal}
+          activeProfileSection={activeProfileSection}
+          setActiveProfileSection={handleSetActiveProfileSection}
+        >
+          {children}
+        </AppSidebar>
+      </ProfileProvider>
 
       <SearchModal
         isOpen={isSearchModalOpen}

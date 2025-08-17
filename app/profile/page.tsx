@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from 'sonner';
 import { useAuth } from '@/context/firebase-auth-context';
+import { useProfile } from '@/context/profile-context';
 import { AcademicSection } from './academic-section';
 import { profileService, ProfileData as FirebaseProfileData } from '@/lib/firebase/profile-service';
 import { 
@@ -136,16 +137,16 @@ const countries = [
 export default function ProfilePage() {
   const t = useTranslations();
   const { user } = useAuth();
+  const { activeSection } = useProfile();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [activeSection, setActiveSection] = useState('personal');
   
   const [profileData, setProfileData] = useState<ProfileData>({
-    // Personal Information
+    // All fields start empty - will be populated from Firebase
     firstName: '',
     lastName: '',
     preferredName: '',
-    email: user?.email || '',
+    email: '',
     phone: '',
     dateOfBirth: '',
     nationality: '',
@@ -159,9 +160,9 @@ export default function ProfilePage() {
     
     // Academic Information
     currentSchool: '',
-    graduationYear: 2025,
+    graduationYear: new Date().getFullYear() + 1, // Current year + 1
     gpa: '',
-    gpaScale: '4.0',
+    gpaScale: '',
     classRank: '',
     classSize: '',
     intendedMajor: '',
@@ -174,20 +175,20 @@ export default function ProfilePage() {
     activities: [],
     achievements: [],
     
-    // Preferences
+    // Preferences - all defaults removed
     preferences: {
       notifications: {
-        email: true,
+        email: false,
         sms: false,
-        deadlineReminders: true,
-        applicationUpdates: true,
+        deadlineReminders: false,
+        applicationUpdates: false,
       },
       privacy: {
-        profileVisibility: 'private',
+        profileVisibility: '',
         shareDataWithPartners: false,
       },
       application: {
-        preferredApplicationSeason: 'fall',
+        preferredApplicationSeason: '',
         targetCountries: [],
         budgetRange: '',
       },
@@ -197,38 +198,87 @@ export default function ProfilePage() {
   // Load profile data when component mounts or user changes
   useEffect(() => {
     const loadProfile = async () => {
-      console.log('Loading profile for user:', user?.uid);
+      console.log('[ProfilePage] useEffect triggered');
+      console.log('[ProfilePage] User object:', user);
+      console.log('[ProfilePage] User UID:', user?.uid);
+      console.log('[ProfilePage] User email:', user?.email);
       
       if (!user?.uid) {
-        console.log('No user ID, stopping profile load');
+        console.log('[ProfilePage] No user ID, stopping profile load');
         setIsLoadingProfile(false);
         return;
       }
       
       try {
+        console.log('[ProfilePage] Starting profile load for user:', user.uid);
         setIsLoadingProfile(true);
+        
         const savedProfile = await profileService.getProfile(user.uid);
-        console.log('Loaded profile:', savedProfile);
+        console.log('[ProfilePage] Profile service response:', savedProfile);
         
         if (savedProfile) {
-          // Don't spread profileData here - it causes infinite loop
-          setProfileData(prev => ({
-            ...prev,
-            ...savedProfile,
-            email: savedProfile.email || user.email || '',
-          }));
+          console.log('[ProfilePage] Setting profile data from saved profile');
+          // Use ONLY Firebase data - no merging with defaults
+          setProfileData(savedProfile as ProfileData);
         } else {
-          // If no profile exists, at least set the email
-          console.log('No saved profile, creating new with email:', user.email);
-          setProfileData(prev => ({
-            ...prev,
-            email: user.email || ''
-          }));
+          // If no profile exists, create completely empty profile with just email
+          console.log('[ProfilePage] No saved profile found for user:', user.email);
+          // Keep the form completely empty except for email from auth
+          setProfileData({
+            firstName: '',
+            lastName: '',
+            preferredName: '',
+            email: user.email || '',
+            phone: '',
+            dateOfBirth: '',
+            nationality: '',
+            address: {
+              street: '',
+              city: '',
+              state: '',
+              zipCode: '',
+              country: '',
+            },
+            currentSchool: '',
+            graduationYear: new Date().getFullYear() + 1,
+            gpa: '',
+            gpaScale: '',
+            classRank: '',
+            classSize: '',
+            intendedMajor: '',
+            secondMajor: '',
+            testScores: [],
+            activities: [],
+            achievements: [],
+            preferences: {
+              notifications: {
+                email: false,
+                sms: false,
+                deadlineReminders: false,
+                applicationUpdates: false,
+              },
+              privacy: {
+                profileVisibility: '',
+                shareDataWithPartners: false,
+              },
+              application: {
+                preferredApplicationSeason: '',
+                targetCountries: [],
+                budgetRange: '',
+              },
+            },
+          });
         }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        toast.error('Failed to load profile data');
+      } catch (error: any) {
+        console.error('[ProfilePage] Error loading profile:', {
+          message: error.message,
+          code: error.code,
+          stack: error.stack,
+          details: error
+        });
+        toast.error(error.message || 'Failed to load profile data');
       } finally {
+        console.log('[ProfilePage] Setting loading to false');
         setIsLoadingProfile(false);
       }
     };
@@ -257,7 +307,7 @@ export default function ProfilePage() {
   const addTestScore = () => {
     setProfileData({
       ...profileData,
-      testScores: [...profileData.testScores, { type: 'SAT', score: '', date: '' }]
+      testScores: [...profileData.testScores, { type: '', score: '', date: '' }]
     });
   };
 
@@ -272,7 +322,7 @@ export default function ProfilePage() {
     setProfileData({
       ...profileData,
       activities: [...profileData.activities, { 
-        name: '', category: 'Other', description: '', yearsParticipated: '', 
+        name: '', category: '', description: '', yearsParticipated: '', 
         hoursPerWeek: '', position: '' 
       }]
     });
@@ -289,7 +339,7 @@ export default function ProfilePage() {
     setProfileData({
       ...profileData,
       achievements: [...profileData.achievements, { 
-        title: '', description: '', date: '', type: 'Other' 
+        title: '', description: '', date: '', type: '' 
       }]
     });
   };
@@ -301,13 +351,7 @@ export default function ProfilePage() {
     });
   };
 
-  const sections = [
-    { id: 'personal', label: 'Personal Info', icon: User },
-    { id: 'academic', label: 'Academic', icon: GraduationCap },
-    { id: 'tests', label: 'Test Scores', icon: Award },
-    { id: 'activities', label: 'Activities', icon: Target },
-    { id: 'preferences', label: 'Preferences', icon: Settings },
-  ];
+  // Profile sections are now managed by the AppSidebar
 
   // Show loading state while fetching profile
   if (isLoadingProfile) {
@@ -358,36 +402,8 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="flex gap-6">
-        {/* Sidebar Navigation */}
-        <div className="w-64 flex-shrink-0">
-          <Card>
-            <CardContent className="p-4">
-              <nav className="space-y-2">
-                {sections.map((section) => {
-                  const Icon = section.icon;
-                  return (
-                    <button
-                      key={section.id}
-                      onClick={() => setActiveSection(section.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                        activeSection === section.id
-                          ? 'bg-blue-600/10 text-blue-600 font-medium'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      {section.label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1">
+      {/* Main Content - Full Width */}
+      <div className="max-w-4xl mx-auto">
           {/* Personal Information */}
           {activeSection === 'personal' && (
             <div className="space-y-6">
@@ -905,7 +921,6 @@ export default function ProfilePage() {
               </Card>
             </div>
           )}
-        </div>
       </div>
     </div>
   );

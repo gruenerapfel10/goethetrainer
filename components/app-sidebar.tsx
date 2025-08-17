@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react';
-import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown } from "lucide-react"
+import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { MuaLogoVertical } from '@/airdrop3/components/mua-logo-vertical';
@@ -30,9 +30,11 @@ interface AppSidebarProps {
   setSidebarOpen: (open: boolean) => void;
   onOpenSearchModal: () => void;
   children: React.ReactNode;
+  activeProfileSection?: string;
+  setActiveProfileSection?: (section: string) => void;
 }
 
-export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, children }: AppSidebarProps) {
+export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, children, activeProfileSection, setActiveProfileSection }: AppSidebarProps) {
   const { user, logout } = useAuth()
   const { setTheme, theme } = useTheme()
   const t = useTranslations()
@@ -101,6 +103,18 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     // Default fallback
     return [{ label: 'Home', current: true }]
   }
+
+  // Profile sections configuration
+  const profileSections = [
+    { id: 'personal', label: 'Personal Info', icon: User },
+    { id: 'academic', label: 'Academic', icon: GraduationCap },
+    { id: 'tests', label: 'Test Scores', icon: Award },
+    { id: 'activities', label: 'Activities', icon: Target },
+    { id: 'preferences', label: 'Preferences', icon: Settings },
+  ];
+
+  // Check if we're on the profile page
+  const isProfilePage = pathname === '/profile'
 
   return (
     <div className="min-h-screen bg-background">
@@ -213,6 +227,29 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                   {sidebarOpen && <span className="truncate">{t('navigation.profile')}</span>}
                 </Button>
               </Link>
+              
+              {/* Profile Sub-sections */}
+              {isProfilePage && sidebarOpen && (
+                <div className="ml-4 space-y-1">
+                  {profileSections.map((section) => {
+                    const Icon = section.icon;
+                    return (
+                      <button
+                        key={section.id}
+                        onClick={() => setActiveProfileSection?.(section.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors text-sm ${
+                          activeProfileSection === section.id
+                            ? 'bg-blue-600/10 text-blue-600 font-medium border border-blue-500/20'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                      >
+                        <Icon className="w-3 h-3" />
+                        {section.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className={sidebarOpen ? "pl-1 pr-4" : "px-2"}>
                 <SidebarToggle 
                   isOpen={sidebarOpen} 

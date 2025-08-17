@@ -4,17 +4,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Allow users to read and write their own profile
     match /profiles/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId
-        && request.resource.data.keys().hasAll(['email'])
-        && request.resource.data.email is string;
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Add other rules for your existing collections here
-    // Example for chats collection if you have one:
-    // match /chats/{chatId} {
-    //   allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
-    // }
   }
 }

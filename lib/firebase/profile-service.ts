@@ -4,10 +4,24 @@ import {
   getDoc, 
   updateDoc,
   serverTimestamp,
-  DocumentData
+  DocumentData,
+  enableNetwork,
+  disableNetwork
 } from 'firebase/firestore';
 import { db } from './config';
 import { User } from 'firebase/auth';
+
+// Try to ensure Firestore network is enabled
+if (typeof window !== 'undefined') {
+  console.log('[ProfileService] Enabling Firestore network...');
+  enableNetwork(db)
+    .then(() => {
+      console.log('[ProfileService] Firestore network enabled successfully');
+    })
+    .catch((error) => {
+      console.error('[ProfileService] Failed to enable Firestore network:', error);
+    });
+}
 
 export interface ProfileData {
   // Personal Information
@@ -126,21 +140,50 @@ class ProfileService {
    */
   async getProfile(userId: string): Promise<ProfileData | null> {
     if (!userId) {
+      console.error('[ProfileService] getProfile: No userId provided');
       throw new Error('User ID is required to get profile');
     }
 
+    console.log('[ProfileService] Attempting to get profile for user:', userId);
+    console.log('[ProfileService] Firebase config:', {
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      hasApiKey: !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY
+    });
+
     try {
       const profileRef = doc(db, 'profiles', userId);
+      console.log('[ProfileService] Document reference created:', profileRef.path);
+      
       const profileSnap = await getDoc(profileRef);
+      console.log('[ProfileService] Document fetched. Exists:', profileSnap.exists());
       
       if (profileSnap.exists()) {
-        return profileSnap.data() as ProfileData;
+        const data = profileSnap.data() as ProfileData;
+        console.log('[ProfileService] Profile data retrieved:', { 
+          hasData: !!data,
+          fields: data ? Object.keys(data) : []
+        });
+        return data;
       }
       
+      console.log('[ProfileService] No profile found for user:', userId);
       return null;
-    } catch (error) {
-      console.error('Error getting profile:', error);
-      throw new Error('Failed to get profile data');
+    } catch (error: any) {
+      console.error('[ProfileService] Error getting profile:', {
+        message: error.message,
+        code: error.code,
+        details: error
+      });
+      
+      // More specific error handling
+      if (error.code === 'unavailable') {
+        throw new Error('Firebase is offline. Please check your internet connection and Firebase configuration.');
+      } else if (error.code === 'permission-denied') {
+        throw new Error('Permission denied. Please ensure you are logged in.');
+      } else {
+        throw new Error(`Failed to get profile: ${error.message}`);
+      }
     }
   }
 
