@@ -259,9 +259,16 @@
     "ru": {
         "requirements": {
             "academic_requirements": {
-                "diploma": "Gold Medal or equivalent",
-                "unified_state_exam": "top 5%",
-                "international_curriculum": "IB 42+ or A-levels A*A*A"
+                "diploma": "Attestat with Gold Medal (average 4.8-5.0)",
+                "unified_state_exam": {
+                    "mathematics": "90-100 points (profile level)",
+                    "russian_language": "85-95 points",
+                    "physics": "85-100 points",
+                    "chemistry": "85-95 points (if applicable)",
+                    "total_average": "90+ points across all subjects"
+                },
+                "international_curriculum": "IB 42+ or A-levels A*A*A in Mathematics and Sciences",
+                "olympiad_achievements": "National or International Olympiad medals highly valued"
             },
             "language_requirements": {
                 "english_proficiency": "required",

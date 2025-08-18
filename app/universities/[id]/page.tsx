@@ -289,7 +289,7 @@ export default function UniversityDetailPage() {
   return (
     <div className="relative min-h-screen">
       {/* Controls at top */}
-      <div className="relative z-20 px-4 py-3 bg-black/20 backdrop-blur-md border-b border-white/20">
+      <div className="relative z-20 px-4 py-3 bg-black/20 dark:bg-black/20 light:bg-white/30 backdrop-blur-md border-b border-white/20 dark:border-white/20 light:border-black/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             {university && (
@@ -304,23 +304,23 @@ export default function UniversityDetailPage() {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
-                <div className="text-white">
+                <div className="text-white dark:text-white light:text-black">
                   <div className="font-semibold text-sm">{university.name}</div>
-                  <div className="text-xs text-white/70">{university.country}</div>
+                  <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70">{university.country}</div>
                 </div>
               </div>
             )}
           </div>
           <div className="flex gap-3 items-center">
             <Link href="/universities">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 border-white/30 p-2">
+              <Button variant="ghost" size="sm" className="text-white dark:text-white light:text-black hover:bg-white/20 border-white/30 dark:border-white/30 light:border-black/30 p-2">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
             <Button className="bg-blue-600/80 backdrop-blur-sm hover:bg-blue-700/80 border border-blue-500/30">{t('university.applyNow')}</Button>
             <Button 
               variant="outline" 
-              className={`gap-2 text-white border-white/30 hover:bg-white/20 ${isStarred ? 'bg-yellow-500/20 border-yellow-400/40' : ''}`}
+              className={`gap-2 text-white dark:text-white light:text-black border-white/30 dark:border-white/30 light:border-black/30 hover:bg-white/20 ${isStarred ? 'bg-yellow-500/20 border-yellow-400/40' : ''}`}
               onClick={handleToggleStar}
               disabled={isStarring || !user}
             >
@@ -350,7 +350,7 @@ export default function UniversityDetailPage() {
           priority
         />
       )}
-      <div className="absolute inset-0 bg-black/40"></div>
+      <div className="absolute inset-0 bg-black/40 dark:bg-black/40 light:bg-black/20"></div>
 
       {/* Content Overlay */}
       <div className="relative z-10 h-full flex flex-col">
@@ -364,7 +364,7 @@ export default function UniversityDetailPage() {
               header={
                 <SwipeableWidget
                   title={
-                    <div className="flex items-center gap-3 text-white font-semibold">
+                    <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                       <Trophy className="h-5 w-5 text-blue-600" />
                       University Rankings
                     </div>
@@ -377,8 +377,8 @@ export default function UniversityDetailPage() {
                       content: (
                         <div className="text-center space-y-3">
                           <div className="text-6xl font-bold text-blue-600 mb-3 leading-none">#{university.rank}</div>
-                          <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.globalRank')}</div>
-                          <div className="text-xs text-white/50">QS World University Rankings</div>
+                          <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.globalRank')}</div>
+                          <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">QS World University Rankings</div>
                         </div>
                       )
                     },
@@ -388,9 +388,9 @@ export default function UniversityDetailPage() {
                       hasData: !!university.employer_reputation_rank,
                       content: (
                         <div className="text-center space-y-3">
-                          <div className="text-6xl font-bold text-white mb-3 leading-none">#{university.employer_reputation_rank}</div>
-                          <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.employer')} Reputation</div>
-                          <div className="text-xs text-white/50">Employer Survey Ranking</div>
+                          <div className="text-6xl font-bold text-white dark:text-white light:text-black mb-3 leading-none">#{university.employer_reputation_rank}</div>
+                          <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.employer')} Reputation</div>
+                          <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Employer Survey Ranking</div>
                         </div>
                       )
                     },
@@ -400,9 +400,9 @@ export default function UniversityDetailPage() {
                       hasData: !!university.academic_reputation_rank,
                       content: (
                         <div className="text-center space-y-3">
-                          <div className="text-6xl font-bold text-white mb-3 leading-none">#{university.academic_reputation_rank}</div>
-                          <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.academic')} Reputation</div>
-                          <div className="text-xs text-white/50">Academic Survey Ranking</div>
+                          <div className="text-6xl font-bold text-white dark:text-white light:text-black mb-3 leading-none">#{university.academic_reputation_rank}</div>
+                          <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.academic')} Reputation</div>
+                          <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Academic Survey Ranking</div>
                         </div>
                       )
                     }
@@ -418,7 +418,7 @@ export default function UniversityDetailPage() {
                 header={
                   <SwipeableWidget
                     title={
-                      <div className="flex items-center gap-3 text-white font-semibold">
+                      <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                         <Award className="h-5 w-5 text-blue-600" />
                         {t('university.academicRequirements')}
                       </div>
@@ -427,35 +427,35 @@ export default function UniversityDetailPage() {
                       // Grade Requirements View
                       {
                         id: 'grades',
-                        hasData: !!(getAcademicRequirements()?.gpa_minimum || getAcademicRequirements()?.class_12_percentage || getAcademicRequirements()?.a_levels || getAcademicRequirements()?.diploma),
+                        hasData: !!(getAcademicRequirements()?.gpa_minimum || getAcademicRequirements()?.class_12_percentage || getAcademicRequirements()?.a_levels || (getAcademicRequirements()?.diploma && (typeof getAcademicRequirements()?.diploma !== 'object' || getAcademicRequirements()?.diploma?.total_average))),
                         content: (
                           <div className="text-center space-y-3">
                             {getAcademicRequirements()?.gpa_minimum ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.gpa_minimum}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.gpaMinimum')}</div>
-                                <div className="text-xs text-white/50">US Students</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.gpa_minimum}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.gpaMinimum')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">US Students</div>
                               </>
                             ) : getAcademicRequirements()?.class_12_percentage ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.class_12_percentage}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.class12Percentage')}</div>
-                                <div className="text-xs text-white/50">Indian Students</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.class_12_percentage}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.class12Percentage')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Indian Students</div>
                               </>
                             ) : getAcademicRequirements()?.a_levels ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.a_levels}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.aLevels')}</div>
-                                <div className="text-xs text-white/50">UK Students</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.a_levels}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.aLevels')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">UK Students</div>
                               </>
                             ) : getAcademicRequirements()?.diploma ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.diploma}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.diploma')}</div>
-                                <div className="text-xs text-white/50">Russian Students</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{typeof getAcademicRequirements()?.diploma === 'object' ? JSON.stringify(getAcademicRequirements()?.diploma) : getAcademicRequirements()?.diploma}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.diploma')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Russian Students</div>
                               </>
                             ) : (
-                              <div className="text-white/70">No grade requirements</div>
+                              <div className="text-white/70 dark:text-white/70 light:text-black/70">No grade requirements</div>
                             )}
                           </div>
                         )
@@ -463,35 +463,39 @@ export default function UniversityDetailPage() {
                       // Standardized Tests View
                       {
                         id: 'tests',
-                        hasData: !!(getAcademicRequirements()?.sat_scores?.average || getAcademicRequirements()?.act_scores?.average || getAcademicRequirements()?.ib || getAcademicRequirements()?.unified_state_exam),
+                        hasData: !!(getAcademicRequirements()?.sat_scores?.average || getAcademicRequirements()?.act_scores?.average || getAcademicRequirements()?.ib || (getAcademicRequirements()?.unified_state_exam && (typeof getAcademicRequirements()?.unified_state_exam !== 'object' || getAcademicRequirements()?.unified_state_exam?.total_average))),
                         content: (
                           <div className="text-center space-y-3">
                             {getAcademicRequirements()?.sat_scores?.average ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.sat_scores?.average}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.satAverage')}</div>
-                                <div className="text-xs text-white/50">SAT Score</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.sat_scores?.average}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.satAverage')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">SAT Score</div>
                               </>
                             ) : getAcademicRequirements()?.act_scores?.average ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.act_scores?.average}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.actAverage')}</div>
-                                <div className="text-xs text-white/50">ACT Score</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.act_scores?.average}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.actAverage')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">ACT Score</div>
                               </>
                             ) : getAcademicRequirements()?.ib ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.ib}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.ibScore')}</div>
-                                <div className="text-xs text-white/50">IB Diploma</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getAcademicRequirements()?.ib}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.ibScore')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">IB Diploma</div>
                               </>
                             ) : getAcademicRequirements()?.unified_state_exam ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getAcademicRequirements()?.unified_state_exam}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.stateExam')}</div>
-                                <div className="text-xs text-white/50">Russian Exam</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">
+                                  {typeof getAcademicRequirements()?.unified_state_exam === 'object' ? 
+                                    getAcademicRequirements()?.unified_state_exam?.total_average || 'Score Required' : 
+                                    getAcademicRequirements()?.unified_state_exam}
+                                </div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.stateExam')}</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Russian Exam</div>
                               </>
                             ) : (
-                              <div className="text-white/70">No test requirements</div>
+                              <div className="text-white/70 dark:text-white/70 light:text-black/70">No test requirements</div>
                             )}
                           </div>
                         )
@@ -506,11 +510,14 @@ export default function UniversityDetailPage() {
                           getAcademicRequirements()?.ib,
                           getAcademicRequirements()?.class_12_percentage,
                           getAcademicRequirements()?.a_levels,
-                          getAcademicRequirements()?.unified_state_exam
+                          getAcademicRequirements()?.unified_state_exam ? 
+                            (typeof getAcademicRequirements()?.unified_state_exam === 'object' ? 
+                              getAcademicRequirements()?.unified_state_exam?.total_average : 
+                              getAcademicRequirements()?.unified_state_exam) : null
                         ].filter(Boolean).length >= 2,
                         content: (
                           <div className="text-center space-y-2">
-                            <div className="text-lg font-bold text-white mb-3">Requirements for {nationality.toUpperCase()}</div>
+                            <div className="text-lg font-bold text-white dark:text-white light:text-black mb-3">Requirements for {nationality.toUpperCase()}</div>
                             <div className="space-y-1 text-sm">
                               {getAcademicRequirements()?.gpa_minimum && (
                                 <div className="text-white/80">GPA: {getAcademicRequirements()?.gpa_minimum}</div>
@@ -546,7 +553,7 @@ export default function UniversityDetailPage() {
               header={
                 <SwipeableWidget
                   title={
-                    <div className="flex items-center gap-3 text-white font-semibold">
+                    <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                       <DollarSign className="h-5 w-5 text-blue-600" />
                       Tuition & Costs
                     </div>
@@ -559,18 +566,18 @@ export default function UniversityDetailPage() {
                         <div className="text-center space-y-3">
                           {university.tuition_2025_26?.international ? (
                             <>
-                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.international}</div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Annual Tuition</div>
-                              <div className="text-xs text-white/50">International Students</div>
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">{university.tuition_2025_26.international}</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Annual Tuition</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">International Students</div>
                             </>
                           ) : university.tuition_2025_26?.estimated ? (
                             <>
-                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.estimated}</div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Annual Tuition</div>
-                              <div className="text-xs text-white/50">Estimated</div>
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">{university.tuition_2025_26.estimated}</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Annual Tuition</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Estimated</div>
                             </>
                           ) : (
-                            <div className="text-white/70">No tuition data</div>
+                            <div className="text-white/70 dark:text-white/70 light:text-black/70">No tuition data</div>
                           )}
                         </div>
                       )
@@ -582,22 +589,22 @@ export default function UniversityDetailPage() {
                         <div className="text-center space-y-3">
                           {university.tuition_2025_26?.international ? (
                             <>
-                              <div className="text-4xl font-bold text-white">
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">
                                 ${(parseInt(university.tuition_2025_26.international.replace(/[$,]/g, '')) / 2).toLocaleString()}
                               </div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Per Semester</div>
-                              <div className="text-xs text-white/50">International Students</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Per Semester</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">International Students</div>
                             </>
                           ) : university.tuition_2025_26?.estimated ? (
                             <>
-                              <div className="text-4xl font-bold text-white">
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">
                                 ${(parseInt(university.tuition_2025_26.estimated.replace(/[$,]/g, '')) / 2).toLocaleString()}
                               </div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Per Semester</div>
-                              <div className="text-xs text-white/50">Estimated</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Per Semester</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Estimated</div>
                             </>
                           ) : (
-                            <div className="text-white/70">No tuition data</div>
+                            <div className="text-white/70 dark:text-white/70 light:text-black/70">No tuition data</div>
                           )}
                         </div>
                       )
@@ -609,18 +616,18 @@ export default function UniversityDetailPage() {
                         <div className="text-center space-y-3">
                           {university.tuition_2025_26?.total_cost ? (
                             <>
-                              <div className="text-4xl font-bold text-white">{university.tuition_2025_26.total_cost}</div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Total Cost</div>
-                              <div className="text-xs text-white/50">Including Living Expenses</div>
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">{university.tuition_2025_26.total_cost}</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Total Cost</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Including Living Expenses</div>
                             </>
                           ) : getScholarshipData()?.need_based?.average_award ? (
                             <>
-                              <div className="text-4xl font-bold text-white">{getScholarshipData().need_based.average_award}</div>
-                              <div className="text-sm text-white/70 uppercase tracking-wide">Average Aid</div>
-                              <div className="text-xs text-white/50">Need-based</div>
+                              <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getScholarshipData().need_based.average_award}</div>
+                              <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Average Aid</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Need-based</div>
                             </>
                           ) : (
-                            <div className="text-white/70">No total cost data</div>
+                            <div className="text-white/70 dark:text-white/70 light:text-black/70">No total cost data</div>
                           )}
                         </div>
                       )
@@ -634,31 +641,31 @@ export default function UniversityDetailPage() {
             {getApplicationData() && (
               <BentoGridItem
                 className=""
-                title={<span className="text-white font-semibold">{t('university.application')}</span>}
+                title={<span className="text-white dark:text-white light:text-black font-semibold">{t('university.application')}</span>}
                 description={
                   <div className="space-y-4 mt-3">
                     {university.acceptance_rate && (
                       <div>
-                        <div className="text-2xl font-bold text-white">{university.acceptance_rate}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.acceptanceRate')}</div>
+                        <div className="text-2xl font-bold text-white dark:text-white light:text-black">{university.acceptance_rate}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.acceptanceRate')}</div>
                       </div>
                     )}
                     {getApplicationData()?.letters_of_recommendation && (
                       <div>
-                        <div className="text-2xl font-bold text-white">{getApplicationData()?.letters_of_recommendation}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.recLetters')}</div>
+                        <div className="text-2xl font-bold text-white dark:text-white light:text-black">{getApplicationData()?.letters_of_recommendation}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.recLetters')}</div>
                       </div>
                     )}
                     {getApplicationData()?.interview && (
                       <div>
-                        <div className="text-lg font-bold text-white/90">{getApplicationData()?.interview}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.interview')}</div>
+                        <div className="text-lg font-bold text-white dark:text-white light:text-black/90">{getApplicationData()?.interview}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.interview')}</div>
                       </div>
                     )}
                     {getApplicationData()?.essays && Array.isArray(getApplicationData()?.essays) && (
                       <div>
-                        <div className="text-2xl font-bold text-white">{getApplicationData()?.essays.length}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.essaysRequired')}</div>
+                        <div className="text-2xl font-bold text-white dark:text-white light:text-black">{getApplicationData()?.essays.length}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.essaysRequired')}</div>
                       </div>
                     )}
                   </div>
@@ -673,7 +680,7 @@ export default function UniversityDetailPage() {
                 header={
                   <SwipeableWidget
                     title={
-                      <div className="flex items-center gap-3 text-white font-semibold">
+                      <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                         <Globe className="h-5 w-5 text-blue-600" />
                         {t('university.language')}
                       </div>
@@ -685,9 +692,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getLanguageRequirements()?.minimum_scores?.ielts,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-5xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.ielts}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.ieltsMinimum')}</div>
-                            <div className="text-xs text-white/50">International English Language Testing System</div>
+                            <div className="text-5xl font-bold text-white dark:text-white light:text-black">{getLanguageRequirements()?.minimum_scores?.ielts}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.ieltsMinimum')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">International English Language Testing System</div>
                           </div>
                         )
                       },
@@ -697,9 +704,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getLanguageRequirements()?.minimum_scores?.toefl,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-5xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.toefl}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.toeflMinimum')}</div>
-                            <div className="text-xs text-white/50">Test of English as a Foreign Language</div>
+                            <div className="text-5xl font-bold text-white dark:text-white light:text-black">{getLanguageRequirements()?.minimum_scores?.toefl}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.toeflMinimum')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Test of English as a Foreign Language</div>
                           </div>
                         )
                       },
@@ -709,9 +716,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getLanguageRequirements()?.minimum_scores?.duolingo,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-5xl font-bold text-white">{getLanguageRequirements()?.minimum_scores?.duolingo}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.duolingo')}</div>
-                            <div className="text-xs text-white/50">Duolingo English Test</div>
+                            <div className="text-5xl font-bold text-white dark:text-white light:text-black">{getLanguageRequirements()?.minimum_scores?.duolingo}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.duolingo')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Duolingo English Test</div>
                           </div>
                         )
                       },
@@ -721,9 +728,9 @@ export default function UniversityDetailPage() {
                         hasData: getLanguageRequirements()?.english_proficiency === 'native_or_equivalent',
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-3xl font-bold text-white">{t('university.notRequired')}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.forUSStudents')}</div>
-                            <div className="text-xs text-white/50">Native English Speakers</div>
+                            <div className="text-3xl font-bold text-white dark:text-white light:text-black">{t('university.notRequired')}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.forUSStudents')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Native English Speakers</div>
                           </div>
                         )
                       },
@@ -733,9 +740,9 @@ export default function UniversityDetailPage() {
                         hasData: (!getLanguageRequirements()?.minimum_scores || Object.keys(getLanguageRequirements()?.minimum_scores).length === 0) && getLanguageRequirements()?.english_proficiency !== 'native_or_equivalent',
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-2xl font-bold text-white">{t('university.checkWebsite')}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.forRequirements')}</div>
-                            <div className="text-xs text-white/50">Visit University Website</div>
+                            <div className="text-2xl font-bold text-white dark:text-white light:text-black">{t('university.checkWebsite')}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.forRequirements')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Visit University Website</div>
                           </div>
                         )
                       }
@@ -752,7 +759,7 @@ export default function UniversityDetailPage() {
                 header={
                   <SwipeableWidget
                     title={
-                      <div className="flex items-center gap-3 text-white font-semibold">
+                      <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                         <Clock className="h-5 w-5 text-blue-600" />
                         {t('university.importantDeadlines')}
                       </div>
@@ -763,9 +770,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getDeadlinesData()?.early_action,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.early_action}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.earlyAction')}</div>
-                            <div className="text-xs text-white/50">Application Deadline</div>
+                            <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getDeadlinesData()?.early_action}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.earlyAction')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Application Deadline</div>
                           </div>
                         )
                       },
@@ -774,9 +781,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getDeadlinesData()?.regular_decision,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.regular_decision}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.regularDecision')}</div>
-                            <div className="text-xs text-white/50">Application Deadline</div>
+                            <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getDeadlinesData()?.regular_decision}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.regularDecision')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Application Deadline</div>
                           </div>
                         )
                       },
@@ -785,9 +792,9 @@ export default function UniversityDetailPage() {
                         hasData: !!getDeadlinesData()?.international_deadline,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-4xl font-bold text-white">{getDeadlinesData()?.international_deadline}</div>
-                            <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.international')}</div>
-                            <div className="text-xs text-white/50">Application Deadline</div>
+                            <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getDeadlinesData()?.international_deadline}</div>
+                            <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.international')}</div>
+                            <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Application Deadline</div>
                           </div>
                         )
                       }
@@ -804,7 +811,7 @@ export default function UniversityDetailPage() {
                 header={
                   <SwipeableWidget
                     title={
-                      <div className="flex items-center gap-3 text-white font-semibold">
+                      <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                         <BadgeDollarSign className="h-5 w-5 text-blue-600" />
                         {t('university.scholarshipOpportunities')}
                       </div>
@@ -816,15 +823,15 @@ export default function UniversityDetailPage() {
                         hasData: !!getScholarshipData()?.need_based?.available,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-lg font-bold text-white mb-3">{t('university.needBasedAid')}</div>
+                            <div className="text-lg font-bold text-white dark:text-white light:text-black mb-3">{t('university.needBasedAid')}</div>
                             {getScholarshipData()?.need_based?.average_award && (
                               <>
-                                <div className="text-4xl font-bold text-white">{getScholarshipData()?.need_based?.average_award}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">{t('university.average')} Award</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getScholarshipData()?.need_based?.average_award}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.average')} Award</div>
                               </>
                             )}
                             {getScholarshipData()?.need_based?.percentage_receiving && (
-                              <div className="text-xs text-white/50">{getScholarshipData()?.need_based?.percentage_receiving} of students receive aid</div>
+                              <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">{getScholarshipData()?.need_based?.percentage_receiving} of students receive aid</div>
                             )}
                           </div>
                         )
@@ -835,18 +842,18 @@ export default function UniversityDetailPage() {
                         hasData: !!getScholarshipData()?.merit_based?.available,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-lg font-bold text-white mb-3">{t('university.meritBased')}</div>
+                            <div className="text-lg font-bold text-white dark:text-white light:text-black mb-3">{t('university.meritBased')}</div>
                             {getScholarshipData()?.merit_based?.scholarships?.length > 0 ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getScholarshipData()?.merit_based?.scholarships?.length}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Merit Scholarships</div>
-                                <div className="text-xs text-white/50">Available Programs</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getScholarshipData()?.merit_based?.scholarships?.length}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Merit Scholarships</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Available Programs</div>
                               </>
                             ) : (
                               <>
-                                <div className="text-2xl font-bold text-white">Available</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Merit-Based Aid</div>
-                                <div className="text-xs text-white/50">Check university website</div>
+                                <div className="text-2xl font-bold text-white dark:text-white light:text-black">Available</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Merit-Based Aid</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Check university website</div>
                               </>
                             )}
                           </div>
@@ -858,20 +865,20 @@ export default function UniversityDetailPage() {
                         hasData: !!getScholarshipData()?.work_study?.available,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-lg font-bold text-white mb-3">{t('university.workStudy')}</div>
+                            <div className="text-lg font-bold text-white dark:text-white light:text-black mb-3">{t('university.workStudy')}</div>
                             {getScholarshipData()?.work_study?.hourly_wage ? (
                               <>
-                                <div className="text-4xl font-bold text-white">{getScholarshipData()?.work_study?.hourly_wage}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Hourly Wage</div>
+                                <div className="text-4xl font-bold text-white dark:text-white light:text-black">{getScholarshipData()?.work_study?.hourly_wage}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Hourly Wage</div>
                                 {getScholarshipData()?.work_study?.typical_hours && (
-                                  <div className="text-xs text-white/50">{getScholarshipData()?.work_study?.typical_hours} per week</div>
+                                  <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">{getScholarshipData()?.work_study?.typical_hours} per week</div>
                                 )}
                               </>
                             ) : (
                               <>
-                                <div className="text-2xl font-bold text-white">Available</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Work-Study Program</div>
-                                <div className="text-xs text-white/50">On-campus employment</div>
+                                <div className="text-2xl font-bold text-white dark:text-white light:text-black">Available</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Work-Study Program</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">On-campus employment</div>
                               </>
                             )}
                           </div>
@@ -883,18 +890,18 @@ export default function UniversityDetailPage() {
                         hasData: !!getScholarshipData()?.research_opportunities?.undergraduate_research,
                         content: (
                           <div className="text-center space-y-3">
-                            <div className="text-lg font-bold text-white mb-3">{t('university.researchOpportunities')}</div>
+                            <div className="text-lg font-bold text-white dark:text-white light:text-black mb-3">{t('university.researchOpportunities')}</div>
                             {getScholarshipData()?.research_opportunities?.funding_available ? (
                               <>
-                                <div className="text-2xl font-bold text-white">{getScholarshipData()?.research_opportunities?.funding_available}</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Research Funding</div>
-                                <div className="text-xs text-white/50">Undergraduate research</div>
+                                <div className="text-2xl font-bold text-white dark:text-white light:text-black">{getScholarshipData()?.research_opportunities?.funding_available}</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Research Funding</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Undergraduate research</div>
                               </>
                             ) : (
                               <>
-                                <div className="text-2xl font-bold text-white">Available</div>
-                                <div className="text-sm text-white/70 uppercase tracking-wide">Research Programs</div>
-                                <div className="text-xs text-white/50">Paid positions available</div>
+                                <div className="text-2xl font-bold text-white dark:text-white light:text-black">Available</div>
+                                <div className="text-sm text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">Research Programs</div>
+                                <div className="text-xs text-white/50 dark:text-white/50 light:text-black/50">Paid positions available</div>
                               </>
                             )}
                           </div>
@@ -911,7 +918,7 @@ export default function UniversityDetailPage() {
               <BentoGridItem
                 className="md:col-span-2"
                 title={
-                  <div className="flex items-center gap-3 text-white font-semibold">
+                  <div className="flex items-center gap-3 text-white dark:text-white light:text-black font-semibold">
                     <FileText className="h-5 w-5 text-blue-600" />
                     {t('university.visaRequirements')}
                   </div>
@@ -920,26 +927,26 @@ export default function UniversityDetailPage() {
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     {getVisaData()?.visa_type && (
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-white">{getVisaData()?.visa_type}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.visaType')}</div>
+                        <div className="text-lg font-bold text-white dark:text-white light:text-black">{getVisaData()?.visa_type}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.visaType')}</div>
                       </div>
                     )}
                     {getVisaData()?.visa_application_fee && (
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-white">{getVisaData()?.visa_application_fee}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.applicationFee')}</div>
+                        <div className="text-lg font-bold text-white dark:text-white light:text-black">{getVisaData()?.visa_application_fee}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.applicationFee')}</div>
                       </div>
                     )}
                     {getVisaData()?.financial_proof_required && (
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-white">{getVisaData()?.financial_proof_required}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.financialProof')}</div>
+                        <div className="text-lg font-bold text-white dark:text-white light:text-black">{getVisaData()?.financial_proof_required}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.financialProof')}</div>
                       </div>
                     )}
                     {getVisaData()?.success_rate && (
                       <div className="space-y-1">
-                        <div className="text-lg font-bold text-white">{getVisaData()?.success_rate}</div>
-                        <div className="text-xs text-white/70 uppercase tracking-wide">{t('university.successRate')}</div>
+                        <div className="text-lg font-bold text-white dark:text-white light:text-black">{getVisaData()?.success_rate}</div>
+                        <div className="text-xs text-white/70 dark:text-white/70 light:text-black/70 uppercase tracking-wide">{t('university.successRate')}</div>
                       </div>
                     )}
                   </div>

@@ -75,7 +75,7 @@ export function SwipeableWidget({ views, className = '', title }: SwipeableWidge
           </div>
         )}
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-white/70 text-center">No data available</div>
+          <div className="text-white/70 dark:text-white/70 light:text-black/70 text-center">No data available</div>
         </div>
       </div>
     );

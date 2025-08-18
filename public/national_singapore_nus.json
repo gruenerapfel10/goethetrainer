@@ -191,89 +191,16 @@
     "ru": {
         "requirements": {
             "academic_requirements": {
-                "diploma": "Gold Medal or equivalent",
-                "unified_state_exam": "top 5%",
-                "international_curriculum": "IB 38+ or A-levels AAA"
-            },
-            "language_requirements": {
-                "english_proficiency": "required",
-                "tests_required": [
-                    "TOEFL",
-                    "IELTS"
-                ],
-                "minimum_scores": {
-                    "toefl": 100,
-                    "ielts": 6.5
-                }
-            },
-            "application_requirements": {
-                "essays": [
-                    "personal_statement"
-                ],
-                "letters_of_recommendation": 2,
-                "interview": "may_be_required",
-                "portfolio": "subject_dependent"
-            },
-            "deadlines": {
-                "international_deadline": "February 26, 2026",
-                "decision_notification": "April 2026",
-                "enrollment_deadline": "June 30, 2026"
-            },
-            "visa_requirements": {
-                "visa_type": "Student Pass",
-                "processing_time": "2-4 weeks",
-                "visa_application_fee": "SGD 90",
-                "financial_proof_required": "SGD 30,000 per year",
-                "medical_examination": "Required"
-            },
-            "additional_requirements": [
-                "visa_requirements",
-                "financial_proof"
-            ]
-        },
-        "scholarship_opportunities": {
-            "need_based": {
-                "available": true,
-                "percentage_receiving": "30%",
-                "average_award": "S$20,000",
-                "income_threshold": "family income under $50,000 for full aid",
-                "application_required": true,
-                "additional_forms": [
-                    "International Student Financial Aid Application"
-                ]
-            },
-            "merit_based": {
-                "available": true,
-                "scholarships": [
-                    "Global Merit Scholarship",
-                    "President's Scholarship"
-                ],
-                "description": "Comprehensive scholarships covering tuition and living costs"
-            },
-            "international_specific": {
-                "available": true,
-                "description": "Special support for students from developing countries",
-                "additional_requirements": [
-                    "academic transcripts",
-                    "financial documentation"
-                ]
-            },
-            "external_scholarships": {
-                "government_programs": [
-                    "Singapore Government Scholarships"
-                ],
-                "private_foundations": [
-                    "various regional foundations"
-                ]
-            }
-        }
-    },
-    "ru": {
-        "requirements": {
-            "academic_requirements": {
-                "diploma": "Gold Medal or equivalent",
-                "unified_state_exam": "top 5%",
-                "international_curriculum": "IB 38+ or A-levels AAA"
+                "diploma": "Attestat with distinction (average 4.6-5.0)",
+                "unified_state_exam": {
+                    "mathematics": "80-95 points (profile level)",
+                    "russian_language": "75-88 points",
+                    "physics": "78-92 points",
+                    "chemistry": "78-90 points (for relevant programs)",
+                    "total_average": "80+ points across all subjects"
+                },
+                "international_curriculum": "IB 38+ or A-levels AAA",
+                "competitive_programs": "Higher scores required for Medicine, Law, and Engineering"
             },
             "language_requirements": {
                 "english_proficiency": "required",

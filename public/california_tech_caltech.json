@@ -186,9 +186,16 @@
     "ru": {
         "requirements": {
             "academic_requirements": {
-                "diploma": "Gold Medal or equivalent",
-                "unified_state_exam": "top 2%",
-                "international_curriculum": "IB 42+ with HL Mathematics and Sciences"
+                "diploma": "Attestat with Gold Medal (average 4.9-5.0)",
+                "unified_state_exam": {
+                    "mathematics": "92-100 points (profile level)",
+                    "russian_language": "88-95 points",
+                    "physics": "90-100 points",
+                    "chemistry": "88-100 points (for chemistry/materials programs)",
+                    "total_average": "93+ points across all subjects"
+                },
+                "international_curriculum": "IB 42+ with HL Mathematics and Sciences",
+                "exceptional_standards": "Among the highest academic requirements globally for STEM excellence"
             },
             "language_requirements": {
                 "english_proficiency": "required",

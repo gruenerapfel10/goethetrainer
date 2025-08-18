@@ -157,9 +157,16 @@
     "ru": {
         "requirements": {
             "academic_requirements": {
-                "diploma": "Gold Medal or equivalent",
-                "unified_state_exam": "top 10%",
-                "international_curriculum": "IB 38+ or A-levels AAA"
+                "diploma": "Attestat with Gold Medal (average 4.8-5.0)",
+                "unified_state_exam": {
+                    "mathematics": "82-95 points (profile level)",
+                    "russian_language": "78-90 points",
+                    "physics": "82-95 points",
+                    "chemistry": "80-90 points (if applicable)",
+                    "total_average": "82+ points across all subjects"
+                },
+                "international_curriculum": "IB 38+ or A-levels AAA",
+                "subject_specific_requirements": "Strong emphasis on STEM subjects for engineering programs"
             },
             "language_requirements": {
                 "english_proficiency": "required",
