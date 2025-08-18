@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MoreHorizontal, MapPin } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MapPin, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
@@ -52,6 +52,9 @@ interface Degree {
 
 type ApplicationStatus = 'not_applied' | 'applied' | 'accepted' | 'rejected';
 
+type SortField = 'rank' | 'name' | 'country' | 'employer_reputation_rank' | 'academic_reputation_rank';
+type SortOrder = 'asc' | 'desc';
+
 export default function UniversitiesPage() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [degrees, setDegrees] = useState<Degree[]>([]);
@@ -63,6 +66,8 @@ export default function UniversitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [applicationStatuses, setApplicationStatuses] = useState<Record<number, ApplicationStatus>>({});
   const [userNationality, setUserNationality] = useState('us');
+  const [sortField, setSortField] = useState<SortField>('rank');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
   const itemsPerPage = 50;
   const t = useTranslations();
   const router = useRouter();
@@ -123,37 +128,97 @@ export default function UniversitiesPage() {
     }
   }, [user?.uid]);
 
-  const filteredUniversities = universities.filter(uni => {
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = uni.name.toLowerCase().includes(searchLower) ||
-                           uni.country.toLowerCase().includes(searchLower);
-      if (!matchesSearch) return false;
+  // Handle sorting
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
 
-    if (selectedCountry !== 'all' && uni.country !== selectedCountry) {
-      return false;
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ChevronsUpDown className="ml-1 h-4 w-4 text-muted-foreground" />;
     }
+    return sortOrder === 'asc' 
+      ? <ChevronUp className="ml-1 h-4 w-4 text-foreground" />
+      : <ChevronDown className="ml-1 h-4 w-4 text-foreground" />;
+  };
 
-    if (rankFilter !== 'all') {
-      switch (rankFilter) {
-        case 'top-50':
-          return uni.rank <= 50;
-        case 'top-100':
-          return uni.rank <= 100;
-        case '100-plus':
-          return uni.rank > 100;
-        default:
-          return true;
+  const sortedAndFilteredUniversities = universities
+    .filter(uni => {
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = uni.name.toLowerCase().includes(searchLower) ||
+                             uni.country.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
       }
-    }
 
-    return true;
-  });
+      if (selectedCountry !== 'all' && uni.country !== selectedCountry) {
+        return false;
+      }
 
-  const totalPages = Math.ceil(filteredUniversities.length / itemsPerPage);
+      if (rankFilter !== 'all') {
+        switch (rankFilter) {
+          case 'top-50':
+            return uni.rank <= 50;
+          case 'top-100':
+            return uni.rank <= 100;
+          case '100-plus':
+            return uni.rank > 100;
+          default:
+            return true;
+        }
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortField) {
+        case 'rank':
+          aValue = a.rank;
+          bValue = b.rank;
+          break;
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'country':
+          aValue = a.country.toLowerCase();
+          bValue = b.country.toLowerCase();
+          break;
+        case 'employer_reputation_rank':
+          aValue = a.employer_reputation_rank;
+          bValue = b.employer_reputation_rank;
+          break;
+        case 'academic_reputation_rank':
+          aValue = a.academic_reputation_rank;
+          bValue = b.academic_reputation_rank;
+          break;
+        default:
+          return 0;
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortOrder === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        return sortOrder === 'asc' 
+          ? (aValue as number) - (bValue as number)
+          : (bValue as number) - (aValue as number);
+      }
+    });
+
+  const totalPages = Math.ceil(sortedAndFilteredUniversities.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUniversities = filteredUniversities.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedUniversities = sortedAndFilteredUniversities.slice(startIndex, startIndex + itemsPerPage);
 
   const countries = Array.from(new Set(universities.map(u => u.country))).sort();
   
@@ -206,19 +271,9 @@ export default function UniversitiesPage() {
     <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold text-foreground mb-2">Universities</h1>
-              <p className="text-muted-foreground">{universities.length} universities • {countries.length} countries</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Requirements for:</span>
-              <Badge variant="secondary" className="text-xs">
-                {requirementsCountryCode === 'us' && '🇺🇸 US Nationals'}
-                {requirementsCountryCode === 'gb' && '🇬🇧 UK/EU Nationals'}
-                {requirementsCountryCode === 'ru' && '🇷🇺 Russian Nationals'}
-              </Badge>
-            </div>
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground mb-2">Universities</h1>
+            <p className="text-muted-foreground">{universities.length} universities • {countries.length} countries</p>
           </div>
         </div>
 
@@ -278,26 +333,66 @@ export default function UniversitiesPage() {
         {/* Results count */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
-            {filteredUniversities.length} results
+            {sortedAndFilteredUniversities.length} results
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {startIndex + 1}–{Math.min(startIndex + itemsPerPage, filteredUniversities.length)} of {filteredUniversities.length}
+              {startIndex + 1}–{Math.min(startIndex + itemsPerPage, sortedAndFilteredUniversities.length)} of {sortedAndFilteredUniversities.length}
             </span>
           </div>
         </div>
 
         {/* Table */}
         <div className="border border-border rounded-lg overflow-hidden">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">Rank</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">University</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">Country</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">Status</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">Employer Rep</th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">Academic Rep</th>
+                <th className="w-24 text-left py-3 px-4 font-medium text-foreground text-sm">
+                  <button 
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('rank')}
+                  >
+                    Rank
+                    {getSortIcon('rank')}
+                  </button>
+                </th>
+                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">
+                  <button 
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('name')}
+                  >
+                    University
+                    {getSortIcon('name')}
+                  </button>
+                </th>
+                <th className="w-48 text-left py-3 px-4 font-medium text-foreground text-sm">
+                  <button 
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('country')}
+                  >
+                    Country
+                    {getSortIcon('country')}
+                  </button>
+                </th>
+                <th className="w-24 text-left py-3 px-4 font-medium text-foreground text-sm">Status</th>
+                <th className="w-32 text-left py-3 px-4 font-medium text-foreground text-sm">
+                  <button 
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('employer_reputation_rank')}
+                  >
+                    Employer Rep
+                    {getSortIcon('employer_reputation_rank')}
+                  </button>
+                </th>
+                <th className="w-32 text-left py-3 px-4 font-medium text-foreground text-sm">
+                  <button 
+                    className="flex items-center hover:text-foreground transition-colors"
+                    onClick={() => handleSort('academic_reputation_rank')}
+                  >
+                    Academic Rep
+                    {getSortIcon('academic_reputation_rank')}
+                  </button>
+                </th>
                 <th className="w-8"></th>
               </tr>
             </thead>
@@ -309,13 +404,13 @@ export default function UniversitiesPage() {
                   onClick={() => router.push(`/universities/${university.id}`)}
                 >
                   <td className="py-4 px-4">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <Image
                         src={getUniversityEmblemPath(university.name)}
                         alt={`${university.name} emblem`}
-                        width={24}
-                        height={24}
-                        className="object-contain"
+                        width={20}
+                        height={20}
+                        className="object-contain flex-shrink-0"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
@@ -324,12 +419,14 @@ export default function UniversitiesPage() {
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <div className="font-medium text-foreground">{university.name}</div>
+                    <div className="font-medium text-foreground truncate" title={university.name}>
+                      {university.name}
+                    </div>
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{university.country}</span>
+                      <span className="truncate" title={university.country}>{university.country}</span>
                     </div>
                   </td>
                   <td className="py-4 px-4">
@@ -405,7 +502,7 @@ export default function UniversitiesPage() {
         )}
 
         {/* Empty state */}
-        {filteredUniversities.length === 0 && (
+        {sortedAndFilteredUniversities.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No universities found</p>
             <Button 
