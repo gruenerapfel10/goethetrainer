@@ -41,7 +41,6 @@ export function MatrixRainBackground() {
             className="flex flex-col font-mono uppercase text-white/20"
             style={{
               fontSize: `${FONT_SIZE}px`,
-              animation: `fall ${40 + Math.random() * 20}s linear -${Math.random() * 60}s infinite`,
             }}
           >
             {chars.map((char, j) => (
@@ -52,6 +51,8 @@ export function MatrixRainBackground() {
           </div>
         ))}
       </div>
+      {/* Vignette overlay */}
+      <div className="absolute inset-0 bg-radial-vignette"></div>
     </div>
   )
 }

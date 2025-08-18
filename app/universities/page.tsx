@@ -268,17 +268,18 @@ export default function UniversitiesPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="h-screen flex flex-col overflow-hidden">
+      <div className="flex-none p-4 max-w-7xl mx-auto w-full">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div>
-            <h1 className="text-3xl font-semibold text-foreground mb-2">Universities</h1>
+            <h1 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">Universities</h1>
             <p className="text-muted-foreground">{universities.length} universities • {countries.length} countries</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-4 mb-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -290,7 +291,7 @@ export default function UniversitiesPage() {
           </div>
           
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-40 lg:w-48">
               <SelectValue placeholder="Country" />
             </SelectTrigger>
             <SelectContent>
@@ -304,7 +305,7 @@ export default function UniversitiesPage() {
           </Select>
 
           <Select value={rankFilter} onValueChange={setRankFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-32 lg:w-40">
               <SelectValue placeholder="Ranking" />
             </SelectTrigger>
             <SelectContent>
@@ -331,7 +332,7 @@ export default function UniversitiesPage() {
         </div>
 
         {/* Results count */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
           <p className="text-sm text-muted-foreground">
             {sortedAndFilteredUniversities.length} results
           </p>
@@ -341,13 +342,15 @@ export default function UniversitiesPage() {
             </span>
           </div>
         </div>
+      </div>
 
-        {/* Table */}
+      {/* Table Container - scrollable */}
+      <div className="flex-1 overflow-auto px-4 max-w-7xl mx-auto w-full">
         <div className="border border-border rounded-lg overflow-hidden">
           <table className="w-full table-fixed">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="w-24 text-left py-3 px-4 font-medium text-foreground text-sm">
+                <th className="w-16 lg:w-24 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('rank')}
@@ -356,7 +359,7 @@ export default function UniversitiesPage() {
                     {getSortIcon('rank')}
                   </button>
                 </th>
-                <th className="text-left py-3 px-4 font-medium text-foreground text-sm">
+                <th className="text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('name')}
@@ -365,7 +368,7 @@ export default function UniversitiesPage() {
                     {getSortIcon('name')}
                   </button>
                 </th>
-                <th className="w-48 text-left py-3 px-4 font-medium text-foreground text-sm">
+                <th className="w-32 lg:w-48 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('country')}
@@ -374,26 +377,26 @@ export default function UniversitiesPage() {
                     {getSortIcon('country')}
                   </button>
                 </th>
-                <th className="w-24 text-left py-3 px-4 font-medium text-foreground text-sm">Status</th>
-                <th className="w-32 text-left py-3 px-4 font-medium text-foreground text-sm">
+                <th className="w-16 lg:w-24 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">Status</th>
+                <th className="w-20 lg:w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden md:table-cell">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('employer_reputation_rank')}
                   >
-                    Employer Rep
+                    Emp Rep
                     {getSortIcon('employer_reputation_rank')}
                   </button>
                 </th>
-                <th className="w-32 text-left py-3 px-4 font-medium text-foreground text-sm">
+                <th className="w-20 lg:w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden lg:table-cell">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('academic_reputation_rank')}
                   >
-                    Academic Rep
+                    Acad Rep
                     {getSortIcon('academic_reputation_rank')}
                   </button>
                 </th>
-                <th className="w-8"></th>
+                <th className="w-8 hidden sm:table-cell"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -403,44 +406,46 @@ export default function UniversitiesPage() {
                   className="hover:bg-muted/50 cursor-pointer group"
                   onClick={() => router.push(`/universities/${university.id}`)}
                 >
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2">
+                  <td className="py-2 lg:py-4 px-2 lg:px-4">
+                    <div className="flex items-center gap-1 lg:gap-2">
                       <Image
                         src={getUniversityEmblemPath(university.name)}
                         alt={`${university.name} emblem`}
-                        width={20}
-                        height={20}
-                        className="object-contain flex-shrink-0"
+                        width={16}
+                        height={16}
+                        className="object-contain flex-shrink-0 lg:w-5 lg:h-5"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
                         }}
                       />
-                      <span className="font-mono text-sm text-foreground">#{university.rank}</span>
+                      <span className="font-mono text-xs lg:text-sm text-foreground">#{university.rank}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="font-medium text-foreground truncate" title={university.name}>
+                  <td className="py-2 lg:py-4 px-2 lg:px-4">
+                    <div className="font-medium text-xs lg:text-sm text-foreground truncate" title={university.name}>
                       {university.name}
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate" title={university.country}>{university.country}</span>
+                  <td className="py-2 lg:py-4 px-2 lg:px-4">
+                    <div className="flex items-center gap-1 lg:gap-2 text-muted-foreground">
+                      <MapPin className="h-2 w-2 lg:h-3 lg:w-3 flex-shrink-0" />
+                      <span className="truncate text-xs lg:text-sm" title={university.country}>{university.country}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4">
-                    {getStatusBadge(applicationStatuses[university.rank])}
+                  <td className="py-2 lg:py-4 px-2 lg:px-4">
+                    <div className="scale-75 lg:scale-100 origin-left">
+                      {getStatusBadge(applicationStatuses[university.rank])}
+                    </div>
                   </td>
-                  <td className="py-4 px-4">
-                    <span className="font-mono text-sm text-muted-foreground">#{university.employer_reputation_rank}</span>
+                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden md:table-cell">
+                    <span className="font-mono text-xs lg:text-sm text-muted-foreground">#{university.employer_reputation_rank}</span>
                   </td>
-                  <td className="py-4 px-4">
-                    <span className="font-mono text-sm text-muted-foreground">#{university.academic_reputation_rank}</span>
+                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden lg:table-cell">
+                    <span className="font-mono text-xs lg:text-sm text-muted-foreground">#{university.academic_reputation_rank}</span>
                   </td>
-                  <td className="py-4 px-4">
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
-                      <MoreHorizontal className="h-4 w-4" />
+                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden sm:table-cell">
+                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 scale-75 lg:scale-100">
+                      <MoreHorizontal className="h-3 w-3 lg:h-4 lg:w-4" />
                     </Button>
                   </td>
                 </tr>
@@ -448,20 +453,22 @@ export default function UniversitiesPage() {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Pagination */}
+      {/* Pagination - fixed at bottom */}
+      <div className="flex-none border-t bg-background px-4 py-3 max-w-7xl mx-auto w-full">
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex items-center justify-between">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className=""
             >
               Previous
             </Button>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 lg:gap-2">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -482,7 +489,7 @@ export default function UniversitiesPage() {
                     variant={currentPage === pageNum ? "default" : "outline"}
                     size="sm"
                     onClick={() => setCurrentPage(pageNum)}
-                    className=""
+                    className="px-2 lg:px-3 text-xs lg:text-sm min-w-8 lg:min-w-10"
                   >
                     {pageNum}
                   </Button>
@@ -492,9 +499,9 @@ export default function UniversitiesPage() {
 
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className=""
             >
               Next
             </Button>
@@ -503,7 +510,7 @@ export default function UniversitiesPage() {
 
         {/* Empty state */}
         {sortedAndFilteredUniversities.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <p className="text-muted-foreground mb-4">No universities found</p>
             <Button 
               variant="outline" 
@@ -517,6 +524,7 @@ export default function UniversitiesPage() {
             </Button>
           </div>
         )}
+      </div>
     </div>
   );
 }
