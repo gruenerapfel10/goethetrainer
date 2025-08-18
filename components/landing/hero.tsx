@@ -1,12 +1,11 @@
 import { Button } from "@/components/ui/button"
-import { MatrixRainBackground } from "./matrix-rain-background"
 import Link from "next/link"
+import Image from "next/image"
 
 export function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden py-20 text-center md:py-32">
-      <MatrixRainBackground />
-      <div className="relative z-10 container mx-auto px-4 md:px-6">
+      <div className="relative z-20 container mx-auto px-4 md:px-6">
         <h1 className="text-5xl font-bold tracking-tighter text-white sm:text-6xl md:text-7xl lg:text-8xl">
           <span className="inline-block bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">One</span>{" "}
           <span className="font-light italic text-blue-100/80">Application</span>.
@@ -34,15 +33,15 @@ export function Hero() {
         {/* Trusted by section */}
         <div className="mt-16">
           <p className="text-sm text-blue-100/50 mb-8">Trusted by students at top universities</p>
-          <div className="flex items-center justify-center gap-8 lg:gap-12 flex-wrap">
-            <div className="text-white/30 font-bold text-xl tracking-wide">HARVARD</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">MIT</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">OXFORD</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">CAMBRIDGE</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">STANFORD</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">YALE</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">PRINCETON</div>
-            <div className="text-white/30 font-bold text-xl tracking-wide">CALTECH</div>
+          <div className="flex items-center justify-center gap-4 lg:gap-8 overflow-x-auto">
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">HARVARD</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">MIT</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">OXFORD</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">CAMBRIDGE</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">STANFORD</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">YALE</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">PRINCETON</div>
+            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">CALTECH</div>
           </div>
         </div>
       </div>

@@ -1,58 +1,62 @@
-"use client"
+'use client'
 
-import { useState, useEffect, useMemo } from "react"
-
-const CHARS = ["M", "U", "A"]
-const FONT_SIZE = 18
-const DENSITY = 0.8
+import { useEffect, useState } from 'react'
+import styles from './matrix-rain.module.css'
 
 export function MatrixRainBackground() {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 })
-
+  const [mounted, setMounted] = useState(false)
+  
   useEffect(() => {
-    const updateDimensions = () => {
-      setDimensions({ width: window.innerWidth, height: window.innerHeight })
-    }
-    updateDimensions()
-    window.addEventListener("resize", updateDimensions)
-    return () => window.removeEventListener("resize", updateDimensions)
+    setMounted(true)
   }, [])
 
-  const columns = useMemo(() => {
-    if (dimensions.width === 0) return []
-    const numCols = Math.floor((dimensions.width / (FONT_SIZE * 0.9)) * DENSITY)
-    const numRows = Math.floor(dimensions.height / (FONT_SIZE * 1.1)) + 1
-    return Array.from({ length: numCols }).map(() => {
-      const sequence = []
-      for (let i = 0; i < numRows; i++) {
-        sequence.push(CHARS[i % CHARS.length])
-      }
-      // Duplicate for seamless loop
-      return [...sequence, ...sequence]
-    })
-  }, [dimensions])
+  if (!mounted) return null
+
+  const columns = Array.from({ length: 30 }, (_, i) => i)
+  const characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*()_+-=[]{}|;:,.<>?'
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-blue-600" aria-hidden="true">
-      <div className="flex h-full w-full justify-between">
-        {columns.map((chars, i) => (
-          <div
-            key={i}
-            className="flex flex-col font-mono uppercase text-white/20"
-            style={{
-              fontSize: `${FONT_SIZE}px`,
-            }}
-          >
-            {chars.map((char, j) => (
-              <span key={j} className="leading-tight">
-                {char}
+    <div className={styles.matrixContainer}>
+      {columns.map((col) => (
+        <div 
+          key={col} 
+          className={styles.column}
+          style={{
+            '--column-index': col,
+            '--random-delay': `${Math.random() * 10}s`,
+            '--random-duration': `${15 + Math.random() * 10}s`
+          } as React.CSSProperties}
+        >
+          <div className={styles.stream}>
+            {Array.from({ length: 40 }, (_, i) => (
+              <span 
+                key={i} 
+                className={styles.character}
+                style={{
+                  '--char-index': i,
+                  '--brightness': 1 - (i * 0.025)
+                } as React.CSSProperties}
+              >
+                {characters[Math.floor(Math.random() * characters.length)]}
               </span>
             ))}
           </div>
-        ))}
-      </div>
-      {/* Vignette overlay */}
-      <div className="absolute inset-0 bg-radial-vignette"></div>
+          <div className={styles.stream}>
+            {Array.from({ length: 40 }, (_, i) => (
+              <span 
+                key={i} 
+                className={styles.character}
+                style={{
+                  '--char-index': i,
+                  '--brightness': 1 - (i * 0.025)
+                } as React.CSSProperties}
+              >
+                {characters[Math.floor(Math.random() * characters.length)]}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
