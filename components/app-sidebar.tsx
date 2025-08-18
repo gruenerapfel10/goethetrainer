@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react';
 import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidebarToggle } from '@/components/sidebar-toggle';
+import { AppRightSidebar } from '@/components/app-right-sidebar';
 import { MuaLogoVertical } from '@/airdrop3/components/mua-logo-vertical';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -50,6 +51,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
   const [universityData, setUniversityData] = useState<{id: string, name: string} | null>(null)
   const [starredUniversities, setStarredUniversities] = useState<StarredUniversity[]>([])
   const [optimisticStarredUniversities, setOptimisticStarredUniversities] = useState<StarredUniversity[]>([])
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
 
   const languageItems = [
     { value: 'en', label: t('locales.en'), emoji: '🇺🇸' },
@@ -126,6 +128,19 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
         .catch(err => console.error('Failed to load user preferences:', err))
     }
   }, [user?.uid, locale])
+
+  // Add keyboard shortcuts for right sidebar toggle (Cmd/Ctrl + J)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'j') {
+        e.preventDefault()
+        setRightSidebarOpen(!rightSidebarOpen)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [rightSidebarOpen, setRightSidebarOpen])
 
   // Listen for starred university changes from other components
   useEffect(() => {
@@ -533,12 +548,20 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
             </div>
           </div>
 
-          <div className="flex-1 relative">
-            <div className="absolute inset-0 bottom-4 right-4 bg-sidebar rounded-lg border border-border overflow-auto">
-              <div className="min-h-full">
-                {children}
+          <div className="flex-1 relative flex">
+            <div className={`flex-1 relative ${rightSidebarOpen ? "mr-4" : ""}`}>
+              <div className="absolute inset-0 bottom-4 right-0 bg-sidebar rounded-lg border border-border overflow-auto">
+                <div className="min-h-full">
+                  {children}
+                </div>
               </div>
             </div>
+            
+            {/* Right Sidebar */}
+            <AppRightSidebar 
+              rightSidebarOpen={rightSidebarOpen}
+              setRightSidebarOpen={setRightSidebarOpen}
+            />
           </div>
         </div>
       </div>

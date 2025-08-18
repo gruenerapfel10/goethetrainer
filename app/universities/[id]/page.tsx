@@ -287,7 +287,7 @@ export default function UniversityDetailPage() {
   const fallbackImagePath = `https://picsum.photos/seed/${university?.rank}/1200/800`;
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative h-full flex flex-col">
       {/* Controls at top */}
       <div className="relative z-20 px-4 py-3 bg-black/20 dark:bg-black/20 light:bg-white/30 backdrop-blur-md border-b border-white/20 dark:border-white/20 light:border-black/20">
         <div className="flex items-center justify-between">
@@ -353,10 +353,10 @@ export default function UniversityDetailPage() {
       <div className="absolute inset-0 bg-black/40 dark:bg-black/40 light:bg-black/20"></div>
 
       {/* Content Overlay */}
-      <div className="relative z-10 h-full flex flex-col">
+      <div className="relative z-10 flex-1 flex flex-col">
         {/* Professional Apple-Style Bento Grid */}
-        <div className="flex-1 p-4 overflow-auto">
-          <BentoGrid className="w-full max-w-none">
+        <div className="flex-1 p-4">
+          <BentoGrid className="w-full max-w-none h-full">
             
             {/* University Rankings - Swipeable Widget */}
             <BentoGridItem
