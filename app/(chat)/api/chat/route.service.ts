@@ -19,7 +19,7 @@ export const agentTypes = {
 export type AgentType = (typeof agentTypes)[keyof typeof agentTypes];
 
 export async function streamAgent(json: any) {
-  const { messages, id, selectedChatModel, deepResearch, selectedFiles, webSearch, imageGeneration } = json;
+  const { messages, id, selectedChatModel, deepResearch, selectedFiles, webSearch, imageGeneration, isJobAssistant } = json;
   try {
     // Auth removed - no authentication needed
     const session = { 
@@ -82,7 +82,7 @@ export async function streamAgent(json: any) {
     };
 
   // Always use the general agent
-  return streamGeneralAgent(agentMeta, messages, id, selectedChatModel, webSearch, deepResearch, imageGeneration);
+  return streamGeneralAgent(agentMeta, messages, id, selectedChatModel, webSearch, deepResearch, imageGeneration, isJobAssistant);
   } catch (error) {
     console.error(`Unhandled error in ${selectedChatModel}:`, error);
     return new Response('An error occurred while processing your request!', {
