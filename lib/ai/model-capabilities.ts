@@ -18,6 +18,24 @@ export interface ModelFeatures {
 }
 
 export const MODEL_CAPABILITIES: Record<string, ModelFeatures> = {
+  'gemini-2.5-flash': {
+    fileAttachments: true,
+    deepSearch: true,
+    webSearch: true,
+    imageGeneration: true,
+    csvAnalysis: false,
+    fileSearch: false,
+    chartGeneration: true,
+  },
+  'gemini-2.5-pro': {
+    fileAttachments: true,
+    deepSearch: true,
+    webSearch: true,
+    imageGeneration: true,
+    csvAnalysis: false,
+    fileSearch: false,
+    chartGeneration: true,
+  },
   'general-bedrock-agent': {
     fileAttachments: true,
     deepSearch: true,

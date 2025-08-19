@@ -1,7 +1,4 @@
 import type { ArtifactKind } from '@/components/artifact';
-import { db } from '@/lib/db/client';
-import { systemPrompts } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 
 // Regular prompt used in all assistants
 export const regularPrompt =
@@ -271,19 +268,8 @@ export async function getSystemPrompt(
       fallbackPrompt = DEFAULT_PROMPTS[assistantId];
     }
 
-    // Query the database for the custom prompt
-    const results = await db
-      .select({ promptText: systemPrompts.promptText })
-      .from(systemPrompts)
-      .where(eq(systemPrompts.assistantId, assistantId))
-      .limit(1);
-
-    // If we found a custom prompt, return it
-    if (results.length > 0 && results[0]?.promptText) {
-      return results[0].promptText;
-    }
-
-    // Otherwise return the fallback prompt (either provided defaultPrompt or from DEFAULT_PROMPTS)
+    // Skip database query for now - use Firebase in the future
+    // Just return the fallback prompt (either provided defaultPrompt or from DEFAULT_PROMPTS)
     return fallbackPrompt;
   } catch (error) {
     console.error(`Error getting system prompt for ${assistantId}:`, error);

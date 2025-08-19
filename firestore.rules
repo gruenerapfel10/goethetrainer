@@ -6,5 +6,30 @@ service cloud.firestore {
     match /profiles/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Allow anonymous access to chats for now - in production you'd want proper auth
+    match /chats/{chatId} {
+      allow read, write, create, delete: if true;
+    }
+
+    // Allow anonymous access to messages for now - in production you'd want proper auth  
+    match /messages/{messageId} {
+      allow read, write, create, delete: if true;
+    }
+
+    // Allow anonymous voting for now
+    match /votes/{voteId} {
+      allow read, write, create: if true;
+    }
+
+    // Suggested messages - public read and write for now
+    match /suggested-messages/{messageId} {
+      allow read, write, create, delete: if true;
+    }
+
+    // System prompts - public access for now
+    match /system-prompts/{promptId} {
+      allow read, write, create, delete: if true;
+    }
   }
 }

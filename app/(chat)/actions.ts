@@ -3,12 +3,12 @@
 import { generateText, type Message } from 'ai';
 import { cookies } from 'next/headers';
 
-// Database imports using stub functions (no persistence)
+// Using Firebase instead of PostgreSQL
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
   updateChatVisiblityById,
-} from '@/lib/db/queries-stub';
+} from '@/lib/firebase/chat-service';
 import type { VisibilityType } from '@/components/visibility-selector';
 import { myProvider } from '@/lib/ai/models';
 

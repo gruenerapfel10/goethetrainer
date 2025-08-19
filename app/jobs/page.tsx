@@ -55,7 +55,7 @@ type ApplicationStatus = 'not_applied' | 'applied' | 'accepted' | 'rejected';
 type SortField = 'rank' | 'name' | 'country' | 'employer_reputation_rank' | 'academic_reputation_rank';
 type SortOrder = 'asc' | 'desc';
 
-export default function UniversitiesPage() {
+export default function JobsPage() {
   const [universities, setUniversities] = useState<University[]>([]);
   const [degrees, setDegrees] = useState<Degree[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -273,8 +273,8 @@ export default function UniversitiesPage() {
         {/* Header */}
         <div className="mb-6">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">Universities</h1>
-            <p className="text-muted-foreground">{universities.length} universities • {countries.length} countries</p>
+            <h1 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">Jobs</h1>
+            <p className="text-muted-foreground">{universities.length} job listings • {countries.length} locations</p>
           </div>
         </div>
 
@@ -283,7 +283,7 @@ export default function UniversitiesPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search universities..."
+              placeholder="Search jobs..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -364,7 +364,7 @@ export default function UniversitiesPage() {
                     className="flex items-center hover:text-foreground transition-colors"
                     onClick={() => handleSort('name')}
                   >
-                    University
+                    Job Title
                     {getSortIcon('name')}
                   </button>
                 </th>
@@ -404,7 +404,7 @@ export default function UniversitiesPage() {
                 <tr 
                   key={`${university.rank}-${university.name}`}
                   className="hover:bg-muted/50 cursor-pointer group"
-                  onClick={() => router.push(`/universities/${university.id}`)}
+                  onClick={() => router.push(`/jobs/${university.id}`)}
                 >
                   <td className="py-2 lg:py-4 px-2 lg:px-4">
                     <div className="flex items-center gap-1 lg:gap-2">
@@ -511,7 +511,7 @@ export default function UniversitiesPage() {
         {/* Empty state */}
         {sortedAndFilteredUniversities.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No universities found</p>
+            <p className="text-muted-foreground mb-4">No jobs found</p>
             <Button 
               variant="outline" 
               onClick={() => {

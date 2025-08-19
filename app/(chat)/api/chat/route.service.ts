@@ -1,38 +1,19 @@
 import { streamGeneralAgent } from './general-agent';
-import { streamSharePointAgent as streamSharePointAgentV1 } from './sharepoint-agent';
-import { streamSharePointAgent as streamSharePointAgentV2 } from './sharepoint-agent-v2';
-import { streamCsvAgent } from '@/app/(chat)/api/chat/csv-agent';
-import { streamCsvAgent as streamCsvAgentV2 } from '@/app/(chat)/api/chat/csv-agent-v2';
-import { streamText2SqlAgent } from "@/app/(chat)/api/chat/text2sql-agent";
 // Auth removed - no authentication needed
 // import {auth} from "@/app/(auth)/auth";
 import {generateUUID, getMostRecentUserMessage} from "@/lib/utils";
-// Database imports disabled - using stub functions instead
-import {getChatById, saveChat, saveMessages} from "@/lib/db/queries-stub";
+// Using Firebase instead of PostgreSQL
+import {getChatById, saveChat, saveMessages} from "@/lib/firebase/chat-service";
 import {generateTitleFromUserMessage} from "@/app/(chat)/actions";
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 import {myProvider} from "@/lib/ai/models";
 
-// Export all agent functions for direct imports if needed
-export {
-  streamGeneralAgent,
-  streamSharePointAgentV1,
-  streamSharePointAgentV2,
-  streamCsvAgent,
-  streamCsvAgentV2,
-};
+// Export general agent
+export { streamGeneralAgent };
 
-// Define agent types
+// Define agent types - simplified to just general
 export const agentTypes = {
   GENERAL: 'general',
-  WEB: 'web-agent',
-  SHAREPOINT: 'sharepoint-agent',
-  SHAREPOINT_V2: 'sharepoint-agent-v2',
-  DOCUMENT: 'document-agent',
-  CSV: 'csv-agent',
-  CSV_V2: 'csv-agent-v2',
-  IMAGE: 'image-agent',
-  TEXT2SQL: 'text2sql-agent'
 } as const;
 
 export type AgentType = (typeof agentTypes)[keyof typeof agentTypes];
@@ -100,32 +81,8 @@ export async function streamAgent(json: any) {
       model,
     };
 
-  // Map selectedChatModel to the appropriate agent
-  switch (selectedChatModel) {
-    case agentTypes.WEB:
-    case agentTypes.IMAGE:
-      // Both web and image agents are now handled by general agent
-      return streamGeneralAgent(agentMeta, messages, id, selectedChatModel, webSearch, deepResearch, imageGeneration);
-
-      case agentTypes.SHAREPOINT:
-        return streamSharePointAgentV1(agentMeta, messages, id, selectedChatModel);
-
-      case agentTypes.SHAREPOINT_V2:
-        return streamSharePointAgentV2(agentMeta, messages, id, selectedChatModel, deepResearch, selectedFiles);
-
-      case agentTypes.CSV:
-        return streamCsvAgent(agentMeta, json);
-
-      case agentTypes.CSV_V2:
-        return streamCsvAgentV2(agentMeta, messages, id, selectedChatModel);
-
-      case agentTypes.TEXT2SQL:
-        return streamText2SqlAgent(agentMeta, messages, id, selectedChatModel);
-
-      default:
-        // Default to general agent for any other model
-        return streamGeneralAgent(agentMeta, messages, id, selectedChatModel, webSearch, deepResearch, imageGeneration);
-    }
+  // Always use the general agent
+  return streamGeneralAgent(agentMeta, messages, id, selectedChatModel, webSearch, deepResearch, imageGeneration);
   } catch (error) {
     console.error(`Unhandled error in ${selectedChatModel}:`, error);
     return new Response('An error occurred while processing your request!', {

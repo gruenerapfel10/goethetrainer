@@ -50,7 +50,7 @@ interface University {
   ru?: any;
 }
 
-export default function UniversityDetailPage() {
+export default function JobDetailPage() {
   const params = useParams()
   const t = useTranslations()
   const { user } = useAuth()

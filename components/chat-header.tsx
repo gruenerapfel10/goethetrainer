@@ -99,7 +99,7 @@ function PureChatHeader({
       </header>
 
       {/* Client Logo Display with Watermark and Chat Title */}
-      <div className="flex flex-col justify-center items-center py-4 relative">
+      <div className="flex flex-col justify-center items-center py-2 relative">
         <div className="relative">
           <div
             className="relative"

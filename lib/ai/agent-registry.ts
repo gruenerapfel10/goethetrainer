@@ -2,14 +2,25 @@ import type { UIMessage, DataStreamWriter } from 'ai';
 import { sharepointRetrieve } from '@/lib/ai/tools/sharepoint-retrieve';
 import { csvQuery } from '@/lib/ai/tools/csv-query';
 import { chartTool } from '@/lib/ai/tools/chart';
+import { getWeather } from '@/lib/ai/tools/get-weather';
+import { processFile } from '@/lib/ai/tools/process-file';
+import { createDocument } from '@/lib/ai/tools/create-document';
+import { updateDocument } from '@/lib/ai/tools/update-document';
+import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
+import { search } from '@/lib/ai/tools/search';
+import { extract } from '@/lib/ai/tools/extract';
+import { scrape } from '@/lib/ai/tools/scrape';
+import { deepResearch as deepResearchTool } from '@/lib/ai/tools/deep-research';
 import type { FileSearchResult } from '@/components/chat-header';
 
 // Define the agent type enum
 export enum AgentType {
-    SHAREPOINT_AGENT_V1 = 'sharepoint-agent-v1',
-    SHAREPOINT_AGENT_V2 = 'sharepoint-agent-v2',
+    SHAREPOINT_AGENT = 'sharepoint-agent',
     CSV_AGENT_V2 = 'csv-agent-v2',
-    TEXT2SQL_AGENT = 'text2sql-agent-v1'
+    TEXT2SQL_AGENT = 'text2sql-agent-v1',
+    GENERAL_ASSISTANT = 'general-assistant',
+    IMAGE_AGENT = 'image-agent',
+    WEB_AGENT = 'web-agent'
 }
 
 // Define the tool configuration interface
@@ -32,29 +43,8 @@ interface AgentConfig {
 
 // Agent registry mapping
 const AGENT_REGISTRY: Record<AgentType, AgentConfig> = {
-
-  [AgentType.SHAREPOINT_AGENT_V1]: {
-    agentType: AgentType.SHAREPOINT_AGENT_V1,
-    reasonTools: [],
-    regularTools: [],
-    defaultPromptModifications: {
-      responseLanguageInstruction: true,
-      systemPromptSuffix: `
-CRITICAL: You MUST ALWAYS respond in the SAME LANGUAGE as the user's query.
-
-Also you must comment after each tool what that tool told you succinctly as a 1 line summary, in the same language as the user's query.
-
-Once you have called the last tool you need please terminate the conversation without making a conclusion. Simply state "All relevant information has been retrieved" (in the same language as the user's query) and terminate.
-
-Remember: 
-1. ALWAYS respond in the SAME LANGUAGE as the user's query
-2. Be thorough when needed but efficient when possible
-3. Don't use an exhaustive search strategy for simple queries that can be answered with basic information
-      `
-    }
-  },
-  [AgentType.SHAREPOINT_AGENT_V2]: {
-    agentType: AgentType.SHAREPOINT_AGENT_V2,
+  [AgentType.SHAREPOINT_AGENT]: {
+    agentType: AgentType.SHAREPOINT_AGENT,
     reasonTools: [
       {
         toolName: 'sharepoint_retrieve',
@@ -74,15 +64,11 @@ Remember:
       systemPromptSuffix: `
 CRITICAL: You MUST ALWAYS respond in the SAME LANGUAGE as the user's query.
 
-Also you must comment after each tool what that tool told you succinctly as a 1 line summary, in the same language as the user's query.
-
 CHART GENERATION:
 - When users ask for visualizations, charts, graphs, or want to "see" data patterns, use the 'chart' tool directly
 - Analyze the data structure and user intent to recommend appropriate chart types
 - Use charts to enhance answers with visual insights from document data
 - The chart tool is available at the main agent level, not inside the reason tool
-
-Once you have called the last tool you need please terminate the conversation without making a conclusion. Simply state "All relevant information has been retrieved" (in the same language as the user's query) and terminate.
 
 Remember: 
 1. ALWAYS respond in the SAME LANGUAGE as the user's query
@@ -141,6 +127,129 @@ Example thought process:
       systemPromptSuffix: ``
     }
   },
+  [AgentType.GENERAL_ASSISTANT]: {
+    agentType: AgentType.GENERAL_ASSISTANT,
+    reasonTools: [],
+    regularTools: [
+      {
+        toolName: 'getWeather',
+        toolInstance: null,
+        description: 'Get weather information'
+      },
+      {
+        toolName: 'requestSuggestions',
+        toolInstance: null,
+        description: 'Request suggestions'
+      },
+      {
+        toolName: 'processFile',
+        toolInstance: null,
+        description: 'Process files'
+      },
+      {
+        toolName: 'chart',
+        toolInstance: null,
+        description: 'Create charts'
+      },
+      {
+        toolName: 'createDocument',
+        toolInstance: null,
+        description: 'Create documents'
+      },
+      {
+        toolName: 'updateDocument',
+        toolInstance: null,
+        description: 'Update documents'
+      }
+    ]
+  },
+  [AgentType.IMAGE_AGENT]: {
+    agentType: AgentType.IMAGE_AGENT,
+    reasonTools: [],
+    regularTools: [
+      {
+        toolName: 'getWeather',
+        toolInstance: null,
+        description: 'Get weather information'
+      },
+      {
+        toolName: 'requestSuggestions',
+        toolInstance: null,
+        description: 'Request suggestions'
+      },
+      {
+        toolName: 'processFile',
+        toolInstance: null,
+        description: 'Process files'
+      },
+      {
+        toolName: 'chart',
+        toolInstance: null,
+        description: 'Create charts'
+      },
+      {
+        toolName: 'createDocument',
+        toolInstance: null,
+        description: 'Create documents'
+      },
+      {
+        toolName: 'updateDocument',
+        toolInstance: null,
+        description: 'Update documents'
+      }
+    ]
+  },
+  [AgentType.WEB_AGENT]: {
+    agentType: AgentType.WEB_AGENT,
+    reasonTools: [],
+    regularTools: [
+      {
+        toolName: 'getWeather',
+        toolInstance: null,
+        description: 'Get weather information'
+      },
+      {
+        toolName: 'requestSuggestions',
+        toolInstance: null,
+        description: 'Request suggestions'
+      },
+      {
+        toolName: 'processFile',
+        toolInstance: null,
+        description: 'Process files'
+      },
+      {
+        toolName: 'chart',
+        toolInstance: null,
+        description: 'Create charts'
+      },
+      {
+        toolName: 'createDocument',
+        toolInstance: null,
+        description: 'Create documents'
+      },
+      {
+        toolName: 'updateDocument',
+        toolInstance: null,
+        description: 'Update documents'
+      },
+      {
+        toolName: 'search',
+        toolInstance: null,
+        description: 'Search the web'
+      },
+      {
+        toolName: 'extract',
+        toolInstance: null,
+        description: 'Extract information'
+      },
+      {
+        toolName: 'scrape',
+        toolInstance: null,
+        description: 'Scrape web content'
+      }
+    ]
+  },
 };
 
 // Props interface for tool initialization
@@ -149,8 +258,13 @@ interface ToolInitProps {
   messages?: UIMessage[];
   deepResearch?: boolean;
   deepSearch?: boolean;
+  webSearch?: boolean;
+  imageGeneration?: boolean;
   selectedFiles?: FileSearchResult[];
   session?: any;
+  userMessage?: any;
+  app?: any;
+  onTokensUsed?: (tokens: number) => void;
 }
 
 // Initialize REASON tools with props (tools accessible within reason.ts)
@@ -190,9 +304,92 @@ export function initializeRegularTools(agentType: AgentType, props: ToolInitProp
   const initializedTools: Record<string, any> = {};
 
   for (const toolConfig of agentConfig.regularTools) {
+    // SECURITY: Filter tools based on capability flags
+    // Skip web search tools if webSearch is disabled
+    if (!props.webSearch && ['search', 'extract', 'scrape'].includes(toolConfig.toolName)) {
+      console.log(`[Security] Skipping ${toolConfig.toolName} - webSearch is disabled`);
+      continue;
+    }
+    
+    // Skip image generation tools if imageGeneration is disabled
+    // (Add image generation tool names here when they are implemented)
+    if (!props.imageGeneration && ['generateImage', 'editImage'].includes(toolConfig.toolName)) {
+      console.log(`[Security] Skipping ${toolConfig.toolName} - imageGeneration is disabled`);
+      continue;
+    }
+
     switch (toolConfig.toolName) {
       case 'chart':
         initializedTools[toolConfig.toolName] = chartTool;
+        break;
+      case 'getWeather':
+        initializedTools[toolConfig.toolName] = getWeather;
+        break;
+      case 'processFile':
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = processFile({
+            session: props.session,
+            dataStream: props.dataStream,
+          });
+        }
+        break;
+      case 'createDocument':
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = createDocument({
+            session: props.session,
+            dataStream: props.dataStream,
+            userMessage: props.userMessage,
+          });
+        }
+        break;
+      case 'updateDocument':
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = updateDocument({
+            session: props.session,
+            dataStream: props.dataStream,
+          });
+        }
+        break;
+      case 'requestSuggestions':
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = requestSuggestions({
+            session: props.session,
+            dataStream: props.dataStream,
+          });
+        }
+        break;
+      case 'search':
+        // Already filtered above if webSearch is false
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = search({
+            session: props.session,
+            dataStream: props.dataStream,
+            app: props.app,
+            onTokensUsed: props.onTokensUsed,
+          });
+        }
+        break;
+      case 'extract':
+        // Already filtered above if webSearch is false
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = extract({
+            session: props.session,
+            dataStream: props.dataStream,
+            app: props.app,
+            onTokensUsed: props.onTokensUsed,
+          });
+        }
+        break;
+      case 'scrape':
+        // Already filtered above if webSearch is false
+        if (props.dataStream && props.session) {
+          initializedTools[toolConfig.toolName] = scrape({
+            session: props.session,
+            dataStream: props.dataStream,
+            app: props.app,
+            onTokensUsed: props.onTokensUsed,
+          });
+        }
         break;
       default:
         console.warn(`Unknown regular tool: ${toolConfig.toolName}`);
@@ -228,9 +425,57 @@ export function getAvailableRegularToolNames(agentType: AgentType): string[] {
   return config.regularTools.map(tool => tool.toolName);
 }
 
+// Get filtered regular tool names based on capabilities
+export function getFilteredRegularToolNames(agentType: AgentType, props: ToolInitProps): string[] {
+  const config = getAgentConfig(agentType);
+  const toolNames = config.regularTools.map(tool => tool.toolName);
+  
+  // Filter based on capabilities
+  return toolNames.filter(toolName => {
+    // Skip web search tools if webSearch is disabled
+    if (!props.webSearch && ['search', 'extract', 'scrape'].includes(toolName)) {
+      return false;
+    }
+    
+    // Skip image generation tools if imageGeneration is disabled
+    if (!props.imageGeneration && ['generateImage', 'editImage'].includes(toolName)) {
+      return false;
+    }
+    
+    return true;
+  });
+}
+
 // Legacy function for backwards compatibility
 export function getAvailableToolNames(agentType: AgentType): string[] {
   return getAvailableReasonToolNames(agentType);
+}
+
+// Initialize deep research tools
+export function initializeDeepResearchTools(props: ToolInitProps): Record<string, any> {
+  const tools: Record<string, any> = {};
+  
+  if (props.dataStream && props.session) {
+    tools.reason_search = deepResearchTool({
+      session: props.session,
+      dataStream: props.dataStream,
+    });
+  }
+  
+  return tools;
+}
+
+// Get agent type from string
+export function getAgentTypeFromString(agentString: string): AgentType {
+  switch (agentString) {
+    case 'image-agent':
+      return AgentType.IMAGE_AGENT;
+    case 'web-agent':
+      return AgentType.WEB_AGENT;
+    case 'general-assistant':
+    default:
+      return AgentType.GENERAL_ASSISTANT;
+  }
 }
 
 // Get base system prompt for an agent
@@ -245,14 +490,21 @@ export function getBaseSystemPrompt(
 
   // Add agent-specific base prompt
   switch (agentType) {
-    case 'sharepoint-agent-v2':
+    case AgentType.SHAREPOINT_AGENT:
       basePrompt = `
       
-      You are an AI assistant specializing in answering questions using information from SharePoint knowledge bases and creating beautiful data visualizations when appropriate. Your primary function is to utilize the 'sharepoint_reason' tool to understand the user's query, gather necessary information by orchestrating sub-tool calls (like retrieval), and then synthesize a final answer based on the results provided by the tool.
+      You are a professional business intelligence assistant specializing in analyzing SharePoint documents and providing actionable insights. Your primary function is to utilize the 'sharepoint_reason' tool to understand the user's query, gather necessary information by orchestrating sub-tool calls (like retrieval), and then synthesize a final answer based on the results provided by the tool.
 
 CRITICAL: You MUST ALWAYS respond in the SAME LANGUAGE as the user's query.
 
 For any user query that requires information from SharePoint knowledge bases, you MUST call the 'sharepoint_reason' tool with the user's query.
+
+BUSINESS INTELLIGENCE APPROACH:
+- Extract specific clause/section references from documents
+- Identify patterns and relationships in data
+- Provide actionable recommendations
+- Highlight compliance requirements or risks
+- Summarize complex information for executive consumption
 
 CHART GENERATION CAPABILITIES:
 - When documents contain numerical data, statistics, metrics, or data tables, consider creating charts
@@ -278,12 +530,20 @@ Once the 'sharepoint_reason' tool has finished executing and provided its result
 CRITICAL CITATION REQUIREMENTS - THIS IS MANDATORY:
 1. You MUST include numbered citations [1], [2], [3] etc. throughout your response text
 2. Every piece of information from the documents MUST be cited immediately after mentioning it
-3. You MUST end your response with a <references> section in EXACTLY this format:
+3. ALWAYS include specific clause/section numbers when referencing policy or legal documents
+   - Format: "Section 21.1 states... [1]" or "According to clause 4.3.2... [2]"
+4. You MUST end your response with a <references> section in EXACTLY this format:
 
 <references>
 <reference id="1" source="Document Title" url="s3://bucket/path/file.pdf" />
 <reference id="2" source="Another Document" url="s3://bucket/path/file.pdf" />
 </references>
+
+BUSINESS RESPONSE FORMAT:
+1. **Executive Summary** - 2-3 sentences highlighting key findings
+2. **Detailed Analysis** - Structured findings with specific references
+3. **Key Takeaways** - Bullet points of actionable insights
+4. **Recommendations** (if applicable) - Next steps or actions
 
 Remember: ALWAYS respond in the SAME LANGUAGE as the user's query.`
       break;
@@ -314,11 +574,6 @@ TOOL USAGE (REASON TOOLS - accessed through reason tool):
 - Tool: csv_query
 - Parameters: 
   * natural_question: Natural language description of what you want to analyze, the ai will generate and execute the sql query for you.
-
-You have no other tools available to you, you are only allowed to use csv_query.
-
-DO NOT make large statements, you are just a "reasoning" tool so user wont see your work, only internal thoughts.
-Avoid long sentencse, 1 line max.
 `;
       }
       break;
@@ -339,4 +594,4 @@ Avoid long sentencse, 1 line max.
   return basePrompt;
 }
 
-export { AGENT_REGISTRY }; 
+export { AGENT_REGISTRY };

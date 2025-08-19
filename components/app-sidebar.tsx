@@ -82,12 +82,12 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
         .catch(err => console.error('Failed to save nationality preference:', err))
     }
     
-    // If we're on a university detail page, update the URL with the new nationality
-    if (pathname.startsWith('/universities/')) {
+    // If we're on a job detail page, update the URL with the new nationality
+    if (pathname.startsWith('/jobs/')) {
       const url = new URL(window.location.href)
       url.searchParams.set('nationality', value)
       window.history.pushState({}, '', url.toString())
-      // Trigger a custom event to notify the university page
+      // Trigger a custom event to notify the job page
       window.dispatchEvent(new CustomEvent('nationalityChanged', { detail: value }))
     }
   }
@@ -178,9 +178,9 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
     return `/university-images/${path}/emblem_${path}.svg`
   }
 
-  // Effect to fetch university data when on university detail page
+  // Effect to fetch job data when on job detail page
   useEffect(() => {
-    const universityMatch = pathname.match(/^\/universities\/([^\/]+)$/)
+    const universityMatch = pathname.match(/^\/jobs\/([^\/]+)$/)
     if (universityMatch) {
       const universityId = universityMatch[1]
       // Fetch from individual university JSON file
@@ -215,15 +215,15 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
   const getBreadcrumbItems = () => {
     if (pathname === '/dashboard') {
       return [{ label: t('navigation.dashboard'), current: true }]
-    } else if (pathname === '/universities') {
-      return [{ label: t('navigation.universities'), current: true }]
+    } else if (pathname === '/jobs') {
+      return [{ label: 'Jobs', current: true }]
     } else if (pathname === '/profile') {
       return [{ label: t('navigation.profile'), current: true }]
     } else if (pathname === '/applications') {
       return [{ label: 'Applications', current: true }]
-    } else if (pathname.startsWith('/universities/') && universityData) {
+    } else if (pathname.startsWith('/jobs/') && universityData) {
       return [
-        { label: t('navigation.universities'), href: '/universities' },
+        { label: 'Jobs', href: '/jobs' },
         { label: truncateUniversityName(universityData.name), current: true }
       ]
     } else if (pathname.startsWith('/chat/')) {
@@ -306,7 +306,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                     {t('sidebar.starredUniversities')}
                   </div>
                   {optimisticStarredUniversities.slice(0, 3).map((university) => (
-                    <Link key={university.id} href={`/universities/${university.id}`}>
+                    <Link key={university.id} href={`/jobs/${university.id}`}>
                       <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                         <Image
                           src={getUniversityEmblemPath(university.name)}
@@ -328,7 +328,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                     </Link>
                   ))}
                   {optimisticStarredUniversities.length > 3 && (
-                    <Link href="/universities?tab=starred">
+                    <Link href="/jobs?tab=starred">
                       <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer">
                         <span className="truncate">+{optimisticStarredUniversities.length - 3} more</span>
                       </div>
@@ -338,7 +338,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
               ) : (
                 <div className="flex flex-col gap-1">
                   {optimisticStarredUniversities.slice(0, 2).map((university) => (
-                    <Link key={university.id} href={`/universities/${university.id}`}>
+                    <Link key={university.id} href={`/jobs/${university.id}`}>
                       <button
                         className="relative group transition-all duration-200 w-full h-8 rounded-lg flex items-center justify-center bg-sidebar-accent/50 backdrop-blur-sm border border-sidebar-border/50 hover:bg-sidebar-accent/70"
                         title={university.name}
@@ -385,20 +385,20 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                   {sidebarOpen && <span className="truncate">{t('navigation.dashboard')}</span>}
                 </Button>
               </Link>
-              <Link href="/universities">
+              <Link href="/jobs">
                 <Button
                   variant="ghost"
                   className={`w-full gap-3 transition-all duration-200 ${
-                    pathname === '/universities' 
+                    pathname === '/jobs' 
                       ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   } ${
                     sidebarOpen ? "justify-start" : "justify-center px-0"
                   }`}
-                  title={!sidebarOpen ? "Universities" : undefined}
+                  title={!sidebarOpen ? "Jobs" : undefined}
                 >
                   <GraduationCap className="w-4 h-4 flex-shrink-0" />
-                  {sidebarOpen && <span className="truncate">{t('navigation.universities')}</span>}
+                  {sidebarOpen && <span className="truncate">Jobs</span>}
                 </Button>
               </Link>
               <Link href="/profile">
@@ -549,7 +549,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
           </div>
 
           <div className="flex-1 relative flex">
-            <div className={`flex-1 relative ${rightSidebarOpen ? "mr-4" : ""}`}>
+            <div className={`flex-1 relative ${rightSidebarOpen ? "lg:mr-4" : ""}`}>
               <div className="absolute inset-0 bottom-4 right-0 bg-sidebar rounded-lg border border-border overflow-auto">
                 <div className="min-h-full">
                   {children}

@@ -133,7 +133,7 @@ function PureMessages({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4 transition-all duration-300 ease-in-out"
+      className="flex flex-col min-w-0 gap-6 h-full overflow-y-auto pt-4 transition-all duration-300 ease-in-out"
       style={{ paddingBottom: `${bottomPadding + 16}px` }}
       onWheel={(e) => {
         e.stopPropagation();

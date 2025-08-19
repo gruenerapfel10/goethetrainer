@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMessageById } from '@/lib/db/queries';
+import { getMessageById } from '@/lib/firebase/chat-service';
 import { calculateCost, formatCost } from '@/lib/costs';
 import { chatModels } from '@/lib/ai/models';
 
@@ -13,13 +13,11 @@ export async function GET(request: Request) {
     }
 
     // Fetch the message from the database
-    const messages = await getMessageById({ id: messageId });
+    const message = await getMessageById({ id: messageId });
     
-    if (!messages || messages.length === 0) {
+    if (!message) {
       return NextResponse.json({ error: 'Message not found' }, { status: 404 });
     }
-
-    const message = messages[0];
 
     // Use Claude Sonnet 4 as default model if no modelId is stored
     const modelId = message.modelId || 'eu.anthropic.claude-sonnet-4-20250514-v1:0';

@@ -2,7 +2,7 @@ import {appendResponseMessages, createDataStreamResponse, streamText, type UIMes
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 import {generateUUID, getTrailingMessageId, messagesWithoutFiles} from "@/lib/utils";
 import {calculateCost} from "@/lib/costs";
-import {saveMessages} from "@/lib/db/queries";
+import {saveMessages} from "@/lib/firebase/chat-service";
 import {AgentType, initializeRegularTools} from "@/lib/ai/agent-registry";
 import {fetchDbMetadata} from "@/lib/wren/wren.api";
 import type {WrenFetchMetadataResponse} from "@/lib/wren/wren.api.types";

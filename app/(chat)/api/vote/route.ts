@@ -1,7 +1,7 @@
 // Auth removed - no authentication needed
 // import { auth } from '@/app/(auth)/auth';
-// Database import using stub functions (no persistence)
-import { getVotesByChatId, voteMessage } from '@/lib/db/queries-stub';
+// Using Firebase instead of PostgreSQL
+import { getVotesByChatId, voteMessage } from '@/lib/firebase/chat-service';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   // Auth removed - no authentication needed
   const session = { user: { email: 'anonymous@example.com' } };
 
-  const votes = await getVotesByChatId({ id: chatId });
+  const votes = await getVotesByChatId({ chatId });
 
   return Response.json(votes, { status: 200 });
 }

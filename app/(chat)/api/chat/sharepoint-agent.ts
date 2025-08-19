@@ -1,8 +1,8 @@
 import type { UIMessage } from 'ai';
 
 import { generateUUID } from '@/lib/utils';
-// Database import using stub function (no persistence)
-import { saveMessages } from '@/lib/db/queries-stub';
+// Using Firebase instead of PostgreSQL
+import { saveMessages } from '@/lib/firebase/chat-service';
 import { getSystemPrompt } from '@/lib/ai/prompts';
 import { calculateCost } from '@/lib/costs';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";

@@ -1,7 +1,7 @@
 import {appendResponseMessages, createDataStreamResponse, streamText, type UIMessage} from 'ai';
 
 import {generateUUID, getTrailingMessageId, messagesWithoutFiles} from '@/lib/utils';
-import {saveMessages} from '@/lib/db/queries-stub';
+import {saveMessages} from '@/lib/firebase/chat-service';
 import {myProvider} from '@/lib/ai/models';
 import {reason} from '@/lib/ai/tools/reason';
 import type {FileSearchResult} from '@/components/chat-header';

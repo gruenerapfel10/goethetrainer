@@ -13,7 +13,7 @@
     "lightMode": "Light",
     "darkMode": "Dark",
     "systemMode": "System",
-    "starredUniversities": "Starred Universities"
+    "starredUniversities": "Starred Jobs"
   },
   "actions": {
     "signOut": "Sign out"
@@ -25,7 +25,7 @@
   },
   "navigation": {
     "dashboard": "Dashboard",
-    "universities": "Universities",
+    "universities": "Jobs",
     "profile": "Profile"
   },
   "dashboard": {
@@ -34,10 +34,10 @@
     "analytics": "Analytics", 
     "reports": "Reports",
     "notifications": "Notifications",
-    "universityApplications": "University Applications",
-    "trackApplications": "Track your applications to top 500 universities worldwide",
-    "viewAllUniversities": "View All Universities",
-    "totalUniversities": "Total Universities",
+    "universityApplications": "Job Applications",
+    "trackApplications": "Track your job applications across multiple companies",
+    "viewAllUniversities": "View All Jobs",
+    "totalUniversities": "Total Jobs",
     "applied": "Applied",
     "pending": "Pending", 
     "offers": "Offers",
@@ -136,5 +136,9 @@
     "successRate": "Success Rate",
     "saving": "Saving...",
     "saved": "Saved"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "It seems you've wandered into uncharted territory. Let's navigate you back to familiar grounds."
   }
 }
