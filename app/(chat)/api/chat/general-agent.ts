@@ -54,6 +54,7 @@ export async function streamGeneralAgent(
     
     
     const baseSystemText = await getSystemPrompt(
+      selectedChatModel === 'job-assistant' ? 'job-assistant' :
       selectedChatModel === 'image-agent' ? 'image-agent' : 
       webSearch ? 'web-agent' : 
       'general-assistant'
@@ -81,6 +82,7 @@ export async function streamGeneralAgent(
       : enhancedSystemText;
     
     const agentType = getAgentTypeFromString(
+      selectedChatModel === 'job-assistant' ? 'general-assistant' :
       selectedChatModel === 'image-agent' ? 'image-agent' :
       webSearch ? 'web-agent' : 
       'general-assistant'

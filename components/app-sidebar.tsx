@@ -548,7 +548,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
             </div>
           </div>
 
-          <div className="flex-1 relative flex">
+          <div className="flex-1 flex overflow-hidden">
             <div className={`flex-1 relative ${rightSidebarOpen ? "lg:mr-4" : ""}`}>
               <div className="absolute inset-0 bottom-4 right-0 bg-sidebar rounded-lg border border-border overflow-auto">
                 <div className="min-h-full">

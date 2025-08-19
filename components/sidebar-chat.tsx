@@ -38,7 +38,7 @@ export function SidebarChat() {
     id: chatId,
     body: {
       id: chatId,
-      selectedChatModel: 'gemini-2.5-flash',
+      selectedChatModel: 'job-assistant',
       webSearch: isWebSearchEnabled,
       selectedFiles: selectedFiles,
     },
@@ -67,9 +67,9 @@ export function SidebarChat() {
 
   return (
     <TooltipProvider>
-      <div className="flex flex-col h-full bg-background">
+      <div className="flex flex-col h-full bg-background overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-2">
+        <div className="px-4 py-2 flex-shrink-0 border-b">
           <h2 className="text-sm font-semibold">Job Assistant</h2>
           <p className="text-xs text-muted-foreground mt-1">Ask me anything about careers and jobs</p>
         </div>
@@ -93,7 +93,7 @@ export function SidebarChat() {
         </div>
 
         {/* Input */}
-        <div className="p-4">
+        <div className="p-4 flex-shrink-0 border-t">
           <form onSubmit={handleSubmit}>
             <MultimodalInput
               selectedModelId="gemini-2.5-flash"
