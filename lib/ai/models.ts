@@ -40,6 +40,7 @@ export const myProvider = customProvider({
   languageModels: {
     // Main Gemini models
     'gemini-2.5-flash': customModel('gemini-2.5-flash'),
+    'gemini-2.0-flash-latest': customModel('gemini-2.5-flash'), // Map old model to new
     'gemini-2.5-pro': customModel('gemini-2.5-pro'),
     
     // Legacy model mappings - now using Gemini

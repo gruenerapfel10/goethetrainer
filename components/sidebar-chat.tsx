@@ -24,8 +24,10 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
   const [completedMessageIds, setCompletedMessageIds] = useState<Set<string>>(new Set());
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   
-  // Simple capability states
+  // Capability states
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
+  const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
+  const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
   
   // Resize functionality
@@ -135,6 +137,8 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
       selectedChatModel: 'gemini-2.5-flash',
       isJobAssistant: true,
       webSearch: isWebSearchEnabled,
+      deepResearch: isDeepResearchEnabled,
+      imageGeneration: isImageGenerationEnabled,
       selectedFiles: selectedFiles,
     },
     initialMessages: [],
@@ -275,14 +279,14 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
               append={append}
               selectedFiles={selectedFiles}
               onSelectedFilesChange={setSelectedFiles}
-              isDeepResearchEnabled={false}
-              onDeepResearchChange={() => {}}
+              isDeepResearchEnabled={isDeepResearchEnabled}
+              onDeepResearchChange={setIsDeepResearchEnabled}
               isFileSearchEnabled={false}
               onFileSearchChange={() => {}}
               isWebSearchEnabled={isWebSearchEnabled}
               onWebSearchChange={setIsWebSearchEnabled}
-              isImageGenerationEnabled={false}
-              onImageGenerationChange={() => {}}
+              isImageGenerationEnabled={isImageGenerationEnabled}
+              onImageGenerationChange={setIsImageGenerationEnabled}
               onHeightChange={handleInputHeightChange}
             />
           </form>
