@@ -31,17 +31,65 @@ export function Hero() {
         </div>
 
         {/* Trusted by section */}
-        <div className="mt-16">
-          <p className="text-sm text-blue-100/50 mb-8">Trusted by students at top universities</p>
-          <div className="flex items-center justify-center gap-4 lg:gap-8 overflow-x-auto">
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">HARVARD</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">MIT</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">OXFORD</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">CAMBRIDGE</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">STANFORD</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">YALE</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">PRINCETON</div>
-            <div className="text-white/30 font-bold text-sm lg:text-xl tracking-wide whitespace-nowrap">CALTECH</div>
+        <div className="mt-12">
+          <p className="text-sm text-blue-100/50 mb-6">Trusted by students at top universities</p>
+          <div className="flex items-center justify-center gap-6 lg:gap-10 overflow-x-auto">
+            <Image
+              src="/university-images/harvard_university/emblem_harvard_university.svg"
+              alt="Harvard University"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/massachusetts_institute_of_technology/emblem_massachusetts_institute_of_technology.svg"
+              alt="MIT"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/university_of_oxford/emblem_university_of_oxford.svg"
+              alt="Oxford University"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/university_of_cambridge/emblem_university_of_cambridge.svg"
+              alt="Cambridge University"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/stanford_university/emblem_stanford_university.svg"
+              alt="Stanford University"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/imperial_college_london/emblem_imperial_college_london.svg"
+              alt="Imperial College London"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/california_tech_caltech/emblem_california_tech_caltech.svg"
+              alt="Caltech"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
+            <Image
+              src="/university-images/eth_zurich_swiss_federal_tech/emblem_eth_zurich_swiss_federal_tech.svg"
+              alt="ETH Zurich"
+              width={64}
+              height={64}
+              className="opacity-30 hover:opacity-50 transition-opacity h-12 w-12 lg:h-16 lg:w-16 object-contain"
+            />
           </div>
         </div>
       </div>

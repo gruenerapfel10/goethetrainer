@@ -45,7 +45,7 @@ const AsciiArt = ({ artData, artColor }: { artData: string; artColor: string }) 
 export function AsciiArtCard({ title, subtitle, artData, bgColor, textColor, artColor }: AsciiArtCardProps) {
   return (
     <div
-      className={`group relative flex aspect-[3/4] w-full flex-col justify-between overflow-hidden p-8 ${bgColor} cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20`}
+      className={`group relative flex aspect-[3/4] w-full flex-col justify-between overflow-hidden rounded-3xl p-8 ${bgColor} cursor-pointer transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20`}
     >
       <div className="relative z-10">
         <h2 className={`text-3xl font-bold ${textColor}`}>{title}</h2>
