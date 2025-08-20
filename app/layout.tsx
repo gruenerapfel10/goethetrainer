@@ -26,19 +26,19 @@ const dmSerif = DM_Serif_Display({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://mua.app'),
-  title: 'MUA - Mass University Applications',
-  description: 'MUA - Your smart assistant for university applications',
+  title: 'Kingfisher - Mass University Applications',
+  description: 'Kingfisher - Your smart assistant for university applications',
   openGraph: {
-    title: 'MUA - Mass University Applications',
+    title: 'Kingfisher - Mass University Applications',
     description: 'Your smart assistant for university applications',
     url: 'https://mua.app',
-    siteName: 'MUA',
+    siteName: 'Kingfisher',
     images: [
       {
         url: '/mua-logo-128x128-blue.png',
         width: 1200,
         height: 630,
-        alt: 'MUA - Mass University Applications',
+        alt: 'Kingfisher - Mass University Applications',
       },
     ],
     locale: 'en_US',
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MUA - Mass University Applications',
+    title: 'Kingfisher - Mass University Applications',
     description: 'Your smart assistant for university applications',
     images: ['/mua-logo-128x128-blue.png'],
   },

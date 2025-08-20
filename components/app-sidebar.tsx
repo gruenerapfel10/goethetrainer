@@ -5,7 +5,7 @@ import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Langu
 import { Button } from "@/components/ui/button"
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { AppRightSidebar } from '@/components/app-right-sidebar';
-import { MuaLogoVertical } from '@/airdrop3/components/mua-logo-vertical';
+import { KingfisherLogoVertical } from '@/airdrop3/components/kingfisher-logo-vertical';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -252,8 +252,8 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                 <div className="relative group">
                   <div className="absolute inset-0 rounded-lg opacity-0 blur-lg transition-opacity duration-300 bg-gradient-to-r from-blue-600/20 via-blue-500/30 to-blue-400/20 group-hover:opacity-100" />
                   <Image
-                    src="/mua-logo-horizontal-blue-bg.png"
-                    alt="MUA Logo"
+                    src="/kingfisher-logo-horizontal-blue-bg.png"
+                    alt="Kingfisher Logo"
                     width={120}
                     height={32}
                     className="relative h-8 w-auto object-contain rounded-lg transition-transform duration-200 group-hover:scale-105"
@@ -263,7 +263,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                 <div className="relative group">
                   <div className="absolute inset-0 rounded-lg opacity-0 blur-lg transition-opacity duration-300 bg-gradient-to-r from-blue-600/20 via-blue-500/30 to-blue-400/20 group-hover:opacity-100" />
                   <div className="relative w-8 h-8 bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105">
-                    <MuaLogoVertical className="w-6 h-6 text-white" />
+                    <KingfisherLogoVertical className="w-6 h-6 text-white" />
                   </div>
                 </div>
               )}

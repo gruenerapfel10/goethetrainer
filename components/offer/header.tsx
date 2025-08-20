@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MuaLogo } from "@/components/mua-logo"
+import { KingfisherLogo } from "@/components/kingfisher-logo"
 import { Button } from "@/components/ui/button"
 
 export function Header() {
@@ -8,8 +8,8 @@ export function Header() {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-3">
-            <MuaLogo className="h-8 w-auto text-white" />
-            <span className="text-xl font-medium text-white">MUA</span>
+            <KingfisherLogo className="h-8 w-auto text-white" />
+            <span className="text-xl font-medium text-white">Kingfisher</span>
           </Link>
         </div>
         <div className="flex items-center gap-6">

@@ -14,119 +14,95 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, MoreHorizontal, MapPin, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Filter, MoreHorizontal, MapPin, ChevronUp, ChevronDown, ChevronsUpDown, Building2, DollarSign, Clock, Briefcase } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 
-interface University {
+interface Job {
   id: string;
-  name: string;
-  country: string;
-  rank: number;
-  employer_reputation_rank: number;
-  academic_reputation_rank: number;
-  supported_degrees?: string[];
-  requirements?: {
-    us?: CountryRequirements;
-    gb?: CountryRequirements;
-    ru?: CountryRequirements;
-  };
+  title: string;
+  company: string;
+  location: string;
+  type: 'full-time' | 'part-time' | 'contract' | 'internship';
+  experience_level: 'entry' | 'mid' | 'senior' | 'executive';
+  salary_min?: number;
+  salary_max?: number;
+  posted_date: string;
+  description?: string;
+  requirements?: string[];
+  remote?: boolean;
+  department?: string;
+  url?: string;
+  source?: string;
 }
 
-interface CountryRequirements {
-  academic_requirements: Record<string, any>;
-  language_requirements: Record<string, any>;
-  application_requirements: Record<string, any>;
-  deadlines: Record<string, any>;
-  additional_requirements: string[];
-}
-
-interface Degree {
-  id: string;
-  name: string;
-  level: string;
-  category: string;
-  aliases: string[];
-  popularity_rank: number;
-}
-
-type ApplicationStatus = 'not_applied' | 'applied' | 'accepted' | 'rejected';
-
-type SortField = 'rank' | 'name' | 'country' | 'employer_reputation_rank' | 'academic_reputation_rank';
+type ApplicationStatus = 'not_applied' | 'applied' | 'interviewing' | 'offer' | 'rejected';
+type SortField = 'title' | 'company' | 'location' | 'posted_date' | 'salary';
 type SortOrder = 'asc' | 'desc';
 
 export default function JobsPage() {
-  const [universities, setUniversities] = useState<University[]>([]);
-  const [degrees, setDegrees] = useState<Degree[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('all');
-  const [rankFilter, setRankFilter] = useState('all');
+  const [selectedLocation, setSelectedLocation] = useState('all');
+  const [selectedType, setSelectedType] = useState('all');
+  const [selectedExperience, setSelectedExperience] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [applicationStatuses, setApplicationStatuses] = useState<Record<number, ApplicationStatus>>({});
-  const [userNationality, setUserNationality] = useState('us');
-  const [sortField, setSortField] = useState<SortField>('rank');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [applicationStatuses, setApplicationStatuses] = useState<Record<string, ApplicationStatus>>({});
+  const [refreshing, setRefreshing] = useState(false);
+  const [sortField, setSortField] = useState<SortField>('posted_date');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const itemsPerPage = 50;
   const t = useTranslations();
   const router = useRouter();
   const locale = useLocale();
   const { user } = useAuth();
 
-  // Helper function to get university emblem path
-  const getUniversityEmblemPath = (name: string) => {
-    const path = name.toLowerCase().replace(/\s+/g, '_').replace(/[^\w_]/g, '');
-    return `/university-images/${path}/emblem_${path}.svg`;
-  };
-
-  // Map locale to requirements country code
-  const getRequirementsCountryCode = (locale: string): string => {
-    switch (locale) {
-      case 'ru':
-        return 'ru'; // Russian nationals
-      case 'en':
-        return 'us'; // Default to US for English
-      case 'lt':
-        return 'gb'; // Lithuanian -> UK (closest European system)
-      default:
-        return 'us'; // Default fallback
-    }
-  };
-
-  const requirementsCountryCode = getRequirementsCountryCode(locale);
-
   useEffect(() => {
-    Promise.all([
-      fetch('/500.json').then(res => res.json()),
-      fetch('/valid_degrees.json').then(res => res.json())
-    ])
-      .then(([universitiesData, degreesData]) => {
-        setUniversities(universitiesData);
-        setDegrees(degreesData.degrees);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load data:', err);
-        setError('Failed to load universities data. Please try again later.');
-        setLoading(false);
+    fetchJobs();
+  }, [searchTerm, selectedLocation, selectedType, selectedExperience, currentPage]);
+
+  const fetchJobs = async (page: number = currentPage) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const params = new URLSearchParams({
+        limit: itemsPerPage.toString(),
+        offset: ((page - 1) * itemsPerPage).toString(),
       });
-  }, []);
-
-  // Load user's nationality preference
-  useEffect(() => {
-    if (user?.uid) {
-      profileService.getProfile(user.uid)
-        .then(profile => {
-          if (profile?.nationality) {
-            setUserNationality(profile.nationality);
-          }
-        })
-        .catch(err => {
-          console.error('Failed to load user nationality preference:', err);
-        });
+      
+      if (searchTerm) params.append('keywords', searchTerm);
+      if (selectedLocation !== 'all') params.append('location', selectedLocation);
+      if (selectedType !== 'all') params.append('jobType', selectedType);
+      if (selectedExperience !== 'all') params.append('experienceLevel', selectedExperience);
+      
+      const response = await fetch(`/api/jobs/search?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setJobs(data.data.jobs);
+        
+        // Log provider errors if any
+        if (data.data.errors && data.data.errors.length > 0) {
+          console.warn('Some job providers failed:', data.data.errors);
+        }
+      } else {
+        throw new Error(data.error || 'Failed to fetch jobs');
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load jobs');
+      setJobs([]);
+    } finally {
+      setLoading(false);
     }
-  }, [user?.uid]);
+  };
 
   // Handle sorting
   const handleSort = (field: SortField) => {
@@ -136,7 +112,7 @@ export default function JobsPage() {
       setSortField(field);
       setSortOrder('asc');
     }
-    setCurrentPage(1); // Reset to first page when sorting
+    setCurrentPage(1);
   };
 
   const getSortIcon = (field: SortField) => {
@@ -148,64 +124,64 @@ export default function JobsPage() {
       : <ChevronDown className="ml-1 h-4 w-4 text-foreground" />;
   };
 
-  const sortedAndFilteredUniversities = universities
-    .filter(uni => {
+  const sortedAndFilteredJobs = jobs
+    .filter(job => {
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
-        const matchesSearch = uni.name.toLowerCase().includes(searchLower) ||
-                             uni.country.toLowerCase().includes(searchLower);
+        const matchesSearch = job.title.toLowerCase().includes(searchLower) ||
+                             job.company.toLowerCase().includes(searchLower) ||
+                             job.location.toLowerCase().includes(searchLower);
         if (!matchesSearch) return false;
       }
 
-      if (selectedCountry !== 'all' && uni.country !== selectedCountry) {
+      if (selectedLocation !== 'all' && job.location !== selectedLocation) {
         return false;
       }
 
-      if (rankFilter !== 'all') {
-        switch (rankFilter) {
-          case 'top-50':
-            return uni.rank <= 50;
-          case 'top-100':
-            return uni.rank <= 100;
-          case '100-plus':
-            return uni.rank > 100;
-          default:
-            return true;
-        }
+      if (selectedType !== 'all' && job.type !== selectedType) {
+        return false;
+      }
+
+      if (selectedExperience !== 'all' && job.experience_level !== selectedExperience) {
+        return false;
       }
 
       return true;
     })
     .sort((a, b) => {
-      let aValue: string | number;
-      let bValue: string | number;
+      let aValue: string | number | Date;
+      let bValue: string | number | Date;
 
       switch (sortField) {
-        case 'rank':
-          aValue = a.rank;
-          bValue = b.rank;
+        case 'title':
+          aValue = a.title.toLowerCase();
+          bValue = b.title.toLowerCase();
           break;
-        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
+        case 'company':
+          aValue = a.company.toLowerCase();
+          bValue = b.company.toLowerCase();
           break;
-        case 'country':
-          aValue = a.country.toLowerCase();
-          bValue = b.country.toLowerCase();
+        case 'location':
+          aValue = a.location.toLowerCase();
+          bValue = b.location.toLowerCase();
           break;
-        case 'employer_reputation_rank':
-          aValue = a.employer_reputation_rank;
-          bValue = b.employer_reputation_rank;
+        case 'posted_date':
+          aValue = new Date(a.posted_date);
+          bValue = new Date(b.posted_date);
           break;
-        case 'academic_reputation_rank':
-          aValue = a.academic_reputation_rank;
-          bValue = b.academic_reputation_rank;
+        case 'salary':
+          aValue = a.salary_max || a.salary_min || 0;
+          bValue = b.salary_max || b.salary_min || 0;
           break;
         default:
           return 0;
       }
 
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return sortOrder === 'asc' 
+          ? aValue.getTime() - bValue.getTime()
+          : bValue.getTime() - aValue.getTime();
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
         return sortOrder === 'asc' 
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
@@ -216,28 +192,43 @@ export default function JobsPage() {
       }
     });
 
-  const totalPages = Math.ceil(sortedAndFilteredUniversities.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedAndFilteredJobs.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedUniversities = sortedAndFilteredUniversities.slice(startIndex, startIndex + itemsPerPage);
-
-  const countries = Array.from(new Set(universities.map(u => u.country))).sort();
-  
-  // Get university count per country
-  const getCountryCount = (country: string) => {
-    return universities.filter(u => u.country === country).length;
-  };
+  const paginatedJobs = sortedAndFilteredJobs.slice(startIndex, startIndex + itemsPerPage);
 
   const getStatusBadge = (status: ApplicationStatus | undefined) => {
     switch (status) {
       case 'applied':
         return <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20">Applied</Badge>;
-      case 'accepted':
-        return <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">Accepted</Badge>;
+      case 'interviewing':
+        return <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">Interviewing</Badge>;
+      case 'offer':
+        return <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">Offer</Badge>;
       case 'rejected':
         return <Badge className="bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="text-muted-foreground">—</Badge>;
+        return <Badge variant="outline" className="text-muted-foreground">Not Applied</Badge>;
     }
+  };
+
+  const getExperienceBadge = (level: string) => {
+    const colors = {
+      'entry': 'bg-green-500/10 text-green-600 border-green-500/20',
+      'mid': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+      'senior': 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+      'executive': 'bg-orange-500/10 text-orange-600 border-orange-500/20'
+    };
+    return <Badge className={colors[level as keyof typeof colors] || 'bg-muted'}>{level}</Badge>;
+  };
+
+  const getTypeBadge = (type: string) => {
+    const colors = {
+      'full-time': 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+      'part-time': 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+      'contract': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
+      'internship': 'bg-green-500/10 text-green-600 border-green-500/20'
+    };
+    return <Badge className={colors[type as keyof typeof colors] || 'bg-muted'}>{type.replace('-', ' ')}</Badge>;
   };
 
   if (loading) {
@@ -272,9 +263,21 @@ export default function JobsPage() {
       <div className="flex-none p-4 max-w-7xl mx-auto w-full">
         {/* Header */}
         <div className="mb-6">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">Jobs</h1>
-            <p className="text-muted-foreground">{universities.length} job listings • {countries.length} locations</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-semibold text-foreground mb-2">Job Opportunities</h1>
+              <p className="text-muted-foreground">{jobs.length} job listings available</p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRefreshing(true);
+                fetchJobs().finally(() => setRefreshing(false));
+              }}
+              disabled={loading || refreshing}
+            >
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </div>
         </div>
 
@@ -283,46 +286,46 @@ export default function JobsPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search jobs..."
+              placeholder="Search jobs, companies, or locations..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
           
-          <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+          <Select value={selectedType} onValueChange={setSelectedType}>
             <SelectTrigger className="w-40 lg:w-48">
-              <SelectValue placeholder="Country" />
+              <SelectValue placeholder="Job Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All countries ({universities.length})</SelectItem>
-              {countries.map(country => (
-                <SelectItem key={country} value={country}>
-                  {country} ({getCountryCount(country)})
-                </SelectItem>
-              ))}
+              <SelectItem value="all">All types</SelectItem>
+              <SelectItem value="full-time">Full-time</SelectItem>
+              <SelectItem value="part-time">Part-time</SelectItem>
+              <SelectItem value="contract">Contract</SelectItem>
+              <SelectItem value="internship">Internship</SelectItem>
             </SelectContent>
           </Select>
 
-          <Select value={rankFilter} onValueChange={setRankFilter}>
+          <Select value={selectedExperience} onValueChange={setSelectedExperience}>
             <SelectTrigger className="w-32 lg:w-40">
-              <SelectValue placeholder="Ranking" />
+              <SelectValue placeholder="Experience" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All ranks</SelectItem>
-              <SelectItem value="top-50">Top 50</SelectItem>
-              <SelectItem value="top-100">Top 100</SelectItem>
-              <SelectItem value="100-plus">100+</SelectItem>
+              <SelectItem value="all">All levels</SelectItem>
+              <SelectItem value="entry">Entry Level</SelectItem>
+              <SelectItem value="mid">Mid Level</SelectItem>
+              <SelectItem value="senior">Senior Level</SelectItem>
+              <SelectItem value="executive">Executive</SelectItem>
             </SelectContent>
           </Select>
 
-          {(searchTerm || selectedCountry !== 'all' || rankFilter !== 'all') && (
+          {(searchTerm || selectedType !== 'all' || selectedExperience !== 'all') && (
             <Button 
               variant="ghost" 
               onClick={() => {
                 setSearchTerm('');
-                setSelectedCountry('all');
-                setRankFilter('all');
+                setSelectedType('all');
+                setSelectedExperience('all');
                 setCurrentPage(1);
               }}
             >
@@ -334,11 +337,14 @@ export default function JobsPage() {
         {/* Results count */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
           <p className="text-sm text-muted-foreground">
-            {sortedAndFilteredUniversities.length} results
+            {sortedAndFilteredJobs.length} results
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              {startIndex + 1}–{Math.min(startIndex + itemsPerPage, sortedAndFilteredUniversities.length)} of {sortedAndFilteredUniversities.length}
+              {jobs.length > 0 
+                ? `${startIndex + 1}–${Math.min(startIndex + itemsPerPage, sortedAndFilteredJobs.length)} of ${sortedAndFilteredJobs.length}`
+                : 'No jobs to display'
+              }
             </span>
           </div>
         </div>
@@ -350,106 +356,131 @@ export default function JobsPage() {
           <table className="w-full table-fixed">
             <thead className="bg-muted/50 border-b border-border">
               <tr>
-                <th className="w-16 lg:w-24 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
-                  <button 
-                    className="flex items-center hover:text-foreground transition-colors"
-                    onClick={() => handleSort('rank')}
-                  >
-                    Rank
-                    {getSortIcon('rank')}
-                  </button>
-                </th>
                 <th className="text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
-                    onClick={() => handleSort('name')}
+                    onClick={() => handleSort('title')}
                   >
                     Job Title
-                    {getSortIcon('name')}
+                    {getSortIcon('title')}
                   </button>
                 </th>
-                <th className="w-32 lg:w-48 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
+                <th className="w-48 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
-                    onClick={() => handleSort('country')}
+                    onClick={() => handleSort('company')}
                   >
-                    Country
-                    {getSortIcon('country')}
+                    Company
+                    {getSortIcon('company')}
                   </button>
                 </th>
-                <th className="w-16 lg:w-24 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">Status</th>
-                <th className="w-20 lg:w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden md:table-cell">
+                <th className="w-40 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
-                    onClick={() => handleSort('employer_reputation_rank')}
+                    onClick={() => handleSort('location')}
                   >
-                    Emp Rep
-                    {getSortIcon('employer_reputation_rank')}
+                    Location
+                    {getSortIcon('location')}
                   </button>
                 </th>
-                <th className="w-20 lg:w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden lg:table-cell">
+                <th className="w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">Type</th>
+                <th className="w-32 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden md:table-cell">Experience</th>
+                <th className="w-36 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm hidden lg:table-cell">
                   <button 
                     className="flex items-center hover:text-foreground transition-colors"
-                    onClick={() => handleSort('academic_reputation_rank')}
+                    onClick={() => handleSort('salary')}
                   >
-                    Acad Rep
-                    {getSortIcon('academic_reputation_rank')}
+                    Salary
+                    {getSortIcon('salary')}
                   </button>
                 </th>
+                <th className="w-24 text-left py-2 px-2 lg:px-4 font-medium text-foreground text-xs lg:text-sm">Status</th>
                 <th className="w-8 hidden sm:table-cell"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {paginatedUniversities.map((university) => (
-                <tr 
-                  key={`${university.rank}-${university.name}`}
-                  className="hover:bg-muted/50 cursor-pointer group"
-                  onClick={() => router.push(`/jobs/${university.id}`)}
-                >
-                  <td className="py-2 lg:py-4 px-2 lg:px-4">
-                    <div className="flex items-center gap-1 lg:gap-2">
-                      <Image
-                        src={getUniversityEmblemPath(university.name)}
-                        alt={`${university.name} emblem`}
-                        width={16}
-                        height={16}
-                        className="object-contain flex-shrink-0 lg:w-5 lg:h-5"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <span className="font-mono text-xs lg:text-sm text-foreground">#{university.rank}</span>
+              {paginatedJobs.length > 0 ? (
+                paginatedJobs.map((job) => (
+                  <tr 
+                    key={job.id}
+                    className="hover:bg-muted/50 cursor-pointer group"
+                    onClick={() => {
+                      if (job.url) {
+                        window.open(job.url, '_blank');
+                      } else {
+                        router.push(`/jobs/${job.id}`);
+                      }
+                    }}
+                  >
+                    <td className="py-2 lg:py-4 px-2 lg:px-4">
+                      <div className="font-medium text-xs lg:text-sm text-foreground truncate" title={job.title}>
+                        {job.title}
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4">
+                      <div className="flex items-center gap-1 lg:gap-2 text-muted-foreground">
+                        <Building2 className="h-3 w-3 lg:h-4 lg:w-4 flex-shrink-0" />
+                        <span className="truncate text-xs lg:text-sm" title={job.company}>
+                          {job.company}
+                          {job.source && (
+                            <span className="ml-1 text-xs text-muted-foreground/70">({job.source})</span>
+                          )}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4">
+                      <div className="flex items-center gap-1 lg:gap-2 text-muted-foreground">
+                        <MapPin className="h-2 w-2 lg:h-3 lg:w-3 flex-shrink-0" />
+                        <span className="truncate text-xs lg:text-sm" title={job.location}>{job.location}</span>
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4">
+                      <div className="scale-75 lg:scale-100 origin-left">
+                        {getTypeBadge(job.type)}
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4 hidden md:table-cell">
+                      <div className="scale-75 lg:scale-100 origin-left">
+                        {getExperienceBadge(job.experience_level)}
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4 hidden lg:table-cell">
+                      {job.salary_min && job.salary_max ? (
+                        <div className="flex items-center gap-1 text-xs lg:text-sm">
+                          <DollarSign className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-mono text-muted-foreground">
+                            {`${job.salary_min / 1000}k-${job.salary_max / 1000}k`}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4">
+                      <div className="scale-75 lg:scale-100 origin-left">
+                        {getStatusBadge(applicationStatuses[job.id])}
+                      </div>
+                    </td>
+                    <td className="py-2 lg:py-4 px-2 lg:px-4 hidden sm:table-cell">
+                      <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 scale-75 lg:scale-100">
+                        <MoreHorizontal className="h-3 w-3 lg:h-4 lg:w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <Briefcase className="h-12 w-12 text-muted-foreground/50" />
+                      <div>
+                        <p className="text-muted-foreground font-medium">No jobs available yet</p>
+                        <p className="text-sm text-muted-foreground/70 mt-1">Check back soon for new opportunities</p>
+                      </div>
                     </div>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4">
-                    <div className="font-medium text-xs lg:text-sm text-foreground truncate" title={university.name}>
-                      {university.name}
-                    </div>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4">
-                    <div className="flex items-center gap-1 lg:gap-2 text-muted-foreground">
-                      <MapPin className="h-2 w-2 lg:h-3 lg:w-3 flex-shrink-0" />
-                      <span className="truncate text-xs lg:text-sm" title={university.country}>{university.country}</span>
-                    </div>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4">
-                    <div className="scale-75 lg:scale-100 origin-left">
-                      {getStatusBadge(applicationStatuses[university.rank])}
-                    </div>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden md:table-cell">
-                    <span className="font-mono text-xs lg:text-sm text-muted-foreground">#{university.employer_reputation_rank}</span>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden lg:table-cell">
-                    <span className="font-mono text-xs lg:text-sm text-muted-foreground">#{university.academic_reputation_rank}</span>
-                  </td>
-                  <td className="py-2 lg:py-4 px-2 lg:px-4 hidden sm:table-cell">
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 scale-75 lg:scale-100">
-                      <MoreHorizontal className="h-3 w-3 lg:h-4 lg:w-4" />
-                    </Button>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -504,23 +535,6 @@ export default function JobsPage() {
               disabled={currentPage === totalPages}
             >
               Next
-            </Button>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {sortedAndFilteredUniversities.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No jobs found</p>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedCountry('all');
-                setRankFilter('all');
-              }}
-            >
-              Clear filters
             </Button>
           </div>
         )}

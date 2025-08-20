@@ -227,7 +227,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
       </div>
       
       <TooltipProvider>
-        <div className="flex-1 flex flex-col h-full bg-sidebar rounded-lg border border-border overflow-hidden relative">
+        <div className="flex-1 flex flex-col h-full bg-transparent overflow-hidden relative">
           {/* Toggle button when sidebar is open - positioned in top right */}
           <div className="absolute top-2 right-2 z-50">
             <RightSidebarToggle 
@@ -238,7 +238,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
           </div>
           
           {/* Header */}
-          <div className="px-4 py-2 flex-shrink-0 border-b">
+          <div className="px-4 py-2 flex-shrink-0">
             <h2 className="text-sm font-semibold">Job Assistant</h2>
             <p className="text-xs text-muted-foreground mt-1">Ask me anything about careers and jobs</p>
           </div>
@@ -262,7 +262,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
         </div>
 
         {/* Input */}
-        <div className="p-4 flex-shrink-0 border-t">
+        <div className="p-4 flex-shrink-0">
           <form onSubmit={handleSubmit}>
             <MultimodalInput
               selectedModelId="gemini-2.5-flash"

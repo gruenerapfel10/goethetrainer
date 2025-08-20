@@ -63,7 +63,7 @@ export default function OfferPage() {
                 title="Navigator"
                 price="$99"
                 period="/PER YEAR"
-                description="Master the journey. Unlock the full power of MUA for unlimited applications and elite insights."
+                description="Master the journey. Unlock the full power of Kingfisher for unlimited applications and elite insights."
                 features={navigatorFeatures}
                 ctaText="Become a Navigator"
                 ctaVariant="default"

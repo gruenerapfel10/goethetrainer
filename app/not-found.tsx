@@ -32,7 +32,7 @@ export default function NotFound() {
         <div className="absolute bottom-40 right-40 w-72 h-72 bg-blur-circle-light animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* MUA Pattern Overlay */}
+      {/* Kingfisher Pattern Overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 mua-pattern opacity-20 mix-blend-overlay" />
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
@@ -44,7 +44,7 @@ export default function NotFound() {
             }}
             transition={{ type: "spring", stiffness: 50, damping: 20 }}
           >
-            MUA
+            Kingfisher
           </motion.div>
         </div>
       </div>

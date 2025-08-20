@@ -1,4 +1,4 @@
-import { MuaLogo } from "@/components/mua-logo"
+import { KingfisherLogo } from "@/components/kingfisher-logo"
 
 export function Footer() {
   return (
@@ -6,8 +6,8 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:px-6">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-3">
-            <MuaLogo className="h-8 w-auto text-white" />
-            <span className="text-sm text-zinc-400">&copy; 2025 MUA. All rights reserved.</span>
+            <KingfisherLogo className="h-8 w-auto text-white" />
+            <span className="text-sm text-zinc-400">&copy; 2025 Kingfisher. All rights reserved.</span>
           </div>
           <div className="flex gap-6 text-sm font-medium">
             <a href="#" className="text-zinc-400 hover:text-white">

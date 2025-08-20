@@ -23,7 +23,7 @@ import { X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useChatPanel } from './chat-panel';
 import type { FileSearchResult } from './chat-header';
-import { MuaLogo } from './mua-logo';
+import { KingfisherLogo } from './kingfisher-logo';
 
 export function ChatPanelInterface({
   id,
@@ -269,9 +269,9 @@ export function ChatPanelInterface({
       <div className="flex items-center justify-between p-4 border-b border-primary/10 bg-white/98 dark:bg-zinc-900/98 backdrop-blur-xl shadow-blue">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary dark:bg-blue-600 rounded-full flex items-center justify-center p-1.5">
-            <MuaLogo className="w-full h-full text-white" />
+            <KingfisherLogo className="w-full h-full text-white" />
           </div>
-          <h2 className="text-sm font-medium text-foreground">MUA Assistant</h2>
+          <h2 className="text-sm font-medium text-foreground">Kingfisher Assistant</h2>
         </div>
         <Button
           variant="ghost"

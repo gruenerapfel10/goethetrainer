@@ -1,4 +1,4 @@
-import { MuaLogo } from "@/components/mua-logo"
+import { KingfisherLogo } from "@/components/kingfisher-logo"
 import { Instagram, Twitter, Linkedin, Facebook, Youtube, ChevronDown, Globe } from "lucide-react"
 
 export function Footer() {
@@ -9,8 +9,8 @@ export function Footer() {
           {/* Logo and Social Icons */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2 mb-8">
-              <MuaLogo className="h-8 w-auto text-black" />
-              <span className="text-xl font-bold text-black">MUA</span>
+              <KingfisherLogo className="h-8 w-auto text-black" />
+              <span className="text-xl font-bold text-black">Kingfisher</span>
             </div>
             <div className="flex gap-4">
               <Instagram className="w-5 h-5 text-gray-600 hover:text-black cursor-pointer" />
@@ -59,9 +59,9 @@ export function Footer() {
             </div>
           </div>
 
-          {/* MUA for */}
+          {/* Kingfisher for */}
           <div>
-            <h3 className="font-semibold text-black mb-4">MUA for</h3>
+            <h3 className="font-semibold text-black mb-4">Kingfisher for</h3>
             <div className="space-y-3">
               <a href="#" className="block text-gray-600 hover:text-black text-sm">Enterprise</a>
               <a href="#" className="block text-gray-600 hover:text-black text-sm">Small business</a>
@@ -88,7 +88,7 @@ export function Footer() {
             </button>
           </div>
           <div className="text-sm text-gray-600">
-            © 2025 MUA Labs, Inc.
+            © 2025 Kingfisher Labs, Inc.
           </div>
         </div>
       </div>
