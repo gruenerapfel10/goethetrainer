@@ -1,0 +1,242 @@
+{
+  "system_id": "br-enem",
+  "name": "Exame Nacional do Ensino Médio (ENEM)",
+  "type": "national",
+  "country": "BR",
+  "version": "2024.11",
+  "authority": "Instituto Nacional de Estudos e Pesquisas Educacionais (INEP)",
+  "recognition": "Brazil + Portuguese-speaking countries",
+  "last_updated": "2024-11-01",
+  "overview": {
+    "description": "National high school examination and university entrance test",
+    "purpose": "University admission, high school certification, scholarships",
+    "dates_2024": ["November 3", "November 10"],
+    "duration": "5.5 hours Day 1, 5 hours Day 2",
+    "candidates_2024": 4325000,
+    "importance": "Primary gateway to higher education in Brazil",
+    "rank": "Second largest exam globally after Chinese Gaokao"
+  },
+  "exam_structure": {
+    "format": "180 multiple choice questions + 1 essay",
+    "days": {
+      "day_1": {
+        "date": "First Sunday",
+        "duration": "5 hours 30 minutes",
+        "components": {
+          "languages": {
+            "name": "Linguagens, Códigos e suas Tecnologias",
+            "questions": 45,
+            "subjects": ["Portuguese", "Literature", "Foreign Language", "Arts", "Physical Education", "Information Technology"]
+          },
+          "human_sciences": {
+            "name": "Ciências Humanas e suas Tecnologias",
+            "questions": 45,
+            "subjects": ["History", "Geography", "Philosophy", "Sociology"]
+          },
+          "essay": {
+            "name": "Redação",
+            "type": "Dissertative-argumentative text",
+            "word_limit": "Up to 30 lines",
+            "time_recommended": "1 hour"
+          }
+        }
+      },
+      "day_2": {
+        "date": "Following Sunday",
+        "duration": "5 hours",
+        "components": {
+          "natural_sciences": {
+            "name": "Ciências da Natureza e suas Tecnologias",
+            "questions": 45,
+            "subjects": ["Physics", "Chemistry", "Biology"]
+          },
+          "mathematics": {
+            "name": "Matemática e suas Tecnologias",
+            "questions": 45,
+            "subjects": ["Mathematics", "Geometry", "Statistics"]
+          }
+        }
+      }
+    }
+  },
+  "scoring_system": {
+    "methodology": "Item Response Theory (TRI)",
+    "scale": {
+      "minimum": 0,
+      "maximum": 1000,
+      "average_range": "450-650"
+    },
+    "components": {
+      "objective_questions": {
+        "weight": "80%",
+        "scoring": "TRI methodology",
+        "characteristics": [
+          "Questions have different weights",
+          "Pattern consistency checked",
+          "Penalizes random guessing"
+        ]
+      },
+      "essay": {
+        "weight": "20%",
+        "scale": "0-1000",
+        "competencies": {
+          "I": {
+            "description": "Mastery of written Portuguese",
+            "points": 200
+          },
+          "II": {
+            "description": "Understanding the proposal",
+            "points": 200
+          },
+          "III": {
+            "description": "Selection and organization of information",
+            "points": 200
+          },
+          "IV": {
+            "description": "Knowledge of argumentative mechanisms",
+            "points": 200
+          },
+          "V": {
+            "description": "Intervention proposal respecting human rights",
+            "points": 200
+          }
+        },
+        "automatic_zero": [
+          "Off-topic",
+          "Less than 7 lines",
+          "Disrespect for human rights",
+          "Blank submission"
+        ]
+      }
+    },
+    "final_score": {
+      "calculation": "Average of 5 areas",
+      "range": "300-900 typical",
+      "perfect_score": "Extremely rare (less than 0.01%)"
+    }
+  },
+  "score_interpretation": {
+    "excellent": {
+      "range": "700-1000",
+      "percentile": "Top 5%",
+      "opportunities": "Top federal universities, full scholarships"
+    },
+    "very_good": {
+      "range": "600-699",
+      "percentile": "Top 20%",
+      "opportunities": "Good federal universities, partial scholarships"
+    },
+    "good": {
+      "range": "500-599",
+      "percentile": "Average",
+      "opportunities": "Regional universities, FIES financing"
+    },
+    "sufficient": {
+      "range": "450-499",
+      "percentile": "Below average",
+      "opportunities": "Private universities, technical courses"
+    },
+    "insufficient": {
+      "range": "Below 450",
+      "percentile": "Bottom 30%",
+      "opportunities": "Need to retake or seek alternatives"
+    }
+  },
+  "university_admission": {
+    "sisu": {
+      "name": "Sistema de Seleção Unificada",
+      "type": "Unified selection for public universities",
+      "participants": "All federal universities + many state universities",
+      "selection": "Based solely on ENEM scores",
+      "cutoff_scores": {
+        "medicine": "750-850",
+        "engineering": "650-750",
+        "law": "700-800",
+        "humanities": "550-650"
+      }
+    },
+    "prouni": {
+      "name": "Programa Universidade para Todos",
+      "type": "Scholarships for private universities",
+      "requirements": {
+        "minimum_score": 450,
+        "essay_minimum": 400,
+        "income_limit": "1.5-3 minimum wages per capita"
+      },
+      "benefits": ["50% scholarship", "100% scholarship"]
+    },
+    "fies": {
+      "name": "Fundo de Financiamento Estudantil",
+      "type": "Student loan program",
+      "minimum_score": 450,
+      "essay_minimum": 400
+    }
+  },
+  "special_policies": {
+    "quotas": {
+      "racial": "Reserved spots for Black, Brown, and Indigenous students",
+      "public_school": "50% reserved for public school students",
+      "income": "Reserved for low-income families",
+      "disability": "Reserved spots for disabled students"
+    },
+    "accommodations": {
+      "visual_impairment": "Braille, large print, reader",
+      "hearing_impairment": "Sign language interpreter",
+      "physical": "Accessible rooms, extended time",
+      "learning_disabilities": "Extended time"
+    }
+  },
+  "preparation": {
+    "study_methods": {
+      "cursinho": "Preparatory courses (30-40% of students)",
+      "self_study": "Online platforms, YouTube channels",
+      "school_preparation": "Final year focus on ENEM"
+    },
+    "average_preparation": "6-12 months intensive study",
+    "mock_exams": "Simulados offered by schools and courses"
+  },
+  "statistics_2024": {
+    "registered": 4325000,
+    "attendance_rate": "71.4%",
+    "average_scores": {
+      "languages": 523,
+      "human_sciences": 518,
+      "natural_sciences": 490,
+      "mathematics": 510,
+      "essay": 625
+    },
+    "essay_perfect_scores": 22,
+    "gender_distribution": {
+      "female": "60%",
+      "male": "40%"
+    },
+    "age_distribution": {
+      "17-18": "55%",
+      "19-25": "30%",
+      "26+": "15%"
+    }
+  },
+  "international_recognition": {
+    "portugal": {
+      "universities": 50,
+      "minimum_score": 500,
+      "agreement": "Direct admission agreement"
+    },
+    "other_countries": [
+      "France (Sciences Po)",
+      "UK (Birkbeck, University of London)",
+      "Ireland (University College Cork)"
+    ]
+  },
+  "recent_changes": {
+    "2024": {
+      "digital_enem": "Pilot program in select cities",
+      "new_competencies": "Focus on contemporary themes",
+      "accessibility": "Improved accommodations"
+    },
+    "future": {
+      "2025": "Gradual transition to digital format",
+      "2026": "New curriculum alignment"
+    }
+  }
+}

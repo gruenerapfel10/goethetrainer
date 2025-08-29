@@ -1,0 +1,261 @@
+{
+  "version": "2024.11",
+  "last_updated": "2024-11-01",
+  "description": "Universal grade conversion matrix for major education systems",
+  "methodology": "Based on percentile rankings and official equivalencies",
+  "conversions": {
+    "percentage_bands": {
+      "exceptional": {
+        "range": "95-100%",
+        "percentile": "Top 5%",
+        "equivalents": {
+          "ib": 7,
+          "igcse_letter": "A*",
+          "igcse_number": 9,
+          "us_gpa": 4.0,
+          "us_letter": "A+",
+          "uk_alevel": "A*",
+          "uk_gcse": 9,
+          "german": 1.0,
+          "french": "18-20",
+          "gaokao": "675-750",
+          "csat_stanine": 1,
+          "enem": "850-1000",
+          "russian": 5,
+          "japanese": "90-100",
+          "indian_cbse": "A1"
+        }
+      },
+      "excellent": {
+        "range": "85-94%",
+        "percentile": "Top 10-15%",
+        "equivalents": {
+          "ib": 6,
+          "igcse_letter": "A",
+          "igcse_number": 8,
+          "us_gpa": 3.7,
+          "us_letter": "A",
+          "uk_alevel": "A",
+          "uk_gcse": 8,
+          "german": 1.3,
+          "french": "16-17",
+          "gaokao": "600-674",
+          "csat_stanine": 2,
+          "enem": "750-849",
+          "russian": 5,
+          "japanese": "80-89",
+          "indian_cbse": "A2"
+        }
+      },
+      "very_good": {
+        "range": "75-84%",
+        "percentile": "Top 25%",
+        "equivalents": {
+          "ib": 5,
+          "igcse_letter": "B",
+          "igcse_number": 7,
+          "us_gpa": 3.3,
+          "us_letter": "B+",
+          "uk_alevel": "B",
+          "uk_gcse": 7,
+          "german": 2.0,
+          "french": "14-15",
+          "gaokao": "550-599",
+          "csat_stanine": 3,
+          "enem": "650-749",
+          "russian": 4,
+          "japanese": "70-79",
+          "indian_cbse": "B1"
+        }
+      },
+      "good": {
+        "range": "65-74%",
+        "percentile": "Top 40%",
+        "equivalents": {
+          "ib": 4,
+          "igcse_letter": "C",
+          "igcse_number": 6,
+          "us_gpa": 3.0,
+          "us_letter": "B",
+          "uk_alevel": "C",
+          "uk_gcse": 6,
+          "german": 2.7,
+          "french": "12-13",
+          "gaokao": "500-549",
+          "csat_stanine": 4,
+          "enem": "600-649",
+          "russian": 4,
+          "japanese": "60-69",
+          "indian_cbse": "B2"
+        }
+      },
+      "satisfactory": {
+        "range": "55-64%",
+        "percentile": "Average",
+        "equivalents": {
+          "ib": 4,
+          "igcse_letter": "D",
+          "igcse_number": 5,
+          "us_gpa": 2.3,
+          "us_letter": "C+",
+          "uk_alevel": "D",
+          "uk_gcse": 5,
+          "german": 3.3,
+          "french": "10-11",
+          "gaokao": "450-499",
+          "csat_stanine": 5,
+          "enem": "500-599",
+          "russian": 3,
+          "japanese": "50-59",
+          "indian_cbse": "C1"
+        }
+      },
+      "pass": {
+        "range": "45-54%",
+        "percentile": "Below average",
+        "equivalents": {
+          "ib": 3,
+          "igcse_letter": "E",
+          "igcse_number": 4,
+          "us_gpa": 2.0,
+          "us_letter": "C",
+          "uk_alevel": "E",
+          "uk_gcse": 4,
+          "german": 4.0,
+          "french": "10",
+          "gaokao": "400-449",
+          "csat_stanine": 6,
+          "enem": "450-499",
+          "russian": 3,
+          "japanese": "40-49",
+          "indian_cbse": "C2"
+        }
+      },
+      "marginal_pass": {
+        "range": "35-44%",
+        "percentile": "Bottom 40%",
+        "equivalents": {
+          "ib": 3,
+          "igcse_letter": "F",
+          "igcse_number": 3,
+          "us_gpa": 1.0,
+          "us_letter": "D",
+          "uk_alevel": "U",
+          "uk_gcse": 3,
+          "german": 5.0,
+          "french": "8-9",
+          "gaokao": "350-399",
+          "csat_stanine": 7,
+          "enem": "400-449",
+          "russian": 2,
+          "japanese": "30-39",
+          "indian_cbse": "D"
+        }
+      },
+      "fail": {
+        "range": "0-34%",
+        "percentile": "Bottom 25%",
+        "equivalents": {
+          "ib": "1-2",
+          "igcse_letter": "U",
+          "igcse_number": "1-2",
+          "us_gpa": 0.0,
+          "us_letter": "F",
+          "uk_alevel": "U",
+          "uk_gcse": "1-2",
+          "german": 6.0,
+          "french": "0-7",
+          "gaokao": "0-349",
+          "csat_stanine": "8-9",
+          "enem": "0-399",
+          "russian": 2,
+          "japanese": "0-29",
+          "indian_cbse": "E"
+        }
+      }
+    },
+    "direct_conversions": {
+      "ib_to_ucas": {
+        "45": 720,
+        "44": 698,
+        "43": 676,
+        "42": 654,
+        "41": 632,
+        "40": 611,
+        "39": 589,
+        "38": 567,
+        "37": 545,
+        "36": 523,
+        "35": 501,
+        "34": 479,
+        "33": 457,
+        "32": 435,
+        "31": 413,
+        "30": 392,
+        "29": 370,
+        "28": 348,
+        "27": 326,
+        "26": 304,
+        "25": 282,
+        "24": 260
+      },
+      "alevel_to_ib": {
+        "AAA": "36-38",
+        "AAB": "35-36",
+        "ABB": "34-35",
+        "BBB": "32-34",
+        "BBC": "31-32",
+        "BCC": "30-31",
+        "CCC": "28-30",
+        "CCD": "26-28",
+        "CDD": "24-26"
+      },
+      "sat_to_ib": {
+        "1500-1600": "40-45",
+        "1400-1499": "36-39",
+        "1300-1399": "32-35",
+        "1200-1299": "28-31",
+        "1100-1199": "24-27",
+        "1000-1099": "20-23"
+      }
+    },
+    "university_requirements": {
+      "oxford_cambridge": {
+        "ib": "38-42",
+        "alevel": "A*A*A-A*AA",
+        "gaokao": "85-90%",
+        "sat": "1480+",
+        "enem": "800+"
+      },
+      "russell_group": {
+        "ib": "32-38",
+        "alevel": "AAB-BBB",
+        "gaokao": "75-85%",
+        "sat": "1350+",
+        "enem": "700+"
+      },
+      "ivy_league": {
+        "ib": "37-42",
+        "alevel": "A*A*A*",
+        "sat": "1500+",
+        "act": "33+",
+        "gaokao": "Top 1%"
+      }
+    }
+  },
+  "important_notes": [
+    "Conversions are approximate and for reference only",
+    "Universities may have specific requirements beyond grades",
+    "Some systems cannot be directly compared due to structural differences",
+    "Context matters: difficulty of curriculum, school ranking, etc.",
+    "Always check with specific institutions for official requirements"
+  ],
+  "system_specific_notes": {
+    "ib": "Total score matters more than individual grades",
+    "gaokao": "Provincial variations affect score interpretation",
+    "csat": "Stanine scores vary by subject and year",
+    "enem": "TRI scoring makes direct conversion complex",
+    "german": "Lower numbers indicate better performance",
+    "french": "Baccalaureate mentions affect university admission"
+  }
+}

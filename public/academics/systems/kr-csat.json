@@ -1,0 +1,229 @@
+{
+  "system_id": "kr-csat",
+  "name": "대학수학능력시험 (CSAT/Suneung)",
+  "type": "national",
+  "country": "KR",
+  "version": "2024.11",
+  "authority": "Korea Institute for Curriculum and Evaluation (KICE)",
+  "recognition": "South Korea",
+  "last_updated": "2024-11-01",
+  "overview": {
+    "description": "Standardized test for university admissions in South Korea",
+    "purpose": "University entrance examination",
+    "date": "Third Thursday of November",
+    "duration": "8 hours",
+    "candidates_2024": 504588,
+    "importance": "Determines university admission and future career prospects",
+    "cultural_significance": "National event with traffic controls and flight restrictions"
+  },
+  "exam_structure": {
+    "sections": {
+      "korean_language": {
+        "name": "국어 (Korean Language)",
+        "duration": "80 minutes",
+        "questions": 45,
+        "score_range": "0-100",
+        "standard_score": "Mean 100, SD 20",
+        "components": ["Reading", "Literature", "Grammar", "Writing"]
+      },
+      "mathematics": {
+        "name": "수학 (Mathematics)",
+        "duration": "100 minutes",
+        "questions": 30,
+        "score_range": "0-100",
+        "standard_score": "Mean 100, SD 20",
+        "types": {
+          "ga": {
+            "name": "Mathematics Ga (가형)",
+            "level": "Advanced",
+            "for": "Science track students",
+            "topics": ["Calculus II", "Geometry", "Vectors"]
+          },
+          "na": {
+            "name": "Mathematics Na (나형)",
+            "level": "Standard",
+            "for": "Humanities track students",
+            "topics": ["Calculus I", "Probability", "Statistics"]
+          }
+        }
+      },
+      "english": {
+        "name": "영어 (English)",
+        "duration": "70 minutes",
+        "questions": 45,
+        "score_type": "Absolute grading (1-9 grade)",
+        "listening": "17 questions",
+        "reading": "28 questions"
+      },
+      "korean_history": {
+        "name": "한국사 (Korean History)",
+        "duration": "30 minutes",
+        "questions": 20,
+        "mandatory": true,
+        "score_type": "Absolute grading (1-9 grade)",
+        "minimum_requirement": "Must pass for university eligibility"
+      },
+      "investigation": {
+        "name": "탐구 (Investigation)",
+        "duration": "30 minutes per subject",
+        "select": "2 subjects",
+        "options": {
+          "social_studies": {
+            "name": "Social Studies",
+            "subjects": [
+              "Life and Ethics",
+              "Ethics and Thoughts",
+              "Korean Geography",
+              "World Geography",
+              "East Asian History",
+              "World History",
+              "Law and Politics",
+              "Economics",
+              "Society and Culture"
+            ]
+          },
+          "sciences": {
+            "name": "Sciences",
+            "subjects": [
+              "Physics I", "Physics II",
+              "Chemistry I", "Chemistry II",
+              "Biology I", "Biology II",
+              "Earth Science I", "Earth Science II"
+            ]
+          },
+          "vocational": {
+            "name": "Vocational Education",
+            "subjects": [
+              "Agriculture",
+              "Technology",
+              "Commerce",
+              "Oceanography",
+              "Home Economics"
+            ]
+          }
+        }
+      },
+      "second_foreign_language": {
+        "name": "제2외국어/한문 (Second Foreign Language/Chinese Characters)",
+        "duration": "40 minutes",
+        "questions": 30,
+        "optional": true,
+        "languages": [
+          "German", "French", "Spanish", "Chinese",
+          "Japanese", "Russian", "Arabic", "Vietnamese",
+          "Classical Chinese"
+        ]
+      }
+    }
+  },
+  "scoring_system": {
+    "types": {
+      "standard_score": {
+        "subjects": ["Korean", "Mathematics", "Investigation"],
+        "calculation": "Stanine curve (표준점수)",
+        "mean": 100,
+        "standard_deviation": 20,
+        "range": "0-200 (theoretical)"
+      },
+      "grade_system": {
+        "subjects": ["English", "Korean History", "Second Foreign Language"],
+        "grades": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        "distribution": {
+          "1": "Top 4%",
+          "2": "Next 7%",
+          "3": "Next 12%",
+          "4": "Next 17%",
+          "5": "Next 20%",
+          "6": "Next 17%",
+          "7": "Next 12%",
+          "8": "Next 7%",
+          "9": "Bottom 4%"
+        }
+      }
+    },
+    "percentile_rank": {
+      "calculation": "National percentile ranking",
+      "reporting": "Provided for each subject"
+    }
+  },
+  "university_admission": {
+    "sky_universities": {
+      "name": "Seoul National, Yonsei, Korea University",
+      "requirement": "Top 1-2% overall",
+      "typical_scores": {
+        "korean": "130+",
+        "mathematics": "130+",
+        "english": "Grade 1",
+        "investigation": "65+ each"
+      }
+    },
+    "in_seoul_universities": {
+      "requirement": "Top 4-5%",
+      "competition": "Extremely high"
+    },
+    "regional_universities": {
+      "requirement": "Top 30-40%",
+      "variation": "Significant by region and major"
+    },
+    "admission_types": {
+      "regular": {
+        "weight": "100% CSAT scores",
+        "percentage": "30% of admissions"
+      },
+      "comprehensive": {
+        "components": ["CSAT", "School records", "Essays", "Interviews"],
+        "percentage": "70% of admissions"
+      }
+    }
+  },
+  "special_arrangements": {
+    "exam_day": {
+      "business_hours": "Delayed opening (10 AM)",
+      "stock_market": "Delayed opening",
+      "public_transport": "Increased service",
+      "flight_restrictions": "No takeoffs/landings during listening test",
+      "police_escorts": "Available for late students"
+    },
+    "accommodations": {
+      "disabled_students": "Extended time, separate rooms",
+      "hospital_patients": "Testing in hospitals"
+    }
+  },
+  "preparation": {
+    "study_hours": "14-16 hours/day in final year",
+    "hagwons": "Private cram schools (80% participation)",
+    "cost": "Average $1,000-3,000/month for tutoring",
+    "mock_exams": "Monthly national mock tests",
+    "재수생": {
+      "name": "Gap year students",
+      "percentage": "20-30% of test takers",
+      "purpose": "Retaking for better scores"
+    }
+  },
+  "grading_reforms": {
+    "absolute_grading": {
+      "implemented": "English (2018), Korean History (2017)",
+      "purpose": "Reduce competition"
+    },
+    "future_changes": {
+      "2025": "Consideration of high school credits",
+      "2028": "Major reform planned"
+    }
+  },
+  "statistics_2024": {
+    "perfect_scores": "Fewer than 10 students",
+    "average_scores": {
+      "korean": "100",
+      "mathematics_ga": "98",
+      "mathematics_na": "102",
+      "english": "Grade 4-5"
+    },
+    "university_enrollment_rate": "71.5%",
+    "test_anxiety_rate": "Over 75% report severe stress"
+  },
+  "international_comparison": {
+    "difficulty": "Considered one of world's most difficult exams",
+    "pressure": "Highest stakes among developed nations",
+    "preparation_time": "Most intensive globally"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "system_id": "cn-gaokao",
+  "name": "高考 (Gaokao - National College Entrance Examination)",
+  "type": "national",
+  "country": "CN",
+  "version": "2024.11",
+  "authority": "Ministry of Education of the People's Republic of China",
+  "recognition": "China + International Chinese Universities",
+  "last_updated": "2024-11-01",
+  "overview": {
+    "description": "Standardized academic examination held annually in mainland China",
+    "purpose": "University admission",
+    "date": "June 7-8 (or 7-9 in some provinces)",
+    "duration": "2-3 days",
+    "candidates_2024": 13500000,
+    "acceptance_rate": "75-85%",
+    "importance": "Considered most important exam in Chinese student's life"
+  },
+  "exam_structure": {
+    "current_system": "3+1+2",
+    "components": {
+      "3": {
+        "name": "Core Subjects",
+        "subjects": ["Chinese", "Mathematics", "Foreign Language"],
+        "points_each": 150,
+        "total_points": 450,
+        "mandatory": true
+      },
+      "1": {
+        "name": "Primary Elective",
+        "choices": ["Physics", "History"],
+        "points": 100,
+        "note": "Determines science or humanities track"
+      },
+      "2": {
+        "name": "Secondary Electives",
+        "choices": ["Chemistry", "Biology", "Politics", "Geography"],
+        "select": 2,
+        "points_each": 100,
+        "total_points": 200
+      }
+    },
+    "legacy_systems": {
+      "3+X": {
+        "description": "Previous system in some provinces",
+        "core": ["Chinese", "Mathematics", "Foreign Language"],
+        "comprehensive": ["Science Comprehensive", "Liberal Arts Comprehensive"]
+      }
+    }
+  },
+  "scoring": {
+    "total_points": {
+      "standard": 750,
+      "shanghai": 660,
+      "hainan": 900,
+      "jiangsu_old": 480
+    },
+    "subject_breakdown": {
+      "chinese": {
+        "points": 150,
+        "duration": "150 minutes",
+        "components": ["Reading comprehension", "Classical Chinese", "Essay writing"]
+      },
+      "mathematics": {
+        "points": 150,
+        "duration": "120 minutes",
+        "versions": ["Science track", "Humanities track (easier)"]
+      },
+      "foreign_language": {
+        "points": 150,
+        "duration": "120 minutes",
+        "options": ["English", "Russian", "Japanese", "German", "French", "Spanish"],
+        "components": ["Listening", "Reading", "Writing"]
+      },
+      "physics_history": {
+        "points": 100,
+        "duration": "90 minutes"
+      },
+      "electives": {
+        "points_each": 100,
+        "duration_each": "90 minutes"
+      }
+    }
+  },
+  "grade_interpretation": {
+    "tier_1_universities": {
+      "score_range": "600-750",
+      "description": "Top universities (985/211 projects)",
+      "examples": ["Tsinghua", "Peking University", "Fudan"]
+    },
+    "tier_2_universities": {
+      "score_range": "550-599",
+      "description": "Key universities",
+      "admission_rate": "~20%"
+    },
+    "tier_3_universities": {
+      "score_range": "450-549",
+      "description": "Regular bachelor programs",
+      "admission_rate": "~40%"
+    },
+    "vocational_colleges": {
+      "score_range": "200-449",
+      "description": "Vocational and technical colleges",
+      "admission_rate": "~35%"
+    }
+  },
+  "provincial_variations": {
+    "autonomous_regions": {
+      "provinces": ["Beijing", "Shanghai", "Tianjin", "Zhejiang", "Jiangsu"],
+      "feature": "Create own exam papers"
+    },
+    "national_papers": {
+      "types": ["National Paper I", "National Paper II", "National Paper III"],
+      "difficulty": "Varies by region's educational development"
+    },
+    "score_lines": {
+      "description": "Minimum scores for each tier vary by province",
+      "factors": ["Number of candidates", "University quotas", "Regional development"]
+    }
+  },
+  "special_policies": {
+    "bonus_points": {
+      "ethnic_minorities": "5-20 points",
+      "rural_students": "Up to 20 points",
+      "outstanding_athletes": "Up to 20 points",
+      "competition_winners": "5-20 points"
+    },
+    "independent_admission": {
+      "description": "Top universities can admit exceptional students with lower scores",
+      "requirements": "Outstanding performance in specific areas"
+    }
+  },
+  "preparation": {
+    "study_intensity": "12-14 hours/day in final year",
+    "cram_schools": "Widespread supplementary education",
+    "mock_exams": "Monthly or bi-monthly",
+    "pressure_level": "Extremely high"
+  },
+  "international_recognition": {
+    "accepted_by": [
+      "University of Cambridge",
+      "University of Birmingham", 
+      "University of Sydney",
+      "University of Toronto",
+      "New York University"
+    ],
+    "typical_requirements": {
+      "uk": "75-85% of total score",
+      "australia": "60-80% of total score",
+      "canada": "70-85% of total score"
+    }
+  },
+  "reforms_2024": {
+    "comprehensive_evaluation": "Pilot programs combining Gaokao with high school performance",
+    "subject_flexibility": "More provinces adopting 3+1+2 system",
+    "mental_health": "Increased focus on student wellbeing"
+  },
+  "statistics": {
+    "average_score_2024": "Approximately 450-480",
+    "perfect_scores_2024": "Less than 100 nationwide",
+    "university_admission_rate": "41.6%",
+    "bachelor_programs": "Over 2,800 universities"
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TYPE "operation_type_enum" ADD VALUE 'FILE_DELETION_AND_PROCESS';

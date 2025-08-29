@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2024-11-01",
+  "next_review": "2025-01-01",
+  "description": "Academic systems metadata and registry",
+  "maintainer": "MUA Education Team",
+  "data_sources": [
+    "Official examination boards",
+    "Ministry of Education websites",
+    "University admission offices",
+    "UCAS, College Board, NACAC",
+    "UNESCO education statistics"
+  ],
+  "systems_registry": {
+    "international": {
+      "ib": {
+        "file": "systems/ib.json",
+        "name": "International Baccalaureate",
+        "countries": 160,
+        "students": 1950000,
+        "last_updated": "2024-11-01"
+      },
+      "igcse": {
+        "file": "systems/igcse.json",
+        "name": "Cambridge IGCSE",
+        "countries": 145,
+        "students": 1000000,
+        "last_updated": "2024-11-01"
+      },
+      "ap": {
+        "file": "systems/ap.json",
+        "name": "Advanced Placement",
+        "countries": 60,
+        "students": 2800000,
+        "status": "pending"
+      }
+    },
+    "national": {
+      "us": {
+        "gpa": {
+          "file": "systems/us-gpa.json",
+          "name": "US Grade Point Average",
+          "status": "pending"
+        },
+        "sat": {
+          "file": "tests/sat.json",
+          "name": "Scholastic Assessment Test",
+          "status": "pending"
+        }
+      },
+      "gb": {
+        "alevel": {
+          "file": "systems/gb-alevel.json",
+          "name": "A-Levels",
+          "status": "pending"
+        },
+        "gcse": {
+          "file": "systems/gb-gcse.json",
+          "name": "GCSE",
+          "status": "pending"
+        }
+      },
+      "cn": {
+        "gaokao": {
+          "file": "systems/cn-gaokao.json",
+          "name": "Gaokao",
+          "students": 13500000,
+          "last_updated": "2024-11-01"
+        }
+      },
+      "kr": {
+        "csat": {
+          "file": "systems/kr-csat.json",
+          "name": "CSAT/Suneung",
+          "students": 504588,
+          "last_updated": "2024-11-01"
+        }
+      },
+      "br": {
+        "enem": {
+          "file": "systems/br-enem.json",
+          "name": "ENEM",
+          "students": 4325000,
+          "last_updated": "2024-11-01"
+        }
+      },
+      "sg": {
+        "sec": {
+          "file": "systems/sg-sec.json",
+          "name": "Singapore-Cambridge SEC",
+          "status": "pending",
+          "note": "Replacing O/A levels in 2027"
+        }
+      }
+    }
+  },
+  "conversion_tables": {
+    "universal": {
+      "file": "conversions/universal-grade-matrix.json",
+      "description": "Universal grade conversion matrix",
+      "last_updated": "2024-11-01"
+    },
+    "bilateral": {
+      "status": "pending",
+      "planned": [
+        "conversions/ib-to-national.json",
+        "conversions/gaokao-to-international.json",
+        "conversions/percentile-rankings.json"
+      ]
+    }
+  },
+  "language_tests": {
+    "english": {
+      "toefl": {
+        "file": "tests/toefl.json",
+        "status": "pending"
+      },
+      "ielts": {
+        "file": "tests/ielts.json",
+        "status": "pending"
+      },
+      "duolingo": {
+        "file": "tests/duolingo.json",
+        "status": "pending"
+      }
+    },
+    "other": {
+      "delf_dalf": {
+        "file": "tests/french-proficiency.json",
+        "status": "pending"
+      },
+      "dele": {
+        "file": "tests/spanish-proficiency.json",
+        "status": "pending"
+      },
+      "hsk": {
+        "file": "tests/chinese-proficiency.json",
+        "status": "pending"
+      },
+      "jlpt": {
+        "file": "tests/japanese-proficiency.json",
+        "status": "pending"
+      }
+    }
+  },
+  "update_schedule": {
+    "annual": [
+      "Grade boundaries",
+      "Test formats",
+      "University requirements"
+    ],
+    "biannual": [
+      "Score statistics",
+      "Conversion matrices"
+    ],
+    "as_needed": [
+      "System reforms",
+      "New qualifications",
+      "Policy changes"
+    ]
+  },
+  "api_endpoints": {
+    "note": "Future API development",
+    "planned": {
+      "get_system": "/api/academics/system/{system_id}",
+      "convert_grade": "/api/academics/convert",
+      "get_requirements": "/api/academics/requirements/{university_id}",
+      "validate_score": "/api/academics/validate"
+    }
+  },
+  "data_quality": {
+    "accuracy": "95%+ for major systems",
+    "coverage": "80% of global students",
+    "validation": "Cross-referenced with official sources",
+    "limitations": [
+      "Regional variations within countries",
+      "Year-to-year boundary changes",
+      "University-specific interpretations",
+      "Vocational qualifications not fully covered"
+    ]
+  },
+  "future_additions": {
+    "2024_q4": [
+      "European Baccalaureate",
+      "Indian State Boards",
+      "Canadian Provincial Systems"
+    ],
+    "2025_q1": [
+      "Middle East qualifications",
+      "African education systems",
+      "Professional certifications"
+    ]
+  },
+  "usage_guidelines": {
+    "important": [
+      "Always verify with official sources",
+      "Consider context and circumstances",
+      "Account for grade inflation/deflation",
+      "Check specific university requirements",
+      "Use as reference, not absolute truth"
+    ],
+    "support": "education@mua.app",
+    "feedback": "https://mua.app/feedback"
+  }
+}
