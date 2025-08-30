@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MatrixRainBackground } from "@/components/landing/matrix-rain-background"
 import { MuaLogo } from "@/components/mua-logo"
 import { cn } from "@/lib/utils"
 import { Chrome } from "lucide-react"
@@ -63,8 +62,7 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-2">
       <div className="relative hidden items-center justify-center bg-gray-900 text-white lg:flex">
-        <MatrixRainBackground />
-        <div className="relative z-10 text-center">
+        <div className="text-center">
           <MuaLogo className="mx-auto mb-8 h-20 w-auto text-white" />
           <h1 className="text-5xl font-bold">Unlock a World of Universities.</h1>
           <p className="mt-4 text-lg text-blue-200">Your future campus is just a click away.</p>

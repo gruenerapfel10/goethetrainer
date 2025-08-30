@@ -339,4 +339,17 @@ Avoid long sentencse, 1 line max.
   return basePrompt;
 }
 
-export { AGENT_REGISTRY }; 
+export { AGENT_REGISTRY };
+
+// Additional stub functions for kingfisher compatibility
+export function getAgentTypeFromString(type: string) {
+  return type || 'general-assistant';
+}
+
+export function getFilteredRegularToolNames(agentType: string, options: any) {
+  return [];
+}
+
+export function initializeDeepResearchTools(options: any) {
+  return {};
+} 

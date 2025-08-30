@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react';
-import { Search, LayoutDashboard, GraduationCap, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings, Star } from "lucide-react"
+import { Search, LayoutDashboard, BookOpen, FileText, Headphones, MessageSquare, Sun, Moon, Monitor, User, Languages, ChevronDown, Award, Target, Settings, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { AppRightSidebar } from '@/components/app-right-sidebar';
@@ -215,17 +215,16 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
   const getBreadcrumbItems = () => {
     if (pathname === '/dashboard') {
       return [{ label: t('navigation.dashboard'), current: true }]
-    } else if (pathname === '/universities') {
-      return [{ label: t('navigation.universities'), current: true }]
-    } else if (pathname === '/profile') {
-      return [{ label: t('navigation.profile'), current: true }]
+    } else if (pathname === '/reading') {
+      return [{ label: 'Reading', current: true }]
+    } else if (pathname === '/writing') {
+      return [{ label: 'Writing', current: true }]
+    } else if (pathname === '/listening') {
+      return [{ label: 'Listening', current: true }]
+    } else if (pathname === '/speaking') {
+      return [{ label: 'Speaking', current: true }]
     } else if (pathname === '/applications') {
       return [{ label: 'Applications', current: true }]
-    } else if (pathname.startsWith('/universities/') && universityData) {
-      return [
-        { label: t('navigation.universities'), href: '/universities' },
-        { label: truncateUniversityName(universityData.name), current: true }
-      ]
     } else if (pathname.startsWith('/chat/')) {
       return [{ label: 'Chat', current: true }]
     } else if (pathname === '/admin') {
@@ -385,36 +384,68 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                   {sidebarOpen && <span className="truncate">{t('navigation.dashboard')}</span>}
                 </Button>
               </Link>
-              <Link href="/universities">
+              <Link href="/reading">
                 <Button
                   variant="ghost"
                   className={`w-full gap-3 transition-all duration-200 ${
-                    pathname === '/universities' 
+                    pathname === '/reading' 
                       ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   } ${
                     sidebarOpen ? "justify-start" : "justify-center px-0"
                   }`}
-                  title={!sidebarOpen ? "Universities" : undefined}
+                  title={!sidebarOpen ? "Reading" : undefined}
                 >
-                  <GraduationCap className="w-4 h-4 flex-shrink-0" />
-                  {sidebarOpen && <span className="truncate">{t('navigation.universities')}</span>}
+                  <BookOpen className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="truncate">Reading</span>}
                 </Button>
               </Link>
-              <Link href="/profile">
+              <Link href="/writing">
                 <Button
                   variant="ghost"
                   className={`w-full gap-3 transition-all duration-200 ${
-                    pathname === '/profile' 
+                    pathname === '/writing' 
                       ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   } ${
                     sidebarOpen ? "justify-start" : "justify-center px-0"
                   }`}
-                  title={!sidebarOpen ? "Profile" : undefined}
+                  title={!sidebarOpen ? "Writing" : undefined}
                 >
-                  <User className="w-4 h-4 flex-shrink-0" />
-                  {sidebarOpen && <span className="truncate">{t('navigation.profile')}</span>}
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="truncate">Writing</span>}
+                </Button>
+              </Link>
+              <Link href="/listening">
+                <Button
+                  variant="ghost"
+                  className={`w-full gap-3 transition-all duration-200 ${
+                    pathname === '/listening' 
+                      ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  } ${
+                    sidebarOpen ? "justify-start" : "justify-center px-0"
+                  }`}
+                  title={!sidebarOpen ? "Listening" : undefined}
+                >
+                  <Headphones className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="truncate">Listening</span>}
+                </Button>
+              </Link>
+              <Link href="/speaking">
+                <Button
+                  variant="ghost"
+                  className={`w-full gap-3 transition-all duration-200 ${
+                    pathname === '/speaking' 
+                      ? 'bg-gradient-to-r from-blue-600/20 via-blue-500/20 to-blue-400/20 text-blue-600 font-medium border border-blue-500/30 backdrop-blur-sm' 
+                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                  } ${
+                    sidebarOpen ? "justify-start" : "justify-center px-0"
+                  }`}
+                  title={!sidebarOpen ? "Speaking" : undefined}
+                >
+                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                  {sidebarOpen && <span className="truncate">Speaking</span>}
                 </Button>
               </Link>
               <div className={sidebarOpen ? "pl-1 pr-4" : "px-2"}>
