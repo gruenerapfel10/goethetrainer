@@ -5,6 +5,7 @@ import {
 } from 'ai';
 import { togetherai } from '@ai-sdk/togetherai';
 import { google } from '@ai-sdk/google';
+import { xai } from '@ai-sdk/xai';
 import { customMiddleware } from './custom-middleware';
 
 import { openai } from '@ai-sdk/openai';
@@ -17,6 +18,14 @@ export const customModel = (
   if (apiIdentifier.includes('gemini')) {
     return wrapLanguageModel({
       model: google(apiIdentifier),
+      middleware: customMiddleware,
+    });
+  }
+
+  // Handle xAI Grok models
+  if (apiIdentifier.includes('grok')) {
+    return wrapLanguageModel({
+      model: xai(apiIdentifier),
       middleware: customMiddleware,
     });
   }
@@ -42,6 +51,14 @@ export const myProvider = customProvider({
     'gemini-2.5-flash': customModel('gemini-2.5-flash'),
     'gemini-2.0-flash-latest': customModel('gemini-2.5-flash'), // Map old model to new
     'gemini-2.5-pro': customModel('gemini-2.5-pro'),
+    
+    // xAI Grok models
+    'grok-4-fast-non-reasoning': customModel('grok-4-fast-non-reasoning'),
+    'grok-4-fast-reasoning': customModel('grok-4-fast-reasoning'),
+    'grok-4': customModel('grok-4'),
+    'grok-3': customModel('grok-3'),
+    'grok-3-latest': customModel('grok-3-latest'),
+    'grok-beta': customModel('grok-beta'),
     
     // Legacy model mappings - now using Gemini
     'haiku': customModel('gemini-2.5-flash'), // Legacy Bedrock Haiku -> Gemini
