@@ -261,7 +261,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
           </div>
 
           {/* Search */}
-          <div className={`${sidebarOpen ? "px-4" : "px-2"} pb-1`}>
+          <div className={`${sidebarOpen ? "px-2" : "px-2"} pb-1`}>
             {sidebarOpen ? (
               <div className="flex items-center gap-2 px-3 h-9 rounded-xl bg-sidebar-accent/50 backdrop-blur-sm border border-sidebar-border/50 transition-all duration-200 hover:bg-sidebar-accent/70">
                 <Search className="h-4 w-4 text-muted-foreground" />
