@@ -1,4 +1,4 @@
-import { KingfisherLogo } from "@/components/kingfisher-logo"
+import { GoetheLogo } from "@/components/goethe-logo"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -8,7 +8,7 @@ export function Header() {
       <div className="bg-black/30 backdrop-blur-md border border-white/20 rounded-full px-8 py-3 shadow-xl">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center">
-            <KingfisherLogo className="h-6 w-auto text-white" />
+            <GoetheLogo className="h-6 w-auto text-white" />
           </div>
           
           <nav className="hidden md:flex items-center gap-8">

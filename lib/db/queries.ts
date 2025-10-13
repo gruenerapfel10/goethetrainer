@@ -13,7 +13,7 @@ export {
   listCsvTables,
 } from '@/lib/firebase/chat-service';
 
-// Stub implementations for features not needed in Kingfisher
+// Stub implementations for features not needed in Goethe
 export async function getMessagesByChatId(args: any) {
   console.log('getMessagesByChatId stub:', args);
   return [];

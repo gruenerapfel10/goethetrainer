@@ -7,6 +7,39 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Sessions - users can only access their own
+    match /sessions/{sessionId} {
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.skillType in ['reading', 'writing', 'listening', 'speaking'] &&
+        request.resource.data.status in ['active', 'paused'];
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow delete: if false; // Never delete sessions, only mark as abandoned
+      
+      // Session activities subcollection
+      match /activities/{activityId} {
+        allow read, write: if request.auth != null && 
+          request.auth.uid == get(/databases/$(database)/documents/sessions/$(sessionId)).data.userId;
+      }
+    }
+    
+    // User progress - users can read/write their own progress
+    match /users/{userId}/progress/{skillType} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId &&
+        skillType in ['reading', 'writing', 'listening', 'speaking'];
+    }
+    
+    // Content library - read-only for authenticated users
+    match /content/{skillType}/{contentId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Admin only via Admin SDK
+    }
+
     // Allow anonymous access to chats for now - in production you'd want proper auth
     match /chats/{chatId} {
       allow read, write, create, delete: if true;

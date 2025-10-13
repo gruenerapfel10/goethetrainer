@@ -16,7 +16,7 @@ export function Hero() {
           <span className="underline decoration-blue-400 decoration-2 underline-offset-8">Universities</span>.
         </h1>
         <p className="mx-auto mt-6 max-w-3xl text-lg text-blue-100/90">
-          Kingfisher is the single platform for applying to universities across the globe. Simplify your journey to higher
+          Goethe is the single platform for applying to universities across the globe. Simplify your journey to higher
           education, from discovery to decision.
         </p>
         <div className="mt-8">

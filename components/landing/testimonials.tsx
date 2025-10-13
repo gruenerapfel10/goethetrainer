@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 const testimonials = [
   {
     quote:
-      "Kingfisher made the impossible feel simple. I applied to universities in three different countries from one place. It's a game-changer.",
+      "Goethe made the impossible feel simple. I applied to universities in three different countries from one place. It's a game-changer.",
     name: "Priya Sharma",
     role: "Accepted to University of Toronto",
     avatar: "/placeholder.svg?height=40&width=40",
@@ -18,7 +18,7 @@ const testimonials = [
   },
   {
     quote:
-      "As a first-generation student, the global application process was daunting. Kingfisher provided the clarity and tools I needed to succeed.",
+      "As a first-generation student, the global application process was daunting. Goethe provided the clarity and tools I needed to succeed.",
     name: "Maria Rodriguez",
     role: "Accepted to Imperial College London",
     avatar: "/placeholder.svg?height=40&width=40",
@@ -54,7 +54,7 @@ export function Testimonials() {
           <h2 className="text-4xl font-bold text-white">Trusted by Ambitious Students Worldwide</h2>
           <p className="mt-4 text-lg text-gray-400">
             Don't just take our word for it. Hear from students who turned their global university dreams into reality
-            with Kingfisher.
+            with Goethe.
           </p>
         </div>
       </div>

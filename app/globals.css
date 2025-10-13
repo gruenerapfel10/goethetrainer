@@ -43,16 +43,23 @@
 @layer base {
     /* Base color definitions that will be referenced by theme variables */
     :root {
+        /* Goethe-Institut Inspired Colors */
+        --goethe-navy: 200 100% 24%; /* #00537C - Deep navy blue */
+        --goethe-navy-dark: 200 100% 18%; /* Darker navy */
+        --goethe-navy-light: 200 60% 45%; /* Lighter navy */
+        --goethe-blue-gray: 210 30% 92%; /* Light blue-gray background */
+        --goethe-blue-gray-dark: 210 25% 85%; /* Medium blue-gray */
+        
         /* Primary Blue Theme Colors */
-        --primary-blue: 224 97% 58%; /* #4169E1 - Royal Blue */
-        --primary-blue-dark: 224 100% 45%; /* Darker blue for gradients */
-        --primary-blue-light: 224 90% 70%; /* Lighter blue */
-        --primary-blue-alpha: 224 97% 58% / 0.1; /* Blue with transparency */
+        --primary-blue: 200 100% 24%; /* Goethe navy as primary */
+        --primary-blue-dark: 200 100% 18%; /* Darker blue for gradients */
+        --primary-blue-light: 200 60% 45%; /* Lighter blue */
+        --primary-blue-alpha: 200 100% 24% / 0.1; /* Blue with transparency */
         
         /* Background Blues */
-        --bg-blue-gradient-start: 220 95% 93%; /* Very light blue */
+        --bg-blue-gradient-start: 210 30% 95%; /* Very light blue-gray */
         --bg-blue-gradient-end: 0 0% 100%; /* White */
-        --bg-blue-subtle: 220 95% 97%; /* Subtle blue tint */
+        --bg-blue-subtle: 210 30% 97%; /* Subtle blue-gray tint */
         
         /* Neutral colors */
         --white: 0 0% 100%;
@@ -151,42 +158,42 @@
         --radius: 0.5rem;
 
         /* Base theme colors */
-        --background: var(--white);
-        --foreground: var(--near-black);
+        --background: var(--goethe-blue-gray);
+        --foreground: var(--goethe-navy);
 
         /* Card variants */
         --card: var(--white);
-        --card-foreground: var(--near-black);
+        --card-foreground: var(--goethe-navy);
         --card-bg-alpha: var(--white-alpha);
         --card-bg-solid: var(--white);
-        --card-hover-bg: var(--light-gray-1);
+        --card-hover-bg: var(--goethe-blue-gray);
         --dashboard-card-background-solid: var(--white);
         --dashboard-card-background-alpha: var(--white-alpha);
 
         /* UI elements */
         --popover: var(--white);
-        --popover-foreground: var(--near-black);
-        --primary: var(--near-black);
-        --primary-foreground: var(--off-white);
-        --secondary: var(--light-gray-2);
-        --secondary-foreground: var(--near-black);
-        --muted: var(--light-gray-2);
-        --muted-foreground: var(--dark-gray-1);
-        --accent: var(--light-gray-2);
-        --accent-foreground: var(--near-black);
+        --popover-foreground: var(--goethe-navy);
+        --primary: var(--goethe-navy);
+        --primary-foreground: var(--white);
+        --secondary: var(--goethe-blue-gray);
+        --secondary-foreground: var(--goethe-navy);
+        --muted: var(--goethe-blue-gray);
+        --muted-foreground: var(--goethe-navy-dark);
+        --accent: var(--goethe-blue-gray-dark);
+        --accent-foreground: var(--goethe-navy);
         --destructive: var(--red);
         --success: var(--green);
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-alpha);
 
         /* Borders & inputs */
-        --border: var(--medium-gray-1);
-        --input: var(--medium-gray-1);
-        --ring: var(--near-black);
+        --border: var(--goethe-blue-gray-dark);
+        --input: var(--goethe-blue-gray-dark);
+        --ring: var(--goethe-navy-light);
         --button-bg-alpha: var(--white-alpha);
-        --button-hover-bg: var(--light-gray-1);
-        --button-hover: var(--light-gray-1);
-        --label-text: var(--dark-gray-2);
+        --button-hover-bg: var(--goethe-blue-gray);
+        --button-hover: var(--goethe-blue-gray);
+        --label-text: var(--goethe-navy-dark);
 
         /* Charts */
         --chart-1: var(--chart-light-1);
@@ -196,14 +203,14 @@
         --chart-5: var(--chart-light-5);
 
         /* Sidebar */
-        --sidebar-background: var(--off-white);
-        --sidebar-foreground: var(--dark-gray-4);
-        --sidebar-primary: var(--near-black);
-        --sidebar-primary-foreground: var(--off-white);
-        --sidebar-accent: var(--light-gray-2);
-        --sidebar-accent-foreground: var(--near-black);
-        --sidebar-border: var(--medium-gray-2);
-        --sidebar-ring: var(--blue);
+        --sidebar-background: var(--white);
+        --sidebar-foreground: var(--goethe-navy);
+        --sidebar-primary: var(--goethe-navy);
+        --sidebar-primary-foreground: var(--white);
+        --sidebar-accent: var(--goethe-blue-gray);
+        --sidebar-accent-foreground: var(--goethe-navy);
+        --sidebar-border: var(--goethe-blue-gray-dark);
+        --sidebar-ring: var(--goethe-navy-light);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--white);
@@ -240,32 +247,32 @@
     .dark {
         /* Base theme colors */
         --background: var(--near-black);
-        --foreground: var(--off-white);
+        --foreground: var(--goethe-blue-gray);
 
         /* Card variants */
-        --card-foreground: var(--off-white);
+        --card-foreground: var(--goethe-blue-gray);
         --dashboard-card-background-solid: var(--near-black);
         --dashboard-card-background-alpha: var(--near-black-alpha);
 
         /* UI elements */
         --popover: var(--near-black);
-        --popover-foreground: var(--off-white);
-        --primary: var(--off-white);
-        --primary-foreground: var(--near-black);
+        --popover-foreground: var(--goethe-blue-gray);
+        --primary: var(--goethe-navy-light);
+        --primary-foreground: var(--white);
         --secondary: var(--light-zinc);
-        --secondary-foreground: var(--off-white);
+        --secondary-foreground: var(--goethe-blue-gray);
         --accent: var(--light-zinc);
-        --accent-foreground: var(--off-white);
+        --accent-foreground: var(--goethe-blue-gray);
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-dark-alpha);
 
         /* Borders & inputs */
         --input: var(--light-zinc);
-        --ring: var(--light-gray-2);
+        --ring: var(--goethe-navy-light);
         --button-bg-alpha: var(--near-black-alpha);
         --button-hover-bg: var(--light-zinc);
         --button-hover: var(--light-zinc);
-        --label-text: var(--dark-gray-3);
+        --label-text: var(--goethe-blue-gray);
 
         /* Charts */
         --chart-1: var(--chart-dark-1);
@@ -276,13 +283,13 @@
 
         /* Sidebar */
         --sidebar-background: var(--light-dark-zinc);
-        --sidebar-foreground: var(--light-gray-2);
-        --sidebar-primary: var(--blue-dark);
+        --sidebar-foreground: var(--goethe-blue-gray);
+        --sidebar-primary: var(--goethe-navy-light);
         --sidebar-primary-foreground: var(--white);
         --sidebar-accent: var(--light-zinc);
-        --sidebar-accent-foreground: var(--light-gray-2);
+        --sidebar-accent-foreground: var(--goethe-blue-gray);
         --sidebar-border: var(--light-zinc);
-        --sidebar-ring: var(--blue);
+        --sidebar-ring: var(--goethe-navy-light);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--near-black);

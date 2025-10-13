@@ -23,12 +23,11 @@ export function SidebarToggle({ isOpen, onToggle, className, showText = false }:
           <Button
             onClick={onToggle}
             variant="ghost"
-            size={showText ? "default" : "icon"}
-            className={`gap-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground ${
-              showText ? "justify-start w-full" : ""
+            className={`w-full gap-3 transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground ${
+              showText ? "justify-start" : "justify-center px-0"
             } ${className}`}
           >
-            {isOpen ? <PanelLeftClose className="w-4 h-4 flex-shrink-0" /> : <PanelLeft className="w-4 h-4 flex-shrink-0" />}
+            <PanelLeft className="w-4 h-4 flex-shrink-0" />
             {showText && <span className="truncate">{isOpen ? 'Collapse sidebar' : 'Expand sidebar'}</span>}
           </Button>
         </TooltipTrigger>

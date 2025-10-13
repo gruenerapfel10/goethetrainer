@@ -119,7 +119,7 @@ export const defaultSuggestions: SuggestedActionsConfig = {
     },
   ],
   'general-bedrock-agent': [
-    // Kingfisher University Application Assistant
+    // Goethe University Application Assistant
     {
       title: "Help me choose universities",
       label: 'that match my profile.',

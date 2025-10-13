@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { KingfisherLogo } from "@/components/kingfisher-logo"
+import { GoetheLogo } from "@/components/goethe-logo"
 import { cn } from "@/lib/utils"
 import { Chrome } from "lucide-react"
 import { useAuth } from "@/context/firebase-auth-context"
@@ -63,7 +63,7 @@ export default function LoginPage() {
     <div className="grid min-h-screen w-full lg:grid-cols-2">
       <div className="relative hidden items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 text-white lg:flex">
         <div className="relative z-10 text-center">
-          <KingfisherLogo className="mx-auto mb-8 h-20 w-auto text-white" />
+          <h2 className="mx-auto mb-8 text-5xl font-bold text-white">Goethe</h2>
           <h1 className="text-5xl font-bold">Find Your Perfect Job.</h1>
           <p className="mt-4 text-lg text-blue-100">Your dream career starts here.</p>
         </div>
@@ -75,7 +75,7 @@ export default function LoginPage() {
               {isLoginView ? "Welcome Back" : "Create an Account"}
             </h2>
             <p className="mt-2 text-center text-gray-400">
-              {isLoginView ? "Sign in to access your dashboard." : "Join Kingfisher to start your journey."}
+              {isLoginView ? "Sign in to access your dashboard." : "Join Goethe to start your journey."}
             </p>
           </div>
 

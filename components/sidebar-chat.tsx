@@ -166,14 +166,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
 
   if (!isOpen) {
     return (
-      <div className="w-16 flex flex-col transition-all duration-300 relative hidden lg:flex h-full pr-4 pb-4">
-        <div className="flex flex-col h-full items-center pt-4">
-          <RightSidebarToggle 
-            isOpen={isOpen} 
-            onToggle={onToggle}
-            showText={false}
-          />
-        </div>
+      <div className="w-8 flex flex-col transition-all duration-300 relative hidden lg:flex h-full">
       </div>
     );
   }
@@ -228,23 +221,8 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
       
       <TooltipProvider>
         <div className="flex-1 flex flex-col h-full bg-transparent overflow-hidden relative">
-          {/* Toggle button when sidebar is open - positioned in top right */}
-          <div className="absolute top-2 right-2 z-50">
-            <RightSidebarToggle 
-              isOpen={isOpen} 
-              onToggle={onToggle}
-              showText={false}
-            />
-          </div>
-          
-          {/* Header */}
-          <div className="px-4 py-2 flex-shrink-0">
-            <h2 className="text-sm font-semibold">Job Assistant</h2>
-            <p className="text-xs text-muted-foreground mt-1">Ask me anything about careers and jobs</p>
-          </div>
-
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 pt-4">
           <Messages
             chatId={chatId}
             status={status}

@@ -28,7 +28,7 @@ export function RightSidebarToggle({ isOpen, onToggle, className, showText = fal
               showText ? "justify-start w-full" : ""
             } ${className}`}
           >
-            {isOpen ? <PanelRightClose className="w-4 h-4 flex-shrink-0" /> : <PanelRight className="w-4 h-4 flex-shrink-0" />}
+            <PanelRight className="w-4 h-4 flex-shrink-0" />
             {showText && <span className="truncate">{isOpen ? 'Collapse right panel' : 'Expand right panel'}</span>}
           </Button>
         </TooltipTrigger>
