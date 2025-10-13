@@ -158,7 +158,7 @@
         --radius: 0.5rem;
 
         /* Base theme colors */
-        --background: var(--goethe-blue-gray);
+        --background: 0 0% 98%;
         --foreground: var(--goethe-navy);
 
         /* Card variants */
@@ -203,13 +203,13 @@
         --chart-5: var(--chart-light-5);
 
         /* Sidebar */
-        --sidebar-background: var(--white);
-        --sidebar-foreground: var(--goethe-navy);
+        --sidebar-background: 0 0% 98%;
+        --sidebar-foreground: 0 0% 20%;
         --sidebar-primary: var(--goethe-navy);
         --sidebar-primary-foreground: var(--white);
-        --sidebar-accent: var(--goethe-blue-gray);
-        --sidebar-accent-foreground: var(--goethe-navy);
-        --sidebar-border: var(--goethe-blue-gray-dark);
+        --sidebar-accent: 0 0% 94%;
+        --sidebar-accent-foreground: 0 0% 20%;
+        --sidebar-border: 0 0% 90%;
         --sidebar-ring: var(--goethe-navy-light);
 
         /* Spreadsheet */
