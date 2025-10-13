@@ -134,7 +134,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
     id: chatId,
     body: {
       id: chatId,
-      selectedChatModel: 'grok-2-1212',
+      selectedChatModel: 'grok-beta',
       isJobAssistant: true,
       webSearch: isWebSearchEnabled,
       deepResearch: isDeepResearchEnabled,
@@ -234,7 +234,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
             isArtifactVisible={false}
             bottomPadding={20}
             selectedFiles={selectedFiles}
-            selectedModelId="grok-2-1212"
+            selectedModelId="grok-beta"
             completedMessageIds={completedMessageIds}
           />
         </div>
@@ -243,7 +243,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
         <div className="p-4 flex-shrink-0">
           <form onSubmit={handleSubmit}>
             <MultimodalInput
-              selectedModelId="grok-2-1212"
+              selectedModelId="grok-beta"
               chatId={chatId}
               input={input}
               setInput={setInput}
