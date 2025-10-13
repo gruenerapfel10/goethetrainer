@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { jsonrepair } from 'jsonrepair';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * Enhanced generateObjectWithParsing function that improves JSON reliability with Claude 3.7
@@ -56,8 +56,22 @@ export async function generateObjectWithParsing<T extends z.ZodType>(options: {
         system: systemPrompt,
         temperature: temperature,
         messages: [
-          { role: 'user', content: enhancedPrompt },
-          { role: 'assistant', content: prefill },
+          {
+            role: 'user',
+
+            parts: [{
+              type: 'text',
+              text: enhancedPrompt
+            }]
+          },
+          {
+            role: 'assistant',
+
+            parts: [{
+              type: 'text',
+              text: prefill
+            }]
+          },
         ],
       });
 

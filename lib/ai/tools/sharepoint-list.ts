@@ -1,5 +1,5 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 // AWS SDK imports disabled after migration to Gemini
 // import { BedrockAgentClient as BedrockControlPlaneClient, ListKnowledgeBasesCommand, type KnowledgeBaseSummary } from "@aws-sdk/client-bedrock-agent";
 import { type StandardizedToolResult, TimelineItemUtils } from './types';
@@ -28,7 +28,7 @@ type SharepointListProps = {}
 
 export const sharepointList = ({}: SharepointListProps) => tool({
   description: 'Lists all available SharePoint knowledge bases and their details.',
-  parameters: sharepointListParameters,
+  inputSchema: sharepointListParameters,
   execute: async ({ maxResults }: z.infer<typeof sharepointListParameters>): Promise<StandardizedToolResult> => {
     throw new Error('SharePoint knowledge base listing is not available after migration to Gemini');
   },

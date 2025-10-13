@@ -1,4 +1,10 @@
-import {appendResponseMessages, createDataStreamResponse, streamText, type UIMessage} from 'ai';
+import {
+    appendResponseMessages,
+    createUIMessageStreamResponse,
+    streamText,
+    type UIMessage,
+    stepCountIs,
+} from 'ai';
 
 import {generateUUID, getTrailingMessageId, messagesWithoutFiles} from '@/lib/utils';
 import {saveMessages} from '@/lib/firebase/chat-service';
@@ -173,7 +179,7 @@ export const streamSharePointAgent = async (
         titleOutputTokens,
     } = agentMeta;
 
-    return createDataStreamResponse({
+    return createUIMessageStreamResponse({
         execute: async (dataStream) => {
             try {
                 // Process selected files and determine content handling strategy
@@ -254,8 +260,9 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
                     messages: messagesWithoutFiles(messages) as any,
                     experimental_generateMessageId: generateUUID,
                     temperature: 0.7,
-                    maxSteps: 5,
+                    stopWhen: stepCountIs(5),
                     experimental_telemetry: { isEnabled: true },
+
                     tools: {
                         reason: reason({
                             dataStream,
@@ -266,7 +273,9 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
                         }),
                         ...regularTools,
                     },
+
                     system: constrainedSystemPrompt,
+
                     onFinish: async ({ response, usage }) => {
                         const assistantId = getTrailingMessageId({
                             messages: response.messages.filter(
@@ -281,17 +290,21 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
 
                         if (usage) {
                             const modelId = 'eu.anthropic.claude-sonnet-4-20250514-v1:0';
-                            const cost = calculateCost(modelId, usage.promptTokens, usage.completionTokens);
+                            const cost = calculateCost(modelId, usage.inputTokens, usage.outputTokens);
                             const costData = {
                                 toolName: shouldUseReason ? 'sharepoint_main_agent' : 'sharepoint_direct_files_agent',
                                 modelId,
-                                inputTokens: usage.promptTokens,
-                                outputTokens: usage.completionTokens,
+                                inputTokens: usage.inputTokens,
+                                outputTokens: usage.outputTokens,
                                 cost,
                             };
-                            dataStream.writeMessageAnnotation({ type: 'cost_update', data: costData as any });
+                            dataStream.write({
+                                'type': 'message-annotations',
+                                'value': [{ type: 'cost_update', data: costData as any }]
+                            });
                         }
 
+                        /* FIXME(@ai-sdk-upgrade-v5): The `appendResponseMessages` option has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#message-persistence-changes */
                         const [, assistantMessage] = appendResponseMessages({
                             messages: [userMessage],
                             responseMessages: response.messages,
@@ -328,8 +341,8 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
                                         useCaseId: null,
                                         agentType: selectedChatModel,
                                         modelId: myProvider.languageModel('bedrock-sonnet-latest').modelId,
-                                        inputTokens: (usage?.promptTokens ?? 0) + titleInputTokens,
-                                        outputTokens: (usage?.completionTokens ?? 0) + titleOutputTokens,
+                                        inputTokens: (usage?.inputTokens ?? 0) + titleInputTokens,
+                                        outputTokens: (usage?.outputTokens ?? 0) + titleOutputTokens,
                                         processed: false,
                                     },
                                 ],
@@ -338,38 +351,47 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
 
                         }
                     },
+
                     onError: (error) => {
                         console.error('streamSharePointAgent: Error in main agent stream', error);
-                        dataStream.writeMessageAnnotation({
-                            type: 'sharepoint_update',
-                            data: {
-                                id: generateUUID(),
-                                type: 'error',
-                                status: 'failed',
-                                message: `Overall process failed: ${error instanceof Error ? error.message : String(error)}`,
-                                timestamp: Date.now(),
-                                toolCallId: generateUUID(),
-                                details: { error: error instanceof Error ? error.message : String(error) },
-                            },
+                        dataStream.write({
+                            'type': 'message-annotations',
+
+                            'value': [{
+                                type: 'sharepoint_update',
+                                data: {
+                                    id: generateUUID(),
+                                    type: 'error',
+                                    status: 'failed',
+                                    message: `Overall process failed: ${error instanceof Error ? error.message : String(error)}`,
+                                    timestamp: Date.now(),
+                                    toolCallId: generateUUID(),
+                                    details: { error: error instanceof Error ? error.message : String(error) },
+                                },
+                            }]
                         });
-                    },
+                    }
                 });
 
-                return mainAgentResult.mergeIntoDataStream(dataStream);
+                return mainAgentResult.mergeIntoUIMessageStream(dataStream);
 
             } catch (error) {
                 console.error('streamSharePointAgent: Error during stream setup', error);
-                dataStream.writeMessageAnnotation({
-                    type: 'sharepoint_update',
-                    data: {
-                        id: generateUUID(),
-                        type: 'error',
-                        status: 'failed',
-                        message: `Analysis setup failed: ${error instanceof Error ? error.message : String(error)}`,
-                        timestamp: Date.now(),
-                        toolCallId: generateUUID(),
-                        details: { error: error instanceof Error ? error.message : String(error) },
-                    },
+                dataStream.write({
+                    'type': 'message-annotations',
+
+                    'value': [{
+                        type: 'sharepoint_update',
+                        data: {
+                            id: generateUUID(),
+                            type: 'error',
+                            status: 'failed',
+                            message: `Analysis setup failed: ${error instanceof Error ? error.message : String(error)}`,
+                            timestamp: Date.now(),
+                            toolCallId: generateUUID(),
+                            details: { error: error instanceof Error ? error.message : String(error) },
+                        },
+                    }]
                 });
             }
         },

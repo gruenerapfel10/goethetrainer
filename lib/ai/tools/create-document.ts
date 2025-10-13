@@ -1,6 +1,6 @@
 import { generateUUID } from '@/lib/utils';
-import { type DataStreamWriter, tool, type UIMessage } from 'ai';
-import { z } from 'zod';
+import { type UIMessageStreamWriter, tool, type UIMessage } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import {
   artifactKinds,
@@ -9,7 +9,7 @@ import {
 
 interface CreateDocumentProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
   userMessage: UIMessage;
 }
 
@@ -18,6 +18,7 @@ export const createDocument = ({
   dataStream,
   userMessage,
 }: CreateDocumentProps) => {
+  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
   const imageAttachments = userMessage.experimental_attachments?.map(
     (attachment) => ({
       url: attachment.url,
@@ -27,31 +28,47 @@ export const createDocument = ({
   return tool({
     description:
       'Create a document for writing, content creation, or image generation/editing. This tool will call other functions that will generate the contents of the document based on the title and kind. For image generation or editing, use kind="image".',
-    parameters: z.object({
+    inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
     }),
     execute: async ({ title, kind, ...other }) => {
       const id = generateUUID();
       console.log('other', other);
-      dataStream.writeData({
-        type: 'kind',
-        content: kind,
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'kind',
+          content: kind,
+        }]
       });
 
-      dataStream.writeData({
-        type: 'id',
-        content: id,
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'id',
+          content: id,
+        }]
       });
 
-      dataStream.writeData({
-        type: 'title',
-        content: title,
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'title',
+          content: title,
+        }]
       });
 
-      dataStream.writeData({
-        type: 'clear',
-        content: '',
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'clear',
+          content: '',
+        }]
       });
 
       const documentHandler = documentHandlersByArtifactKind.find(
@@ -71,7 +88,10 @@ export const createDocument = ({
         imageAttachments,
       });
 
-      dataStream.writeData({ type: 'finish', content: '' });
+      dataStream.write({
+        'type': 'data',
+        'value': [{ type: 'finish', content: '' }]
+      });
 
       return {
         id,

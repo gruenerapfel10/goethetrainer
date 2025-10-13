@@ -1,4 +1,4 @@
-import type { Message, UIMessage } from 'ai';
+import type { UIMessage, UIMessage } from 'ai';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
@@ -20,7 +20,7 @@ import { MessageCost } from './message-cost';
 import { GitBranch, MoreHorizontal } from 'lucide-react';
 
 // Helper function to extract text content from message parts
-function extractTextFromMessage(message: Message): string {
+function extractTextFromMessage(message: UIMessage): string {
   if (!message.parts || !Array.isArray(message.parts)) {
     // Fallback to content if it exists (for backward compatibility)
     if (typeof message.content === 'string') {

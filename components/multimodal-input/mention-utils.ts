@@ -35,6 +35,7 @@ export class FileDataManager {
 
     // Add historical attachments from messages
     messages.forEach(message => {
+      /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
       message.experimental_attachments?.forEach((attachment: any) => {
         if (attachment.name && attachment.url) {
           this.fileMap.set(attachment.name, { url: attachment.url });
@@ -78,6 +79,7 @@ export const extractHistoricalFiles = (
   selectedFiles.forEach(file => allFiles.set(file.title, file));
 
   messages.forEach(message => {
+    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
     message.experimental_attachments?.forEach((attachment: any) => {
       if (attachment.name && attachment.url && !allFiles.has(attachment.name)) {
         allFiles.set(attachment.name, {

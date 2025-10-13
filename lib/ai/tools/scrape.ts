@@ -1,11 +1,11 @@
-import type { DataStreamWriter } from 'ai';
-import { z } from 'zod';
+import type { UIMessageStreamWriter } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
 interface ScrapeProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
   app: FirecrawlApp;
   onTokensUsed?: (tokens: number) => void;
 }
@@ -19,7 +19,7 @@ export const scrape = ({
   return {
     description:
       'ONLY FOR URLs: Scrape web pages. ONLY use this when the user provides a specific URL.',
-    parameters: z.object({
+    inputSchema: z.object({
       url: z.string().describe('URL to scrape'),
     }),
     execute: async ({ url }: { url: string }) => {

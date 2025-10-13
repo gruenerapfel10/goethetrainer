@@ -5,7 +5,7 @@
 // It is now simple, stateless, and free of complex validation logic.
 
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { executeCsvQuery } from '@/lib/db/queries';
 import { generateSqlQuery, } from '@/lib/text-to-sql';
 
@@ -28,7 +28,7 @@ const getColumnNames = async (tableName: string): Promise<string[]> => {
 
 export const csvQuery = tool({
   description: 'Execute a natural language query against a CSV file by converting it to SQL.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().describe('The natural language query to analyze the CSV data.'),
     tableName: z.string().describe('The name of the table to query.'),
   }),

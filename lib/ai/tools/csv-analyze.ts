@@ -1,5 +1,5 @@
-import { type DataStreamWriter, tool, generateObject } from 'ai';
-import { z } from 'zod';
+import { type UIMessageStreamWriter, tool, generateObject } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import { jsonrepair } from 'jsonrepair';
 
@@ -9,7 +9,7 @@ import { generateObjectWithParsing } from '@/lib/parsingUtils';
 
 interface CsvAnalyzeProps {
     session: Session;
-    dataStream: DataStreamWriter;
+    dataStream: UIMessageStreamWriter;
 }
 
 // Helper function to generate consistent operation IDs
@@ -20,23 +20,27 @@ const generateOperationId = (stage: string) => {
 
 // Helper function to write timeline updates
 const writeTimelineUpdate = (
-    dataStream: DataStreamWriter, 
+    dataStream: UIMessageStreamWriter, 
     id: string, 
     type: 'tool-call' | 'tool-result' | 'text-delta' | 'error',
     status: 'running' | 'completed' | 'failed',
     message: string,
     details?: any
 ) => {
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: {
-            id,
-            type,
-            status,
-            message,
-            timestamp: Date.now(),
-            details
-        }
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: {
+                id,
+                type,
+                status,
+                message,
+                timestamp: Date.now(),
+                details
+            }
+        }]
     });
 };
 
@@ -162,7 +166,7 @@ const executionSchema = z.object({
 });
 
 // Context Ascertainment - Analyze available data and determine relevant columns
-const ascertainContext = async (topic: string, dataStream: DataStreamWriter, userTables: Array<{
+const ascertainContext = async (topic: string, dataStream: UIMessageStreamWriter, userTables: Array<{
     tableName: string;
     displayName: string;
     rowCount: number;
@@ -258,22 +262,26 @@ const ascertainContext = async (topic: string, dataStream: DataStreamWriter, use
                 });
                 
                 // Send progressive table update with columns
-                dataStream.writeMessageAnnotation({
-                    type: 'csv_update',
-                    data: JSON.parse(JSON.stringify({
-                        id: 'tables-update',
-                        type: 'analysis',
-                        status: 'completed',
-                        title: 'Available Tables',
-                        message: `Analyzed ${tablesData.length}/${userTables.length} tables`,
-                        timestamp: Date.now(),
-                        tables: tablesData.map(table => ({
-                            tableName: table.tableName,
-                            displayName: table.displayName,
-                            rowCount: table.rowCount,
-                            columns: table.columns
+                dataStream.write({
+                    'type': 'message-annotations',
+
+                    'value': [{
+                        type: 'csv_update',
+                        data: JSON.parse(JSON.stringify({
+                            id: 'tables-update',
+                            type: 'analysis',
+                            status: 'completed',
+                            title: 'Available Tables',
+                            message: `Analyzed ${tablesData.length}/${userTables.length} tables`,
+                            timestamp: Date.now(),
+                            tables: tablesData.map(table => ({
+                                tableName: table.tableName,
+                                displayName: table.displayName,
+                                rowCount: table.rowCount,
+                                columns: table.columns
+                            })),
                         })),
-                    })),
+                    }]
                 });
             } catch (error) {
                 console.error(`Error processing table ${tableName}:`, error);
@@ -361,34 +369,38 @@ Based on this analysis, identify:
         }
 
         // Add a structured summary for display
-        dataStream.writeMessageAnnotation({
-            type: 'csv_update',
-            data: {
-                id: 'context-ascertainment',
-                type: 'analysis',
-                status: 'completed',
-                title: 'Data Context Analysis',
-                findings,
-                analysisType: 'context',
-                message: `Analyzed ${tablesData.length} tables with ${tablesData.reduce((sum, table) => sum + table.columns.length, 0)} total columns`,
-                timestamp: Date.now(),
-                overwrite: true,
-                recommendations: [
-                    {
-                        action: 'Focus on relevant columns for analysis',
-                        rationale: `These columns are most relevant to the "${topic}" topic`,
-                        priority: 4,
-                    },
-                    {
-                        action: 'Consider data quality issues',
-                        rationale: 'Address potential data quality concerns before analysis',
-                        priority: 3,
-                    },
-                ],
-                uncertainties: tablesData.flatMap(table => table.dataQualityIssues || []).length > 0
-                    ? tablesData.flatMap(table => table.dataQualityIssues || [])
-                    : ['No major data quality issues identified'],
-            },
+        dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+                type: 'csv_update',
+                data: {
+                    id: 'context-ascertainment',
+                    type: 'analysis',
+                    status: 'completed',
+                    title: 'Data Context Analysis',
+                    findings,
+                    analysisType: 'context',
+                    message: `Analyzed ${tablesData.length} tables with ${tablesData.reduce((sum, table) => sum + table.columns.length, 0)} total columns`,
+                    timestamp: Date.now(),
+                    overwrite: true,
+                    recommendations: [
+                        {
+                            action: 'Focus on relevant columns for analysis',
+                            rationale: `These columns are most relevant to the "${topic}" topic`,
+                            priority: 4,
+                        },
+                        {
+                            action: 'Consider data quality issues',
+                            rationale: 'Address potential data quality concerns before analysis',
+                            priority: 3,
+                        },
+                    ],
+                    uncertainties: tablesData.flatMap(table => table.dataQualityIssues || []).length > 0
+                        ? tablesData.flatMap(table => table.dataQualityIssues || [])
+                        : ['No major data quality issues identified'],
+                },
+            }]
         });
 
         return context;
@@ -399,31 +411,39 @@ Based on this analysis, identify:
 };
 
 // Plan Design - Create analysis strategy based on context
-const designPlan = async (topic: string, context: z.infer<typeof contextSchema>, dataStream: DataStreamWriter) => {
+const designPlan = async (topic: string, context: z.infer<typeof contextSchema>, dataStream: UIMessageStreamWriter) => {
     // Set all subsequent stages to pending
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: {
-            id: 'query-execution',
-            type: 'query',
-            status: 'pending',
-            title: `Queries`,
-            message: `Waiting for query execution...`,
-            timestamp: Date.now(),
-        },
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: {
+                id: 'query-execution',
+                type: 'query',
+                status: 'pending',
+                title: `Queries`,
+                message: `Waiting for query execution...`,
+                timestamp: Date.now(),
+            },
+        }]
     });
 
     // Mark plan design as running
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: {
-            id: 'plan-design',
-            type: 'plan',
-            status: 'running',
-            title: 'Analysis Plan',
-            message: 'Creating analysis plan...',
-            timestamp: Date.now(),
-        },
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: {
+                id: 'plan-design',
+                type: 'plan',
+                status: 'running',
+                title: 'Analysis Plan',
+                message: 'Creating analysis plan...',
+                timestamp: Date.now(),
+            },
+        }]
     });
 
     try {
@@ -549,19 +569,23 @@ INCORRECT SQL examples:
         };
 
 
-        dataStream.writeMessageAnnotation({
-            type: 'csv_update',
-            data: {
-                id: 'plan-design',
-                type: 'plan',
-                status: 'completed',
-                title: 'Analysis Plan',
-                plan: validPlan,
-                totalSteps: validPlan.queries.length + validPlan.analyses.length,
-                message: `Created analysis plan with ${validPlan.queries.length} queries and ${validPlan.analyses.length} analyses`,
-                timestamp: Date.now(),
-                overwrite: true,
-            },
+        dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+                type: 'csv_update',
+                data: {
+                    id: 'plan-design',
+                    type: 'plan',
+                    status: 'completed',
+                    title: 'Analysis Plan',
+                    plan: validPlan,
+                    totalSteps: validPlan.queries.length + validPlan.analyses.length,
+                    message: `Created analysis plan with ${validPlan.queries.length} queries and ${validPlan.analyses.length} analyses`,
+                    timestamp: Date.now(),
+                    overwrite: true,
+                },
+            }]
         });
 
         return validPlan;
@@ -574,7 +598,7 @@ INCORRECT SQL examples:
 // Plan Execution - Execute queries and perform analysis
 const executePlan = async (
     plan: NonNullable<z.infer<typeof planSchema>>,
-    dataStream: DataStreamWriter
+    dataStream: UIMessageStreamWriter
 ) => {
     const queryResults = [];
     let completedSteps = 0;
@@ -584,50 +608,62 @@ const executePlan = async (
     if (plan.analyses.length > 0) {
         for (const [index, analysisReq] of plan.analyses.entries()) {
             const analysisId = `analysis-${index}`;
-            dataStream.writeMessageAnnotation({
-                type: 'csv_update',
-                data: {
-                    id: analysisId,
-                    type: 'analysis',
-                    status: 'pending',
-                    title: `${analysisReq.type} Analysis`,
-                    message: `Waiting for ${analysisReq.type} analysis...`,
-                    analysisType: analysisReq.type,
-                    timestamp: Date.now(),
-                },
+            dataStream.write({
+                'type': 'message-annotations',
+
+                'value': [{
+                    type: 'csv_update',
+                    data: {
+                        id: analysisId,
+                        type: 'analysis',
+                        status: 'pending',
+                        title: `${analysisReq.type} Analysis`,
+                        message: `Waiting for ${analysisReq.type} analysis...`,
+                        analysisType: analysisReq.type,
+                        timestamp: Date.now(),
+                    },
+                }]
             });
         }
     }
     
     // Mark query execution as running
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: {
-            id: 'query-execution',
-            type: 'query',
-            status: 'running',
-            title: `Executing Queries`,
-            message: `Running ${plan.queries.length} SQL queries...`,
-            timestamp: Date.now(),
-        },
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: {
+                id: 'query-execution',
+                type: 'query',
+                status: 'running',
+                title: `Executing Queries`,
+                message: `Running ${plan.queries.length} SQL queries...`,
+                timestamp: Date.now(),
+            },
+        }]
     });
 
     // Execute queries
     for (const [index, query] of plan.queries.entries()) {
         try {
             // Update progress for this specific query
-            dataStream.writeMessageAnnotation({
-                type: 'csv_update',
-                data: {
-                    id: 'query-progress',
-                    type: 'progress',
-                    status: 'running',
-                    message: `Executing query ${index + 1}/${plan.queries.length}: ${query.rationale}`,
-                    completedSteps: index,
-                    totalSteps: plan.queries.length,
-                    timestamp: Date.now(),
-                    overwrite: true,
-                },
+            dataStream.write({
+                'type': 'message-annotations',
+
+                'value': [{
+                    type: 'csv_update',
+                    data: {
+                        id: 'query-progress',
+                        type: 'progress',
+                        status: 'running',
+                        message: `Executing query ${index + 1}/${plan.queries.length}: ${query.rationale}`,
+                        completedSteps: index,
+                        totalSteps: plan.queries.length,
+                        timestamp: Date.now(),
+                        overwrite: true,
+                    },
+                }]
             });
             
             const rawResult = await executeCsvQuery(query.query);
@@ -645,18 +681,22 @@ const executePlan = async (
             completedSteps++;
             
             // Send real-time update after each query completes
-            dataStream.writeMessageAnnotation({
-                type: 'csv_update',
-                data: {
-                    id: 'query-progress',
-                    type: 'progress',
-                    status: 'running',
-                    message: `Completed query ${index + 1}/${plan.queries.length}: Retrieved ${Array.isArray(safeResult) ? safeResult.length : 0} rows`,
-                    completedSteps: index + 1,
-                    totalSteps: plan.queries.length,
-                    timestamp: Date.now(),
-                    overwrite: true,
-                },
+            dataStream.write({
+                'type': 'message-annotations',
+
+                'value': [{
+                    type: 'csv_update',
+                    data: {
+                        id: 'query-progress',
+                        type: 'progress',
+                        status: 'running',
+                        message: `Completed query ${index + 1}/${plan.queries.length}: Retrieved ${Array.isArray(safeResult) ? safeResult.length : 0} rows`,
+                        completedSteps: index + 1,
+                        totalSteps: plan.queries.length,
+                        timestamp: Date.now(),
+                        overwrite: true,
+                    },
+                }]
             });
         } catch (error) {
             console.error('Error executing query:', error);
@@ -686,18 +726,22 @@ const executePlan = async (
             completedSteps++;
             
             // Send real-time update for failed query
-            dataStream.writeMessageAnnotation({
-                type: 'csv_update',
-                data: {
-                    id: 'query-progress',
-                    type: 'progress',
-                    status: 'running',
-                    message: `Failed query ${index + 1}/${plan.queries.length}: ${fixSuggestion || errorMessage}`,
-                    completedSteps: index + 1,
-                    totalSteps: plan.queries.length,
-                    timestamp: Date.now(),
-                    overwrite: true,
-                },
+            dataStream.write({
+                'type': 'message-annotations',
+
+                'value': [{
+                    type: 'csv_update',
+                    data: {
+                        id: 'query-progress',
+                        type: 'progress',
+                        status: 'running',
+                        message: `Failed query ${index + 1}/${plan.queries.length}: ${fixSuggestion || errorMessage}`,
+                        completedSteps: index + 1,
+                        totalSteps: plan.queries.length,
+                        timestamp: Date.now(),
+                        overwrite: true,
+                    },
+                }]
             });
         }
     }
@@ -706,19 +750,23 @@ const executePlan = async (
     const successfulQueries = queryResults.filter(q => q.successful);
     const failedQueries = queryResults.filter(q => !q.successful);
 
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: {
-            id: 'query-execution',
-            type: 'query',
-            status: 'completed',
-            title: `Queries Executed`,
-            message: `Retrieved data from ${successfulQueries.length}/${queryResults.length} queries`,
-            results: queryResults.flatMap(q => q.successful ? q.results : []),
-            query: queryResults.map(q => q.query.query).join('\n'),
-            timestamp: Date.now(),
-            overwrite: true,
-        },
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: {
+                id: 'query-execution',
+                type: 'query',
+                status: 'completed',
+                title: `Queries Executed`,
+                message: `Retrieved data from ${successfulQueries.length}/${queryResults.length} queries`,
+                results: queryResults.flatMap(q => q.successful ? q.results : []),
+                query: queryResults.map(q => q.query.query).join('\n'),
+                timestamp: Date.now(),
+                overwrite: true,
+            },
+        }]
     });
 
     // Update all pending analyses to running and complete them one by one
@@ -726,18 +774,22 @@ const executePlan = async (
         const analysisId = `analysis-${index}`;
 
         // Set to running
-        dataStream.writeMessageAnnotation({
-            type: 'csv_update',
-            data: {
-                id: analysisId,
-                type: 'analysis',
-                status: 'running',
-                title: `Analyzing ${analysisReq.type}`,
-                message: `Performing ${analysisReq.type} analysis...`,
-                analysisType: analysisReq.type,
-                timestamp: Date.now(),
-                overwrite: true,
-            },
+        dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+                type: 'csv_update',
+                data: {
+                    id: analysisId,
+                    type: 'analysis',
+                    status: 'running',
+                    title: `Analyzing ${analysisReq.type}`,
+                    message: `Performing ${analysisReq.type} analysis...`,
+                    analysisType: analysisReq.type,
+                    timestamp: Date.now(),
+                    overwrite: true,
+                },
+            }]
         });
 
         // Add a small delay to provide time for the UI to update
@@ -901,65 +953,73 @@ CORRECT: { "findings": [{"insight":"Revenue grew 10%","evidence":["Q1: $1M","Q2:
         // Add a small delay between completing each analysis
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        dataStream.writeMessageAnnotation({
-            type: 'csv_update',
-            data: {
-                id: analysisId,
-                type: 'analysis',
-                status: 'completed',
-                title: `Analysis of ${analysisReq.type}`,
-                analysisType: analysisReq.type,
-                findings: findingsToUse,
-                message: `Completed ${analysisReq.type} analysis with ${findingsToUse.length} findings`,
-                timestamp: Date.now(),
-                overwrite: true,
-            },
+        dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+                type: 'csv_update',
+                data: {
+                    id: analysisId,
+                    type: 'analysis',
+                    status: 'completed',
+                    title: `Analysis of ${analysisReq.type}`,
+                    analysisType: analysisReq.type,
+                    findings: findingsToUse,
+                    message: `Completed ${analysisReq.type} analysis with ${findingsToUse.length} findings`,
+                    timestamp: Date.now(),
+                    overwrite: true,
+                },
+            }]
         });
 
         completedSteps++;
     }
 
     // Send final analysis summary
-    dataStream.writeMessageAnnotation({
-        type: 'csv_update',
-        data: JSON.parse(JSON.stringify({
-            id: 'final-analysis',
-            type: 'analysis',
-            status: 'completed',
-            title: 'Analysis Complete',
-            findings: validFindings,
-            implications: validImplications,
-            limitations: validLimitations,
-            message: `Generated ${validFindings.length} insights`,
-            timestamp: Date.now(),
-            overwrite: true,
-            completedSteps: totalSteps,
-            totalSteps: totalSteps,
-            analysisType: 'summary',
-            querySuccessRate: `${successfulQueries.length}/${queryResults.length} queries successful`,
-            recommendations: [
-                {
-                    action: 'Review insights and implications',
-                    rationale: 'To understand key findings from the data',
-                    priority: 5
-                },
-                {
-                    action: 'Consider data quality improvements',
-                    rationale: 'To address issues identified during analysis',
-                    priority: validLimitations.length > 0 ? 4 : 2
-                }
-            ],
-            uncertainties: validLimitations.length > 0
-                ? validLimitations
-                : ['No significant limitations identified'],
-            ...(failedQueries.length > 0 ? {
-                gaps: [{
-                    area: 'Query execution',
-                    reason: 'Some queries failed to execute properly',
-                    additional_queries: failedQueries.map(q => q.query.query)
-                }]
-            } : {})
-        }))
+    dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+            type: 'csv_update',
+            data: JSON.parse(JSON.stringify({
+                id: 'final-analysis',
+                type: 'analysis',
+                status: 'completed',
+                title: 'Analysis Complete',
+                findings: validFindings,
+                implications: validImplications,
+                limitations: validLimitations,
+                message: `Generated ${validFindings.length} insights`,
+                timestamp: Date.now(),
+                overwrite: true,
+                completedSteps: totalSteps,
+                totalSteps: totalSteps,
+                analysisType: 'summary',
+                querySuccessRate: `${successfulQueries.length}/${queryResults.length} queries successful`,
+                recommendations: [
+                    {
+                        action: 'Review insights and implications',
+                        rationale: 'To understand key findings from the data',
+                        priority: 5
+                    },
+                    {
+                        action: 'Consider data quality improvements',
+                        rationale: 'To address issues identified during analysis',
+                        priority: validLimitations.length > 0 ? 4 : 2
+                    }
+                ],
+                uncertainties: validLimitations.length > 0
+                    ? validLimitations
+                    : ['No significant limitations identified'],
+                ...(failedQueries.length > 0 ? {
+                    gaps: [{
+                        area: 'Query execution',
+                        reason: 'Some queries failed to execute properly',
+                        additional_queries: failedQueries.map(q => q.query.query)
+                    }]
+                } : {})
+            }))
+        }]
     });
 
     return {
@@ -974,7 +1034,7 @@ export const csvAnalyze = ({ session, dataStream }: CsvAnalyzeProps) => {
     return tool({
         description:
             'Analyzes CSV data by executing SQL queries and providing insights. This tool performs a complete analysis of the specified topic using the available data.',
-        parameters: z.object({
+        inputSchema: z.object({
             topic: z.string().describe('The specific topic or question to analyze in the CSV data'),
             depth: z
                 .enum(['basic', 'advanced'])
@@ -996,15 +1056,19 @@ export const csvAnalyze = ({ session, dataStream }: CsvAnalyzeProps) => {
         }) => {
             try {
                 // Start analysis with simple status
-                dataStream.writeMessageAnnotation({
-                    type: 'csv_update',
-                    data: {
-                        id: 'csv-analysis',
-                        type: 'analysis',
-                        status: 'running',
-                        message: `Analyzing: "${topic}"`,
-                        timestamp: Date.now(),
-                    },
+                dataStream.write({
+                    'type': 'message-annotations',
+
+                    'value': [{
+                        type: 'csv_update',
+                        data: {
+                            id: 'csv-analysis',
+                            type: 'analysis',
+                            status: 'running',
+                            message: `Analyzing: "${topic}"`,
+                            timestamp: Date.now(),
+                        },
+                    }]
                 });
 
                 // Get available tables
@@ -1020,16 +1084,20 @@ export const csvAnalyze = ({ session, dataStream }: CsvAnalyzeProps) => {
                 const analysis = await executePlan(plan, dataStream);
 
                 // Send final completion update
-                dataStream.writeMessageAnnotation({
-                    type: 'csv_update',
-                    data: {
-                        id: 'csv-analysis',
-                        type: 'analysis',
-                        status: 'completed',
-                        message: `Analysis complete: Generated ${analysis.findings.length} insights`,
-                        timestamp: Date.now(),
-                        overwrite: true,
-                    },
+                dataStream.write({
+                    'type': 'message-annotations',
+
+                    'value': [{
+                        type: 'csv_update',
+                        data: {
+                            id: 'csv-analysis',
+                            type: 'analysis',
+                            status: 'completed',
+                            message: `Analysis complete: Generated ${analysis.findings.length} insights`,
+                            timestamp: Date.now(),
+                            overwrite: true,
+                        },
+                    }]
                 });
 
                 // Return simple, focused results like sharepoint_retrieve
@@ -1045,16 +1113,20 @@ export const csvAnalyze = ({ session, dataStream }: CsvAnalyzeProps) => {
                 console.error('CSV analysis failed:', error);
 
                 // Error update
-                dataStream.writeMessageAnnotation({
-                    type: 'csv_update',
-                    data: {
-                        id: 'csv-analysis',
-                        type: 'error',
-                        status: 'failed',
-                        message: `Analysis failed: ${error instanceof Error ? error.message : String(error)}`,
-                        timestamp: Date.now(),
-                        overwrite: true,
-                    },
+                dataStream.write({
+                    'type': 'message-annotations',
+
+                    'value': [{
+                        type: 'csv_update',
+                        data: {
+                            id: 'csv-analysis',
+                            type: 'error',
+                            status: 'failed',
+                            message: `Analysis failed: ${error instanceof Error ? error.message : String(error)}`,
+                            timestamp: Date.now(),
+                            overwrite: true,
+                        },
+                    }]
                 });
 
                 return {

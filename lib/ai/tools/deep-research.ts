@@ -1,6 +1,6 @@
 // Import Firecrawl instead of Tavily
-import { type DataStreamWriter, tool } from 'ai';
-import { z } from 'zod';
+import { type UIMessageStreamWriter, tool } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 // Add Firecrawl import
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
@@ -12,7 +12,7 @@ import { generateObjectWithParsing } from '../../parsingUtils';
 
 interface DeepResearchProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
 }
 
 const JSON_SYSTEM_PROMPT = `You are an AI assistant that provides valid JSON responses when requested.
@@ -52,7 +52,7 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
   return tool({
     description:
       'Perform a reasoned web search with multiple steps and sources.',
-    parameters: z.object({
+    inputSchema: z.object({
       topic: z.string().describe('The main topic or question to research'),
       depth: z
         .enum(['basic', 'advanced'])
@@ -66,17 +66,21 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
       topic: string;
       depth: 'basic' | 'advanced';
     }) => {
-      dataStream.writeMessageAnnotation({
-        type: 'research_update',
-        data: {
-          id: 'research-plan-initial',
-          type: 'plan',
-          status: 'running',
-          title: 'Research Plan',
-          message: 'Creating research plan...',
-          timestamp: Date.now(),
-          overwrite: true,
-        },
+      dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+          type: 'research_update',
+          data: {
+            id: 'research-plan-initial',
+            type: 'plan',
+            status: 'running',
+            title: 'Research Plan',
+            message: 'Creating research plan...',
+            timestamp: Date.now(),
+            overwrite: true,
+          },
+        }]
       });
 
       const currentDate = new Date().toLocaleDateString('en-US', {
@@ -226,36 +230,44 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
       const totalSteps =
         stepIds.searchSteps.length + stepIds.analysisSteps.length;
 
-      dataStream.writeMessageAnnotation({
-        type: 'research_update',
-        data: {
-          id: stepIds.planId,
-          type: 'plan',
-          status: 'completed',
-          title: 'Research Plan',
-          plan: researchPlan,
-          totalSteps: totalSteps,
-          message: 'Research plan created',
-          timestamp: Date.now(),
-          overwrite: true,
-        },
+      dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+          type: 'research_update',
+          data: {
+            id: stepIds.planId,
+            type: 'plan',
+            status: 'completed',
+            title: 'Research Plan',
+            plan: researchPlan,
+            totalSteps: totalSteps,
+            message: 'Research plan created',
+            timestamp: Date.now(),
+            overwrite: true,
+          },
+        }]
       });
 
       const searchResults = [];
       let searchIndex = 0;
 
       for (const step of stepIds.searchSteps) {
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: step.id,
-            type: step.type,
-            status: 'running',
-            title: `Searching the web for "${step.query.query}"`,
-            query: step.query.query,
-            message: `Searching web sources...`,
-            timestamp: Date.now(),
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: step.id,
+              type: step.type,
+              status: 'running',
+              title: `Searching the web for "${step.query.query}"`,
+              query: step.query.query,
+              message: `Searching web sources...`,
+              timestamp: Date.now(),
+            },
+          }]
         });
 
         // Perform web search with Firecrawl
@@ -286,25 +298,29 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
         completedSteps++;
 
         // Send completed annotation for the search step
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: step.id,
-            type: step.type,
-            status: 'completed',
-            title: `Searched the web for "${step.query.query}"`,
-            query: step.query.query,
-            results: searchResults[searchResults.length - 1].results.map(
-              (r) => {
-                return { ...r };
-              },
-            ),
-            message: `Found ${
-              searchResults[searchResults.length - 1].results.length
-            } results`,
-            timestamp: Date.now(),
-            overwrite: true,
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: step.id,
+              type: step.type,
+              status: 'completed',
+              title: `Searched the web for "${step.query.query}"`,
+              query: step.query.query,
+              results: searchResults[searchResults.length - 1].results.map(
+                (r) => {
+                  return { ...r };
+                },
+              ),
+              message: `Found ${
+                searchResults[searchResults.length - 1].results.length
+              } results`,
+              timestamp: Date.now(),
+              overwrite: true,
+            },
+          }]
         });
 
         searchIndex++;
@@ -338,17 +354,21 @@ export const deepResearch = ({ session, dataStream }: DeepResearchProps) => {
       let analysisIndex = 0;
 
       for (const step of stepIds.analysisSteps) {
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: step.id,
-            type: 'analysis',
-            status: 'running',
-            title: `Analyzing ${step.analysis.type}`,
-            analysisType: step.analysis.type,
-            message: `Analyzing ${step.analysis.type}...`,
-            timestamp: Date.now(),
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: step.id,
+              type: 'analysis',
+              status: 'running',
+              title: `Analyzing ${step.analysis.type}`,
+              analysisType: step.analysis.type,
+              message: `Analyzing ${step.analysis.type}...`,
+              timestamp: Date.now(),
+            },
+          }]
         });
 
         // Enhanced analysis prompt with JSON structure instructions
@@ -388,46 +408,54 @@ Search results: ${JSON.stringify(searchResults)}`;
             temperature: 0.1,
             system: JSON_SYSTEM_PROMPT,
           });
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: step.id,
-              type: 'analysis',
-              status: 'completed',
-              title: `Analysis of ${step.analysis.type} complete`,
-              analysisType: step.analysis.type,
-              findings: analysisResult.findings,
-              message: `Analysis complete`,
-              timestamp: Date.now(),
-              overwrite: true,
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: step.id,
+                type: 'analysis',
+                status: 'completed',
+                title: `Analysis of ${step.analysis.type} complete`,
+                analysisType: step.analysis.type,
+                findings: analysisResult.findings,
+                message: `Analysis complete`,
+                timestamp: Date.now(),
+                overwrite: true,
+              },
+            }]
           });
         } catch (error) {
           console.error(`Analysis failed for ${step.analysis.type}:`, error);
 
           // Fallback: create a basic analysis result if generation fails
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: step.id,
-              type: 'analysis',
-              status: 'completed',
-              title: `Analysis of ${step.analysis.type} (partial)`,
-              analysisType: step.analysis.type,
-              findings: [
-                {
-                  insight: `Analysis of ${step.analysis.type} encountered technical difficulties`,
-                  evidence: [
-                    'The analysis engine experienced validation errors while processing results.',
-                    'A simplified analysis is provided instead of the full detailed analysis.',
-                  ],
-                  confidence: 0.5,
-                },
-              ],
-              message: `Analysis completed with limited results`,
-              timestamp: Date.now(),
-              overwrite: true,
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: step.id,
+                type: 'analysis',
+                status: 'completed',
+                title: `Analysis of ${step.analysis.type} (partial)`,
+                analysisType: step.analysis.type,
+                findings: [
+                  {
+                    insight: `Analysis of ${step.analysis.type} encountered technical difficulties`,
+                    evidence: [
+                      'The analysis engine experienced validation errors while processing results.',
+                      'A simplified analysis is provided instead of the full detailed analysis.',
+                    ],
+                    confidence: 0.5,
+                  },
+                ],
+                message: `Analysis completed with limited results`,
+                timestamp: Date.now(),
+                overwrite: true,
+              },
+            }]
           });
         }
 
@@ -461,17 +489,21 @@ Search results: ${JSON.stringify(searchResults)}`;
       });
 
       // After all analyses are complete, send running state for gap analysis
-      dataStream.writeMessageAnnotation({
-        type: 'research_update',
-        data: {
-          id: 'gap-analysis',
-          type: 'analysis',
-          status: 'running',
-          title: 'Research Gaps and Limitations',
-          analysisType: 'gaps',
-          message: 'Analyzing research gaps and limitations...',
-          timestamp: Date.now(),
-        },
+      dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+          type: 'research_update',
+          data: {
+            id: 'gap-analysis',
+            type: 'analysis',
+            status: 'running',
+            title: 'Research Gaps and Limitations',
+            analysisType: 'gaps',
+            message: 'Analyzing research gaps and limitations...',
+            timestamp: Date.now(),
+          },
+        }]
       });
 
       // Enhanced gap analysis prompt with JSON structure instructions
@@ -568,27 +600,31 @@ Search results: ${JSON.stringify(searchResults)}`;
         gapAnalysis = result.object;
 
         // Send gap analysis update
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: 'gap-analysis',
-            type: 'analysis',
-            status: 'completed',
-            title: 'Research Gaps and Limitations',
-            analysisType: 'gaps',
-            findings: gapAnalysis.limitations.map((l) => ({
-              insight: l.description,
-              evidence: l.potential_solutions,
-              confidence: (6 - l.severity) / 5,
-            })),
-            gaps: gapAnalysis.knowledge_gaps,
-            recommendations: gapAnalysis.recommended_followup,
-            message: `Identified ${gapAnalysis.limitations.length} limitations and ${gapAnalysis.knowledge_gaps.length} knowledge gaps`,
-            timestamp: Date.now(),
-            overwrite: true,
-            completedSteps: completedSteps + 1,
-            totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: 'gap-analysis',
+              type: 'analysis',
+              status: 'completed',
+              title: 'Research Gaps and Limitations',
+              analysisType: 'gaps',
+              findings: gapAnalysis.limitations.map((l) => ({
+                insight: l.description,
+                evidence: l.potential_solutions,
+                confidence: (6 - l.severity) / 5,
+              })),
+              gaps: gapAnalysis.knowledge_gaps,
+              recommendations: gapAnalysis.recommended_followup,
+              message: `Identified ${gapAnalysis.limitations.length} limitations and ${gapAnalysis.knowledge_gaps.length} knowledge gaps`,
+              timestamp: Date.now(),
+              overwrite: true,
+              completedSteps: completedSteps + 1,
+              totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
+            },
+          }]
         });
       } catch (error) {
         console.error('Gap analysis failed:', error);
@@ -624,27 +660,31 @@ Search results: ${JSON.stringify(searchResults)}`;
           ],
         };
 
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: 'gap-analysis',
-            type: 'analysis',
-            status: 'completed',
-            title: 'Research Gaps and Limitations (simplified)',
-            analysisType: 'gaps',
-            findings: gapAnalysis.limitations.map((l) => ({
-              insight: l.description,
-              evidence: l.potential_solutions,
-              confidence: (6 - l.severity) / 5,
-            })),
-            gaps: gapAnalysis.knowledge_gaps,
-            recommendations: gapAnalysis.recommended_followup,
-            message: 'Identified research limitations (simplified analysis)',
-            timestamp: Date.now(),
-            overwrite: true,
-            completedSteps: completedSteps + 1,
-            totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: 'gap-analysis',
+              type: 'analysis',
+              status: 'completed',
+              title: 'Research Gaps and Limitations (simplified)',
+              analysisType: 'gaps',
+              findings: gapAnalysis.limitations.map((l) => ({
+                insight: l.description,
+                evidence: l.potential_solutions,
+                confidence: (6 - l.severity) / 5,
+              })),
+              gaps: gapAnalysis.knowledge_gaps,
+              recommendations: gapAnalysis.recommended_followup,
+              message: 'Identified research limitations (simplified analysis)',
+              timestamp: Date.now(),
+              overwrite: true,
+              completedSteps: completedSteps + 1,
+              totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
+            },
+          }]
         });
       }
 
@@ -666,17 +706,21 @@ Search results: ${JSON.stringify(searchResults)}`;
           const gapSearchId = `gap-search-${searchIndex++}`;
 
           // Send running annotation for this gap search
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: gapSearchId,
-              type: 'web',
-              status: 'running',
-              title: `Additional search for "${query.query}"`,
-              query: query.query,
-              message: `Searching to fill knowledge gap: ${query.rationale}`,
-              timestamp: Date.now(),
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: gapSearchId,
+                type: 'web',
+                status: 'running',
+                title: `Additional search for "${query.query}"`,
+                query: query.query,
+                message: `Searching to fill knowledge gap: ${query.rationale}`,
+                timestamp: Date.now(),
+              },
+            }]
           });
 
           // Firecrawl search for gap analysis
@@ -708,24 +752,28 @@ Search results: ${JSON.stringify(searchResults)}`;
           });
 
           // Send completed annotation for web search
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: gapSearchId,
-              type: 'web',
-              status: 'completed',
-              title: `Additional web search for "${query.query}"`,
-              query: query.query,
-              results: webResults.data.map((r) => ({
-                source: 'web',
-                title: r.title || '',
-                url: r.url || '',
-                content: r.markdown || r.description || '',
-              })),
-              message: `Found ${webResults.data.length} results`,
-              timestamp: Date.now(),
-              overwrite: true,
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: gapSearchId,
+                type: 'web',
+                status: 'completed',
+                title: `Additional web search for "${query.query}"`,
+                query: query.query,
+                results: webResults.data.map((r) => ({
+                  source: 'web',
+                  title: r.title || '',
+                  url: r.url || '',
+                  content: r.markdown || r.description || '',
+                })),
+                message: `Found ${webResults.data.length} results`,
+                timestamp: Date.now(),
+                overwrite: true,
+              },
+            }]
           });
 
           completedSteps++;
@@ -744,17 +792,21 @@ Search results: ${JSON.stringify(searchResults)}`;
         });
 
         // Send running state for final synthesis
-        dataStream.writeMessageAnnotation({
-          type: 'research_update',
-          data: {
-            id: 'final-synthesis',
-            type: 'analysis',
-            status: 'running',
-            title: 'Final Research Synthesis',
-            analysisType: 'synthesis',
-            message: 'Synthesizing all research findings...',
-            timestamp: Date.now(),
-          },
+        dataStream.write({
+          'type': 'message-annotations',
+
+          'value': [{
+            type: 'research_update',
+            data: {
+              id: 'final-synthesis',
+              type: 'analysis',
+              status: 'running',
+              title: 'Final Research Synthesis',
+              analysisType: 'synthesis',
+              message: 'Synthesizing all research findings...',
+              timestamp: Date.now(),
+            },
+          }]
         });
 
         // Enhanced synthesis prompt with JSON structure instructions
@@ -819,26 +871,30 @@ Search results: ${JSON.stringify(searchResults)}`;
           synthesis = finalSynthesis;
 
           // Send final synthesis update
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: 'final-synthesis',
-              type: 'analysis',
-              status: 'completed',
-              title: 'Final Research Synthesis',
-              analysisType: 'synthesis',
-              findings: finalSynthesis.key_findings.map((f) => ({
-                insight: f.finding,
-                evidence: f.supporting_evidence,
-                confidence: f.confidence,
-              })),
-              uncertainties: finalSynthesis.remaining_uncertainties,
-              message: `Synthesized ${finalSynthesis.key_findings.length} key findings`,
-              timestamp: Date.now(),
-              overwrite: true,
-              completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1) - 1,
-              totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: 'final-synthesis',
+                type: 'analysis',
+                status: 'completed',
+                title: 'Final Research Synthesis',
+                analysisType: 'synthesis',
+                findings: finalSynthesis.key_findings.map((f) => ({
+                  insight: f.finding,
+                  evidence: f.supporting_evidence,
+                  confidence: f.confidence,
+                })),
+                uncertainties: finalSynthesis.remaining_uncertainties,
+                message: `Synthesized ${finalSynthesis.key_findings.length} key findings`,
+                timestamp: Date.now(),
+                overwrite: true,
+                completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1) - 1,
+                totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
+              },
+            }]
           });
         } catch (error) {
           console.error('Final synthesis generation failed:', error);
@@ -862,26 +918,30 @@ Search results: ${JSON.stringify(searchResults)}`;
             ],
           };
 
-          dataStream.writeMessageAnnotation({
-            type: 'research_update',
-            data: {
-              id: 'final-synthesis',
-              type: 'analysis',
-              status: 'completed',
-              title: 'Final Research Synthesis (simplified)',
-              analysisType: 'synthesis',
-              findings: synthesis.key_findings.map((f) => ({
-                insight: f.finding,
-                evidence: f.supporting_evidence,
-                confidence: f.confidence,
-              })),
-              uncertainties: synthesis.remaining_uncertainties,
-              message: 'Synthesized findings with limited results',
-              timestamp: Date.now(),
-              overwrite: true,
-              completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1) - 1,
-              totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
-            },
+          dataStream.write({
+            'type': 'message-annotations',
+
+            'value': [{
+              type: 'research_update',
+              data: {
+                id: 'final-synthesis',
+                type: 'analysis',
+                status: 'completed',
+                title: 'Final Research Synthesis (simplified)',
+                analysisType: 'synthesis',
+                findings: synthesis.key_findings.map((f) => ({
+                  insight: f.finding,
+                  evidence: f.supporting_evidence,
+                  confidence: f.confidence,
+                })),
+                uncertainties: synthesis.remaining_uncertainties,
+                message: 'Synthesized findings with limited results',
+                timestamp: Date.now(),
+                overwrite: true,
+                completedSteps: totalSteps + (depth === 'advanced' ? 2 : 1) - 1,
+                totalSteps: totalSteps + (depth === 'advanced' ? 2 : 1),
+              },
+            }]
           });
         }
       }
@@ -898,12 +958,16 @@ Search results: ${JSON.stringify(searchResults)}`;
         timestamp: Date.now(),
       };
 
-      dataStream.writeMessageAnnotation({
-        type: 'research_update',
-        data: {
-          ...finalProgress,
-          overwrite: true,
-        },
+      dataStream.write({
+        'type': 'message-annotations',
+
+        'value': [{
+          type: 'research_update',
+          data: {
+            ...finalProgress,
+            overwrite: true,
+          },
+        }]
       });
 
       return {

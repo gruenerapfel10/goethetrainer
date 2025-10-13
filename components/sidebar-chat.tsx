@@ -23,13 +23,13 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
   const [inputHeight, setInputHeight] = useState(80);
   const [completedMessageIds, setCompletedMessageIds] = useState<Set<string>>(new Set());
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
-  
+
   // Capability states
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
   const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<any[]>([]);
-  
+
   // Resize functionality
   const [panelWidth, setPanelWidth] = useState(25); // Default width as percentage
   const [isDragging, setIsDragging] = useState(false);
@@ -41,7 +41,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
   const handleInputHeightChange = useCallback((height: number) => {
     setInputHeight(height);
   }, []);
-  
+
   // Resize handlers - capture initial position to prevent jump
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -120,18 +120,20 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  const [input, setInput] = useState('');
+
   const {
     messages,
     setMessages,
     handleSubmit,
-    input,
     setInput,
     append,
     status,
     stop,
-    reload,
+    reload
   } = useChat({
     id: chatId,
+
     body: {
       id: chatId,
       selectedChatModel: 'grok-4-fast-non-reasoning',
@@ -141,10 +143,11 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
       imageGeneration: isImageGenerationEnabled,
       selectedFiles: selectedFiles,
     },
+
     initialMessages: [],
     experimental_throttle: 100,
-    sendExtraMessageFields: true,
     generateId: generateUUID,
+
     onFinish: (message) => {
       if (message.id && message.role === 'assistant') {
         setTimeout(() => {
@@ -152,9 +155,10 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
         }, 1000);
       }
     },
+
     onError: () => {
       toast.error('An error occurred, please try again!');
-    },
+    }
   });
 
   // Save messages to localStorage

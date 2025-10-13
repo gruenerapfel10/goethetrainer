@@ -6,7 +6,7 @@
 
 import { generateObject } from 'ai';
 import { myProvider } from '@/lib/ai/models';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 const sqlQuerySchema = z.object({
   query: z.string().describe('The complete, executable PostgreSQL query.'),

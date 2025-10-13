@@ -1,11 +1,11 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import {runSql} from "@/lib/wren/wren.api";
 
 
 export const runSqlWrenTool = tool({
     description: 'Runs a sql query',
-    parameters: z.object({
+    inputSchema: z.object({
         sql: z.string().describe('The SQL query to run.'),
     }),
     execute: async ({ sql }) => {

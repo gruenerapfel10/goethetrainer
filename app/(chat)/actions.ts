@@ -1,6 +1,6 @@
 'use server';
 
-import { generateText, type Message } from 'ai';
+import { generateText, type UIMessage } from 'ai';
 import { cookies } from 'next/headers';
 
 // Using Firebase instead of PostgreSQL
@@ -20,7 +20,7 @@ export async function saveChatModelAsCookie(model: string) {
 export async function generateTitleFromUserMessage({
   message,
 }: {
-  message: Message;
+  message: UIMessage;
 }): Promise<{
   title: string,
   inputTokens: number,
@@ -36,7 +36,7 @@ export async function generateTitleFromUserMessage({
     prompt: JSON.stringify(message),
   });
 
-  return { title, inputTokens: usage.promptTokens, outputTokens: usage.completionTokens };
+  return { title, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens };
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {

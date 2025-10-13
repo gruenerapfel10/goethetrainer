@@ -57,6 +57,7 @@ const isStructuredAnnotation = (
 
 interface ExtendedUIMessage extends Omit<UIMessage, 'annotations' | 'parts'> {
   parts?: any[];
+  /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
   experimental_attachments?: Attachment[];
   annotations?: Array<{
     type: string;
@@ -366,7 +367,9 @@ const MessageContent = memo<MessageContentProps>(
       // Add files from all messages
       if (messages) {
         messages.forEach((msg: UIMessage) => {
+          /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
           if (msg.experimental_attachments) {
+            /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
             msg.experimental_attachments.forEach((attachment: Attachment) => {
               if (attachment.name) {
                 map.set(attachment.name, { url: attachment.url || '' });
@@ -404,7 +407,7 @@ const MessageContent = memo<MessageContentProps>(
               <MessageReasoning
                 key={key}
                 isLoading={false}
-                reasoning={part.reasoning || ''}
+                reasoning={part.reasoningText || ''}
               />
             );
           }
@@ -631,6 +634,7 @@ const PurePreviewMessage = memo<PreviewMessageProps>(
       [chatId, message.id]
     );
 
+    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
     return (
       <motion.div
         className="w-full mx-auto max-w-3xl px-4 group/message"

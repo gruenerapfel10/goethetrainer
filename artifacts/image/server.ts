@@ -68,9 +68,13 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
         draftContent = response.data[0].b64_json;
       }
 
-      dataStream.writeData({
-        type: 'image-delta',
-        content: draftContent,
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'image-delta',
+          content: draftContent,
+        }]
       });
 
       return draftContent;
@@ -120,9 +124,13 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
         draftContent = response.data[0].b64_json;
       }
 
-      dataStream.writeData({
-        type: 'image-delta',
-        content: draftContent,
+      dataStream.write({
+        'type': 'data',
+
+        'value': [{
+          type: 'image-delta',
+          content: draftContent,
+        }]
       });
 
       return draftContent;

@@ -47,10 +47,10 @@ export function ChatPanelInterface({
 }) {
   const { mutate } = useSWRConfig();
   const { toggleChatPanel } = useChatPanel();
-  
+
   // Check if we're loading a branch
   const [branchMessages, setBranchMessages] = useState<Array<UIMessage> | null>(null);
-  
+
   useEffect(() => {
     const branchId = sessionStorage.getItem('branch-id');
     const savedBranchMessages = sessionStorage.getItem('branch-messages');
@@ -72,7 +72,7 @@ export function ChatPanelInterface({
   const [isFileSearchEnabled, setIsFileSearchEnabled] = useState(false);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(false);
-  
+
   // Handle capability changes with exclusivity rules
   const handleCapabilityChange = useCallback((capability: string, enabled: boolean) => {
     if (!enabled) {
@@ -143,18 +143,20 @@ export function ChatPanelInterface({
     setInputHeight(height);
   }, []);
 
+  const [input, setInput] = useState('');
+
   const {
     messages,
     setMessages,
     handleSubmit,
-    input,
     setInput,
     append,
     status,
     stop,
-    reload,
+    reload
   } = useChat({
     id,
+
     body: {
       id,
       selectedChatModel: selectedChatModel,
@@ -164,10 +166,11 @@ export function ChatPanelInterface({
       imageGeneration: isImageGenerationEnabled,
       selectedFiles: selectedFiles,
     },
+
     initialMessages: branchMessages || initialMessages,
     experimental_throttle: 100,
-    sendExtraMessageFields: true,
     generateId: generateUUID,
+
     onFinish: (message) => {
       console.log('message', messages[messages.length - 1]);
       
@@ -177,9 +180,10 @@ export function ChatPanelInterface({
         }, 1000);
       }
     },
+
     onError: () => {
       toast.error('An error occurred, please try again!');
-    },
+    }
   });
 
   const { data: votes } = useSWR<Array<Vote>>(

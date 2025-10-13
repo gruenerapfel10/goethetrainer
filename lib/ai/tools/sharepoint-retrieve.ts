@@ -1,5 +1,5 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { type StandardizedToolResult, TimelineItemUtils } from './types';
 import { filesMetadata } from '@/lib/db/schema';
@@ -177,7 +177,7 @@ export const sharepointRetrieve = ({ deepResearch }: SharepointRetrieveProps) =>
     tool({
         description:
             'FILENAME-BASED SEARCH that works like the File Search button. Searches for files by exact filename first, then partial matches through our database. Perfect for finding specific files like "9550-REP-001.pdf". Note: Semantic content search is no longer available after Gemini migration.',
-        parameters: sharepointRetrieveParameters,
+        inputSchema: sharepointRetrieveParameters,
         execute: async ({ query, topK = 10, searchMode = 'filename' }: z.infer<typeof sharepointRetrieveParameters>): Promise<StandardizedToolResult> => {
             try {
                 if (!query || query.trim() === '') {

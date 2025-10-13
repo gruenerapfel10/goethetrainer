@@ -1,6 +1,6 @@
 // app/api/logos/set-active/route.ts
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { auth } from '../../../../(auth)/auth';
 import { setActiveLogo } from '../../../../../lib/db/queries';
 

@@ -1,4 +1,5 @@
-import type { LanguageModelV1, UIMessage } from "ai";
+import type { LanguageModelV2 } from '@ai-sdk/provider';
+import { UIMessage } from 'ai';
 import type { InferSelectModel } from "drizzle-orm";
 import type { chat } from "@/lib/db/schema";
 import type { Session } from "@/types/next-auth";

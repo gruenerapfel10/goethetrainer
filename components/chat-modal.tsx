@@ -34,24 +34,25 @@ export function ChatModal({
   const [attachments, setAttachments] = useState<Array<Attachment>>([]);
   const [selectedFiles, setSelectedFiles] = useState<FileSearchResult[]>([]);
   const [completedMessageIds, setCompletedMessageIds] = useState<Set<string>>(new Set());
-  
+
   // Feature toggles
   const [isDeepResearchEnabled, setIsDeepResearchEnabled] = useState(false);
   const [isFileSearchEnabled, setIsFileSearchEnabled] = useState(false);
   const [isWebSearchEnabled, setIsWebSearchEnabled] = useState(true);
   const [isImageGenerationEnabled, setIsImageGenerationEnabled] = useState(false);
 
+  const [input, setInput] = useState('');
+
   const {
     messages,
     setMessages,
     handleSubmit,
-    input,
     setInput,
     append,
     status,
     stop,
     reload,
-    data,
+    data
   } = useChat({
     id: chatId.current,
     body: {

@@ -1,4 +1,4 @@
-import type { UIMessage, DataStreamWriter } from 'ai';
+import type { UIMessage, UIMessageStreamWriter } from 'ai';
 import { sharepointRetrieve } from '@/lib/ai/tools/sharepoint-retrieve';
 import { csvQuery } from '@/lib/ai/tools/csv-query';
 import { chartTool } from '@/lib/ai/tools/chart';
@@ -254,7 +254,7 @@ Example thought process:
 
 // Props interface for tool initialization
 interface ToolInitProps {
-  dataStream?: DataStreamWriter;
+  dataStream?: UIMessageStreamWriter;
   messages?: UIMessage[];
   deepResearch?: boolean;
   deepSearch?: boolean;

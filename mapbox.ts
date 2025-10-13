@@ -1,5 +1,5 @@
 import { tool } from 'ai'
-import { z } from 'zod'
+import { z } from 'zod/v3';
 import { MAP_STYLES } from '@/components/ui/map-style-selector'
 
 // Mapbox-specific parameter schemas
@@ -204,7 +204,7 @@ async function searchPlaces(query: string, limit: number = 5, longitude?: number
 // Mapbox Tools using Vercel AI SDK tool() function
 export const searchPlacesTool = tool({
   description: 'Search for places and get multiple suggestions with coordinates (like Google Maps search)',
-  parameters: SearchPlacesSchema,
+  inputSchema: SearchPlacesSchema,
   execute: async ({ query, limit, longitude, latitude, type }) => {
     const suggestions = await searchPlaces(query, limit, longitude, latitude, type)
     
@@ -223,7 +223,7 @@ export const searchPlacesTool = tool({
 
 export const addMarkersTool = tool({
   description: 'Add a marker to the map at specific coordinates',
-  parameters: AddMarkersSchema,
+  inputSchema: AddMarkersSchema,
   execute: async ({ name, longitude, latitude, category }) => {
     return {
       success: true,
@@ -235,7 +235,7 @@ export const addMarkersTool = tool({
 
 export const searchLocationTool = tool({
   description: 'Search for a location and get its coordinates',
-  parameters: SearchLocationSchema,
+  inputSchema: SearchLocationSchema,
   execute: async ({ query, longitude, latitude, radius }) => {
     const coords = await geocodeLocation(query)
     if (!coords) {
@@ -256,7 +256,7 @@ export const searchLocationTool = tool({
 
 export const generateAreaReportTool = tool({
   description: 'Generate an intelligence report for a specific area',
-  parameters: GenerateAreaReportSchema,
+  inputSchema: GenerateAreaReportSchema,
   execute: async ({ longitude, latitude, radius }) => {
     return {
       success: true,
@@ -272,7 +272,7 @@ export const generateAreaReportTool = tool({
 
 export const flyToLocationTool = tool({
   description: 'Navigate the map to a specific location',
-  parameters: FlyToLocationSchema,
+  inputSchema: FlyToLocationSchema,
   execute: async ({ longitude, latitude, zoom }) => {
     return {
       success: true,
@@ -288,7 +288,7 @@ export const flyToLocationTool = tool({
 
 export const setMapStyleTool = tool({
   description: 'Change the visual style of the map',
-  parameters: SetMapStyleSchema,
+  inputSchema: SetMapStyleSchema,
   execute: async ({ style }) => {
     return {
       success: true,

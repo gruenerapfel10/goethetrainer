@@ -4,13 +4,13 @@
  */
 
 import { CoreTool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { connectorRegistry } from '@/lib/connectors';
 import { StandardizedToolResult, TimelineItemUtils } from './types';
 
 export const connectorTool = {
   description: 'Execute a capability from any connected service (Gmail, Calendar, Maps, Slack, GitHub, etc.)',
-  parameters: z.object({
+  inputSchema: z.object({
     connectorId: z.string().describe('ID of the connector to use (e.g., gmail, google-calendar, slack)'),
     capability: z.string().describe('Name of the capability to execute'),
     params: z.record(z.any()).describe('Parameters for the capability')
@@ -154,7 +154,7 @@ function createTimelineItems(connectorId: string, capability: string, data: any)
 // Helper tool to list available connectors
 export const listConnectorsTool = {
   description: 'List all available connectors and their capabilities',
-  parameters: z.object({
+  inputSchema: z.object({
     category: z.string().optional().describe('Filter by category (productivity, communication, development, analytics, location)')
   }),
   execute: async ({ category }) => {

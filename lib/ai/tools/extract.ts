@@ -1,11 +1,11 @@
-import type { DataStreamWriter } from 'ai';
-import { z } from 'zod';
+import type { UIMessageStreamWriter } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
 interface ExtractProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
   app: FirecrawlApp;
   onTokensUsed?: (tokens: number) => void;
 }
@@ -19,7 +19,7 @@ export const extract = ({
   return {
     description:
       'REQUIRED SECOND STEP: Extract structured data from web pages. You MUST use this after search.',
-    parameters: z.object({
+    inputSchema: z.object({
       urls: z.array(z.string()).describe('Array of URLs to extract data from'),
       prompt: z.string().describe('Description of what data to extract'),
     }),

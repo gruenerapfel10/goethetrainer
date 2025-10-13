@@ -48,8 +48,8 @@ async function invokeWithRetry(
       return { 
         text, 
         usage: {
-          inputTokens: usage.promptTokens,
-          outputTokens: usage.completionTokens
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens
         }
       };
     } catch (error) {

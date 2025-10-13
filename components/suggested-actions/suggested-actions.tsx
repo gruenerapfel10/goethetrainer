@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/button';
-import type { ChatRequestOptions, CreateMessage, Message } from 'ai';
+import type { ChatRequestOptions, CreateUIMessage, UIMessage } from 'ai';
 import { memo, useEffect, useState } from 'react';
 import { defaultSuggestions } from './defaultConfig';
 import { Skeleton } from '../ui/skeleton';
@@ -63,7 +63,7 @@ interface SuggestedActionsProps {
   chatId: string;
   selectedModelId: string;
   append: (
-    message: Message | CreateMessage,
+    message: UIMessage | CreateUIMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
 }

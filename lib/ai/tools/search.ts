@@ -1,11 +1,11 @@
-import type { DataStreamWriter } from 'ai';
-import { z } from 'zod';
+import type { UIMessageStreamWriter } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
 interface SearchProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
   app: FirecrawlApp;
   onTokensUsed?: (tokens: number) => void;
 }
@@ -19,7 +19,7 @@ export const search = ({
   return {
     description:
       "REQUIRED FIRST STEP: Search for web pages related to the user's query. You MUST use this tool first unless the user provides a URL.",
-    parameters: z.object({
+    inputSchema: z.object({
       query: z.string().describe('Search query to find relevant web pages'),
       maxResults: z
         .number()

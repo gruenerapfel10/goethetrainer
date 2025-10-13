@@ -1,9 +1,10 @@
 import {
   type UIMessage,
   appendResponseMessages,
-  createDataStreamResponse,
+  createUIMessageStreamResponse,
   smoothStream,
   streamText,
+  stepCountIs,
 } from 'ai';
 import { saveMessages } from '@/lib/firebase/chat-service';
 import {
@@ -104,12 +105,16 @@ export async function streamGeneralAgent(
     
     const finalSystemText = enhanceSystemPromptWithTools(constrainedSystemText, availableToolNames);
 
-    return createDataStreamResponse({
+    return createUIMessageStreamResponse({
       execute: async (dataStream) => {
         if (deepResearch) {
-          dataStream.writeData({
-            type: 'status',
-            content: 'initializing'
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'status',
+              content: 'initializing'
+            }]
           });
 
           const researchUpdates: any[] = [];
@@ -124,41 +129,59 @@ export async function streamGeneralAgent(
 
           const result = streamText({
             model: model,
-            maxSteps: 2,
+            stopWhen: stepCountIs(2),
             messages: messagesWithoutFiles(messages),
+
             experimental_transform: smoothStream({
               chunking: 'word',
               delayInMs: 15,
             }),
+
             experimental_generateMessageId: generateUUID,
             temperature: 0,
             experimental_activeTools: ['reason_search'],
             system: finalSystemText,
+
             tools: initializeDeepResearchTools({
               session,
               dataStream,
             }),
+
             onChunk(event) {
               if (event.chunk.type === 'tool-call') {
-                dataStream.writeData({
-                  type: 'status',
-                  content: `executing-${event.chunk.toolName}`
+                dataStream.write({
+                  'type': 'data',
+
+                  'value': [{
+                    type: 'status',
+                    content: `executing-${event.chunk.toolName}`
+                  }]
                 });
               }
             },
+
             onStepFinish(event) {
               if (event.warnings) {
               }
-              dataStream.writeData({
-                type: 'status',
-                content: 'step-completed'
+              dataStream.write({
+                'type': 'data',
+
+                'value': [{
+                  type: 'status',
+                  content: 'step-completed'
+                }]
               });
             },
+
             onFinish: async ({ response, usage }) => {
               try {
-                dataStream.writeData({
-                  type: 'status',
-                  content: 'saving'
+                dataStream.write({
+                  'type': 'data',
+
+                  'value': [{
+                    type: 'status',
+                    content: 'saving'
+                  }]
                 });
 
                 if (session.user?.id) {
@@ -172,6 +195,7 @@ export async function streamGeneralAgent(
                     throw new Error('No assistant message found!');
                   }
 
+                  /* FIXME(@ai-sdk-upgrade-v5): The `appendResponseMessages` option has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#message-persistence-changes */
                   const [, assistantMessage] = appendResponseMessages({
                     messages: [userMessage],
                     responseMessages: response.messages,
@@ -201,48 +225,66 @@ export async function streamGeneralAgent(
                         useCaseId: null,
                         agentType: selectedChatModel,
                         modelId: model.modelId,
-                        inputTokens: (usage?.promptTokens ?? 0) + titleInputTokens,
-                        outputTokens: (usage.completionTokens ?? 0) + titleOutputTokens,
+                        inputTokens: (usage?.inputTokens ?? 0) + titleInputTokens,
+                        outputTokens: (usage.outputTokens ?? 0) + titleOutputTokens,
                         processed: false,
                       },
                     ],
                   });
                 }
 
-                dataStream.writeData({
-                  type: 'status',
-                  content: 'completed'
+                dataStream.write({
+                  'type': 'data',
+
+                  'value': [{
+                    type: 'status',
+                    content: 'completed'
+                  }]
                 });
 
-                dataStream.writeData({
-                  type: 'finish',
-                  content: 'research-complete'
+                dataStream.write({
+                  'type': 'data',
+
+                  'value': [{
+                    type: 'finish',
+                    content: 'research-complete'
+                  }]
                 });
 
               } catch (error) {
                 console.error('Failed to save chat:', error);
-                dataStream.writeData({
-                  type: 'error',
-                  content: 'Failed to save research results'
+                dataStream.write({
+                  'type': 'data',
+
+                  'value': [{
+                    type: 'error',
+                    content: 'Failed to save research results'
+                  }]
                 });
               }
             },
+
             onError(event) {
               const errorMessage = event.error instanceof Error
                 ? event.error.message
                 : String(event.error);
-              dataStream.writeData({
-                type: 'error',
-                content: errorMessage
+              dataStream.write({
+                'type': 'data',
+
+                'value': [{
+                  type: 'error',
+                  content: errorMessage
+                }]
               });
             },
+
             experimental_telemetry: {
               isEnabled: true,
               functionId: 'stream-text',
-            },
+            }
           });
 
-          result.mergeIntoDataStream(dataStream);
+          result.mergeIntoUIMessageStream(dataStream);
         } else {
           const fileProcessor = processFile({
             session,
@@ -254,11 +296,12 @@ export async function streamGeneralAgent(
 
           const result = streamText({
             model,
-          system: enhancedSystemPrompt(finalSystemText),
-          messages: messagesWithoutFiles(messages),
-          maxSteps: 6,
-          experimental_transform: smoothStream({ chunking: 'word' }),
-          experimental_generateMessageId: generateUUID,
+            system: enhancedSystemPrompt(finalSystemText),
+            messages: messagesWithoutFiles(messages),
+            stopWhen: stepCountIs(6),
+            experimental_transform: smoothStream({ chunking: 'word' }),
+            experimental_generateMessageId: generateUUID,
+
             tools: {
               ...initializeRegularTools(agentType, {
                 session,
@@ -273,7 +316,9 @@ export async function streamGeneralAgent(
               }),
               processFile: fileProcessor,
             },
+
             toolChoice: 'auto',
+
             onFinish: async ({ response, usage }) => {
               if (session.user?.id) {
                 try {
@@ -287,6 +332,7 @@ export async function streamGeneralAgent(
                     throw new Error('No assistant message found!');
                   }
 
+                  /* FIXME(@ai-sdk-upgrade-v5): The `appendResponseMessages` option has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#message-persistence-changes */
                   const [, assistantMessage] = appendResponseMessages({
                     messages: [userMessage],
                     responseMessages: response.messages,
@@ -304,8 +350,8 @@ export async function streamGeneralAgent(
                         useCaseId: null,
                         agentType: selectedChatModel,
                         modelId: model.modelId,
-                        inputTokens: (usage.promptTokens ?? 0) + (webSearch ? firecrawlTokens : 0) + (titleInputTokens || 0),
-                        outputTokens: (usage.completionTokens ?? 0) + (titleOutputTokens || 0),
+                        inputTokens: (usage.inputTokens ?? 0) + (webSearch ? firecrawlTokens : 0) + (titleInputTokens || 0),
+                        outputTokens: (usage.outputTokens ?? 0) + (titleOutputTokens || 0),
                         processed: false,
                       },
                     ],
@@ -315,14 +361,15 @@ export async function streamGeneralAgent(
                 }
               }
             },
+
             experimental_telemetry: {
               isEnabled: true,
               functionId: 'stream-text',
-            },
+            }
           });
 
           try {
-            result.mergeIntoDataStream(dataStream, {
+            result.mergeIntoUIMessageStream(dataStream, {
               sendReasoning: true,
             });
           } catch (error: any) {

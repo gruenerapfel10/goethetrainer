@@ -1,11 +1,11 @@
-import type { DataStreamWriter } from 'ai';
-import { z } from 'zod';
+import type { UIMessageStreamWriter } from 'ai';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
 import { MAJOR_CITIES, findCityByName, searchCities, type CityData } from '@/lib/mapbox/city-data';
 
 interface MapControlProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
 }
 
 // Country code to coordinates mapping for major countries
@@ -68,7 +68,7 @@ export const mapControl = ({
 }: MapControlProps) => {
   return {
     description: 'Control the interactive globe map - zoom to countries, cities, specific locations, or change map styles. Now supports city-level detail with major cities worldwide.',
-    parameters: z.object({
+    inputSchema: z.object({
       action: z.enum(['flyToCountry', 'flyToCity', 'flyToLocation', 'setStyle', 'searchCities']).describe('The action to perform on the map'),
       country: z.string().optional().describe('Country name to fly to (e.g., "United States", "China", "Germany")'),
       city: z.string().optional().describe('City name to fly to (e.g., "New York City", "London", "Tokyo")'),
@@ -98,16 +98,20 @@ export const mapControl = ({
             }
             
             // Send map control command to client via dataStream
-            dataStream.writeData({
-              type: 'map-control',
-              content: JSON.stringify({
-                action: 'selectCountry',
-                data: {
-                  iso: countryData.iso,
-                  center: countryData.center,
-                  name: countryData.name
-                }
-              })
+            dataStream.write({
+              'type': 'data',
+
+              'value': [{
+                type: 'map-control',
+                content: JSON.stringify({
+                  action: 'selectCountry',
+                  data: {
+                    iso: countryData.iso,
+                    center: countryData.center,
+                    name: countryData.name
+                  }
+                })
+              }]
             });
             
             return {
@@ -149,18 +153,22 @@ export const mapControl = ({
             }
             
             // Send map control command to client via dataStream
-            dataStream.writeData({
-              type: 'map-control',
-              content: JSON.stringify({
-                action: 'flyToCity',
-                data: {
-                  city: cityData.name,
-                  country: cityData.country,
-                  coordinates: cityData.coordinates,
-                  zoom: cityData.zoomLevel,
-                  boundingBox: cityData.boundingBox
-                }
-              })
+            dataStream.write({
+              'type': 'data',
+
+              'value': [{
+                type: 'map-control',
+                content: JSON.stringify({
+                  action: 'flyToCity',
+                  data: {
+                    city: cityData.name,
+                    country: cityData.country,
+                    coordinates: cityData.coordinates,
+                    zoom: cityData.zoomLevel,
+                    boundingBox: cityData.boundingBox
+                  }
+                })
+              }]
             });
             
             return {
@@ -196,20 +204,24 @@ export const mapControl = ({
             }
             
             // Send search results to client
-            dataStream.writeData({
-              type: 'map-control',
-              content: JSON.stringify({
-                action: 'searchResults',
-                data: {
-                  query,
-                  results: results.slice(0, 10).map(city => ({
-                    name: city.name,
-                    country: city.country,
-                    coordinates: city.coordinates,
-                    population: city.population,
-                  }))
-                }
-              })
+            dataStream.write({
+              'type': 'data',
+
+              'value': [{
+                type: 'map-control',
+                content: JSON.stringify({
+                  action: 'searchResults',
+                  data: {
+                    query,
+                    results: results.slice(0, 10).map(city => ({
+                      name: city.name,
+                      country: city.country,
+                      coordinates: city.coordinates,
+                      population: city.population,
+                    }))
+                  }
+                })
+              }]
             });
             
             return {
@@ -245,16 +257,20 @@ export const mapControl = ({
             }
             
             // Send map control command to client via dataStream
-            dataStream.writeData({
-              type: 'map-control',
-              content: JSON.stringify({
-                action: 'flyToLocation',
-                data: {
-                  longitude,
-                  latitude,
-                  zoom: zoom || 5
-                }
-              })
+            dataStream.write({
+              'type': 'data',
+
+              'value': [{
+                type: 'map-control',
+                content: JSON.stringify({
+                  action: 'flyToLocation',
+                  data: {
+                    longitude,
+                    latitude,
+                    zoom: zoom || 5
+                  }
+                })
+              }]
             });
             
             return {
@@ -277,14 +293,18 @@ export const mapControl = ({
             }
             
             // Send map control command to client via dataStream
-            dataStream.writeData({
-              type: 'map-control',
-              content: JSON.stringify({
-                action: 'setStyle',
-                data: {
-                  style
-                }
-              })
+            dataStream.write({
+              'type': 'data',
+
+              'value': [{
+                type: 'map-control',
+                content: JSON.stringify({
+                  action: 'setStyle',
+                  data: {
+                    style
+                  }
+                })
+              }]
             });
             
             return {

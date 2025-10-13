@@ -3,7 +3,7 @@ import { db, withRetry } from '../utils';
 import { myProvider } from '../../ai/models';
 import { useCase, useCaseCategory } from '../../db/schema';
 import { eq, isNull } from 'drizzle-orm';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { generateObject } from 'ai';
 
 // Use environment variable for debug override

@@ -1,7 +1,7 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { Session } from '@/types/next-auth';
-import type { DataStreamWriter } from 'ai';
+import type { UIMessageStreamWriter } from 'ai';
 import type { UIMessage } from 'ai';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
@@ -12,7 +12,7 @@ import { generateText } from 'ai';
 
 interface ProcessFileProps {
   session: Session;
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
 }
 
 interface ProcessFilesResult {
@@ -143,6 +143,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
       };
     }
 
+    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
     const files = userMessage.experimental_attachments || [];
 
     if (files.length === 0) {
@@ -160,7 +161,7 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
     const fileProcessor = tool({
       description:
         'Process a file using Google Gemini to analyze its content and extract information.',
-      parameters: z.object({
+      inputSchema: z.object({
         fileUrl: z.string().describe('URL of the file to process'),
         fileName: z.string().describe('Name of the file'),
         fileType: z.string().describe('MIME type of the file'),
@@ -178,19 +179,31 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
         try {
           const id = generateUUID();
 
-          dataStream.writeData({
-            type: 'id',
-            content: id,
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'id',
+              content: id,
+            }]
           });
 
-          dataStream.writeData({
-            type: 'fileName',
-            content: fileName,
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'fileName',
+              content: fileName,
+            }]
           });
 
-          dataStream.writeData({
-            type: 'status',
-            content: 'processing',
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'status',
+              content: 'processing',
+            }]
           });
 
           const accessibleUrl = await getAccessibleUrl(fileUrl);
@@ -227,19 +240,31 @@ Status: File uploaded successfully but detailed content analysis is not availabl
 Note: For comprehensive document analysis, please use text-based formats (TXT, JSON, XML, etc.).`;
           }
 
-          dataStream.writeData({
-            type: 'content',
-            content: analysisResult,
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'content',
+              content: analysisResult,
+            }]
           });
 
-          dataStream.writeData({
-            type: 'status',
-            content: 'complete',
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'status',
+              content: 'complete',
+            }]
           });
 
-          dataStream.writeData({
-            type: 'finish',
-            content: analysisResult,
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'finish',
+              content: analysisResult,
+            }]
           });
 
           return {
@@ -252,19 +277,31 @@ Note: For comprehensive document analysis, please use text-based formats (TXT, J
         } catch (error: any) {
           console.error('Error processing file:', error);
 
-          dataStream.writeData({
-            type: 'status',
-            content: 'error',
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'status',
+              content: 'error',
+            }]
           });
 
-          dataStream.writeData({
-            type: 'error',
-            content: error.message,
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'error',
+              content: error.message,
+            }]
           });
 
-          dataStream.writeData({
-            type: 'finish',
-            content: '',
+          dataStream.write({
+            'type': 'data',
+
+            'value': [{
+              type: 'finish',
+              content: '',
+            }]
           });
 
           return {
@@ -306,11 +343,15 @@ Note: For comprehensive document analysis, please use text-based formats (TXT, J
         }
       } catch (error) {
         console.error(`Error processing file ${file.name}:`, error);
-        dataStream.writeData({
-          type: 'error',
-          content: `Failed to process file ${file.name}: ${
-            error instanceof Error ? error.message : 'Unknown error'
-          }`,
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'error',
+            content: `Failed to process file ${file.name}: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`,
+          }]
         });
       }
     }
@@ -341,7 +382,7 @@ refer to the analysis results. Be specific and cite information from the documen
   const toolInstance = tool({
     description:
       'Process a file using Google Gemini to analyze its content and extract information.',
-    parameters: z.object({
+    inputSchema: z.object({
       fileUrl: z.string().describe('URL of the file to process'),
       fileName: z.string().describe('Name of the file'),
       fileType: z.string().describe('MIME type of the file'),
@@ -359,19 +400,31 @@ refer to the analysis results. Be specific and cite information from the documen
       try {
         const id = generateUUID();
 
-        dataStream.writeData({
-          type: 'id',
-          content: id,
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'id',
+            content: id,
+          }]
         });
 
-        dataStream.writeData({
-          type: 'fileName',
-          content: fileName,
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'fileName',
+            content: fileName,
+          }]
         });
 
-        dataStream.writeData({
-          type: 'status',
-          content: 'processing',
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'status',
+            content: 'processing',
+          }]
         });
 
         const accessibleUrl = await getAccessibleUrl(fileUrl);
@@ -407,14 +460,22 @@ Status: File uploaded successfully but detailed content analysis is not availabl
 Note: For comprehensive document analysis, please use text-based formats (TXT, JSON, XML, etc.).`;
         }
 
-        dataStream.writeData({
-          type: 'status',
-          content: 'complete',
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'status',
+            content: 'complete',
+          }]
         });
 
-        dataStream.writeData({
-          type: 'finish',
-          content: '',
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'finish',
+            content: '',
+          }]
         });
 
         return {
@@ -427,19 +488,31 @@ Note: For comprehensive document analysis, please use text-based formats (TXT, J
       } catch (error: any) {
         console.error('Error processing file:', error);
 
-        dataStream.writeData({
-          type: 'status',
-          content: 'error',
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'status',
+            content: 'error',
+          }]
         });
 
-        dataStream.writeData({
-          type: 'error',
-          content: error.message,
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'error',
+            content: error.message,
+          }]
         });
 
-        dataStream.writeData({
-          type: 'finish',
-          content: '',
+        dataStream.write({
+          'type': 'data',
+
+          'value': [{
+            type: 'finish',
+            content: '',
+          }]
         });
 
         return {

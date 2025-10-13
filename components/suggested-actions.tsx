@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
-import type { ChatRequestOptions, CreateMessage, Message } from 'ai';
+import type { ChatRequestOptions, CreateUIMessage, UIMessage } from 'ai';
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -10,7 +10,7 @@ interface SuggestedActionsProps {
   chatId: string;
   selectedModelId: string;
   append: (
-    message: Message | CreateMessage,
+    message: UIMessage | CreateUIMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
 }

@@ -1,5 +1,5 @@
-import {type DataStreamWriter, tool} from 'ai';
-import { z } from 'zod';
+import {type UIMessageStreamWriter, tool} from 'ai';
+import { z } from 'zod/v3';
 import {streamGenerateSql} from "@/lib/wren/stream-api/wren.stream-api";
 import {type StateEvent, WrenStreamStateEnum} from "@/lib/wren/stream-api/wren.stream-api.types";
 import {generateUUID} from "@/lib/utils";
@@ -8,10 +8,10 @@ import {calculateApproximateTokenUsageByWren} from "@/lib/ai/tools/wren/utils";
 
 
 export const generateSqlWrenTool = (
-    { dataStream, onTokenUsageUpdate }: { dataStream: DataStreamWriter, onTokenUsageUpdate?: (tokenUsage: { inputTokens: number, outputTokens: number }) => void }
+    { dataStream, onTokenUsageUpdate }: { dataStream: UIMessageStreamWriter, onTokenUsageUpdate?: (tokenUsage: { inputTokens: number, outputTokens: number }) => void }
 ) => tool({
   description: 'Converts a natural language question to SQL, runs it, and provides the data. The limit is set to 100 rows',
-  parameters: z.object({
+  inputSchema: z.object({
     question: z.string().describe('The natural language question'),
     language: z.string().describe('Language to be used for the answer'),
   }),
@@ -19,7 +19,10 @@ export const generateSqlWrenTool = (
     const stateUpdates: StateEvent['data'][] = [];
     const addStateUpdate = (data: StateEvent['data']) => {
       stateUpdates.push(data);
-      dataStream.writeMessageAnnotation({ type: 'wren_update', toolCallId, data });
+      dataStream.write({
+        'type': 'message-annotations',
+        'value': [{ type: 'wren_update', toolCallId, data }]
+      });
     }
 
     try {

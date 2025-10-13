@@ -1,7 +1,13 @@
 // Replacement for reason.ts
 
-import { type UIMessage, streamText, type DataStreamWriter, type JSONValue } from 'ai';
-import { z } from 'zod';
+import {
+  type UIMessage,
+  streamText,
+  type UIMessageStreamWriter,
+  type JSONValue,
+  stepCountIs,
+} from 'ai';
+import { z } from 'zod/v3';
 import { tool } from 'ai';
 
 import { myProvider } from '@/lib/ai/models';
@@ -32,7 +38,7 @@ interface UpdateData {
 }
 
 interface ReasonProps {
-  dataStream: DataStreamWriter;
+  dataStream: UIMessageStreamWriter;
   messages: UIMessage[];
   agentType: AgentType;
   deepResearch?: boolean;
@@ -61,7 +67,7 @@ export const reason = ({
 }: ReasonProps) => {
   return tool({
     description: `Strategically reasons about the user query and orchestrates efficient information gathering using ${agentType}-specific tools.`,
-    parameters: reasonParameters,
+    inputSchema: reasonParameters,
 execute: async ({ query, direction_guidance }: z.infer<typeof reasonParameters>, { toolCallId: parentToolCallId }: { toolCallId: string }) => {
   const collectedUpdates: UpdateData[] = [];
   const activeSubToolOperations = new Map<string, string>();
@@ -71,7 +77,10 @@ execute: async ({ query, direction_guidance }: z.infer<typeof reasonParameters>,
 
   const writeUpdate = (data: UpdateData) => {
     // Stream the update to the UI for the live view
-    dataStream.writeMessageAnnotation({ type: 'agent_update', data: data as any as JSONValue });
+    dataStream.write({
+      'type': 'message-annotations',
+      'value': [{ type: 'agent_update', data: data as any as JSONValue }]
+    });
     
     // Collect the update to be persisted for the refreshed view
     collectedUpdates.push(data);
@@ -136,11 +145,15 @@ NO OTHER TEXT ALLOWED.`;
         model: myProvider.languageModel('bedrock-sonnet-latest'),
         messages: messages as any,
         experimental_generateMessageId: generateUUID,
-        temperature: 0.1, // Lower temperature for more deterministic, focused responses
-        maxSteps: 5, // Fewer steps - just gather data and exit
+
+        // Lower temperature for more deterministic, focused responses
+        temperature: 0.1,
+
+        stopWhen: stepCountIs(5),
         tools: initializedTools,
         system: systemPrompt,
         experimental_telemetry: { isEnabled: true },
+
         onChunk: (event: any) => {
           if (event.chunk.type === 'text-delta') {
             if (!currentTextDeltaId) currentTextDeltaId = `${reasonNamespace}-text-${generateUUID()}`;
@@ -213,6 +226,7 @@ NO OTHER TEXT ALLOWED.`;
             }
           }
         },
+
         onFinish: async (response) => {
           if (currentTextDeltaId) {
             writeUpdate({ id: currentTextDeltaId, type: 'text-delta', status: 'completed', message: '', timestamp: Date.now(), toolCallId: parentToolCallId });
@@ -220,17 +234,21 @@ NO OTHER TEXT ALLOWED.`;
           const usage = response.usage;
           const modelId = getModelId('bedrock-sonnet-latest');
           if (usage && modelId) {
-            const cost = calculateCost(modelId, usage.promptTokens, usage.completionTokens);
-            const costData = { toolName: 'reason', modelId, inputTokens: usage.promptTokens, outputTokens: usage.completionTokens, cost, parentToolCallId };
-            dataStream.writeMessageAnnotation({ type: 'cost_update', data: costData as any as JSONValue });
+            const cost = calculateCost(modelId, usage.inputTokens, usage.outputTokens);
+            const costData = { toolName: 'reason', modelId, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens, cost, parentToolCallId };
+            dataStream.write({
+              'type': 'message-annotations',
+              'value': [{ type: 'cost_update', data: costData as any as JSONValue }]
+            });
           }
           
           // Resolve with the complete array of updates that were collected.
           resolve(collectedUpdates);
         },
+
         onError: (error: any) => {
           reject(error);
-        },
+        }
       });
       await result.consumeStream();
     } catch (error) {

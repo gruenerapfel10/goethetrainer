@@ -1,5 +1,5 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import fs from 'fs';
 import path from 'path';
 
@@ -59,7 +59,7 @@ function loadUniversityData(): UniversityData {
 // Search universities by various criteria
 export const searchUniversities = tool({
   description: 'Search for universities from the top 500 worldwide rankings. Can filter by country, rank range, supported degrees, or search by name.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().optional().describe('Search term to match against university names (case-insensitive)'),
     country: z.string().optional().describe('Filter by specific country (e.g., "United States of America", "United Kingdom", "Canada")'),
     minRank: z.number().min(1).max(500).optional().describe('Minimum rank (1 = best)'),
@@ -123,7 +123,7 @@ export const searchUniversities = tool({
 // Search and get degree information
 export const searchDegrees = tool({
   description: 'Search for degree programs and get detailed information about available degrees, their categories, and aliases.',
-  parameters: z.object({
+  inputSchema: z.object({
     query: z.string().optional().describe('Search term to match against degree names or aliases (case-insensitive)'),
     category: z.string().optional().describe('Filter by degree category (e.g., "STEM", "Business & Management", "Health & Medicine")'),
     level: z.string().optional().describe('Filter by degree level (e.g., "undergraduate", "masters", "phd")'),
@@ -178,7 +178,7 @@ export const searchDegrees = tool({
 // Get universities that offer a specific degree
 export const getUniversitiesForDegree = tool({
   description: 'Find all universities from the top 500 that offer a specific degree program.',
-  parameters: z.object({
+  inputSchema: z.object({
     degreeId: z.string().describe('The degree ID to search for (e.g., "comp-science", "medicine", "bus-admin")'),
     country: z.string().optional().describe('Optional: Filter by specific country'),
     maxRank: z.number().min(1).max(500).optional().describe('Optional: Only include universities ranked this or better'),
@@ -240,7 +240,7 @@ export const getUniversitiesForDegree = tool({
 // Get comprehensive statistics about the university data
 export const getUniversityStats = tool({
   description: 'Get comprehensive statistics about the university database including country distribution, degree categories, and ranking insights.',
-  parameters: z.object({
+  inputSchema: z.object({
     includeCountryBreakdown: z.boolean().default(true).describe('Include breakdown by country'),
     includeDegreeCategories: z.boolean().default(true).describe('Include degree category statistics'),
     includeRankingInsights: z.boolean().default(true).describe('Include ranking distribution insights'),

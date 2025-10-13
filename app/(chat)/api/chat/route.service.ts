@@ -53,6 +53,7 @@ export async function streamAgent(json: any) {
     const model = myProvider.languageModel(selectedChatModel);
 
     // Database save using stub function (no persistence)
+    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
     await saveMessages({
       messages: [
         {

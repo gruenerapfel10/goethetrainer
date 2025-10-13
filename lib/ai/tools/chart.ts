@@ -1,5 +1,5 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Chart Type Definitions for shadcn/ui charts
 export type ChartType = 'line' | 'bar' | 'area' | 'pie' | 'radar' | 'radialBar' | 'scatter';
@@ -70,7 +70,7 @@ const chartConfigSchema = z.object({
 // Chart generation tool parameters
 const chartParameters = z.object({
   chartConfig: chartConfigSchema.describe('Complete chart configuration including type, data, and display options'),
-  reasoning: z.string().optional().describe('Optional explanation of why this chart type and configuration was chosen for the data'),
+  reasoningText: z.string().optional().describe('Optional explanation of why this chart type and configuration was chosen for the data'),
 });
 
 // Utility functions for data processing
@@ -221,9 +221,9 @@ export const chartTool = tool({
   
   REMEMBER: For ALL visualization requests, use this tool - never generate code.`,
   
-  parameters: chartParameters,
+  inputSchema: chartParameters,
   
-  execute: async ({ chartConfig, reasoning }) => {
+  execute: async ({ chartConfig, reasoningText }) => {
     try {
       console.log('=== SHADCN CHART GENERATION TOOL CALLED ===');
       if (reasoning) {

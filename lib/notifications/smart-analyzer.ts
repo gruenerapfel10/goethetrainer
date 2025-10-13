@@ -187,7 +187,9 @@ export class SmartNotificationAnalyzer {
     }
 
     // Check for code or attachments
+    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
     if (this.containsCode(textContent) || message.experimental_attachments?.length) {
+      /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
       notifications.push({
         type: 'info',
         title: 'Content with Code/Files',

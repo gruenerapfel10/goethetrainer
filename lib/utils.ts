@@ -1,7 +1,7 @@
 import type {
   CoreAssistantMessage,
   CoreToolMessage,
-  Message,
+  UIMessage,
   UIMessage,
 } from 'ai';
 import { type ClassValue, clsx } from 'clsx';
@@ -120,7 +120,7 @@ export function getDocumentTimestampByIndex(
   return documents[index].createdAt;
 }
 
-export function getMessageIdFromAnnotations(message: Message) {
+export function getMessageIdFromAnnotations(message: UIMessage) {
   // Since annotations are removed, always return the message id
   return message.id;
 }
@@ -283,6 +283,6 @@ export function formatAIResponse(text: string): string {
   return formatted;
 }
 
-export const getSources = (messages: Message[], urls: string[]) => {
+export const getSources = (messages: UIMessage[], urls: string[]) => {
   // ... existing code ...
 };

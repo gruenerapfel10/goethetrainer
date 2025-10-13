@@ -1,9 +1,10 @@
 // app/api/chat/csv-agent.ts
 import {
-  createDataStreamResponse,
+  createUIMessageStreamResponse,
   streamText,
   smoothStream,
   appendResponseMessages,
+  stepCountIs,
 } from 'ai';
 import { getTrailingMessageId, messagesWithoutFiles } from '@/lib/utils';
 import { myProvider } from '@/lib/ai/models';
@@ -31,36 +32,42 @@ export async function streamCsvAgent(agentMeta: AgentMeta, json: any) {
     const model = myProvider.languageModel('bedrock-sonnet-latest');
     const systemText = await getSystemPrompt('csv-agent');
 
-    return createDataStreamResponse({
+    return createUIMessageStreamResponse({
       execute: async (dataStream) => {
         const result = streamText({
           model: model,
-          maxSteps: 2,
+          stopWhen: stepCountIs(2),
           messages: messagesWithoutFiles(originalMessages),
+
           experimental_transform: smoothStream({
             chunking: 'word',
             delayInMs: 15,
           }),
+
           experimental_generateMessageId: generateUUID,
           temperature: 0,
           experimental_activeTools: ['reason_csv'],
           system: systemText,
+
           tools: {
             reason_csv: csvAnalyze({
               session,
               dataStream,
             }),
           },
+
           onChunk(event) {
             if (event.chunk.type === 'tool-call') {
               console.log('Called Tool: ', event.chunk.toolName);
             }
           },
+
           onStepFinish(event) {
             if (event.warnings) {
               console.log('Warnings: ', event.warnings);
             }
           },
+
           onFinish: async ({ response, usage }) => {
             if (session.user?.id) {
               try {
@@ -74,11 +81,13 @@ export async function streamCsvAgent(agentMeta: AgentMeta, json: any) {
                   throw new Error('No assistant message found!');
                 }
 
+                /* FIXME(@ai-sdk-upgrade-v5): The `appendResponseMessages` option has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#message-persistence-changes */
                 const [, assistantMessage] = appendResponseMessages({
                   messages: [userMessage],
                   responseMessages: response.messages,
                 });
 
+                /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
                 await saveMessages({
                   messages: [
                     {
@@ -95,9 +104,9 @@ export async function streamCsvAgent(agentMeta: AgentMeta, json: any) {
                       agentType: selectedChatModel,
                       modelId: model.modelId,
                       inputTokens:
-                        (usage?.promptTokens ?? 0) + titleInputTokens,
+                        (usage?.inputTokens ?? 0) + titleInputTokens,
                       outputTokens:
-                        (usage.completionTokens ?? 0) + titleOutputTokens,
+                        (usage.outputTokens ?? 0) + titleOutputTokens,
                       processed: false,
                     },
                   ],
@@ -107,16 +116,18 @@ export async function streamCsvAgent(agentMeta: AgentMeta, json: any) {
               }
             }
           },
+
           onError(event) {
             console.log('Error: ', event.error);
           },
+
           experimental_telemetry: {
             isEnabled: true,
             functionId: 'stream-text',
-          },
+          }
         });
         result.consumeStream();
-        return result.mergeIntoDataStream(dataStream, {
+        return result.mergeIntoUIMessageStream(dataStream, {
           sendReasoning: true,
         });
       },

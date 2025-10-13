@@ -1,4 +1,10 @@
-import {appendResponseMessages, createDataStreamResponse, streamText, type UIMessage,} from 'ai';
+import {
+    appendResponseMessages,
+    createUIMessageStreamResponse,
+    streamText,
+    type UIMessage,
+    stepCountIs,
+} from 'ai';
 import type {AgentMeta} from "@/app/(chat)/api/chat/agent.type";
 import {generateUUID, getTrailingMessageId, messagesWithoutFiles} from "@/lib/utils";
 import {calculateCost} from "@/lib/costs";
@@ -60,6 +66,7 @@ const clearRedundantToolInvocationsFromMessages = (messages: Array<UIMessage>) =
             return {
                 ...message,
                 parts: message.parts.filter(part => {
+                    /* FIXME(@ai-sdk-upgrade-v5): The `part.toolInvocation.toolName` property has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#tool-part-type-changes-uimessage */
                     if (part.type === 'tool-invocation' && part.toolInvocation.toolName !== 'run_sql') {
                         return false;
                     }
@@ -88,7 +95,7 @@ export async function streamText2SqlAgent(
     } = agentMeta;
 
 
-    return createDataStreamResponse({
+    return createUIMessageStreamResponse({
         async execute(dataStream) {
             const wrenTokenUsage: { inputTokens: number, outputTokens: number }[] = [];
             const sanitizedMessages = messagesWithoutFiles(clearRedundantToolInvocationsFromMessages(messages));
@@ -104,8 +111,9 @@ export async function streamText2SqlAgent(
                 messages: sanitizedMessages,
                 experimental_generateMessageId: generateUUID,
                 temperature: 0.5,
-                maxSteps: 5,
+                stopWhen: stepCountIs(5),
                 experimental_telemetry: { isEnabled: true },
+
                 tools: {
                     text2sql: generateSqlWrenTool({
                         dataStream,
@@ -116,7 +124,9 @@ export async function streamText2SqlAgent(
                     run_sql: runSqlWrenTool,
                     ...regularTools,
                 },
+
                 system: getBaseSystemPrompt(userQuery, dbMetadata),
+
                 onFinish: async ({ response, usage }) => {
                     const assistantId = getTrailingMessageId({
                         messages: response.messages.filter(
@@ -137,17 +147,21 @@ export async function streamText2SqlAgent(
                     }, { inputTokens: 0, outputTokens: 0 })
 
                     if (usage) {
-                        const cost = calculateCost(model.modelId, usage.promptTokens + totalWrenTokenUsage.inputTokens, usage.completionTokens + totalWrenTokenUsage.outputTokens);
+                        const cost = calculateCost(model.modelId, usage.inputTokens + totalWrenTokenUsage.inputTokens, usage.outputTokens + totalWrenTokenUsage.outputTokens);
                         const costData = {
                             toolName: selectedChatModel,
                             modelId: model.modelId,
-                            inputTokens: usage.promptTokens + totalWrenTokenUsage.inputTokens,
-                            outputTokens: usage.completionTokens + totalWrenTokenUsage.outputTokens,
+                            inputTokens: usage.inputTokens + totalWrenTokenUsage.inputTokens,
+                            outputTokens: usage.outputTokens + totalWrenTokenUsage.outputTokens,
                             cost,
                         };
-                        dataStream.writeMessageAnnotation({ type: 'cost_update', data: costData as any });
+                        dataStream.write({
+                            'type': 'message-annotations',
+                            'value': [{ type: 'cost_update', data: costData as any }]
+                        });
                     }
 
+                    /* FIXME(@ai-sdk-upgrade-v5): The `appendResponseMessages` option has been removed. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#message-persistence-changes */
                     const [, assistantMessage] = appendResponseMessages({
                         messages: [userMessage],
                         responseMessages: response.messages,
@@ -169,21 +183,22 @@ export async function streamText2SqlAgent(
                                 useCaseId: null,
                                 agentType: selectedChatModel,
                                 modelId: model.modelId,
-                                inputTokens: (usage?.promptTokens ?? 0) + titleInputTokens + totalWrenTokenUsage.inputTokens,
-                                outputTokens: (usage?.completionTokens ?? 0) + titleOutputTokens + totalWrenTokenUsage.outputTokens,
+                                inputTokens: (usage?.inputTokens ?? 0) + titleInputTokens + totalWrenTokenUsage.inputTokens,
+                                outputTokens: (usage?.outputTokens ?? 0) + titleOutputTokens + totalWrenTokenUsage.outputTokens,
                                 processed: false,
                             },
                         ],
                     });
                 },
+
                 onError: (error) => {
                     console.error('text2sql agent: Error in main agent stream', error);
-                },
+                }
             });
 
-            return agentStream.mergeIntoDataStream(dataStream);
+            return agentStream.mergeIntoUIMessageStream(dataStream);
         }
-    })
+    });
 
 
 

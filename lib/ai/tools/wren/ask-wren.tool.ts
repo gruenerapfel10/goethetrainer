@@ -1,5 +1,5 @@
-import {type DataStreamWriter, tool} from 'ai';
-import { z } from 'zod';
+import {type UIMessageStreamWriter, tool} from 'ai';
+import { z } from 'zod/v3';
 import { streamAsk } from "@/lib/wren/stream-api/wren.stream-api";
 import {type StateEvent, WrenStreamStateEnum} from "@/lib/wren/stream-api/wren.stream-api.types";
 import {generateUUID} from "@/lib/utils";
@@ -8,10 +8,10 @@ import {calculateApproximateTokenUsageByWren} from "@/lib/ai/tools/wren/utils";
 
 
 export const askWren = (
-    { dataStream, onTokenUsageUpdate }: { dataStream: DataStreamWriter, onTokenUsageUpdate?: (tokenUsage: { inputTokens: number, outputTokens: number }) => void }
+    { dataStream, onTokenUsageUpdate }: { dataStream: UIMessageStreamWriter, onTokenUsageUpdate?: (tokenUsage: { inputTokens: number, outputTokens: number }) => void }
 ) => tool({
   description: 'Converts a natural language question to SQL, runs it, and provides insights about the data',
-  parameters: z.object({
+  inputSchema: z.object({
     question: z.string().describe('The natural language question'),
     language: z.string().describe('Language to be used for the answer'),
   }),
@@ -22,7 +22,10 @@ export const askWren = (
       const stateUpdates: StateEvent['data'][] = [];
       const addStateUpdate = (data: StateEvent['data']) => {
         stateUpdates.push(data);
-        dataStream.writeMessageAnnotation({ type: 'wren_update', toolCallId, data });
+        dataStream.write({
+          'type': 'message-annotations',
+          'value': [{ type: 'wren_update', toolCallId, data }]
+        });
       }
 
       let contentBlockStartTimestamp = 0; // to properly display the timestamp of the first delta block
@@ -42,10 +45,14 @@ export const askWren = (
           },
           onContentBlockDelta(responseChunk) {
             response += responseChunk;
-            dataStream.writeMessageAnnotation({
-              toolCallId,
-              type: 'agent_update',
-              data: { state: WrenStreamStateEnum.RESPONSE_DELTA, responseChunk, timestamp: Date.now(), id: generateId() }
+            dataStream.write({
+              'type': 'message-annotations',
+
+              'value': [{
+                toolCallId,
+                type: 'agent_update',
+                data: { state: WrenStreamStateEnum.RESPONSE_DELTA, responseChunk, timestamp: Date.now(), id: generateId() }
+              }]
             });
           },
           onContentBlockStop(){
@@ -61,7 +68,7 @@ export const askWren = (
             resolve(stateUpdates);
           }
         });
-      })
+      });
 
     } catch (error) {
       console.error(`Critical error in askWren tool:`, error);
