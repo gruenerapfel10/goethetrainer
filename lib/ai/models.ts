@@ -22,12 +22,9 @@ export const customModel = (
     });
   }
 
-  // Handle xAI Grok models
+  // Handle xAI Grok models - no middleware to avoid stream-start issues
   if (apiIdentifier.includes('grok')) {
-    return wrapLanguageModel({
-      model: xai(apiIdentifier),
-      middleware: customMiddleware,
-    });
+    return xai(apiIdentifier);
   }
 
   if (forReasoning) {
