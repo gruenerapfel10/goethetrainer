@@ -321,9 +321,16 @@ export async function streamGeneralAgent(
             },
           });
 
-          result.mergeIntoDataStream(dataStream, {
-            sendReasoning: true,
-          });
+          try {
+            result.mergeIntoDataStream(dataStream, {
+              sendReasoning: true,
+            });
+          } catch (error: any) {
+            // Ignore stream-start errors from xAI models
+            if (!error?.message?.includes('stream-start')) {
+              throw error;
+            }
+          }
         }
       },
       onError: (err) => {
