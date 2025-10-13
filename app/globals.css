@@ -43,23 +43,23 @@
 @layer base {
     /* Base color definitions that will be referenced by theme variables */
     :root {
-        /* Goethe-Institut Inspired Colors */
-        --goethe-navy: 200 100% 24%; /* #00537C - Deep navy blue */
-        --goethe-navy-dark: 200 100% 18%; /* Darker navy */
-        --goethe-navy-light: 200 60% 45%; /* Lighter navy */
-        --goethe-blue-gray: 210 30% 92%; /* Light blue-gray background */
-        --goethe-blue-gray-dark: 210 25% 85%; /* Medium blue-gray */
+        /* Goethe-Institut Official Colors */
+        --goethe-green: 72 100% 39%; /* #A5C500 - Official Goethe green */
+        --goethe-green-dark: 72 100% 28%; /* Darker green */
+        --goethe-green-light: 72 60% 55%; /* Lighter green */
+        --goethe-green-gray: 72 15% 92%; /* Light green-gray background */
+        --goethe-green-gray-dark: 72 12% 85%; /* Medium green-gray */
         
-        /* Primary Blue Theme Colors */
-        --primary-blue: 200 100% 24%; /* Goethe navy as primary */
-        --primary-blue-dark: 200 100% 18%; /* Darker blue for gradients */
-        --primary-blue-light: 200 60% 45%; /* Lighter blue */
-        --primary-blue-alpha: 200 100% 24% / 0.1; /* Blue with transparency */
+        /* Primary Green Theme Colors */
+        --primary-green: 72 100% 39%; /* Goethe green as primary */
+        --primary-green-dark: 72 100% 28%; /* Darker green for gradients */
+        --primary-green-light: 72 60% 55%; /* Lighter green */
+        --primary-green-alpha: 72 100% 39% / 0.1; /* Green with transparency */
         
-        /* Background Blues */
-        --bg-blue-gradient-start: 210 30% 95%; /* Very light blue-gray */
-        --bg-blue-gradient-end: 0 0% 100%; /* White */
-        --bg-blue-subtle: 210 30% 97%; /* Subtle blue-gray tint */
+        /* Background Greens */
+        --bg-green-gradient-start: 72 30% 95%; /* Very light green-gray */
+        --bg-green-gradient-end: 0 0% 100%; /* White */
+        --bg-green-subtle: 72 30% 97%; /* Subtle green-gray tint */
         
         /* Neutral colors */
         --white: 0 0% 100%;
@@ -159,41 +159,41 @@
 
         /* Base theme colors */
         --background: 0 0% 98%;
-        --foreground: var(--goethe-navy);
+        --foreground: 0 0% 20%;
 
         /* Card variants */
         --card: var(--white);
-        --card-foreground: var(--goethe-navy);
+        --card-foreground: 0 0% 20%;
         --card-bg-alpha: var(--white-alpha);
         --card-bg-solid: var(--white);
-        --card-hover-bg: var(--goethe-blue-gray);
+        --card-hover-bg: var(--goethe-green-gray);
         --dashboard-card-background-solid: var(--white);
         --dashboard-card-background-alpha: var(--white-alpha);
 
         /* UI elements */
         --popover: var(--white);
-        --popover-foreground: var(--goethe-navy);
-        --primary: var(--goethe-navy);
+        --popover-foreground: 0 0% 20%;
+        --primary: var(--goethe-green);
         --primary-foreground: var(--white);
-        --secondary: var(--goethe-blue-gray);
-        --secondary-foreground: var(--goethe-navy);
-        --muted: var(--goethe-blue-gray);
-        --muted-foreground: var(--goethe-navy-dark);
-        --accent: var(--goethe-blue-gray-dark);
-        --accent-foreground: var(--goethe-navy);
+        --secondary: 0 0% 92%;
+        --secondary-foreground: 0 0% 20%;
+        --muted: 0 0% 92%;
+        --muted-foreground: 0 0% 40%;
+        --accent: 0 0% 90%;
+        --accent-foreground: 0 0% 20%;
         --destructive: var(--red);
         --success: var(--green);
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-alpha);
 
         /* Borders & inputs */
-        --border: var(--goethe-blue-gray-dark);
-        --input: var(--goethe-blue-gray-dark);
-        --ring: var(--goethe-navy-light);
+        --border: 0 0% 85%;
+        --input: 0 0% 85%;
+        --ring: var(--goethe-green-light);
         --button-bg-alpha: var(--white-alpha);
-        --button-hover-bg: var(--goethe-blue-gray);
-        --button-hover: var(--goethe-blue-gray);
-        --label-text: var(--goethe-navy-dark);
+        --button-hover-bg: 0 0% 92%;
+        --button-hover: 0 0% 92%;
+        --label-text: 0 0% 30%;
 
         /* Charts */
         --chart-1: var(--chart-light-1);
@@ -204,13 +204,13 @@
 
         /* Sidebar */
         --sidebar-background: 0 0% 98%;
-        --sidebar-foreground: 0 0% 20%;
-        --sidebar-primary: var(--goethe-navy);
+        --sidebar-foreground: 0 0% 30%;
+        --sidebar-primary: var(--goethe-green);
         --sidebar-primary-foreground: var(--white);
         --sidebar-accent: 0 0% 94%;
         --sidebar-accent-foreground: 0 0% 20%;
         --sidebar-border: 0 0% 90%;
-        --sidebar-ring: var(--goethe-navy-light);
+        --sidebar-ring: var(--goethe-green-light);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--white);
@@ -247,22 +247,22 @@
     .dark {
         /* Base theme colors */
         --background: var(--near-black);
-        --foreground: var(--goethe-blue-gray);
+        --foreground: 0 0% 85%;
 
         /* Card variants */
-        --card-foreground: var(--goethe-blue-gray);
+        --card-foreground: 0 0% 85%;
         --dashboard-card-background-solid: var(--near-black);
         --dashboard-card-background-alpha: var(--near-black-alpha);
 
         /* UI elements */
         --popover: var(--near-black);
-        --popover-foreground: var(--goethe-blue-gray);
-        --primary: var(--goethe-navy-light);
+        --popover-foreground: 0 0% 85%;
+        --primary: var(--goethe-green-light);
         --primary-foreground: var(--white);
         --secondary: var(--light-zinc);
-        --secondary-foreground: var(--goethe-blue-gray);
+        --secondary-foreground: 0 0% 85%;
         --accent: var(--light-zinc);
-        --accent-foreground: var(--goethe-blue-gray);
+        --accent-foreground: 0 0% 85%;
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-dark-alpha);
 
@@ -272,7 +272,7 @@
         --button-bg-alpha: var(--near-black-alpha);
         --button-hover-bg: var(--light-zinc);
         --button-hover: var(--light-zinc);
-        --label-text: var(--goethe-blue-gray);
+        --label-text: 0 0% 75%;
 
         /* Charts */
         --chart-1: var(--chart-dark-1);
@@ -283,13 +283,13 @@
 
         /* Sidebar */
         --sidebar-background: var(--light-dark-zinc);
-        --sidebar-foreground: var(--goethe-blue-gray);
-        --sidebar-primary: var(--goethe-navy-light);
+        --sidebar-foreground: 0 0% 75%;
+        --sidebar-primary: var(--goethe-green-light);
         --sidebar-primary-foreground: var(--white);
         --sidebar-accent: var(--light-zinc);
-        --sidebar-accent-foreground: var(--goethe-blue-gray);
+        --sidebar-accent-foreground: 0 0% 85%;
         --sidebar-border: var(--light-zinc);
-        --sidebar-ring: var(--goethe-navy-light);
+        --sidebar-ring: var(--goethe-green-light);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--near-black);
@@ -706,14 +706,14 @@
     border: 1px solid hsla(var(--border) / 0.3);
 }
 
-/* Blue Theme Utilities */
+/* Green Theme Utilities */
 @layer utilities {
-    .bg-gradient-blue {
+    .bg-gradient-green {
         background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%);
     }
     
-    .bg-gradient-blue-light {
-        background: linear-gradient(135deg, hsl(var(--bg-blue-gradient-start)) 0%, hsl(var(--bg-blue-gradient-end)) 100%);
+    .bg-gradient-green-light {
+        background: linear-gradient(135deg, hsl(var(--bg-green-gradient-start)) 0%, hsl(var(--bg-green-gradient-end)) 100%);
     }
     
     .bg-blur-circle {
@@ -736,27 +736,27 @@
         filter: blur(60px);
     }
     
-    .text-primary-blue {
+    .text-primary-green {
         color: hsl(var(--primary));
     }
     
-    .border-primary-blue {
+    .border-primary-green {
         border-color: hsl(var(--primary));
     }
     
-    .shadow-blue {
+    .shadow-green {
         box-shadow: 0 4px 20px hsla(var(--primary) / 0.15);
     }
     
-    .dark .shadow-blue {
+    .dark .shadow-green {
         box-shadow: 0 4px 20px hsla(0 0% 0% / 0.3);
     }
     
-    .shadow-blue-lg {
+    .shadow-green-lg {
         box-shadow: 0 10px 40px hsla(var(--primary) / 0.2);
     }
     
-    .dark .shadow-blue-lg {
+    .dark .shadow-green-lg {
         box-shadow: 0 10px 40px hsla(0 0% 0% / 0.4);
     }
     

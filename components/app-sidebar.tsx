@@ -247,7 +247,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
           <div className="p-4 flex items-center justify-between">
             {sidebarOpen ? (
               <>
-                <span className="text-lg font-bold text-foreground">Goethe</span>
+                <span className="text-2xl font-bold text-foreground">Goethe</span>
                 <SidebarToggle 
                   isOpen={sidebarOpen} 
                   onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -256,7 +256,7 @@ export function AppSidebar({ sidebarOpen, setSidebarOpen, onOpenSearchModal, chi
                 />
               </>
             ) : (
-              <span className="text-lg font-bold text-foreground">G</span>
+              <span className="text-2xl font-bold text-foreground w-full text-center">G</span>
             )}
           </div>
 
