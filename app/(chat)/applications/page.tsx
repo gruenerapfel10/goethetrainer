@@ -132,8 +132,8 @@ export default function ApplicationsDashboard() {
               A complete profile improves your application matching and unlocks AI assistance
             </p>
             <Button size="sm" asChild>
-              <Link href="/profile">
-                Complete Profile
+              <Link href="/dashboard">
+                Go to Dashboard
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

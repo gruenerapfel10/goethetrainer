@@ -258,19 +258,8 @@ If no relevant data is found, respond: "I'm sorry, I couldn't find any relevant 
                 const mainAgentResult = streamText({
                     model: myProvider.languageModel('bedrock-sonnet-latest'),
                     messages: messagesWithoutFiles(messages) as any,
-                    experimental_generateMessageId: generateUUID,
                     temperature: 0.7,
                     stopWhen: stepCountIs(5),
-                    experimental_telemetry: { isEnabled: true },
-
-                    tools: {
-                        reason: reason({
-                            dataStream,
-                            messages: messagesWithoutFiles(messages) as any,
-                            agentType: AgentType.SHAREPOINT_AGENT_V2,
-                            deepSearch,
-                            selectedFiles,
-                        }),
                         ...regularTools,
                     },
 

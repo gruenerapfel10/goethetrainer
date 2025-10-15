@@ -1,6 +1,6 @@
 'use client';
 
-import type { Attachment, UIMessage } from 'ai';
+import type { Attachment, UIMessage } from '@ai-sdk/react';
 import { useChat } from '@ai-sdk/react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { generateUUID, cn } from '@/lib/utils';
@@ -126,12 +126,12 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
     messages,
     setMessages,
     handleSubmit,
-    setInput,
-    append,
+    sendMessage,
     status,
     stop,
     reload
   } = useChat({
+    api: '/api/chat',
     id: chatId,
 
     body: {
@@ -145,7 +145,6 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
     },
 
     initialMessages: [],
-    experimental_throttle: 100,
     generateId: generateUUID,
 
     onFinish: (message) => {
@@ -258,7 +257,7 @@ export function SidebarChat({ isOpen, onToggle }: SidebarChatProps) {
               setAttachments={setAttachments}
               messages={messages}
               setMessages={setMessages}
-              append={append}
+              sendMessage={sendMessage}
               selectedFiles={selectedFiles}
               onSelectedFilesChange={setSelectedFiles}
               isDeepResearchEnabled={isDeepResearchEnabled}

@@ -112,21 +112,8 @@ LEAST TOOL USAGE AS POSSIBLE, PLEASE.
                 const mainAgentResult = streamText({
                     model: myProvider.languageModel('bedrock-sonnet-latest'),
                     messages: messagesWithoutFiles(messages) as any,
-                    experimental_generateMessageId: generateUUID,
                     temperature: 0.7,
                     stopWhen: stepCountIs(5),
-                    experimental_telemetry: { isEnabled: true },
-
-                    tools: {
-                        reason: reason({
-                            dataStream,
-                            messages: messagesWithoutFiles(messages) as any,
-                            agentType: AgentType.CSV_AGENT_V2,
-                            session,
-                            availableTables: availableTablesList,
-                            // --- NEW: Pass the pre-fetched info to the reason tool ---
-                            initialSchemaInfo: initialSchemaInfo,
-                        }),
                         ...regularTools, // Add chart tool at main agent level
                     },
 

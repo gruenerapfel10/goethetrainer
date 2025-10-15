@@ -80,12 +80,8 @@ function formatSegmentLabel(segment: string, fullPath: string): string {
   switch (segment) {
     case 'universities':
       return 'Universities';
-    case 'jobs':
-      return 'Jobs';
     case 'dashboard':
       return 'Dashboard';
-    case 'profile':
-      return 'Profile';
     case 'applications':
       return 'Applications';
     case 'chat':
@@ -99,12 +95,7 @@ function formatSegmentLabel(segment: string, fullPath: string): string {
     case 'offer':
       return 'Offer';
     default:
-      // Check if it's a number (job/university ID)
       if (/^\d+$/.test(segment)) {
-        // This is likely a job ID, we'll handle this in the component that uses it
-        if (fullPath.includes('/jobs/')) {
-          return `Job #${segment}`;
-        }
         return `University #${segment}`;
       }
       

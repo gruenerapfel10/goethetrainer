@@ -109,17 +109,8 @@ export async function streamText2SqlAgent(
             const agentStream = streamText({
                 model,
                 messages: sanitizedMessages,
-                experimental_generateMessageId: generateUUID,
                 temperature: 0.5,
                 stopWhen: stepCountIs(5),
-                experimental_telemetry: { isEnabled: true },
-
-                tools: {
-                    text2sql: generateSqlWrenTool({
-                        dataStream,
-                        onTokenUsageUpdate(usage) {
-                            wrenTokenUsage.push(usage);
-                        }
                     }),
                     run_sql: runSqlWrenTool,
                     ...regularTools,

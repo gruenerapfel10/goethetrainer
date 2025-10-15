@@ -51,7 +51,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
   const signIn = async (email: string, password: string) => {
     try {
       await signInWithEmailAndPassword(auth, email, password)
-      router.push('/jobs')
+      router.push('/dashboard')
     } catch (error) {
       throw error
     }
@@ -60,7 +60,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
   const signUp = async (email: string, password: string) => {
     try {
       await createUserWithEmailAndPassword(auth, email, password)
-      router.push('/jobs')
+      router.push('/dashboard')
     } catch (error) {
       throw error
     }
@@ -70,7 +70,7 @@ export function FirebaseAuthProvider({ children }: { children: React.ReactNode }
     try {
       const provider = new GoogleAuthProvider()
       await signInWithPopup(auth, provider)
-      router.push('/jobs')
+      router.push('/dashboard')
     } catch (error) {
       throw error
     }

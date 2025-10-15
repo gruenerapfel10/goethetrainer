@@ -1,6 +1,6 @@
 'use client';
 
-import type { Attachment, UIMessage } from 'ai';
+import type { Attachment, UIMessage } from '@ai-sdk/react';
 import { useChat } from '@ai-sdk/react';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import useSWR, { unstable_serialize, useSWRConfig } from 'swr';
@@ -152,12 +152,12 @@ export function Chat({
     messages,
     setMessages,
     handleSubmit,
-    setInput,
-    append,
+    sendMessage,
     status,
     stop,
     reload
   } = useChat({
+    api: '/api/chat',
     id,
 
     body: {
@@ -171,7 +171,6 @@ export function Chat({
     },
 
     initialMessages: branchMessages || initialMessages,
-    experimental_throttle: 100,
     generateId: generateUUID,
 
     onFinish: (message) => {
@@ -339,7 +338,7 @@ export function Chat({
                 setAttachments={setAttachments}
                 messages={messages}
                 setMessages={setMessages}
-                append={append}
+                sendMessage={sendMessage}
                 selectedFiles={selectedFiles}
                 onSelectedFilesChange={setSelectedFiles}
                 isDeepResearchEnabled={isDeepResearchEnabled}
@@ -366,7 +365,7 @@ export function Chat({
         messages={messages}
         setMessages={setMessages}
         votes={votes}
-        append={append}
+        sendMessage={sendMessage}
         reload={reload}
         isReadonly={isReadonly}
       />

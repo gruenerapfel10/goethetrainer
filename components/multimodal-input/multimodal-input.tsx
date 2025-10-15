@@ -16,7 +16,7 @@ import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDown, } from 'lucide-react';
 import equal from 'fast-deep-equal';
-import type { UseChatHelpers } from '@ai-sdk/react';
+import type { UseChatHelpers } from 'ai';
 import classNames from 'classnames';
 
 import { PreviewAttachment } from '@/components/preview-attachment';
@@ -59,7 +59,7 @@ function PureMultimodalInput({
   setAttachments,
   messages,
   setMessages,
-  append,
+  sendMessage,
   handleSubmit,
   className,
   isDeepResearchEnabled,
@@ -84,7 +84,7 @@ function PureMultimodalInput({
   setAttachments: Dispatch<SetStateAction<Array<Attachment>>>;
   messages: Array<UIMessage>;
   setMessages: UseChatHelpers['setMessages'];
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
   handleSubmit: UseChatHelpers['handleSubmit'];
   className?: string;
   isDeepResearchEnabled?: boolean;
@@ -264,17 +264,21 @@ function PureMultimodalInput({
       },
     );
 
-    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
-    handleSubmit(undefined, {
-      experimental_attachments: attachments,
-      body: {
-        data: {
-          input: textToSend,
-          selectedFiles: selectedFiles,
-        },
-      },
+    const messageParts: UIMessage['parts'] = [{ type: 'text', text: textToSend }];
+    attachments.forEach(attachment => {
+      messageParts.push({ type: 'file', url: attachment.url, mediaType: attachment.contentType });
     });
 
+    sendMessage(
+      { role: 'user', parts: messageParts },
+      {
+        body: {
+          data: {
+            selectedFiles: selectedFiles,
+          },
+        },
+      },
+    );
     setAttachments([]);
     setLocalStorageInput('');
     if (editorRef.current) {
@@ -509,7 +513,7 @@ function PureMultimodalInput({
             transition={{ delay: 0.2, duration: 0.5 }}
           >
             <SuggestedActions
-              append={append}
+              sendMessage={sendMessage}
               chatId={chatId}
               selectedModelId={selectedModelId}
             />

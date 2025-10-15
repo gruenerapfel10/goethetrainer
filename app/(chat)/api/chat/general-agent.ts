@@ -137,28 +137,7 @@ export async function streamGeneralAgent(
               delayInMs: 15,
             }),
 
-            experimental_generateMessageId: generateUUID,
             temperature: 0,
-            experimental_activeTools: ['reason_search'],
-            system: finalSystemText,
-
-            tools: initializeDeepResearchTools({
-              session,
-              dataStream,
-            }),
-
-            onChunk(event) {
-              if (event.chunk.type === 'tool-call') {
-                dataStream.write({
-                  'type': 'data',
-
-                  'value': [{
-                    type: 'status',
-                    content: `executing-${event.chunk.toolName}`
-                  }]
-                });
-              }
-            },
 
             onStepFinish(event) {
               if (event.warnings) {
@@ -278,10 +257,6 @@ export async function streamGeneralAgent(
               });
             },
 
-            experimental_telemetry: {
-              isEnabled: true,
-              functionId: 'stream-text',
-            }
           });
 
           result.mergeIntoUIMessageStream(dataStream);
@@ -300,7 +275,6 @@ export async function streamGeneralAgent(
             messages: messagesWithoutFiles(messages),
             stopWhen: stepCountIs(6),
             experimental_transform: smoothStream({ chunking: 'word' }),
-            experimental_generateMessageId: generateUUID,
 
             tools: {
               ...initializeRegularTools(agentType, {
@@ -362,10 +336,6 @@ export async function streamGeneralAgent(
               }
             },
 
-            experimental_telemetry: {
-              isEnabled: true,
-              functionId: 'stream-text',
-            }
           });
 
           try {

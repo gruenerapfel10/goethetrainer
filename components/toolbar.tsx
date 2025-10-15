@@ -37,11 +37,11 @@ type ToolProps = {
   isToolbarVisible?: boolean;
   setIsToolbarVisible?: Dispatch<SetStateAction<boolean>>;
   isAnimating: boolean;
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
   onClick: ({
-    appendMessage,
+    sendMessage,
   }: {
-    appendMessage: UseChatHelpers['append'];
+    sendMessage: UseChatHelpers['sendMessage'];
   }) => void;
 };
 
@@ -53,7 +53,7 @@ const Tool = ({
   isToolbarVisible,
   setIsToolbarVisible,
   isAnimating,
-  append,
+  sendMessage,
   onClick,
 }: ToolProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -80,7 +80,7 @@ const Tool = ({
       setSelectedTool(description);
     } else {
       setSelectedTool(null);
-      onClick({ appendMessage: append });
+      onClick({ sendMessage });
     }
   };
 
@@ -133,12 +133,12 @@ const randomArr = [...Array(6)].map((x) => nanoid(5));
 
 const ReadingLevelSelector = ({
   setSelectedTool,
-  append,
+  sendMessage,
   isAnimating,
 }: {
   setSelectedTool: Dispatch<SetStateAction<string | null>>;
   isAnimating: boolean;
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
 }) => {
   const LEVELS = [
     'Elementary',
@@ -212,9 +212,9 @@ const ReadingLevelSelector = ({
               }}
               onClick={() => {
                 if (currentLevel !== 2 && hasUserSelectedLevel) {
-                  append({
+                  sendMessage({
                     role: 'user',
-                    content: `Please adjust the reading level to ${LEVELS[currentLevel]} level.`,
+                    parts: [{ type: 'text', text: `Please adjust the reading level to ${LEVELS[currentLevel]} level.` }],
                   });
 
                   setSelectedTool(null);
@@ -241,7 +241,7 @@ export const Tools = ({
   isToolbarVisible,
   selectedTool,
   setSelectedTool,
-  append,
+  sendMessage,
   isAnimating,
   setIsToolbarVisible,
   tools,
@@ -249,7 +249,7 @@ export const Tools = ({
   isToolbarVisible: boolean;
   selectedTool: string | null;
   setSelectedTool: Dispatch<SetStateAction<string | null>>;
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
   isAnimating: boolean;
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
   tools: Array<ArtifactToolbarItem>;
@@ -272,7 +272,7 @@ export const Tools = ({
               icon={secondaryTool.icon}
               selectedTool={selectedTool}
               setSelectedTool={setSelectedTool}
-              append={append}
+              sendMessage={sendMessage}
               isAnimating={isAnimating}
               onClick={secondaryTool.onClick}
             />
@@ -286,7 +286,7 @@ export const Tools = ({
         setSelectedTool={setSelectedTool}
         isToolbarVisible={isToolbarVisible}
         setIsToolbarVisible={setIsToolbarVisible}
-        append={append}
+        sendMessage={sendMessage}
         isAnimating={isAnimating}
         onClick={primaryTool.onClick}
       />
@@ -297,7 +297,7 @@ export const Tools = ({
 const PureToolbar = ({
   isToolbarVisible,
   setIsToolbarVisible,
-  append,
+  sendMessage,
   status,
   stop,
   setMessages,
@@ -306,7 +306,7 @@ const PureToolbar = ({
   isToolbarVisible: boolean;
   setIsToolbarVisible: Dispatch<SetStateAction<boolean>>;
   status: UseChatHelpers['status'];
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
   stop: UseChatHelpers['stop'];
   setMessages: UseChatHelpers['setMessages'];
   artifactKind: ArtifactKind;
@@ -429,14 +429,14 @@ const PureToolbar = ({
         ) : selectedTool === 'adjust-reading-level' ? (
           <ReadingLevelSelector
             key="reading-level-selector"
-            append={append}
+            sendMessage={sendMessage}
             setSelectedTool={setSelectedTool}
             isAnimating={isAnimating}
           />
         ) : (
           <Tools
             key="tools"
-            append={append}
+            sendMessage={sendMessage}
             isAnimating={isAnimating}
             isToolbarVisible={isToolbarVisible}
             selectedTool={selectedTool}

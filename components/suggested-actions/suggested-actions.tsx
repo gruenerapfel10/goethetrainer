@@ -62,7 +62,7 @@ const getIconForSuggestion = (title: string, index: number) => {
 interface SuggestedActionsProps {
   chatId: string;
   selectedModelId: string;
-  append: (
+  sendMessage: (
     message: UIMessage | CreateUIMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
@@ -71,7 +71,7 @@ interface SuggestedActionsProps {
 function PureSuggestedActions({
   chatId,
   selectedModelId,
-  append,
+  sendMessage,
 }: SuggestedActionsProps) {
   const [messages, setMessages] = useState<SuggestedAction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,9 +165,9 @@ function PureSuggestedActions({
                 // Navigation disabled - stay in current chat panel
                 // window.history.replaceState({}, '', `/chat/${chatId}`);
 
-                append({
+                sendMessage({
                   role: 'user',
-                  content: message.action,
+                  parts: [{ type: 'text', text: message.action }],
                 });
               }}
               className={`group relative w-full h-auto p-0 hover:bg-primary/5 hover:shadow-blue transition-all duration-150 ${index < displayMessages.length - 1 ? 'border-b border-primary/10' : ''}`}

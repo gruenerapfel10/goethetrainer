@@ -26,7 +26,7 @@ interface ArtifactPanelProps {
   messages: Array<UIMessage>;
   setMessages: UseChatHelpers['setMessages'];
   votes: Array<Vote> | undefined;
-  append: UseChatHelpers['append'];
+  sendMessage: UseChatHelpers['sendMessage'];
   reload: UseChatHelpers['reload'];
   isReadonly: boolean;
 }
@@ -39,7 +39,7 @@ export function ArtifactPanel({
   messages,
   setMessages,
   votes,
-  append,
+  sendMessage,
   reload,
   isReadonly,
 }: ArtifactPanelProps) {
@@ -389,7 +389,7 @@ export function ArtifactPanel({
                   <Toolbar
                     isToolbarVisible={isToolbarVisible}
                     setIsToolbarVisible={setIsToolbarVisible}
-                    append={append}
+                    sendMessage={sendMessage}
                     status={status}
                     stop={stop}
                     setMessages={setMessages}

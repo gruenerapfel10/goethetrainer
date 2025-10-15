@@ -72,7 +72,6 @@ export const config = {
     '/register',
     '/universities/:id*',
     '/dashboard/:id*',
-    '/profile/:path*',
     '/applications/:path*',
     '/documents/:path*',
     '/admin/:path*',
