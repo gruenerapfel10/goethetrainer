@@ -34,11 +34,6 @@ import {
   useCaseCategory,
   logo,
   suggestedMessage,
-  type operationTypeEnum,
-  type operationStatusEnum,
-  type SystemOperation,
-  type NewSystemOperation,
-  systemOperations,
   systemPrompts,
 } from './schema';
 import type { ArtifactKind } from '@/components/artifact';
@@ -1882,94 +1877,6 @@ export async function listCsvTables() {
   }
 }
 
-export async function createSystemOperation(
-  type: (typeof operationTypeEnum.enumValues)[number],
-  initialStatus: (typeof operationStatusEnum.enumValues)[number] = 'STARTED',
-  details?: any,
-): Promise<SystemOperation | null> {
-  try {
-    const newOp: NewSystemOperation = {
-      operationType: type,
-      currentStatus: initialStatus,
-      progressDetails: details || {},
-      startedAt: new Date(),
-      updatedAt: new Date(),
-    };
-    const result = await db.insert(systemOperations).values(newOp).returning();
-    return result[0] || null;
-  } catch (error) {
-    console.error(`Error creating system operation (type: ${type}):`, error);
-    // If it's a unique constraint violation, it means an operation is already active
-    if (error instanceof Error && (error as any).code === '23505') {
-      // Postgres unique violation
-      throw new Error(`An operation of type '${type}' is already in progress.`);
-    }
-    throw error;
-  }
-}
-
-export async function updateSystemOperation(
-  id: number,
-  status: (typeof operationStatusEnum.enumValues)[number],
-  details?: any,
-  errorMessage?: string | null,
-  bedrockJobId?: string | null,
-): Promise<SystemOperation | null> {
-  const updates: Partial<SystemOperation> = {
-    currentStatus: status,
-    progressDetails: details,
-    updatedAt: new Date(), // This will be set by $onUpdateFn, but good to be explicit
-  };
-  if (errorMessage !== undefined) updates.errorMessage = errorMessage;
-  if (bedrockJobId !== undefined) updates.lastBedrockJobId = bedrockJobId;
-  if (status === 'COMPLETED' || status === 'FAILED') {
-    updates.endedAt = new Date();
-  }
-  const result = await db
-    .update(systemOperations)
-    .set(updates)
-    .where(eq(systemOperations.id, id))
-    .returning();
-  return result[0] || null;
-}
-
-export async function getActiveSystemOperation(
-  type: (typeof operationTypeEnum.enumValues)[number],
-): Promise<SystemOperation | null> {
-  const activeStatuses: Array<(typeof operationStatusEnum.enumValues)[number]> =
-    [
-      'STARTED',
-      'PULLING_FROM_SHAREPOINT',
-      'UPLOADING_TO_S3',
-      'FLAGGING_FOR_BEDROCK',
-      'BEDROCK_PROCESSING_SUBMITTED',
-      'BEDROCK_POLLING_STATUS',
-    ];
-  const result = await db
-    .select()
-    .from(systemOperations)
-    .where(
-      and(
-        eq(systemOperations.operationType, type),
-        inArray(systemOperations.currentStatus, activeStatuses),
-      ),
-    )
-    .orderBy(desc(systemOperations.startedAt))
-    .limit(1);
-  return result[0] || null;
-}
-
-export async function getLatestOperationStatus(
-  type: (typeof operationTypeEnum.enumValues)[number],
-): Promise<SystemOperation | null> {
-  const result = await db
-    .select()
-    .from(systemOperations)
-    .where(eq(systemOperations.operationType, type))
-    .orderBy(desc(systemOperations.startedAt))
-    .limit(1);
-  return result[0] || null;
-}
 
 /**
  * Returns message IDs that fit within a token context window with metadata
@@ -2018,40 +1925,6 @@ export async function withinContext(chatId: string, maxTokens = 150000): Promise
   };
 }
 
-export async function cleanupStaleOperations() {
-  const activeStatuses: Array<(typeof operationStatusEnum.enumValues)[number]> =
-    [
-      'STARTED',
-      'PULLING_FROM_SHAREPOINT',
-      'UPLOADING_TO_S3',
-      'FLAGGING_FOR_BEDROCK',
-      'BEDROCK_PROCESSING_SUBMITTED',
-      'BEDROCK_POLLING_STATUS',
-    ];
-
-  // Find ALL operations that are in active states (no date filtering needed)
-  const activeOps = await db
-    .select({ id: systemOperations.id })
-    .from(systemOperations)
-    .where(inArray(systemOperations.currentStatus, activeStatuses));
-
-  if (activeOps.length > 0) {
-    console.warn(
-      `Found ${activeOps.length} active operations interrupted by app restart. Marking as FAILED.`,
-    );
-
-    for (const op of activeOps) {
-      await updateSystemOperation(
-        op.id,
-        'FAILED',
-        { message: 'Operation interrupted by application restart.' },
-        'Operation marked as FAILED due to application restart.',
-      );
-    }
-
-  } else {
-  }
-}
 
 export async function searchChatsByTitle({
   userId,

@@ -11,7 +11,6 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { SessionProvider } from 'next-auth/react';
 import { themes } from '@/lib/constants';
 import { LogoProvider } from '../context/logo-context';
-import {cleanupStaleOperations} from "@/lib/db/queries";
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { DeepResearchProvider } from '@/lib/deep-research-context';
 
@@ -82,19 +81,12 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
-let hasRunCleanup = false;
-
 export default async function RootLayout({
                                            children,
                                          }: Readonly<{
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
-
-  if (!hasRunCleanup) {
-    await cleanupStaleOperations();
-    hasRunCleanup = true;
-  }
 
   // Providing all messages to the client
   // side is the easiest way to get started

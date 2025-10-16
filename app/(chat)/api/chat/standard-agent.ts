@@ -21,7 +21,6 @@ import { ToolName } from '@/lib/ai/tools/tool-registry';
 import { streamBufferManager } from '@/lib/ai/stream-buffer';
 
 // Import tool implementations
-import { sharepointRetrieve } from '@/lib/ai/tools/sharepoint-retrieve';
 import { chartTool } from '@/lib/ai/tools/chart';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { processFile } from '@/lib/ai/tools/process-file';
@@ -68,7 +67,6 @@ async function initializeActiveTools(
 }
 
 const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<any>> = {
-  [ToolName.SHAREPOINT_RETRIEVE]: async () => sharepointRetrieve({ deepResearch: false }),
   [ToolName.CHART]: async () => chartTool,
   [ToolName.GET_WEATHER]: async () => getWeather,
   [ToolName.PROCESS_FILE]: async () => processFile(),

@@ -4,7 +4,7 @@ import { deleteChatById, getChatById, saveChat } from '@/lib/db/queries';
 import { generateTitleFromUserMessage } from '@/app/(chat)/actions';
 import { myProvider } from '@/lib/ai/models';
 import { cleanupOrphanedToolCalls, cleanupEmptyMessages } from '@/lib/utils/message-filter';
-import { getS3FileContent } from '@/lib/utils/s3-content';
+import { getFirebaseFileContent } from '@/lib/utils/firebase-content';
 import type { FileSearchResult } from '@/components/chat-header';
 import { getUserLocale } from '@/services/locale';
 
@@ -227,12 +227,12 @@ export async function POST(request: Request) {
               try {
                 let fileContent = '';
                 
-                if (part.url.startsWith('s3://')) {
-                  // Fetch content from S3 for document files
-                  const { content } = await getS3FileContent(part.url);
+                if (part.url.includes('firebasestorage.googleapis.com') || part.url.includes('storage.googleapis.com')) {
+                  // Fetch content from Firebase Storage for document files
+                  const { content } = await getFirebaseFileContent(part.url);
                   fileContent = content;
                 } else if (part.url.startsWith('http')) {
-                  // For non-S3 document files with HTTP URLs
+                  // For non-Firebase document files with HTTP URLs
                   try {
                     const response = await fetch(part.url);
                     if (response.ok) {

@@ -1,6 +1,5 @@
 export enum ToolName {
   // Data & Analysis Tools
-  SHAREPOINT_RETRIEVE = 'sharepoint_retrieve',
   TEXT2SQL = 'text2sql',
   RUN_SQL = 'run_sql',
   CHART = 'chart',
@@ -55,17 +54,6 @@ export interface ToolMetadata {
 
 // Complete tool registry with all metadata
 export const TOOL_METADATA: Record<ToolName, ToolMetadata> = {
-  [ToolName.SHAREPOINT_RETRIEVE]: {
-    name: ToolName.SHAREPOINT_RETRIEVE,
-    displayName: 'SharePoint Search',
-    description: 'Retrieves relevant documents from SharePoint knowledge bases',
-    displayNameKey: 'tools.sharepoint_retrieve.displayName',
-    descriptionKey: 'tools.sharepoint_retrieve.description',
-    category: 'data',
-    icon: 'database',
-    toggle: false,
-    requiresAuth: true,
-  },
   [ToolName.TEXT2SQL]: {
     name: ToolName.TEXT2SQL,
     displayName: 'Text to SQL',

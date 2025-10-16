@@ -26,7 +26,7 @@ export async function generateTitleFromUserMessage({
   outputTokens: number
 }> {
   const { text: title, usage } = await generateText({
-    model: myProvider.languageModel('haiku'),
+    model: myProvider.languageModel('grok-4-fast-reasoning'),
     system: `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long

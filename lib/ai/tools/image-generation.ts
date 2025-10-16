@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { tool, experimental_generateImage as generateImage } from 'ai';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { uploadFileAdmin } from '@/lib/firebase/storage-utils';
 import { v4 as uuidv4 } from 'uuid';
 import { myProvider } from '@/lib/ai/models';
 
@@ -20,17 +20,6 @@ const imageGenerationSchema = z.object({
   size: z.string().optional().describe('The size of the generated image (1024x1024, 1792x1024, or 1024x1792)'),
   quality: z.string().optional().describe('Quality level: low, medium, high, or auto (default: high)'),
 });
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-const bucketName = process.env.FILE_UPLOAD_S3_BUCKET_NAME!;
-
 
 function buildEnhancedPrompt(params: z.infer<typeof imageGenerationSchema>): string {
   const promptParts = [];
@@ -131,44 +120,39 @@ export const imageGeneration = () => {
           throw new Error('No image data returned from image generation API');
         }
         
-        console.log('[Image Generation] Uploading image buffer to S3...');
-        const arrayBuffer = imageBuffer.buffer;
+        console.log('[Image Generation] Uploading image buffer to Firebase Storage...');
         
         const sanitizedPrompt = input.prompt
           .slice(0, 30)
           .replace(/[^a-z0-9]/gi, '-')
           .toLowerCase();
-        const filename = `ai-generated-images/${sanitizedPrompt}-${uuidv4()}.png`;
+        const filename = `${sanitizedPrompt}-${uuidv4()}.png`;
         
-        const uploadCommand = new PutObjectCommand({
-          Bucket: bucketName,
-          Key: filename,
-          Body: new Uint8Array(arrayBuffer),
-          ContentType: 'image/png',
-        });
+        // Upload to Firebase Storage using admin SDK
+        const { downloadURL, filePath } = await uploadFileAdmin(
+          Buffer.from(imageBuffer.buffer),
+          filename,
+          'ai-generated-images'
+        );
         
-        await s3Client.send(uploadCommand);
-        
-        const region = process.env.AWS_REGION || 'us-east-1';
-        const encodedFilename = encodeURIComponent(filename);
-        const permanentImageUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${encodedFilename}`;
-        
-        console.log('[Image Generation] Image uploaded successfully to S3:', permanentImageUrl);
+        console.log('[Image Generation] Image uploaded successfully to Firebase Storage:', downloadURL);
         
         console.log('[Image Generation] Returning success response');
         return {
-          imageUrl: permanentImageUrl,
+          imageUrl: downloadURL,
           prompt: enhancedPrompt,
           originalPrompt: input.prompt,
           size: size,
           quality: quality,
-          message: `Successfully generated image and uploaded to permanent storage`,
+          message: `Successfully generated image and uploaded to Firebase Storage`,
           metadata: {
             model: 'gpt-image-1',
             timestamp: new Date().toISOString(),
             structuredParams: input,
             enhancedPrompt: enhancedPrompt,
-            permanentUrl: permanentImageUrl,
+            permanentUrl: downloadURL,
+            filePath: filePath,
+            storage: 'firebase'
           }
         };
       } catch (error) {

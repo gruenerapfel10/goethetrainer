@@ -1,26 +1,16 @@
 import { customProvider } from 'ai';
-import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { openai } from '@ai-sdk/openai';
 import { xai } from '@ai-sdk/xai';
 import { AgentType } from '@/lib/ai/agents';
 import { ModelId } from '@/lib/ai/model-registry';
 
-const bedrockProvider = createAmazonBedrock({
-  region: 'eu-central-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-});
-
 export const customModel = (modelId: ModelId | string) => {
-  if (modelId === ModelId.GROK_4 || modelId === 'grok-4-fast-reasoning') {
-    return xai(modelId);
-  }
-  return bedrockProvider(modelId);
+  return xai(modelId);
 };
 
 export const myProvider = customProvider({
   languageModels: {
-    'haiku': customModel(ModelId.CLAUDE_HAIKU_3),
+    'grok-4-fast-reasoning': customModel(ModelId.GROK_4),
     'artifact-model': customModel(ModelId.GROK_4),
     'bedrock-sonnet-latest': customModel(ModelId.GROK_4),
     'document-agent': customModel(ModelId.GROK_4),
