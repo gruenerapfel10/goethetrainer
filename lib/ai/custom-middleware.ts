@@ -1,3 +1,4 @@
-import type { Experimental_LanguageModelV1Middleware } from 'ai';
+// Middleware feature removed in AI SDK v5
+// This is kept for compatibility but is now a no-op
 
-export const customMiddleware: Experimental_LanguageModelV1Middleware = {};
+export const customMiddleware = {};

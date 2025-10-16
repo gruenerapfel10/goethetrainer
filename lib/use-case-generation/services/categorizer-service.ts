@@ -3,7 +3,7 @@ import { db, withRetry } from '../utils';
 import { myProvider } from '../../ai/models';
 import { useCase, useCaseCategory } from '../../db/schema';
 import { eq, isNull } from 'drizzle-orm';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 import { generateObject } from 'ai';
 
 // Use environment variable for debug override
@@ -65,7 +65,6 @@ export class UseCaseCategorizerService implements IUseCaseCategorizer {
         `<<<< DEBUG: Using concurrency limit ${CONCURRENCY_LIMIT} (from DEBUG_CATEGORY_CONCURRENCY) >>>>`,
       );
     } else {
-      console.log(`  Using concurrency limit: ${CONCURRENCY_LIMIT}`);
     }
 
     try {
@@ -119,9 +118,6 @@ export class UseCaseCategorizerService implements IUseCaseCategorizer {
           const batch = pass1BatchQueue.shift();
           if (!batch) continue;
 
-          console.log(
-            `  Worker ${workerId} (Pass 1) starting Batch ${batchNumber}/${totalBatches} (${batch.length} use cases)...`,
-          );
           try {
             const batchResults = await this.categorizeBatchWithAI(
               batch,
@@ -244,9 +240,6 @@ export class UseCaseCategorizerService implements IUseCaseCategorizer {
           }
         }
       } else {
-        console.log(
-          `  No use cases were matched to existing categories in Pass 1.`,
-        );
       }
 
       // === Phase 2: Generate New Category Suggestions for Remaining ===
@@ -255,13 +248,7 @@ export class UseCaseCategorizerService implements IUseCaseCategorizer {
       );
 
       if (remainingUseCases.length === 0) {
-        console.log(
-          '\n--- Phase 2 & 3 Skipped: No remaining use cases require new categories. ---',
-        );
       } else {
-        console.log(
-          `\n--- Phase 2: Generating & Assigning New Categories for ${remainingUseCases.length} Remaining Use Cases (Parallel) ---`,
-        );
 
         // Re-batch the remaining use cases
         const pass2Batches = [];
@@ -463,7 +450,6 @@ export class UseCaseCategorizerService implements IUseCaseCategorizer {
             );
           }
            } else {
-          console.log('  No use cases required updating.');
         }
       }
 

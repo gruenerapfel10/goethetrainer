@@ -2,21 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes fall {
-  from {
-    transform: translateY(-50%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
+@source "../node_modules/streamdown/dist/index.js";
 
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-50%);
+/* iOS Safe Area Support */
+@supports (padding: env(safe-area-inset-top)) {
+  html {
+    /* Ensure the viewport extends to the full screen */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 }
 
@@ -43,43 +36,25 @@
 @layer base {
     /* Base color definitions that will be referenced by theme variables */
     :root {
-        /* Goethe-Institut Official Colors */
-        --goethe-green: 72 100% 39%; /* #A5C500 - Official Goethe green */
-        --goethe-green-dark: 72 100% 28%; /* Darker green */
-        --goethe-green-light: 72 60% 55%; /* Lighter green */
-        --goethe-green-gray: 72 15% 92%; /* Light green-gray background */
-        --goethe-green-gray-dark: 72 12% 85%; /* Medium green-gray */
-        
-        /* Primary Green Theme Colors */
-        --primary-green: 72 100% 39%; /* Goethe green as primary */
-        --primary-green-dark: 72 100% 28%; /* Darker green for gradients */
-        --primary-green-light: 72 60% 55%; /* Lighter green */
-        --primary-green-alpha: 72 100% 39% / 0.1; /* Green with transparency */
-        
-        /* Background Greens */
-        --bg-green-gradient-start: 72 30% 95%; /* Very light green-gray */
-        --bg-green-gradient-end: 0 0% 100%; /* White */
-        --bg-green-subtle: 72 30% 97%; /* Subtle green-gray tint */
-        
         /* Neutral colors */
         --white: 0 0% 100%;
         --white-alpha: 0 0% 100% / 0.5;
-        --off-white: 220 20% 98%; /* Slight blue tint */
-        --light-gray-1: 220 15% 96%;
-        --light-gray-2: 220 12% 95%;
-        --medium-gray-1: 220 10% 90%;
+        --off-white: 0 0% 98%;
+        --light-gray-1: 0 0% 96%;
+        --light-gray-2: 240 4.8% 95.9%;
+        --medium-gray-1: 240 5.9% 90%;
         --medium-gray-2: 220 13% 91%;
-        --dark-gray-1: 220 10% 46%;
-        --dark-gray-2: 220 10% 50%;
-        --dark-gray-3: 220 10% 65%;
-        --dark-gray-4: 220 10% 26%;
-        --light-zinc: 220 10% 16%;
-        --darker-zinc: 220 10% 7%;
-        --light-dark-zinc: 220 10% 10%;
-        --darkest-zinc: 220 10% 6%;
-        --near-black: 220 20% 4%;
-        --near-black-alpha: 220 20% 4% / 0.5;
-        --black-alpha-light: 220 20% 4% / 0.2;
+        --dark-gray-1: 240 3.8% 46.1%;
+        --dark-gray-2: 240 5% 50%;
+        --dark-gray-3: 240 5% 65%;
+        --dark-gray-4: 240 5.3% 26.1%;
+        --light-zinc: 240 3.7% 15.9%;
+        --darker-zinc: 240 3.7% 7%;
+        --light-dark-zinc: 240 6% 10%;
+        --darkest-zinc: 240 3.7% 5.9%;
+        --near-black: 240 10% 3.9%;
+        --near-black-alpha: 240 10% 3.9% / 0.5;
+        --black-alpha-light: 240 10% 3.9% / 0.2;
         --white-alpha-light: 0 0% 100% / 0.2;
 
         /* Accent colors */
@@ -158,42 +133,42 @@
         --radius: 0.5rem;
 
         /* Base theme colors */
-        --background: 0 0% 98%;
-        --foreground: 0 0% 20%;
+        --background: var(--white);
+        --foreground: var(--near-black);
 
         /* Card variants */
         --card: var(--white);
-        --card-foreground: 0 0% 20%;
+        --card-foreground: var(--near-black);
         --card-bg-alpha: var(--white-alpha);
         --card-bg-solid: var(--white);
-        --card-hover-bg: var(--goethe-green-gray);
+        --card-hover-bg: var(--light-gray-1);
         --dashboard-card-background-solid: var(--white);
         --dashboard-card-background-alpha: var(--white-alpha);
 
         /* UI elements */
         --popover: var(--white);
-        --popover-foreground: 0 0% 20%;
-        --primary: var(--goethe-green);
-        --primary-foreground: var(--white);
-        --secondary: 0 0% 92%;
-        --secondary-foreground: 0 0% 20%;
-        --muted: 0 0% 92%;
-        --muted-foreground: 0 0% 40%;
-        --accent: 0 0% 90%;
-        --accent-foreground: 0 0% 20%;
+        --popover-foreground: var(--near-black);
+        --primary: var(--near-black);
+        --primary-foreground: var(--off-white);
+        --secondary: var(--light-gray-2);
+        --secondary-foreground: var(--near-black);
+        --muted: var(--light-gray-2);
+        --muted-foreground: var(--dark-gray-1);
+        --accent: var(--light-gray-2);
+        --accent-foreground: var(--near-black);
         --destructive: var(--red);
         --success: var(--green);
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-alpha);
 
         /* Borders & inputs */
-        --border: 0 0% 85%;
-        --input: 0 0% 85%;
-        --ring: var(--goethe-green-light);
+        --border: var(--medium-gray-1);
+        --input: var(--medium-gray-1);
+        --ring: var(--near-black);
         --button-bg-alpha: var(--white-alpha);
-        --button-hover-bg: 0 0% 92%;
-        --button-hover: 0 0% 92%;
-        --label-text: 0 0% 30%;
+        --button-hover-bg: var(--light-gray-1);
+        --button-hover: var(--light-gray-1);
+        --label-text: var(--dark-gray-2);
 
         /* Charts */
         --chart-1: var(--chart-light-1);
@@ -203,14 +178,14 @@
         --chart-5: var(--chart-light-5);
 
         /* Sidebar */
-        --sidebar-background: 0 0% 98%;
-        --sidebar-foreground: 0 0% 30%;
-        --sidebar-primary: var(--goethe-green);
-        --sidebar-primary-foreground: var(--white);
-        --sidebar-accent: 0 0% 94%;
-        --sidebar-accent-foreground: 0 0% 20%;
-        --sidebar-border: 0 0% 90%;
-        --sidebar-ring: var(--goethe-green-light);
+        --sidebar-background: var(--off-white);
+        --sidebar-foreground: var(--dark-gray-4);
+        --sidebar-primary: var(--near-black);
+        --sidebar-primary-foreground: var(--off-white);
+        --sidebar-accent: var(--light-gray-2);
+        --sidebar-accent-foreground: var(--near-black);
+        --sidebar-border: var(--medium-gray-2);
+        --sidebar-ring: var(--blue);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--white);
@@ -247,32 +222,32 @@
     .dark {
         /* Base theme colors */
         --background: var(--near-black);
-        --foreground: 0 0% 85%;
+        --foreground: var(--off-white);
 
         /* Card variants */
-        --card-foreground: 0 0% 85%;
+        --card-foreground: var(--off-white);
         --dashboard-card-background-solid: var(--near-black);
         --dashboard-card-background-alpha: var(--near-black-alpha);
 
         /* UI elements */
         --popover: var(--near-black);
-        --popover-foreground: 0 0% 85%;
-        --primary: var(--goethe-green-light);
-        --primary-foreground: var(--white);
+        --popover-foreground: var(--off-white);
+        --primary: var(--off-white);
+        --primary-foreground: var(--near-black);
         --secondary: var(--light-zinc);
-        --secondary-foreground: 0 0% 85%;
+        --secondary-foreground: var(--off-white);
         --accent: var(--light-zinc);
-        --accent-foreground: 0 0% 85%;
+        --accent-foreground: var(--off-white);
         --destructive-foreground: var(--off-white);
         --destructive-focus-bg: var(--red-dark-alpha);
 
         /* Borders & inputs */
         --input: var(--light-zinc);
-        --ring: var(--goethe-navy-light);
+        --ring: var(--light-gray-2);
         --button-bg-alpha: var(--near-black-alpha);
         --button-hover-bg: var(--light-zinc);
         --button-hover: var(--light-zinc);
-        --label-text: 0 0% 75%;
+        --label-text: var(--dark-gray-3);
 
         /* Charts */
         --chart-1: var(--chart-dark-1);
@@ -283,13 +258,13 @@
 
         /* Sidebar */
         --sidebar-background: var(--light-dark-zinc);
-        --sidebar-foreground: 0 0% 75%;
-        --sidebar-primary: var(--goethe-green-light);
+        --sidebar-foreground: var(--light-gray-2);
+        --sidebar-primary: var(--blue-dark);
         --sidebar-primary-foreground: var(--white);
         --sidebar-accent: var(--light-zinc);
-        --sidebar-accent-foreground: 0 0% 85%;
+        --sidebar-accent-foreground: var(--light-gray-2);
         --sidebar-border: var(--light-zinc);
-        --sidebar-ring: var(--goethe-green-light);
+        --sidebar-ring: var(--blue);
 
         /* Spreadsheet */
         --spreadsheet-bg: var(--near-black);
@@ -501,89 +476,6 @@
     }
 }
 
-/* Sidebar hover improvements */
-@layer components {
-    /* Ensure sidebar has proper z-index hierarchy */
-    [data-sidebar="sidebar"] {
-        z-index: 40;
-    }
-    
-    /* Prevent sidebar from closing when interacting with focusable elements */
-    [data-sidebar="sidebar"]:focus-within {
-        pointer-events: auto !important;
-    }
-    
-    /* Smooth transitions for hover states */
-    [data-state="collapsed"] [data-sidebar="sidebar"] {
-        transition: width 200ms ease-in-out, transform 200ms ease-in-out;
-    }
-    
-    /* Ensure hover trigger zone doesn't interfere with main content */
-    .sidebar-hover-trigger {
-        pointer-events: auto;
-        background: transparent;
-        position: fixed;
-        inset-y: 0;
-        z-index: 30;
-    }
-}
-
-/* University Detail Page Enhancements */
-@layer components {
-    /* MUA Pattern Background */
-    .mua-pattern {
-        background-image: 
-            repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 20px,
-                rgba(65, 105, 225, 0.03) 20px,
-                rgba(65, 105, 225, 0.03) 21px
-            ),
-            repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 20px,
-                rgba(65, 105, 225, 0.03) 20px,
-                rgba(65, 105, 225, 0.03) 21px
-            );
-    }
-    
-    /* Smooth scrollbar for data stream */
-    .data-stream-scroll {
-        scrollbar-width: thin;
-        scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-    }
-    
-    .data-stream-scroll::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .data-stream-scroll::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    
-    .data-stream-scroll::-webkit-scrollbar-thumb {
-        background-color: rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-    }
-    
-    .data-stream-scroll::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-    }
-    
-    /* Radial vignette effect */
-    .bg-radial-vignette {
-        background: radial-gradient(
-            ellipse at top left,
-            transparent 0%,
-            transparent 40%,
-            rgba(0, 0, 0, 0.2) 70%,
-            rgba(0, 0, 0, 0.6) 100%
-        );
-    }
-}
-
 @layer base {
     * {
         @apply border-border;
@@ -591,6 +483,36 @@
 
     body {
         @apply bg-background text-foreground;
+        /* Mobile scrolling optimizations */
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* Mobile scrolling optimizations for all scrollable elements */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Simple mobile scrolling that actually works */
+    @media (max-width: 768px) {
+        html, body {
+            height: 100dvh; /* Dynamic viewport height */
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Mobile viewport fix */
+        .mobile-vh {
+            height: 100dvh; /* Dynamic viewport height */
+        }
+        
+        /* Simple mobile scroll - no fancy stuff */
+        .mobile-scroll {
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
     }
 
     @font-face {
@@ -704,73 +626,6 @@
     border-radius: 0.5rem;
     margin: 0.5rem;
     border: 1px solid hsla(var(--border) / 0.3);
-}
-
-/* Green Theme Utilities */
-@layer utilities {
-    .bg-gradient-green {
-        background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)) 100%);
-    }
-    
-    .bg-gradient-green-light {
-        background: linear-gradient(135deg, hsl(var(--bg-green-gradient-start)) 0%, hsl(var(--bg-green-gradient-end)) 100%);
-    }
-    
-    .bg-blur-circle {
-        background: radial-gradient(circle at center, hsl(var(--primary) / 0.3) 0%, transparent 70%);
-        filter: blur(40px);
-    }
-    
-    .dark .bg-blur-circle {
-        background: radial-gradient(circle at center, hsl(var(--primary) / 0.1) 0%, transparent 70%);
-        filter: blur(40px);
-    }
-    
-    .bg-blur-circle-light {
-        background: radial-gradient(circle at center, hsl(var(--primary) / 0.15) 0%, transparent 70%);
-        filter: blur(60px);
-    }
-    
-    .dark .bg-blur-circle-light {
-        background: radial-gradient(circle at center, hsl(var(--primary) / 0.05) 0%, transparent 70%);
-        filter: blur(60px);
-    }
-    
-    .text-primary-green {
-        color: hsl(var(--primary));
-    }
-    
-    .border-primary-green {
-        border-color: hsl(var(--primary));
-    }
-    
-    .shadow-green {
-        box-shadow: 0 4px 20px hsla(var(--primary) / 0.15);
-    }
-    
-    .dark .shadow-green {
-        box-shadow: 0 4px 20px hsla(0 0% 0% / 0.3);
-    }
-    
-    .shadow-green-lg {
-        box-shadow: 0 10px 40px hsla(var(--primary) / 0.2);
-    }
-    
-    .dark .shadow-green-lg {
-        box-shadow: 0 10px 40px hsla(0 0% 0% / 0.4);
-    }
-    
-    .backdrop-blur-xl {
-        backdrop-filter: blur(20px);
-    }
-    
-    .bg-white-90 {
-        background-color: hsla(var(--white) / 0.9);
-    }
-    
-    .bg-white-95 {
-        background-color: hsla(var(--white) / 0.95);
-    }
 }
 
 /* Pure CSS staggered grid animations */
@@ -947,11 +802,288 @@
     animation: text-shimmer 1.5s linear infinite;
   }
 
-  .animate-marquee {
-    animation: marquee 60s linear infinite;
+  /* Custom Markdown Styles */
+  .prose {
+    @apply text-foreground;
   }
 
-  .group:hover .animate-marquee {
-    animation-play-state: paused;
+  /* Tighter spacing throughout */
+  .prose > * + * {
+    @apply mt-2;
+  }
+
+  /* Distinct list styles */
+  .prose ol {
+    @apply list-decimal list-outside;
+  }
+  
+  .prose ol > li::marker {
+    @apply font-bold text-lg text-foreground;
+  }
+  
+  .prose ol > li {
+    @apply text-foreground;
+  }
+  
+  .prose ul {
+    @apply list-disc list-outside;
+  }
+  
+  .prose ul > li::marker {
+    @apply text-muted-foreground/50 text-xs;
+  }
+  
+  .prose ul > li {
+    @apply text-foreground;
+  }
+  
+  /* Nested list styles */
+  .prose ol > li > ol {
+    list-style-type: lower-alpha;
+  }
+  
+  .prose ol > li > ol > li::marker {
+    @apply font-semibold text-base;
+  }
+  
+  .prose ol > li > ol > li > ol {
+    list-style-type: lower-roman;
+  }
+  
+  .prose ol > li > ol > li > ol > li::marker {
+    @apply font-medium text-sm;
+  }
+
+  /* Better spacing for mixed content */
+  .prose > *:first-child {
+    @apply mt-0;
+  }
+
+  .prose > *:last-child {
+    @apply mb-0;
+  }
+
+  /* Code block improvements */
+  .prose code:not(.code-block) {
+    @apply px-1 py-0.5 rounded bg-muted text-xs font-mono;
+  }
+
+  /* Strong emphasis - ensure bold text works */
+  .prose strong,
+  .prose b {
+    @apply font-bold text-foreground;
+  }
+  
+  /* Remove excessive margins after bold text */
+  .prose strong + *,
+  .prose b + * {
+    @apply mt-1;
+  }
+  
+  /* Tighter spacing when bold is followed by a list */
+  .prose p:has(strong) + ul,
+  .prose p:has(b) + ul {
+    @apply mt-2;
+  }
+
+  /* Emphasis */
+  .prose em,
+  .prose i {
+    @apply italic;
+  }
+
+  /* List item spacing */
+  .prose li > p {
+    @apply mb-1;
+  }
+
+  .prose li:last-child > p:last-child {
+    @apply mb-0;
+  }
+  
+  /* Ensure lists don't have extra spacing */
+  .prose ul p,
+  .prose ol p {
+    @apply mb-1;
+  }
+
+  /* Blockquote styling */
+  .prose blockquote p:first-of-type::before {
+    content: none;
+  }
+
+  .prose blockquote p:last-of-type::after {
+    content: none;
+  }
+}
+
+/* Pure CSS Timeline Connector System */
+@layer components {
+  /* Timeline container - add custom properties for connector colors */
+  .timeline-container {
+    --timeline-connector-default: hsl(var(--muted-foreground) / 0.4);
+    --timeline-connector-completed: hsl(var(--primary));
+    --timeline-connector-running: hsl(var(--primary) / 0.5);
+    --timeline-connector-error: hsl(var(--destructive));
+    --timeline-connector-pending: hsl(var(--muted-foreground) / 0.4);
+    --timeline-connector-skipped: hsl(var(--muted-foreground) / 0.4);
+    isolation: isolate;
+  }
+
+  /* Base timeline item styles */
+  .timeline-item {
+    position: relative;
+  }
+
+  /* Vertical connector - always present, controlled by CSS classes */
+  .timeline-item:not(.timeline-item--last)::after {
+    content: '';
+    position: absolute;
+    left: 12px; /* Icon center position */
+    top: 24px; /* Below icon */
+    width: 1px;
+    height: calc(100% + 0.5rem);
+    background: var(--timeline-connector-color, var(--timeline-connector-default));
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.2s ease-out;
+    z-index: 1;
+  }
+
+  /* Show vertical connector when expanded or for nested items */
+  .timeline-item--expanded:not(.timeline-item--last)::after,
+  .timeline-item--nested:not(.timeline-item--last)::after {
+    transform: scaleY(1);
+  }
+
+  /* Root level items with children - always show connector when expanded */
+  .timeline-item--level-0.timeline-item--has-children.timeline-item--expanded:not(.timeline-item--last)::after {
+    height: 99%;
+  }
+
+  /* Nested items - connector extends beyond current item */
+  .timeline-item--nested:not(.timeline-item--last)::after {
+    height: calc(100% + 0.5rem);
+  }
+
+  /* Horizontal connector for nested items (first child only) */
+  .timeline-item--nested.timeline-item--first::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 12px;
+    width: 24px;
+    height: 1px;
+    background: var(--timeline-connector-color, var(--timeline-connector-default));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s ease-out 0.1s; /* Slight delay for sequence */
+    z-index: 1;
+  }
+
+  /* Show horizontal connector for nested first items */
+  .timeline-item--nested.timeline-item--first.timeline-item--show-horizontal::before {
+    transform: scaleX(1);
+  }
+
+  /* Status-based connector colors using CSS custom properties */
+  .timeline-item--completed {
+    --timeline-connector-color: var(--timeline-connector-completed);
+  }
+
+  .timeline-item--running {
+    --timeline-connector-color: var(--timeline-connector-running);
+  }
+
+  .timeline-item--error {
+    --timeline-connector-color: var(--timeline-connector-error);
+  }
+
+  .timeline-item--pending {
+    --timeline-connector-color: var(--timeline-connector-pending);
+  }
+
+  .timeline-item--skipped {
+    --timeline-connector-color: var(--timeline-connector-skipped);
+  }
+
+  /* CSS Animation delays based on nesting level and index */
+  .timeline-item--level-0::after,
+  .timeline-item--level-0::before { 
+    transition-delay: 0ms; 
+  }
+
+  .timeline-item--level-1::after,
+  .timeline-item--level-1::before { 
+    transition-delay: 50ms; 
+  }
+
+  .timeline-item--level-2::after,
+  .timeline-item--level-2::before { 
+    transition-delay: 100ms; 
+  }
+
+  .timeline-item--level-3::after,
+  .timeline-item--level-3::before { 
+    transition-delay: 150ms; 
+  }
+
+  /* Index-based delays for siblings (nth-child selectors) */
+  .timeline-item:nth-child(1)::after,
+  .timeline-item:nth-child(1)::before { 
+    transition-delay: 0ms; 
+  }
+
+  .timeline-item:nth-child(2)::after,
+  .timeline-item:nth-child(2)::before { 
+    transition-delay: 25ms; 
+  }
+
+  .timeline-item:nth-child(3)::after,
+  .timeline-item:nth-child(3)::before { 
+    transition-delay: 50ms; 
+  }
+
+  .timeline-item:nth-child(4)::after,
+  .timeline-item:nth-child(4)::before { 
+    transition-delay: 75ms; 
+  }
+
+  .timeline-item:nth-child(5)::after,
+  .timeline-item:nth-child(5)::before { 
+    transition-delay: 100ms; 
+  }
+
+  /* Combine level and index delays for proper staggering */
+  .timeline-item--level-1:nth-child(1)::after,
+  .timeline-item--level-1:nth-child(1)::before { 
+    transition-delay: 50ms; 
+  }
+
+  .timeline-item--level-1:nth-child(2)::after,
+  .timeline-item--level-1:nth-child(2)::before { 
+    transition-delay: 75ms; 
+  }
+
+  .timeline-item--level-2:nth-child(1)::after,
+  .timeline-item--level-2:nth-child(1)::before { 
+    transition-delay: 100ms; 
+  }
+
+  /* Icon positioning adjustments for dynamic icon sizes */
+  .timeline-item--icon-small::after,
+  .timeline-item--icon-small::before {
+    left: 8px; /* Adjust for smaller icons */
+  }
+
+  .timeline-item--icon-large::after,
+  .timeline-item--icon-large::before {
+    left: 16px; /* Adjust for larger icons */
+  }
+
+  /* Special handling for timeline icon container */
+  .timeline-icon {
+    position: relative;
+    z-index: 2;
   }
 }

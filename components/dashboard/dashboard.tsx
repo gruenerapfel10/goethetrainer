@@ -124,7 +124,6 @@ export default function Dashboard({ userId }: { userId: string }) {
           modelUsageData={modelUsage}
           isLoading={isLoading}
           agentTypeUsageData={agentTypeUsage}
-          userId={userId}
         />
       </div>
     </div>

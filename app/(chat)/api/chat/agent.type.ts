@@ -1,8 +1,8 @@
-import type { LanguageModelV2 } from '@ai-sdk/provider';
-import { UIMessage } from 'ai';
+import type { UIMessage } from "ai";
+import type { LanguageModelV1 } from "@ai-sdk/provider";
 import type { InferSelectModel } from "drizzle-orm";
 import type { chat } from "@/lib/db/schema";
-import type { Session } from "@/types/next-auth";
+import type { Session } from "next-auth";
 
 
 export type AgentMeta = {
@@ -10,6 +10,6 @@ export type AgentMeta = {
     userMessage: UIMessage,
     titleInputTokens: number,
     titleOutputTokens: number,
-    chat: InferSelectModel<typeof chat> | null,
+    chat: InferSelectModel<typeof chat>,
     model: LanguageModelV1
 }

@@ -15,7 +15,6 @@ export const dynamic = 'force-dynamic';
 
 async function runProcessPendingInBackground(operationId: number) {
   try {
-    console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Starting processing of all pending Bedrock operations...`);
 
     // Update status to indicate we're processing
     await updateSystemOperation(operationId, 'BEDROCK_PROCESSING_SUBMITTED', {
@@ -23,8 +22,7 @@ async function runProcessPendingInBackground(operationId: number) {
     });
 
     // Process all pending operations
-    const bedrockProcessingResults = await processPendingBedrockOperations();
-    console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Bedrock Processing complete:`, bedrockProcessingResults);
+    const bedrockProcessingResults = await processPendingBedrockOperations(operationId);
 
     // Check if operation is still not failed before marking as completed
     const currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, operationId)).limit(1))[0];
@@ -32,10 +30,15 @@ async function runProcessPendingInBackground(operationId: number) {
       await updateSystemOperation(operationId, 'COMPLETED', {
         message: "Processing of pending documents completed successfully.",
         bedrockProcessingDetails: bedrockProcessingResults,
+        summary: {
+          totalLoops: bedrockProcessingResults.totalLoops,
+          ingestionsSubmitted: bedrockProcessingResults.ingestionsSubmittedThisRun,
+          deletionsSubmitted: bedrockProcessingResults.deletionsSubmittedThisRun,
+          statusesChecked: bedrockProcessingResults.statusesCheckedThisRun,
+          errorsEncountered: bedrockProcessingResults.totalProcessingErrorsThisRun
+        }
       });
-      console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Marked as COMPLETED.`);
     } else {
-      console.log(`[API Route PROCESS-PENDING BG] OpID ${operationId}: Operation was already FAILED. Not marking COMPLETED.`);
     }
 
   } catch (error: any) {
@@ -51,7 +54,6 @@ async function runProcessPendingInBackground(operationId: number) {
 }
 
 export async function POST() {
-  console.log('[API Route PROCESS-PENDING] Process pending documents request received...');
   const operationType: typeof operationTypeEnum.enumValues[number] = 'BEDROCK_PROCESS_PENDING';
   let operationIdToReturn: number | undefined = undefined;
 
@@ -66,7 +68,6 @@ export async function POST() {
     }
 
     operationIdToReturn = newOp.id;
-    console.log(`[API Route PROCESS-PENDING] Operation ${operationIdToReturn} (${operationType}) created.`);
 
     // Run the processing in the background
     runProcessPendingInBackground(operationIdToReturn).catch(bgError => {

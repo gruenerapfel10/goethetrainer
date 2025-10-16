@@ -8,7 +8,7 @@
  * - MessagePrompt: Shows the complete raw prompt sent to the AI
  * 
  * VISIBILITY REQUIREMENTS:
- * - Only visible to authenticated users (TODO: add admin check with Firebase custom claims)
+ * - Only visible to admin users (session.user.isAdmin === true)
  * - Only visible when debug mode is enabled (NEXT_PUBLIC_DEBUG_MODE=true in .env)
  * 
  * To enable debug mode:
@@ -19,8 +19,7 @@
 
 import type { UIMessage } from 'ai';
 import { useMemo } from 'react';
-// Auth removed - no sessions needed
-// import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { FileTextIcon, AlertTriangleIcon, CodeIcon } from 'lucide-react';
@@ -49,18 +48,17 @@ const calculateTokensFromWords = (text: string) => {
 const isDebugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true';
 
 export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: MessagePromptProps) {
-  // Auth removed - no sessions needed
-  const session = null;
+  const { data: session } = useSession();
   
   const fullPrompt = useMemo(() => {
+    const messageText = (message as any).parts?.find((p: any) => p.type === 'text')?.text || '';
     const totalTokens = calculateTokensFromWords(systemPrompt) + 
-      calculateTokensFromWords(typeof message.content === 'string' ? message.content : '') +
-      (attachedFiles?.reduce((sum, file) => sum + calculateTokensFromWords(file.content), 0) || 0);
+      calculateTokensFromWords(messageText) +
+      (attachedFiles?.reduce((sum, file) => sum + calculateTokensFromWords(file.content || ''), 0) || 0);
     
     const isOverThreshold = totalTokens > 150000;
     const mode = isOverThreshold ? 'retrieval' : 'direct inclusion';
 
-    console.log(attachedFiles);
     
     let prompt = `=== COMPLETE RAW PROMPT ===\n\n`;
     prompt += `[SYSTEM PROMPT]\n${systemPrompt}\n\n`;
@@ -70,20 +68,21 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
       if (isOverThreshold) {
         prompt += `Files over 200k token threshold - using retrieval tool:\n`;
         attachedFiles.forEach((file, index) => {
-          prompt += `${index + 1}. ${file.title} (${calculateTokensFromWords(file.content)} tokens)\n   URL: ${file.url}\n`;
+          prompt += `${index + 1}. ${file.title} (${calculateTokensFromWords(file.content || '')} tokens)\n   URL: ${file.url}\n`;
         });
       } else {
         prompt += `Files under 200k token threshold - analyze directly:\n\n`;
         attachedFiles.forEach((file, index) => {
           prompt += `--- FILE ${index + 1}: ${file.title} ---\n`;
           prompt += `URL: ${file.url}\n`;
-          prompt += `Content:\n${file.content}\n\n`;
+          prompt += `Content:\n${file.content || '[Content not loaded]'}\n\n`;
         });
       }
       prompt += `\n`;
     }
     
-    prompt += `[USER MESSAGE]\n${typeof message.content === 'string' ? message.content : JSON.stringify(message.content)}\n\n`;
+    const userMessageText = (message as any).parts?.find((p: any) => p.type === 'text')?.text || '';
+    prompt += `[USER MESSAGE]\n${userMessageText}\n\n`;
     prompt += `=== PROMPT STATS ===\n`;
     prompt += `Total Tokens: ${totalTokens.toLocaleString()}\n`;
     prompt += `Mode: ${mode}\n`;
@@ -93,8 +92,7 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  // TODO: Implement Firebase custom claims for admin check
-  if (!isDebugMode) {
+  if (!session?.user?.isAdmin || !isDebugMode) {
     return null;
   }
 
@@ -116,14 +114,14 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
 }
 
 export function MessageTokens({ message, systemPrompt = '', attachedFiles }: MessageTokensProps) {
-  // Auth removed - no sessions needed
-  const session = null;
+  const { data: session } = useSession();
   
   const tokenDetails = useMemo(() => {
     // Calculate tokens for user message content
+    const messageText = (message as any).parts?.find((p: any) => p.type === 'text')?.text || '';
     let userMessageTokens = 0;
-    if (typeof message.content === 'string') {
-      userMessageTokens = calculateTokensFromWords(message.content);
+    if (messageText) {
+      userMessageTokens = calculateTokensFromWords(messageText);
     } else if (Array.isArray(message.parts)) {
       for (const part of message.parts) {
         if (typeof part === 'string') {
@@ -139,12 +137,12 @@ export function MessageTokens({ message, systemPrompt = '', attachedFiles }: Mes
 
     // Calculate tokens for attached files using the accurate method
     const fileTokens = attachedFiles?.map(file => {
-      const tokens = calculateTokensFromWords(file.content);
+      const tokens = calculateTokensFromWords(file.content || '');
 
       return {
         title: file.title,
         url: file.url,
-        content: file.content,
+        content: file.content || '',
         sizeInBytes: file.sizeInBytes,
         tokens: tokens,
       };
@@ -163,8 +161,7 @@ export function MessageTokens({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  // TODO: Implement Firebase custom claims for admin check
-  if (!isDebugMode) {
+  if (!session?.user?.isAdmin || !isDebugMode) {
     return null;
   }
 

@@ -1,24 +1,21 @@
-import type { UIMessageStreamWriter } from 'ai';
-import { z } from 'zod/v3';
-import type { Session } from '@/types/next-auth';
-import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
+import { z } from 'zod';
+import type { Session } from 'next-auth';
+import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
 
 interface ScrapeProps {
-  session: Session;
-  dataStream: UIMessageStreamWriter;
-  app: FirecrawlApp;
-  onTokensUsed?: (tokens: number) => void;
+  // Props removed - will be provided at execution time
 }
 
-export const scrape = ({
-  session,
-  dataStream,
-  app,
-  onTokensUsed,
-}: ScrapeProps) => {
+// Initialize FirecrawlApp instance
+const getFirecrawlApp = () => {
+  const firecrawlUrl = process.env.FIRECRAWL_URL || 'http://localhost:3002';
+  return new FirecrawlApp(firecrawlUrl);
+};
+
+export const scrape = () => {
+  const app = getFirecrawlApp();
   return {
-    description:
-      'ONLY FOR URLs: Scrape web pages. ONLY use this when the user provides a specific URL.',
+    description: 'Scrape content from a specific URL.',
     inputSchema: z.object({
       url: z.string().describe('URL to scrape'),
     }),
@@ -31,12 +28,10 @@ export const scrape = ({
             error: `Failed to scrape: ${scrapeResult.error}`,
             success: false,
           };
-        }
+        };
 
-        // Track tokens used if callback provided
-        if (onTokensUsed && scrapeResult.totalTokensUsed) {
-          onTokensUsed(scrapeResult.totalTokensUsed);
-        }
+        console.log("from scraping")
+        console.log(scrapeResult);
 
         return {
           data:

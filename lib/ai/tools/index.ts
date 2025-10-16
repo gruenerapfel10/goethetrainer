@@ -14,7 +14,7 @@ export interface ToolMetadata {
 // Central registry of all tools and their metadata
 export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   // SharePoint tools
-  'sharepoint_reason': {
+  'reason': {
     displayName: 'Reasoning Engine',
     description: 'Strategically reasons about the user query and orchestrates information gathering'
   },
@@ -34,20 +34,6 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     displayName: 'Main Agent',
     description: 'Primary SharePoint agent orchestrating the overall process'
   },
-  'legacy_sharepoint_agent': {
-    displayName: 'Legacy SharePoint Agent',
-    description: 'Legacy SharePoint agent implementation'
-  },
-  
-  // CSV tools
-  'csv_analyze': {
-    displayName: 'CSV Analysis',
-    description: 'Analyzes CSV data and provides comprehensive insights'
-  },
-  'csv_query': {
-    displayName: 'CSV Query',
-    description: 'Converts natural language to SQL queries for CSV data analysis'
-  },
   
   // Chart tools
   'chart': {
@@ -59,22 +45,6 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   'document': {
     displayName: 'Document',
     description: 'Document or file from the knowledge base'
-  },
-  
-  // Map control tool
-  'mapControl': {
-    displayName: 'Map Control',
-    description: 'Control the interactive globe map - zoom to countries, locations, or change map styles'
-  },
-  
-  // Connector tools
-  'connector': {
-    displayName: 'Service Connector',
-    description: 'Connect to external services like Gmail, Calendar, Maps, Slack, and GitHub'
-  },
-  'listConnectors': {
-    displayName: 'List Connectors',
-    description: 'List all available service connectors and their capabilities'
   },
   
   // Unknown tool type

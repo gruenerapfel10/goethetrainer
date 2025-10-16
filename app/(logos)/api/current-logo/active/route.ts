@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
     if (!activeLogo) {
       return NextResponse.json(
-        { url: '/mua-logo-128x128-blue.png' }, // Default logo
+        { url: '/moterra-logo.svg' }, // Default logo
         { status: 200 },
       );
     }
@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error getting active logo:', error);
     return NextResponse.json(
-      { error: 'Failed to get active logo', url: '/mua-logo-128x128-blue.png' },
+      { error: 'Failed to get active logo', url: '/moterra-logo.svg' },
       { status: 500 },
     );
   }

@@ -1,18 +1,18 @@
+import { z } from 'zod';
 import { tool } from 'ai';
-import { z } from 'zod/v3';
-import type { Session } from '@/types/next-auth';
-import type { UIMessageStreamWriter } from 'ai';
+import type { Session } from 'next-auth';
 import type { UIMessage } from 'ai';
+import {
+  BedrockRuntimeClient,
+  ConverseStreamCommand,
+} from '@aws-sdk/client-bedrock-runtime';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import fetch from 'node-fetch';
 import { generateUUID, messagesWithoutFiles } from '@/lib/utils';
-import { google } from '@ai-sdk/google';
-import { generateText } from 'ai';
 
 interface ProcessFileProps {
-  session: Session;
-  dataStream: UIMessageStreamWriter;
+  bedrockClient?: BedrockRuntimeClient;
 }
 
 interface ProcessFilesResult {
@@ -21,19 +21,24 @@ interface ProcessFilesResult {
   hasProcessedFiles: boolean;
 }
 
-// Helper function to sanitize filenames
+// Helper function to sanitize filenames for AWS Bedrock compatibility
 function sanitizeFilename(filename: string): string {
+  // First decode any URL encoding
   let sanitized = decodeURIComponent(filename);
 
+  // Remove or replace characters not allowed by AWS Bedrock
+  // Allowed: alphanumeric, whitespace, hyphens, parentheses, and square brackets
   sanitized = sanitized
-    .replace(/[^a-zA-Z0-9\s\-\(\)\[\]]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/[^a-zA-Z0-9\s\-\(\)\[\]]/g, '') // Remove invalid characters
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim(); // Remove leading/trailing whitespace
 
+  // If the result is empty or too short, provide a fallback
   if (!sanitized || sanitized.length < 1) {
     sanitized = 'document';
   }
 
+  // Ensure it doesn't exceed reasonable length limits
   if (sanitized.length > 100) {
     sanitized = sanitized.substring(0, 100).trim();
   }
@@ -44,6 +49,7 @@ function sanitizeFilename(filename: string): string {
 // Helper function to parse S3 URLs and generate presigned URLs
 function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
   try {
+    // Handle both s3:// and https:// formats
     if (s3Url.startsWith('s3://')) {
       const urlParts = s3Url.replace('s3://', '').split('/');
       const bucketName = urlParts[0];
@@ -52,15 +58,17 @@ function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
     } else if (s3Url.startsWith('https://')) {
       const url = new URL(s3Url);
 
+      // Handle format: https://bucket-name.s3.region.amazonaws.com/key
       if (
         url.hostname.includes('.s3.') &&
         url.hostname.includes('.amazonaws.com')
       ) {
         const bucketName = url.hostname.split('.s3.')[0];
-        const key = url.pathname.substring(1);
+        const key = url.pathname.substring(1); // Remove leading slash
         return { bucketName, key };
       }
 
+      // Handle format: https://s3.region.amazonaws.com/bucket-name/key
       if (
         url.hostname.startsWith('s3.') &&
         url.hostname.includes('.amazonaws.com')
@@ -79,7 +87,15 @@ function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
   }
 }
 
-// Initialize S3 client (still needed for file access)
+// Initialize AWS clients
+const bedrockClient = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION || 'eu-central-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'eu-central-1',
   credentials: {
@@ -93,17 +109,19 @@ async function getAccessibleUrl(fileUrl: string): Promise<string> {
   const s3Info = parseS3Url(fileUrl);
 
   if (!s3Info) {
+    // Not an S3 URL, return as-is (could be a public URL or presigned URL)
     return fileUrl;
   }
 
   try {
+    // Generate presigned URL for S3 file
     const command = new GetObjectCommand({
       Bucket: s3Info.bucketName,
       Key: s3Info.key,
     });
 
     const presignedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: 3600,
+      expiresIn: 3600, // 1 hour
     });
 
     return presignedUrl;
@@ -117,23 +135,306 @@ async function getAccessibleUrl(fileUrl: string): Promise<string> {
   }
 }
 
-// Helper function to read file content as text (for text-based files)
-async function readFileAsText(fileUrl: string): Promise<string> {
-  const response = await fetch(fileUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch file: ${response.statusText}`);
-  }
-  return await response.text();
-}
+// Helper function to process individual file
+const processFileWithBedrock = async (input: any, dataStream: any, session: Session) => {
+  const { fileUrl, fileName, fileType, analysisPrompt } = input;
+  
+  try {
+    const id = generateUUID();
 
-export const processFile = ({ session, dataStream }: ProcessFileProps) => {
-  const processMultipleFiles = async (
+    // Notify client that processing has started
+    dataStream?.writeData({
+      type: 'id',
+      content: id,
+    });
+
+    dataStream?.writeData({
+      type: 'fileName',
+      content: fileName,
+    });
+
+    dataStream?.writeData({
+      type: 'status',
+      content: 'processing',
+    });
+
+    // Get accessible URL (presigned if S3, original if not)
+    const accessibleUrl = await getAccessibleUrl(fileUrl);
+
+    // Fetch the file from the accessible URL
+    const response = await fetch(accessibleUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch file: ${response.statusText}`);
+    }
+
+    const fileBuffer = await response.arrayBuffer();
+    const fileBytes = new Uint8Array(fileBuffer);
+
+    // Sanitize the filename for AWS Bedrock compatibility
+    const sanitizedFileName = sanitizeFilename(fileName);
+
+    // Create a timestamp suffix for unique filenames
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const fileNameParts = sanitizedFileName.split('.');
+    const extension = fileNameParts.pop() || '';
+    const baseName = fileNameParts.join('.');
+    const uniqueFileName = `${baseName}_${timestamp}`;
+
+    // Prepare content blocks based on file type
+    const contentBlocks = [];
+
+    // Add the analysis prompt as text
+    contentBlocks.push({ text: analysisPrompt });
+
+    // Add the file as appropriate content type
+    if (fileType.startsWith('image/')) {
+      const format = fileType.split('/')[1];
+      contentBlocks.push({
+        image: {
+          format: format as 'png' | 'jpeg' | 'gif' | 'webp',
+          source: {
+            bytes: fileBytes,
+          },
+        },
+      });
+    } else {
+      // Determine document format based on file type
+      let format = 'txt';
+      if (fileType === 'application/pdf') format = 'pdf';
+      else if (fileType === 'text/csv') format = 'csv';
+      else if (fileType === 'application/msword') format = 'doc';
+      else if (
+        fileType ===
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      )
+        format = 'docx';
+      else if (fileType === 'application/vnd.ms-excel') format = 'xls';
+      else if (
+        fileType ===
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      )
+        format = 'xlsx';
+      else if (fileType === 'text/html') format = 'html';
+      else if (fileType === 'text/markdown') format = 'md';
+
+      contentBlocks.push({
+        document: {
+          format: format as
+            | 'pdf'
+            | 'csv'
+            | 'doc'
+            | 'docx'
+            | 'xls'
+            | 'xlsx'
+            | 'html'
+            | 'txt'
+            | 'md',
+          name: uniqueFileName,
+          source: {
+            bytes: fileBytes,
+          },
+        },
+      });
+    }
+
+    // Create the input for the ConverseStreamCommand with enhanced API features
+    const input_cmd = {
+      modelId: 'eu.anthropic.claude-3-7-sonnet-20250219-v1:0',
+      messages: [
+        {
+          role: 'user',
+          content: contentBlocks,
+        },
+      ],
+      system: [
+        {
+          text: `You are a document analysis assistant. Your task is to:
+          1. Analyze the provided document thoroughly
+          2. Extract key information, facts, and insights
+          3. Organize the information in a structured way
+          4. Focus on addressing: ${analysisPrompt}
+          
+          Be comprehensive but concise. Your analysis will be used to answer questions about this document.`,
+        },
+      ],
+      inferenceConfig: {
+        maxTokens: 8192,
+        temperature: 0.3,
+        topP: 0.7,
+        topK: 40,
+        stopSequences: [],
+      },
+      // Add request metadata for tracking
+      requestMetadata: {
+        userId: session?.user?.id || 'anonymous',
+        operation: 'file-analysis',
+        fileType: fileType,
+        timestamp: new Date().toISOString(),
+      },
+      // Add additional model response field paths if needed
+      additionalModelResponseFieldPaths: [
+        '/stopReason',
+        '/usage',
+        '/metrics',
+      ],
+    };
+
+    const command = new ConverseStreamCommand(input_cmd as any);
+    const bedrockResponse = await bedrockClient.send(command);
+
+    let accumulatedResponse = '';
+    let stopReason = '';
+    let usage = null;
+    let metrics = null;
+
+    // Process the stream with enhanced event handling
+    for await (const event of bedrockResponse.stream as AsyncIterable<any>) {
+      try {
+        // Handle different event types according to new API structure
+        if (event.messageStart) {
+          // Handle message start event
+          const role = event.messageStart.role;
+          dataStream?.writeData({
+            type: 'messageStart',
+            role: role,
+          });
+        } else if (event.contentBlockStart) {
+          // Handle content block start
+          const index = event.contentBlockStart.contentBlockIndex;
+          dataStream?.writeData({
+            type: 'contentBlockStart',
+            index: index,
+          });
+        } else if (event.contentBlockDelta) {
+          // Handle content block delta (text chunks)
+          const delta = event.contentBlockDelta.delta;
+          if (delta.text) {
+            accumulatedResponse += delta.text;
+            dataStream?.writeData({
+              type: 'content',
+              content: delta.text,
+              contentBlockIndex:
+                event.contentBlockDelta.contentBlockIndex,
+            });
+          } else if (delta.reasoningContent) {
+            // Handle reasoning content if present
+            dataStream?.writeData({
+              type: 'reasoning',
+              content: delta.reasoningContent,
+              contentBlockIndex:
+                event.contentBlockDelta.contentBlockIndex,
+            });
+          }
+        } else if (event.contentBlockStop) {
+          // Handle content block stop
+          dataStream?.writeData({
+            type: 'contentBlockStop',
+            index: event.contentBlockStop.contentBlockIndex,
+          });
+        } else if (event.messageStop) {
+          // Handle message stop event
+          stopReason = event.messageStop.stopReason;
+          dataStream?.writeData({
+            type: 'messageStop',
+            stopReason: stopReason,
+          });
+        } else if (event.metadata) {
+          // Handle metadata event with usage and metrics
+          usage = event.metadata.usage;
+          metrics = event.metadata.metrics;
+          dataStream?.writeData({
+            type: 'metadata',
+            usage: usage,
+            metrics: metrics,
+          });
+        }
+      } catch (error) {
+        console.error('Error processing event:', error);
+      }
+    }
+
+    // Notify client that processing is complete with enhanced metadata
+    dataStream?.writeData({
+      type: 'status',
+      content: 'complete',
+      stopReason: stopReason,
+      usage: usage,
+      metrics: metrics,
+    });
+
+    dataStream?.writeData({
+      type: 'finish',
+      content: accumulatedResponse,
+      metadata: {
+        stopReason: stopReason,
+        usage: usage,
+        metrics: metrics,
+        fileInfo: {
+          fileName: fileName,
+          fileType: fileType,
+          processingTime: metrics?.latencyMs || 0,
+        },
+      },
+    });
+
+    return {
+      id,
+      fileName,
+      fileType,
+      analysis: accumulatedResponse,
+      message: 'File processed successfully',
+    };
+  } catch (error: any) {
+    console.error('Error processing file:', error);
+
+    dataStream?.writeData({
+      type: 'status',
+      content: 'error',
+    });
+
+    dataStream?.writeData({
+      type: 'error',
+      content: error.message,
+    });
+
+    dataStream?.writeData({
+      type: 'finish',
+      content: '',
+    });
+
+    throw new Error(`Failed to process file: ${error.message}`);
+  }
+};
+
+export const processFile = () => {
+  const toolInstance = tool({
+    description: 'Process a file using AWS Bedrock to analyze its content and extract information.',
+    inputSchema: z.object({
+      fileUrl: z.string().describe('URL of the file to process'),
+      fileName: z.string().describe('Name of the file'),
+      fileType: z.string().describe('MIME type of the file'),
+      analysisPrompt: z
+        .string()
+        .optional()
+        .describe('Optional prompt to guide the analysis'),
+    }),
+    
+    execute: async ({ fileUrl, fileName, fileType, analysisPrompt = 'Analyze this file and extract key information' }, { session, dataStream }: any = {}) => {
+      // Note: session and dataStream should be provided by the AI SDK at execution time
+      return processFileWithBedrock({ fileUrl, fileName, fileType, analysisPrompt }, dataStream, session);
+    },
+  });
+
+  // Add the processMultipleFiles method as a property
+  (toolInstance as any).processMultipleFiles = async (
     messages: Array<UIMessage>,
     baseSystemPrompt = '',
+    context: { session: any, dataStream: any } = { session: null, dataStream: null }
   ): Promise<ProcessFilesResult> => {
     const fileAnalysisResults: string[] = [];
     let hasProcessedFiles = false;
 
+    // Get the most recent user message
     const userMessage = messages[messages.length - 1];
     if (!userMessage || userMessage.role !== 'user') {
       return {
@@ -143,8 +444,9 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
       };
     }
 
-    /* FIXME(@ai-sdk-upgrade-v5): The `experimental_attachments` property has been replaced with the parts array. Please manually migrate following https://ai-sdk.dev/docs/migration-guides/migration-guide-5-0#attachments--file-parts */
-    const files = userMessage.experimental_attachments || [];
+    // Check if there are file attachments in the user message
+    // In v5, attachments are passed differently - using data for now
+    const files = (userMessage as any).data?.experimental_attachments || [];
 
     if (files.length === 0) {
       return {
@@ -154,168 +456,15 @@ export const processFile = ({ session, dataStream }: ProcessFileProps) => {
       };
     }
 
+    // Get the user's text message if any
     const userText =
       userMessage.parts.find((part) => part.type === 'text')?.text || '';
 
     // Process each file
-    const fileProcessor = tool({
-      description:
-        'Process a file using Google Gemini to analyze its content and extract information.',
-      inputSchema: z.object({
-        fileUrl: z.string().describe('URL of the file to process'),
-        fileName: z.string().describe('Name of the file'),
-        fileType: z.string().describe('MIME type of the file'),
-        analysisPrompt: z
-          .string()
-          .optional()
-          .describe('Optional prompt to guide the analysis'),
-      }),
-      execute: async ({
-        fileUrl,
-        fileName,
-        fileType,
-        analysisPrompt = 'Analyze this file and extract key information',
-      }) => {
-        try {
-          const id = generateUUID();
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'id',
-              content: id,
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'fileName',
-              content: fileName,
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'status',
-              content: 'processing',
-            }]
-          });
-
-          const accessibleUrl = await getAccessibleUrl(fileUrl);
-          console.log('Processing file:', fileName, 'Type:', fileType);
-
-          let analysisResult = '';
-
-          // For text-based files, read content and analyze with Gemini
-          if (
-            fileType.startsWith('text/') ||
-            fileType === 'application/json' ||
-            fileType === 'application/xml'
-          ) {
-            const fileContent = await readFileAsText(accessibleUrl);
-            
-            const { text } = await generateText({
-              model: google('gemini-2.5-flash'),
-              prompt: `${analysisPrompt}
-
-File: ${fileName}
-Content:
-${fileContent}
-
-Please provide a comprehensive analysis of this file.`,
-            });
-
-            analysisResult = text;
-          } else {
-            // For other file types, provide basic information
-            analysisResult = `File: ${fileName}
-Type: ${fileType}
-Status: File uploaded successfully but detailed content analysis is not available for this file type with current Gemini implementation.
-
-Note: For comprehensive document analysis, please use text-based formats (TXT, JSON, XML, etc.).`;
-          }
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'content',
-              content: analysisResult,
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'status',
-              content: 'complete',
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'finish',
-              content: analysisResult,
-            }]
-          });
-
-          return {
-            id,
-            fileName,
-            fileType,
-            analysis: analysisResult,
-            message: 'File processed successfully',
-          };
-        } catch (error: any) {
-          console.error('Error processing file:', error);
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'status',
-              content: 'error',
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'error',
-              content: error.message,
-            }]
-          });
-
-          dataStream.write({
-            'type': 'data',
-
-            'value': [{
-              type: 'finish',
-              content: '',
-            }]
-          });
-
-          return {
-            error: error.message,
-            message: 'Failed to process file',
-          };
-        }
-      },
-    });
-
-    // Process each file
     for (const file of files) {
       try {
-        const result = await fileProcessor.execute(
+        // Call the file processing function directly
+        const result = await processFileWithBedrock(
           {
             fileUrl: file.url,
             fileName: file.name || 'unnamed-file',
@@ -328,13 +477,11 @@ Note: For comprehensive document analysis, please use text-based formats (TXT, J
                   file.name || 'file'
                 } and extract key information.`,
           },
-          {
-            abortSignal: undefined,
-            toolCallId: generateUUID(),
-            messages: messagesWithoutFiles(messages),
-          },
+          context.dataStream,
+          context.session
         );
 
+        // Store the analysis result to include in the context
         if (result?.analysis) {
           fileAnalysisResults.push(
             `Analysis of ${file.name}:\n${result.analysis}`,
@@ -343,19 +490,16 @@ Note: For comprehensive document analysis, please use text-based formats (TXT, J
         }
       } catch (error) {
         console.error(`Error processing file ${file.name}:`, error);
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'error',
-            content: `Failed to process file ${file.name}: ${
-              error instanceof Error ? error.message : 'Unknown error'
-            }`,
-          }]
+        context.dataStream?.writeData({
+          type: 'error',
+          content: `Failed to process file ${file.name}: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
         });
       }
     }
 
+    // Create an enhanced system prompt function
     const enhancedSystemPrompt = (basePrompt: string): string => {
       if (!hasProcessedFiles || fileAnalysisResults.length === 0) {
         return basePrompt;
@@ -378,152 +522,5 @@ refer to the analysis results. Be specific and cite information from the documen
     };
   };
 
-  // Return the tool instance with processMultipleFiles function
-  const toolInstance = tool({
-    description:
-      'Process a file using Google Gemini to analyze its content and extract information.',
-    inputSchema: z.object({
-      fileUrl: z.string().describe('URL of the file to process'),
-      fileName: z.string().describe('Name of the file'),
-      fileType: z.string().describe('MIME type of the file'),
-      analysisPrompt: z
-        .string()
-        .optional()
-        .describe('Optional prompt to guide the analysis'),
-    }),
-    execute: async ({
-      fileUrl,
-      fileName,
-      fileType,
-      analysisPrompt = 'Analyze this file and extract key information',
-    }) => {
-      try {
-        const id = generateUUID();
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'id',
-            content: id,
-          }]
-        });
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'fileName',
-            content: fileName,
-          }]
-        });
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'status',
-            content: 'processing',
-          }]
-        });
-
-        const accessibleUrl = await getAccessibleUrl(fileUrl);
-
-        let analysisResult = '';
-
-        // For text-based files, read content and analyze with Gemini
-        if (
-          fileType.startsWith('text/') ||
-          fileType === 'application/json' ||
-          fileType === 'application/xml'
-        ) {
-          const fileContent = await readFileAsText(accessibleUrl);
-          
-          const { text } = await generateText({
-            model: google('gemini-2.5-flash'),
-            prompt: `${analysisPrompt}
-
-File: ${fileName}
-Content:
-${fileContent}
-
-Please provide a comprehensive analysis of this file.`,
-          });
-
-          analysisResult = text;
-        } else {
-          // For other file types, provide basic information
-          analysisResult = `File: ${fileName}
-Type: ${fileType}
-Status: File uploaded successfully but detailed content analysis is not available for this file type with current Gemini implementation.
-
-Note: For comprehensive document analysis, please use text-based formats (TXT, JSON, XML, etc.).`;
-        }
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'status',
-            content: 'complete',
-          }]
-        });
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'finish',
-            content: '',
-          }]
-        });
-
-        return {
-          id,
-          fileName,
-          fileType,
-          analysis: analysisResult,
-          message: 'File processed successfully',
-        };
-      } catch (error: any) {
-        console.error('Error processing file:', error);
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'status',
-            content: 'error',
-          }]
-        });
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'error',
-            content: error.message,
-          }]
-        });
-
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'finish',
-            content: '',
-          }]
-        });
-
-        return {
-          error: error.message,
-          message: 'Failed to process file',
-        };
-      }
-    },
-  });
-
-  const enhancedTool = Object.assign(toolInstance, { processMultipleFiles });
-
-  return enhancedTool;
+  return toolInstance;
 };

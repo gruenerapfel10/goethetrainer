@@ -103,7 +103,7 @@ export function logSummary(summary: any): void {
     ['🆕 New Categories Created', summary.newCategoriesCount]
   ];
 
-  logItems.forEach(([label, value]) => console.log(`   ${label}: ${value}`));
+  logItems.forEach(([label, value]) => {});
   
   // Log processing time if available
   if (summary.processingTime) {
@@ -111,7 +111,6 @@ export function logSummary(summary: any): void {
     // Log time by stage if available
     if (summary.processingTime.byStage) {
       Object.entries(summary.processingTime.byStage).forEach(([stage, timeMs]) => {
-        console.log(`      - ${stage}: ${(timeMs as number / 1000).toFixed(2)}s`);
       });
     }
   }

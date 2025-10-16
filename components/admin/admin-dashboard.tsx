@@ -9,7 +9,6 @@ import UserManagement from './user-management';
 import SystemPromptsPage from './SystemPromptsPage';
 import { useTranslations } from 'next-intl';
 import ChatManagement from './ChatManagement/ChatManagement';
-import CSVManagement from './CSVManagement';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -54,7 +53,6 @@ export default function AdminDashboard() {
                   { id: 'users', label: t('userManagement') },
                   { id: 'chat-management', label: t('titleLogo') },
                   { id: 'system-prompts', label: t('systemPrompts') },
-                  { id: 'csv-management', label: t('csvManagement') },
                 ].map((tab) => (
                   <TabsTrigger
                     key={tab.id}
@@ -93,17 +91,12 @@ export default function AdminDashboard() {
             >
               <ChatManagement />
             </TabsContent>
+            
             <TabsContent
               value="system-prompts"
               className="m-0 p-2 sm:p-4 h-full overflow-y-auto"
             >
               <SystemPromptsPage />
-            </TabsContent>
-            <TabsContent
-              value="csv-management"
-              className="m-0 p-2 sm:p-4 h-full overflow-y-auto"
-            >
-              <CSVManagement />
             </TabsContent>
           </div>
         </Tabs>

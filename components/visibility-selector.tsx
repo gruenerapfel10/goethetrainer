@@ -1,6 +1,6 @@
 'use client';
 
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState, useOptimistic, startTransition, } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ import {
   GlobeIcon,
   LockIcon,
 } from './icons';
-import { useChatVisibility } from '@/hooks/use-chat-visibility';
+import { updateChatVisibility } from '@/app/(chat)/actions';
 import { useTranslations } from 'next-intl';
 
 export type VisibilityType = 'private' | 'public';
@@ -52,15 +52,14 @@ export function VisibilitySelector({
   const [open, setOpen] = useState(false);
   const t = useTranslations();
 
-  const { visibilityType, setVisibilityType } = useChatVisibility({
-    chatId,
-    initialVisibility: selectedVisibilityType,
-  });
+  // Local state that can be updated immediately
+  const [currentVisibility, setCurrentVisibility] = useState(selectedVisibilityType);
+  const [optimisticVisibility, setOptimisticVisibility] = useOptimistic(currentVisibility);
 
   const selectedVisibility = useMemo(
     () =>
-      visibilities(t).find((visibility) => visibility.id === visibilityType),
-    [visibilityType, t],
+      visibilities(t).find((visibility) => visibility.id === optimisticVisibility),
+    [optimisticVisibility, t],
   );
 
   return (
@@ -74,7 +73,7 @@ export function VisibilitySelector({
       >
         <Button
           variant="outline"
-          className="hidden md:flex md:px-2 md:h-[34px]"
+          className="hidden md:flex md:px-2 md:h-[34px] gap-1"
         >
           {selectedVisibility?.icon}
           {selectedVisibility?.label}
@@ -82,24 +81,46 @@ export function VisibilitySelector({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="min-w-[300px]">
+      <DropdownMenuContent 
+        align="start" 
+        className="min-w-[300px] border-border/30 rounded-xl bg-muted"
+      >
         {visibilities(t).map((visibility) => (
           <DropdownMenuItem
             key={visibility.id}
             onSelect={() => {
-              setVisibilityType(visibility.id);
               setOpen(false);
+              
+              // Use startTransition for optimistic update
+              startTransition(() => {
+                setOptimisticVisibility(visibility.id);
+                setCurrentVisibility(visibility.id);
+                
+                // Update the backend
+                updateChatVisibility({
+                  chatId: chatId,
+                  visibility: visibility.id,
+                });
+              });
             }}
-            className="gap-4 group/item flex flex-row justify-between items-center"
-            data-active={visibility.id === visibilityType}
+            className="gap-2 md:gap-4 group/item flex flex-row justify-between items-center hover:bg-accent data-[highlighted]:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
+            data-active={visibility.id === optimisticVisibility}
           >
-            <div className="flex flex-col gap-1 items-start">
-              {visibility.label}
-              {visibility.description && (
-                <div className="text-xs text-muted-foreground">
-                  {visibility.description}
-                </div>
-              )}
+            <div className="flex flex-row gap-3 items-start">
+              <div className={cn(
+                "mt-0.5",
+                visibility.id === optimisticVisibility ? "text-foreground" : "text-muted-foreground"
+              )}>
+                {visibility.icon}
+              </div>
+              <div className="flex flex-col gap-1 items-start">
+                <div>{visibility.label}</div>
+                {visibility.description && (
+                  <div className="text-xs text-muted-foreground">
+                    {visibility.description}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="text-foreground opacity-0 group-data-[active=true]/item:opacity-100">
               <CheckCircleFillIcon />

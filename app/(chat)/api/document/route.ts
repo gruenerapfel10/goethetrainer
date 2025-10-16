@@ -1,5 +1,5 @@
 import { auth } from '@/app/(auth)/auth';
-import type { ArtifactKind } from '@/components/artifact';
+import { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import {
   deleteDocumentsByIdAfterTimestamp,
   getDocumentsById,
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     title,
     kind,
     userId: session.user.id,
+    author: 'user',
   });
 
   return Response.json(document, { status: 200 });

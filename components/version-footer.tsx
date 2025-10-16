@@ -11,7 +11,8 @@ import { getDocumentTimestampByIndex } from '@/lib/utils';
 
 import { LoaderIcon } from './icons';
 import { Button } from './ui/button';
-import { useArtifact } from '@/hooks/use-artifact';
+import { useChat } from '@/contexts/chat-context';
+import { useArtifactsContext } from '@/contexts/artifacts-context';
 
 interface VersionFooterProps {
   handleVersionChange: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
@@ -24,15 +25,14 @@ export const VersionFooter = ({
   documents,
   currentVersionIndex,
 }: VersionFooterProps) => {
-  const { artifact } = useArtifact();
-  console.log('');
+  const { activeArtifact: artifact } = useArtifactsContext();
   const { width } = useWindowSize();
   const isMobile = width < 768;
 
   const { mutate } = useSWRConfig();
   const [isMutating, setIsMutating] = useState(false);
 
-  if (!documents) return;
+  if (!documents || !artifact) return;
 
   return (
     <motion.div

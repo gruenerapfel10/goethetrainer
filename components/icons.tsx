@@ -4,7 +4,13 @@ type IconProps = {
   className?: string;
 };
 
-export const BotIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const BotIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -23,7 +29,13 @@ export const BotIcon = ({ size = 16, className }: { size?: number; className?: s
   );
 };
 
-export const WarningIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const WarningIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -42,7 +54,13 @@ export const WarningIcon = ({ size = 16, className }: { size?: number; className
   );
 };
 
-export const UserIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const UserIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       data-testid="geist-icon"
@@ -62,7 +80,13 @@ export const UserIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const AttachmentIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const AttachmentIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -81,7 +105,13 @@ export const AttachmentIcon = ({ size = 16, className }: { size?: number; classN
   );
 };
 
-export const VercelIcon = ({ size = 17, className }: { size?: number; className?: string }) => {
+export const VercelIcon = ({
+  size = 17,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -100,7 +130,13 @@ export const VercelIcon = ({ size = 17, className }: { size?: number; className?
   );
 };
 
-export const GitIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const GitIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -126,7 +162,13 @@ export const GitIcon = ({ size = 16, className }: { size?: number; className?: s
   );
 };
 
-export const BoxIcon = ({ size = 16, className }: { size: number; className?: string }) => {
+export const BoxIcon = ({
+  size = 16,
+  className,
+}: {
+  size: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -145,7 +187,13 @@ export const BoxIcon = ({ size = 16, className }: { size: number; className?: st
   );
 };
 
-export const HomeIcon = ({ size = 16, className }: { size: number; className?: string }) => {
+export const HomeIcon = ({
+  size = 16,
+  className,
+}: {
+  size: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -164,7 +212,13 @@ export const HomeIcon = ({ size = 16, className }: { size: number; className?: s
   );
 };
 
-export const GPSIcon = ({ size = 16, className }: { size: number; className?: string }) => {
+export const GPSIcon = ({
+  size = 16,
+  className,
+}: {
+  size: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -185,7 +239,13 @@ export const GPSIcon = ({ size = 16, className }: { size: number; className?: st
   );
 };
 
-export const InvoiceIcon = ({ size = 16, className }: { size: number; className?: string }) => {
+export const InvoiceIcon = ({
+  size = 16,
+  className,
+}: {
+  size: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -204,7 +264,13 @@ export const InvoiceIcon = ({ size = 16, className }: { size: number; className?
   );
 };
 
-export const LogoOpenAI = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const LogoOpenAI = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -213,14 +279,18 @@ export const LogoOpenAI = ({ size = 16, className }: { size?: number; className?
       width={size}
       className={className}
     >
-      <path
-        d="M14.9449 6.54871C15.3128 5.45919 15.1861 4.26567 14.5978 3.27464C13.7131 1.75461 11.9345 0.972595 10.1974 1.3406C9.42464 0.481584 8.3144 -0.00692594 7.15045 7.42132e-05C5.37487 -0.00392587 3.79946 1.1241 3.2532 2.79113C2.11256 3.02164 1.12799 3.72615 0.551837 4.72468C-0.339497 6.24071 -0.1363 8.15175 1.05451 9.45178C0.686626 10.5413 0.813308 11.7348 1.40162 12.7258C2.28637 14.2459 4.06498 15.0279 5.80204 14.6599C6.5743 15.5189 7.68504 16.0074 8.849 15.9999C10.6256 16.0044 12.2015 14.8754 12.7478 13.2069C13.8884 12.9764 14.873 12.2718 15.4491 11.2733C16.3394 9.75728 16.1357 7.84774 14.9454 6.54771L14.9449 6.54871ZM8.85001 14.9544C8.13907 14.9554 7.45043 14.7099 6.90468 14.2604C6.92951 14.2474 6.97259 14.2239 7.00046 14.2069L10.2293 12.3668C10.3945 12.2743 10.4959 12.1008 10.4949 11.9133V7.42173L11.8595 8.19925C11.8742 8.20625 11.8838 8.22025 11.8858 8.23625V11.9558C11.8838 13.6099 10.5263 14.9509 8.85001 14.9544ZM2.32133 12.2028C1.9651 11.5958 1.8369 10.8843 1.95902 10.1938C1.98284 10.2078 2.02489 10.2333 2.05479 10.2503L5.28366 12.0903C5.44733 12.1848 5.65003 12.1848 5.81421 12.0903L9.75604 9.84429V11.3993C9.75705 11.4153 9.74945 11.4308 9.73678 11.4408L6.47295 13.3004C5.01915 14.1264 3.1625 13.6354 2.32184 12.2028H2.32133ZM1.47155 5.24819C1.82626 4.64017 2.38619 4.17516 3.05305 3.93366C3.05305 3.96116 3.05152 4.00966 3.05152 4.04366V7.72424C3.05051 7.91124 3.15186 8.08475 3.31654 8.17725L7.25838 10.4228L5.89376 11.2003C5.88008 11.2093 5.86285 11.2108 5.84765 11.2043L2.58331 9.34327C1.13255 8.51426 0.63494 6.68272 1.47104 5.24869L1.47155 5.24819ZM12.6834 7.82274L8.74157 5.57669L10.1062 4.79968C10.1199 4.79068 10.1371 4.78918 10.1523 4.79568L13.4166 6.65522C14.8699 7.48373 15.3681 9.31827 14.5284 10.7523C14.1732 11.3593 13.6138 11.8243 12.9474 12.0663V8.27575C12.9489 8.08875 12.8481 7.91574 12.6839 7.82274H12.6834ZM14.0414 5.8057C14.0176 5.7912 13.9756 5.7662 13.9457 5.7492L10.7168 3.90916C10.5531 3.81466 10.3504 3.81466 10.1863 3.90916L6.24442 6.15521V4.60017C6.2434 4.58417 6.251 4.56867 6.26367 4.55867L9.52751 2.70063C10.9813 1.87311 12.84 2.36563 13.6781 3.80066C14.0323 4.40667 14.1605 5.11618 14.0404 5.8057H14.0414ZM5.50257 8.57726L4.13744 7.79974C4.12275 7.79274 4.11312 7.77874 4.11109 7.76274V4.04316C4.11211 2.38713 5.47368 1.0451 7.15197 1.0461C7.86189 1.0461 8.54902 1.2921 9.09476 1.74011C9.06993 1.75311 9.02737 1.77661 8.99899 1.79361L5.77012 3.63365C5.60493 3.72615 5.50358 3.89916 5.50459 4.08666L5.50257 8.57626V8.57726ZM6.24391 7.00022L7.99972 5.9997L9.75553 6.99972V9.00027L7.99972 10.0003L6.24391 9.00027V7.00022Z"
-      />
+      <path d="M14.9449 6.54871C15.3128 5.45919 15.1861 4.26567 14.5978 3.27464C13.7131 1.75461 11.9345 0.972595 10.1974 1.3406C9.42464 0.481584 8.3144 -0.00692594 7.15045 7.42132e-05C5.37487 -0.00392587 3.79946 1.1241 3.2532 2.79113C2.11256 3.02164 1.12799 3.72615 0.551837 4.72468C-0.339497 6.24071 -0.1363 8.15175 1.05451 9.45178C0.686626 10.5413 0.813308 11.7348 1.40162 12.7258C2.28637 14.2459 4.06498 15.0279 5.80204 14.6599C6.5743 15.5189 7.68504 16.0074 8.849 15.9999C10.6256 16.0044 12.2015 14.8754 12.7478 13.2069C13.8884 12.9764 14.873 12.2718 15.4491 11.2733C16.3394 9.75728 16.1357 7.84774 14.9454 6.54771L14.9449 6.54871ZM8.85001 14.9544C8.13907 14.9554 7.45043 14.7099 6.90468 14.2604C6.92951 14.2474 6.97259 14.2239 7.00046 14.2069L10.2293 12.3668C10.3945 12.2743 10.4959 12.1008 10.4949 11.9133V7.42173L11.8595 8.19925C11.8742 8.20625 11.8838 8.22025 11.8858 8.23625V11.9558C11.8838 13.6099 10.5263 14.9509 8.85001 14.9544ZM2.32133 12.2028C1.9651 11.5958 1.8369 10.8843 1.95902 10.1938C1.98284 10.2078 2.02489 10.2333 2.05479 10.2503L5.28366 12.0903C5.44733 12.1848 5.65003 12.1848 5.81421 12.0903L9.75604 9.84429V11.3993C9.75705 11.4153 9.74945 11.4308 9.73678 11.4408L6.47295 13.3004C5.01915 14.1264 3.1625 13.6354 2.32184 12.2028H2.32133ZM1.47155 5.24819C1.82626 4.64017 2.38619 4.17516 3.05305 3.93366C3.05305 3.96116 3.05152 4.00966 3.05152 4.04366V7.72424C3.05051 7.91124 3.15186 8.08475 3.31654 8.17725L7.25838 10.4228L5.89376 11.2003C5.88008 11.2093 5.86285 11.2108 5.84765 11.2043L2.58331 9.34327C1.13255 8.51426 0.63494 6.68272 1.47104 5.24869L1.47155 5.24819ZM12.6834 7.82274L8.74157 5.57669L10.1062 4.79968C10.1199 4.79068 10.1371 4.78918 10.1523 4.79568L13.4166 6.65522C14.8699 7.48373 15.3681 9.31827 14.5284 10.7523C14.1732 11.3593 13.6138 11.8243 12.9474 12.0663V8.27575C12.9489 8.08875 12.8481 7.91574 12.6839 7.82274H12.6834ZM14.0414 5.8057C14.0176 5.7912 13.9756 5.7662 13.9457 5.7492L10.7168 3.90916C10.5531 3.81466 10.3504 3.81466 10.1863 3.90916L6.24442 6.15521V4.60017C6.2434 4.58417 6.251 4.56867 6.26367 4.55867L9.52751 2.70063C10.9813 1.87311 12.84 2.36563 13.6781 3.80066C14.0323 4.40667 14.1605 5.11618 14.0404 5.8057H14.0414ZM5.50257 8.57726L4.13744 7.79974C4.12275 7.79274 4.11312 7.77874 4.11109 7.76274V4.04316C4.11211 2.38713 5.47368 1.0451 7.15197 1.0461C7.86189 1.0461 8.54902 1.2921 9.09476 1.74011C9.06993 1.75311 9.02737 1.77661 8.99899 1.79361L5.77012 3.63365C5.60493 3.72615 5.50358 3.89916 5.50459 4.08666L5.50257 8.57626V8.57726ZM6.24391 7.00022L7.99972 5.9997L9.75553 6.99972V9.00027L7.99972 10.0003L6.24391 9.00027V7.00022Z" />
     </svg>
   );
 };
 
-export const LogoGoogle = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const LogoGoogle = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       data-testid="geist-icon"
@@ -250,7 +320,13 @@ export const LogoGoogle = ({ size = 16, className }: { size?: number; className?
   );
 };
 
-export const LogoAnthropic = ({ size = 18, className }: { size?: number; className?: string }) => {
+export const LogoAnthropic = ({
+  size = 18,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -270,7 +346,13 @@ export const LogoAnthropic = ({ size = 18, className }: { size?: number; classNa
   );
 };
 
-export const RouteIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const RouteIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -289,7 +371,13 @@ export const RouteIcon = ({ size = 16, className }: { size?: number; className?:
   );
 };
 
-export const FileIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const FileIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -308,7 +396,13 @@ export const FileIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const LoaderIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const LoaderIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -383,7 +477,13 @@ export const LoaderIcon = ({ size = 16, className }: { size?: number; className?
   );
 };
 
-export const UploadIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const UploadIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       data-testid="geist-icon"
@@ -403,7 +503,13 @@ export const UploadIcon = ({ size = 16, className }: { size?: number; className?
   );
 };
 
-export const MenuIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const MenuIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -422,7 +528,13 @@ export const MenuIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const PencilEditIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const PencilEditIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -441,7 +553,13 @@ export const PencilEditIcon = ({ size = 16, className }: { size?: number; classN
   );
 };
 
-export const CheckedSquare = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const CheckedSquare = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -460,7 +578,13 @@ export const CheckedSquare = ({ size = 16, className }: { size?: number; classNa
   );
 };
 
-export const UncheckedSquare = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const UncheckedSquare = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -482,7 +606,13 @@ export const UncheckedSquare = ({ size = 16, className }: { size?: number; class
   );
 };
 
-export const MoreIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const MoreIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -501,7 +631,13 @@ export const MoreIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const TrashIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const TrashIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -520,7 +656,13 @@ export const TrashIcon = ({ size = 16, className }: { size?: number; className?:
   );
 };
 
-export const InfoIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const InfoIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -572,12 +714,7 @@ export const StopIcon = ({
   className?: string;
 }) => {
   return (
-    <svg
-      height={size}
-      viewBox="0 0 16 16"
-      width={size}
-      className={className}
-    >
+    <svg height={size} viewBox="0 0 16 16" width={size} className={className}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -596,12 +733,7 @@ export const PaperclipIcon = ({
   className?: string;
 }) => {
   return (
-    <svg
-      height={size}
-      viewBox="0 0 16 16"
-      width={size}
-      className={className}
-    >
+    <svg height={size} viewBox="0 0 16 16" width={size} className={className}>
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -612,7 +744,13 @@ export const PaperclipIcon = ({
   );
 };
 
-export const MoreHorizontalIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const MoreHorizontalIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -631,7 +769,13 @@ export const MoreHorizontalIcon = ({ size = 16, className }: { size?: number; cl
   );
 };
 
-export const MessageIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const MessageIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -650,7 +794,13 @@ export const MessageIcon = ({ size = 16, className }: { size?: number; className
   );
 };
 
-export const CrossIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const CrossIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -667,7 +817,13 @@ export const CrossIcon = ({ size = 16, className }: { size?: number; className?:
   </svg>
 );
 
-export const CrossSmallIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const CrossSmallIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -684,7 +840,13 @@ export const CrossSmallIcon = ({ size = 16, className }: { size?: number; classN
   </svg>
 );
 
-export const UndoIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const UndoIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -701,7 +863,13 @@ export const UndoIcon = ({ size = 16, className }: { size?: number; className?: 
   </svg>
 );
 
-export const RedoIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const RedoIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -718,7 +886,13 @@ export const RedoIcon = ({ size = 16, className }: { size?: number; className?: 
   </svg>
 );
 
-export const DeltaIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const DeltaIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -735,7 +909,13 @@ export const DeltaIcon = ({ size = 16, className }: { size?: number; className?:
   </svg>
 );
 
-export const PenIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const PenIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -752,7 +932,13 @@ export const PenIcon = ({ size = 16, className }: { size?: number; className?: s
   </svg>
 );
 
-export const SummarizeIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const SummarizeIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -769,7 +955,13 @@ export const SummarizeIcon = ({ size = 16, className }: { size?: number; classNa
   </svg>
 );
 
-export const SidebarLeftIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const SidebarLeftIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -786,7 +978,13 @@ export const SidebarLeftIcon = ({ size = 16, className }: { size?: number; class
   </svg>
 );
 
-export const PlusIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const PlusIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -803,7 +1001,13 @@ export const PlusIcon = ({ size = 16, className }: { size?: number; className?: 
   </svg>
 );
 
-export const CopyIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const CopyIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -820,7 +1024,13 @@ export const CopyIcon = ({ size = 16, className }: { size?: number; className?: 
   </svg>
 );
 
-export const ThumbUpIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const ThumbUpIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -837,7 +1047,13 @@ export const ThumbUpIcon = ({ size = 16, className }: { size?: number; className
   </svg>
 );
 
-export const ThumbDownIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const ThumbDownIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -854,7 +1070,13 @@ export const ThumbDownIcon = ({ size = 16, className }: { size?: number; classNa
   </svg>
 );
 
-export const ChevronDownIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const ChevronDownIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -871,7 +1093,13 @@ export const ChevronDownIcon = ({ size = 16, className }: { size?: number; class
   </svg>
 );
 
-export const SparklesIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const SparklesIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -894,7 +1122,13 @@ export const SparklesIcon = ({ size = 16, className }: { size?: number; classNam
   </svg>
 );
 
-export const CheckCircleFillIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const CheckCircleFillIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -913,7 +1147,13 @@ export const CheckCircleFillIcon = ({ size = 16, className }: { size?: number; c
   );
 };
 
-export const GlobeIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const GlobeIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -926,12 +1166,19 @@ export const GlobeIcon = ({ size = 16, className }: { size?: number; className?:
         fillRule="evenodd"
         clipRule="evenodd"
         d="M10.268 14.0934C11.9051 13.4838 13.2303 12.2333 13.9384 10.6469C13.1192 10.7941 12.2138 10.9111 11.2469 10.9925C11.0336 12.2005 10.695 13.2621 10.268 14.0934ZM8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM8.48347 14.4823C8.32384 14.494 8.16262 14.5 8 14.5C7.83738 14.5 7.67616 14.494 7.51654 14.4823C7.5132 14.4791 7.50984 14.4759 7.50647 14.4726C7.2415 14.2165 6.94578 13.7854 6.67032 13.1558C6.41594 12.5744 6.19979 11.8714 6.04101 11.0778C6.67605 11.1088 7.33104 11.125 8 11.125C8.66896 11.125 9.32395 11.1088 9.95899 11.0778C9.80021 11.8714 9.58406 12.5744 9.32968 13.1558C9.05422 13.7854 8.7585 14.2165 8.49353 14.4726C8.49016 14.4759 8.4868 14.4791 8.48347 14.4823ZM11.4187 9.72246C12.5137 9.62096 13.5116 9.47245 14.3724 9.28806C14.4561 8.87172 14.5 8.44099 14.5 8C14.5 7.55901 14.4561 7.12828 14.3724 6.71194C13.5116 6.52755 12.5137 6.37904 11.4187 6.27753C11.4719 6.83232 11.5 7.40867 11.5 8C11.5 8.59133 11.4719 9.16768 11.4187 9.72246ZM10.1525 6.18401C10.2157 6.75982 10.25 7.36805 10.25 8C10.25 8.63195 10.2157 9.24018 10.1525 9.81598C9.46123 9.85455 8.7409 9.875 8 9.875C7.25909 9.875 6.53877 9.85455 5.84749 9.81598C5.7843 9.24018 5.75 8.63195 5.75 8C5.75 7.36805 5.7843 6.75982 5.84749 6.18401C6.53877 6.14545 7.25909 6.125 8 6.125C8.74091 6.125 9.46123 6.14545 10.1525 6.18401ZM11.2469 5.00748C12.2138 5.08891 13.1191 5.20593 13.9384 5.35306C13.2303 3.7667 11.9051 2.51622 10.268 1.90662C10.695 2.73788 11.0336 3.79953 11.2469 5.00748ZM8.48347 1.51771C8.4868 1.52089 8.49016 1.52411 8.49353 1.52737C8.7585 1.78353 9.05422 2.21456 9.32968 2.84417C9.58406 3.42562 9.80021 4.12856 9.95899 4.92219C9.32395 4.89118 8.66896 4.875 8 4.875C7.33104 4.875 6.67605 4.89118 6.04101 4.92219C6.19978 4.12856 6.41594 3.42562 6.67032 2.84417C6.94578 2.21456 7.2415 1.78353 7.50647 1.52737C7.50984 1.52411 7.51319 1.52089 7.51653 1.51771C7.67615 1.50597 7.83738 1.5 8 1.5C8.16262 1.5 8.32384 1.50597 8.48347 1.51771ZM5.73202 1.90663C4.0949 2.51622 2.76975 3.7667 2.06159 5.35306C2.88085 5.20593 3.78617 5.08891 4.75309 5.00748C4.96639 3.79953 5.30497 2.73788 5.73202 1.90663ZM4.58133 6.27753C3.48633 6.37904 2.48837 6.52755 1.62761 6.71194C1.54392 7.12828 1.5 7.55901 1.5 8C1.5 8.44099 1.54392 8.87172 1.62761 9.28806C2.48837 9.47245 3.48633 9.62096 4.58133 9.72246C4.52807 9.16768 4.5 8.59133 4.5 8C4.5 7.40867 4.52807 6.83232 4.58133 6.27753ZM4.75309 10.9925C3.78617 10.9111 2.88085 10.7941 2.06159 10.6469C2.76975 12.2333 4.0949 13.4838 5.73202 14.0934C5.30497 13.2621 4.96639 12.2005 4.75309 10.9925Z"
+        fill="currentColor"
       />
     </svg>
   );
 };
 
-export const LockIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const LockIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -950,7 +1197,13 @@ export const LockIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const EyeIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const EyeIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -969,7 +1222,13 @@ export const EyeIcon = ({ size = 16, className }: { size?: number; className?: s
   );
 };
 
-export const ShareIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const ShareIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -988,7 +1247,13 @@ export const ShareIcon = ({ size = 16, className }: { size?: number; className?:
   );
 };
 
-export const CodeIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const CodeIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1007,7 +1272,13 @@ export const CodeIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const PlayIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const PlayIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1026,7 +1297,13 @@ export const PlayIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const PythonIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const PythonIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1047,7 +1324,13 @@ export const PythonIcon = ({ size = 16, className }: { size?: number; className?
   );
 };
 
-export const TerminalWindowIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const TerminalWindowIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1066,7 +1349,13 @@ export const TerminalWindowIcon = ({ size = 16, className }: { size?: number; cl
   );
 };
 
-export const TerminalIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const TerminalIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1085,7 +1374,13 @@ export const TerminalIcon = ({ size = 16, className }: { size?: number; classNam
   );
 };
 
-export const ClockRewind = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const ClockRewind = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1104,7 +1399,13 @@ export const ClockRewind = ({ size = 16, className }: { size?: number; className
   );
 };
 
-export const LogsIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const LogsIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1123,7 +1424,13 @@ export const LogsIcon = ({ size = 16, className }: { size?: number; className?: 
   );
 };
 
-export const ImageIcon = ({ size = 16, className }: { size?: number; className?: string }) => {
+export const ImageIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => {
   return (
     <svg
       height={size}
@@ -1142,7 +1449,13 @@ export const ImageIcon = ({ size = 16, className }: { size?: number; className?:
   );
 };
 
-export const FullscreenIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const FullscreenIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1159,7 +1472,13 @@ export const FullscreenIcon = ({ size = 16, className }: { size?: number; classN
   </svg>
 );
 
-export const DownloadIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const DownloadIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1176,7 +1495,13 @@ export const DownloadIcon = ({ size = 16, className }: { size?: number; classNam
   </svg>
 );
 
-export const LineChartIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+export const LineChartIcon = ({
+  size = 16,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) => (
   <svg
     height={size}
     strokeLinejoin="round"
@@ -1188,23 +1513,6 @@ export const LineChartIcon = ({ size = 16, className }: { size?: number; classNa
       fill="currentColor"
       fillRule="evenodd"
       d="M1 1v11.75A2.25 2.25 0 0 0 3.25 15H15v-1.5H3.25a.75.75 0 0 1-.75-.75V1H1Zm13.297 5.013.513-.547-1.094-1.026-.513.547-3.22 3.434-2.276-2.275a1 1 0 0 0-1.414 0L4.22 8.22l-.53.53 1.06 1.06.53-.53L7 7.56l2.287 2.287a1 1 0 0 0 1.437-.023l3.573-3.811Z"
-      clipRule="evenodd"
-    />
-  </svg>
-);
-
-export const GraduationCapIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
-  <svg
-    height={size}
-    strokeLinejoin="round"
-    viewBox="0 0 16 16"
-    width={size}
-    className={className}
-  >
-    <path
-      fill="currentColor"
-      fillRule="evenodd"
-      d="M8 1.5L0.5 5.5L8 9.5L15.5 5.5L8 1.5ZM8 3.191L3.309 5.5L8 7.809L12.691 5.5L8 3.191ZM2.5 7.5V11.5C2.5 11.5 2.5 13.5 8 13.5C13.5 13.5 13.5 11.5 13.5 11.5V7.5L8 10.25L2.5 7.5Z"
       clipRule="evenodd"
     />
   </svg>
@@ -1283,7 +1591,6 @@ export function PinIcon(props: IconProps) {
     </svg>
   );
 }
-
 export function PinOffIcon(props: IconProps) {
   return (
     <svg
@@ -1302,6 +1609,23 @@ export function PinOffIcon(props: IconProps) {
       <path d="M12 17v5" />
       <path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h12" />
       <path d="M15 9.34V6h1a2 2 0 0 0 0-4H7.89" />
+    </svg>
+  );
+}
+
+export function Database({ className, ...props }: React.ComponentProps<'svg'>) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      {...props}
+    >
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M3 5V19C3 20.1046 7.02944 21 12 21C16.9706 21 21 20.1046 21 19V5" />
+      <path d="M3 12C3 13.1046 7.02944 14 12 14C16.9706 14 21 13.1046 21 12" />
     </svg>
   );
 }

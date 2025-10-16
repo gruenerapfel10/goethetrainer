@@ -44,11 +44,7 @@ export function filterToolMessages(messages: UIMessage[]): UIMessage[] {
  */
 export function filterToTextOnly(messages: UIMessage[]): UIMessage[] {
   return messages.map(message => {
-    // Convert to simple text content
-    if (typeof message.content === 'string' && !message.parts) {
-      return message;
-    }
-
+    // In AI SDK v5, UIMessage always uses parts
     // If message has parts, extract only text parts
     if (message.parts && Array.isArray(message.parts)) {
       const textContent = message.parts
@@ -68,6 +64,64 @@ export function filterToTextOnly(messages: UIMessage[]): UIMessage[] {
 }
 
 /**
+ * Cleans up orphaned tool calls by adding error results for incomplete tool-use blocks
+ * This prevents the "tool_use without tool_result" error when conversations are interrupted
+ * Also ensures input field is present to satisfy AWS Bedrock API requirements
+ */
+export function cleanupOrphanedToolCalls(messages: UIMessage[]): UIMessage[] {
+  return messages.map(message => {
+    if (message.role !== 'assistant' || !message.parts || !Array.isArray(message.parts)) {
+      return message;
+    }
+    
+    const fixedParts = message.parts.map(part => {
+      if (!part || typeof part !== 'object') return part;
+      const partType = (part as any).type;
+      if (partType?.startsWith('tool-') && partType !== 'tool-result' && !(part as any).output) {
+        return { 
+          ...part, 
+          // Ensure input field exists (preserve existing or provide empty object)
+          input: (part as any).input || {},
+          state: 'output-available', 
+          output: { error: 'Tool call interrupted', success: false }
+        } as any;
+      }
+      return part;
+    });
+    
+    return { ...message, parts: fixedParts } as UIMessage;
+  }) as UIMessage[];
+}
+
+/**
+ * Removes messages with empty content or adds default text content to prevent API errors
+ */
+export function cleanupEmptyMessages(messages: UIMessage[]): UIMessage[] {
+  return messages.filter(message => {
+    // Remove messages with no parts
+    if (!message.parts || !Array.isArray(message.parts) || message.parts.length === 0) {
+      return false;
+    }
+    
+    // Check if all parts are empty text
+    const hasAnyContent = message.parts.some(part => {
+      if (!part || typeof part !== 'object') return false;
+      
+      // For text parts, check if text is not empty
+      if ((part as any).type === 'text') {
+        return (part as any).text && (part as any).text.trim().length > 0;
+      }
+      
+      // For non-text parts (tool calls, etc.), consider them as having content
+      return true;
+    });
+    
+    // Keep message only if it has some non-empty content
+    return hasAnyContent;
+  }).filter(message => message != null); // Remove any null/undefined messages
+}
+
+/**
  * Adds explicit tool constraints to the system prompt
  */
 export function addToolConstraints(systemPrompt: string, availableTools: string[]): string {
@@ -75,7 +129,7 @@ export function addToolConstraints(systemPrompt: string, availableTools: string[
 CRITICAL TOOL CONSTRAINTS:
 - You can ONLY use these tools: ${availableTools.join(', ')}
 - DO NOT attempt to use any other tools mentioned in the conversation history
-- If you see references to tools like '${['search', 'reason', 'sharepoint_retrieve', 'csv_query'].filter(t => !availableTools.includes(t)).join(', ')}', ignore them - they are NOT available to you
+- If you see references to tools like '${['web_search', 'reason', 'sharepoint_retrieve', 'csv_query'].filter(t => !availableTools.includes(t)).join(', ')}', ignore them - they are NOT available to you
 - Any attempt to use unavailable tools will result in an error
 `;
 

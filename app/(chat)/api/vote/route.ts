@@ -1,7 +1,5 @@
-// Auth removed - no authentication needed
-// import { auth } from '@/app/(auth)/auth';
-// Using Firebase instead of PostgreSQL
-import { getVotesByChatId, voteMessage } from '@/lib/firebase/chat-service';
+import { auth } from '@/app/(auth)/auth';
+import { getVotesByChatId, voteMessage } from '@/lib/db/queries';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,10 +9,13 @@ export async function GET(request: Request) {
     return new Response('chatId is required', { status: 400 });
   }
 
-  // Auth removed - no authentication needed
-  const session = { user: { email: 'anonymous@example.com' } };
+  const session = await auth();
 
-  const votes = await getVotesByChatId({ chatId });
+  if (!session || !session.user || !session.user.email) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const votes = await getVotesByChatId({ id: chatId });
 
   return Response.json(votes, { status: 200 });
 }
@@ -31,14 +32,33 @@ export async function PATCH(request: Request) {
     return new Response('messageId and type are required', { status: 400 });
   }
 
-  // Auth removed - no authentication needed
-  const session = { user: { email: 'anonymous@example.com' } };
+  const session = await auth();
 
-  await voteMessage({
-    chatId,
-    messageId,
-    type: type,
-  });
+  if (!session || !session.user || !session.user.email) {
+    return new Response('Unauthorized', { status: 401 });
+  }
 
-  return new Response('Message voted', { status: 200 });
+  try {
+    await voteMessage({
+      chatId,
+      messageId,
+      type: type,
+    });
+
+    return new Response('Message voted', { status: 200 });
+  } catch (error: any) {
+    // Handle foreign key constraint violation (message not found)
+    if (error?.code === '23503' && error?.constraint_name === 'Vote_messageId_Message_id_fk') {
+      return new Response(JSON.stringify({
+        error: 'Message not found. Please wait for the message to complete before voting.',
+        code: 'MESSAGE_NOT_FOUND'
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Re-throw other errors
+    throw error;
+  }
 }

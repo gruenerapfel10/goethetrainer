@@ -19,7 +19,7 @@ export interface SharepointStreamUpdate {
   status: 'running' | 'completed' | 'failed';
   message: string; // Human-readable message for this event
   timestamp: number;
-  toolCallId: string; // ID of the orchestrating tool call (e.g., the 'sharepoint_reason' tool call ID from the message part)
+  toolCallId: string; // ID of the orchestrating tool call (e.g., the 'reason' tool call ID from the message part)
   analysisType?: 'context' | string; // For analysis type updates
   findings?: Array<{ evidence?: string[] }>; // For context analysis results
   tables?: SharepointDataTable[]; // For table data

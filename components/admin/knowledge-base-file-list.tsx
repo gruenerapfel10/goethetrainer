@@ -947,7 +947,6 @@ export default function KnowledgeBaseFileList() {
     } : prev);
 
     try {
-      console.log(`[Stop Operation] Attempting to cancel operation ${systemOperationStatus.id}`);
 
       const response = await fetch('/api/operations/cancel', {
         method: 'POST',
@@ -956,7 +955,6 @@ export default function KnowledgeBaseFileList() {
       });
 
       const result = await response.json();
-      console.log(`[Stop Operation] Response:`, result);
 
       if (response.ok && result.success) {
         toast.success(t('status.operationCancelled') || 'Operation cancelled');

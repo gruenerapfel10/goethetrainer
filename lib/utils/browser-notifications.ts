@@ -57,13 +57,11 @@ export function canShowNotifications(): boolean {
   
   // Check basic requirements
   if (!('Notification' in window)) {
-    console.warn('Notification API not supported in this browser');
     return false;
   }
   
   // Check secure context (HTTPS or localhost)
   if (!window.isSecureContext) {
-    console.warn('Notifications require a secure context (HTTPS)');
     return false;
   }
   
@@ -77,15 +75,12 @@ export async function requestNotificationPermission(): Promise<boolean> {
   if (typeof window === 'undefined') return false;
   
   const debugInfo = getNotificationDebugInfo();
-  console.log('Notification debug info:', debugInfo);
   
   if (!debugInfo.supported) {
-    console.error('This browser does not support notifications');
     return false;
   }
   
   if (!debugInfo.isSecureContext) {
-    console.error('Notifications require HTTPS or localhost');
     return false;
   }
 
@@ -114,10 +109,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
       }
     });
     
-    console.log('Notification permission result:', permission);
     return permission === 'granted';
   } catch (error) {
-    console.error('Error requesting notification permission:', error);
     return false;
   }
 }
@@ -127,14 +120,13 @@ export async function requestNotificationPermission(): Promise<boolean> {
  */
 export function showNotification(options: NotificationOptions): Notification | null {
   if (!canShowNotifications()) {
-    console.warn('Cannot show notification - checking debug info:', getNotificationDebugInfo());
     return null;
   }
 
   try {
     // Use PNG icons for better browser compatibility
     // SVG icons are not supported in most browser notifications
-    const defaultIcon = '/mua-logo-128x128-white.png'; // Using MUA PNG logo
+    const defaultIcon = '/logo_white.png'; // Using existing PNG logo
     const iconUrl = options.icon || defaultIcon;
     const absoluteIconUrl = typeof window !== 'undefined' 
       ? `${window.location.origin}${iconUrl.startsWith('/') ? iconUrl : `/${iconUrl}`}`
@@ -162,11 +154,6 @@ export function showNotification(options: NotificationOptions): Notification | n
     
     const notification = new Notification(options.title, notificationOptions);
     
-    console.log('Notification created successfully:', {
-      title: options.title,
-      body: options.body,
-      icon: absoluteIconUrl,
-    });
 
     // Auto-close notification after 10 seconds unless requireInteraction is true
     if (!options.requireInteraction) {
@@ -188,14 +175,10 @@ export function showNotification(options: NotificationOptions): Notification | n
     };
     
     // Handle notification error
-    notification.onerror = (event) => {
-      console.error('Notification error:', event);
-    };
+    notification.onerror = (event) => {};
 
     return notification;
   } catch (error) {
-    console.error('Error showing notification:', error);
-    console.error('Debug info:', getNotificationDebugInfo());
     return null;
   }
 }
@@ -207,8 +190,7 @@ export function showAgentCompletionNotification(agentType: string): void {
   const agentNames: Record<string, string> = {
     'deep-research-agent': 'Deep Research',
     'general-bedrock-agent': 'Standard Assistant',
-    'sharepoint-agent-v2': 'SharePoint Assistant',
-    'sharepoint-agent': 'SharePoint Search',
+    'sharepoint-agent': 'SharePoint Assistant',
     'text2sql-agent': 'SQL Assistant',
   };
 
@@ -216,7 +198,6 @@ export function showAgentCompletionNotification(agentType: string): void {
   
   // Only show notification if page is not visible
   if (isPageVisible()) {
-    console.log('Page is visible, skipping notification');
     return;
   }
 
@@ -234,7 +215,6 @@ export function showAgentCompletionNotification(agentType: string): void {
   
   if (!notification) {
     // Fallback to in-app toast if notifications fail
-    console.warn('Failed to show native notification, falling back to toast');
     // You might want to import and use your toast here as a fallback
   }
 }
@@ -279,11 +259,9 @@ export async function initializeNotificationSystem(): Promise<void> {
   if (typeof window === 'undefined') return;
   
   const debugInfo = getNotificationDebugInfo();
-  console.log('Initializing notification system:', debugInfo);
   
   // Check if we're in a supported environment
   if (!debugInfo.supported || !debugInfo.isSecureContext) {
-    console.warn('Notification system cannot be initialized in this environment');
     return;
   }
   
@@ -292,9 +270,7 @@ export async function initializeNotificationSystem(): Promise<void> {
     try {
       // You would need to create a service worker file for this
       // const registration = await navigator.serviceWorker.register('/sw.js');
-      // console.log('Service Worker registered:', registration);
     } catch (error) {
-      console.warn('Service Worker registration failed:', error);
     }
   }
 } 

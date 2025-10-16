@@ -1,0 +1,53 @@
+/* Telegram approach for iOS Safari mobile keyboard fix */
+/* Only apply fixed positioning and custom viewport height to iOS Safari */
+html.is-safari,
+html.is-safari body {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+:root {
+  --vh: 1vh;
+}
+
+html.is-safari,
+html.is-safari body {
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.sticky-input-bugged {
+  /* marker class for inputs with safari keyboard bug */
+}
+
+/* Prevent zoom on input focus for mobile */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  [contenteditable="true"] {
+    font-size: 16px !important;
+  }
+}
+
+/* Android-specific adjustments - reduce spacing */
+html.is-android {
+  --android-keyboard-padding: -0.5rem;
+}
+
+/* Reduce spacing for Android virtual keyboard */
+html.is-android .chat-input-container {
+  margin-bottom: -0.5rem;
+}
+
+/* Android input container adjustments - tighter spacing */
+html.is-android [data-testid="multimodal-input"] {
+  margin-bottom: -0.25rem;
+}
+
+/* Reduce padding around Android input */
+html.is-android .chat-input-container .pointer-events-auto {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}

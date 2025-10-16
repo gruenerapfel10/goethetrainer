@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
 const PUBLIC_FILES = [
   '/favicon.ico',
-  '/mua-logo-128x128-blue.png',
-  '/mua-logo-128x128-white.png',
+  '/moterra-logo.svg',
+  '/moterra-logo-s.svg',
+  '/logo.svg',
+  '/logo_white.png',
   '/fonts/geist-mono.woff2',
   '/fonts/geist.woff2',
 ];
@@ -11,55 +14,58 @@ const PUBLIC_FILES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  console.log('🔄 Middleware check for:', pathname);
 
   // Allow static files
   if (PUBLIC_FILES.some(file => pathname.includes(file))) {
-    console.log('✅ Static file allowed');
     return NextResponse.next();
   }
 
-  // Always allow Firebase auth API routes
+  // Always allow NextAuth API routes
   if (pathname.startsWith('/api/auth')) {
-    console.log('✅ Auth API allowed');
     return NextResponse.next();
   }
 
   // Allow public API routes
   if (pathname.startsWith('/api/current-logo') || pathname.startsWith('/api/logos')) {
-    console.log('✅ Public API allowed');
     return NextResponse.next();
   }
 
-  // Get the auth token from cookies
-  const token = request.cookies.get('auth-token');
+  // Get the session token
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === 'production',
+  });
 
-  console.log('🔐 Has token:', !!token);
+  // Check if this is a chat page request
+  const isChatPage = pathname.startsWith('/chat/');
+  
+  // For chat pages, we need to check if it's public before requiring auth
+  if (isChatPage && !token) {
+    // Allow the request to proceed to the page where it will check visibility
+    // The page itself will handle authentication for private chats
+    return NextResponse.next();
+  }
 
-  // If no token, redirect to landing page (except for auth pages and landing)
+  // If no token, redirect to login (except for auth pages and public chats)
   if (!token) {
-    if (pathname === '/' || pathname === '/login' || pathname === '/register') {
-      console.log('✅ Public page allowed');
+    if (pathname === '/login' || pathname === '/register') {
       return NextResponse.next();
     }
 
-    console.log('❌ No token, redirecting to landing page');
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If logged in and trying to access auth pages or landing, redirect to universities
-  if (token && (pathname === '/' || pathname === '/login' || pathname === '/register')) {
-    console.log('✅ Redirecting logged-in user to universities');
-    return NextResponse.redirect(new URL('/universities', request.url));
+  // If logged in and trying to access auth pages, redirect to home
+  if (token && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Protect API routes (except auth and public ones)
   if (pathname.startsWith('/api/')) {
-    console.log('✅ Protected API access granted');
     return NextResponse.next();
   }
 
-  console.log('✅ Access granted');
   return NextResponse.next();
 }
 
@@ -70,13 +76,6 @@ export const config = {
     '/api/:path*',
     '/login',
     '/register',
-    '/universities/:id*',
-    '/dashboard/:id*',
-    '/applications/:path*',
-    '/documents/:path*',
-    '/admin/:path*',
-    '/counselor/:path*',
-    '/parent/:path*',
     '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 };

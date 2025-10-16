@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { uploadLogo } from '../../../../../lib/s3/chat-customization-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
       console.error('No file provided in request');
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+    
 
     // Validate file type and size
     if (!file.type.startsWith('image/')) {
@@ -27,17 +28,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Vercel Blob
-    const filename = `logos/${Date.now()}-${file.name}`;
-    const blob = await put(filename, file, {
-      access: 'public',
-    });
-
-    return NextResponse.json({
-      url: blob.url,
-      key: filename,
-      message: 'Logo uploaded successfully'
-    });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    try {
+      const result = await uploadLogo(buffer, file.name, file.type);
+      return NextResponse.json(result);
+    } catch (uploadError) {
+      console.error('Error from uploadLogo:', uploadError);
+      return NextResponse.json(
+        { error: 'Failed to upload to S3' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Error in upload logo API:', error);
     return NextResponse.json(

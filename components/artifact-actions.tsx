@@ -2,7 +2,15 @@ import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { artifactDefinitions, type UIArtifact } from './artifact';
 import { type Dispatch, memo, type SetStateAction, useState } from 'react';
-import type { ArtifactActionContext } from './create-artifact';
+type ArtifactActionContext = {
+  content: string;
+  handleVersionChange: (type: 'next' | 'prev' | 'toggle' | 'latest') => void;
+  currentVersionIndex: number;
+  isCurrentVersion: boolean;
+  mode: 'edit' | 'diff';
+  metadata: any;
+  setMetadata: Dispatch<SetStateAction<any>>;
+};
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -47,7 +55,7 @@ function PureArtifactActions({
 
   return (
     <div className="flex flex-row gap-1">
-      {artifactDefinition.actions.map((action) => (
+      {artifactDefinition.actions.map((action: any) => (
         <Tooltip key={action.description}>
           <TooltipTrigger asChild>
             <Button

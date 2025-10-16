@@ -1,32 +1,25 @@
-import {type UIMessageStreamWriter, tool} from 'ai';
-import { z } from 'zod/v3';
+import { tool } from 'ai';
+import { z } from 'zod';
 import {streamGenerateSql} from "@/lib/wren/stream-api/wren.stream-api";
 import {type StateEvent, WrenStreamStateEnum} from "@/lib/wren/stream-api/wren.stream-api.types";
 import {generateUUID} from "@/lib/utils";
-import {fetchDbMetadata} from "@/lib/wren/wren.api";
 import {calculateApproximateTokenUsageByWren} from "@/lib/ai/tools/wren/utils";
 
 
-export const generateSqlWrenTool = (
-    { dataStream, onTokenUsageUpdate }: { dataStream: UIMessageStreamWriter, onTokenUsageUpdate?: (tokenUsage: { inputTokens: number, outputTokens: number }) => void }
-) => tool({
-  description: 'Converts a natural language question to SQL, runs it, and provides the data. The limit is set to 100 rows',
+export const generateSqlWrenTool = () => tool({
+  description: 'Converts a natural language question to SQL',
   inputSchema: z.object({
     question: z.string().describe('The natural language question'),
     language: z.string().describe('Language to be used for the answer'),
   }),
-  execute: async ({ question, language }, { toolCallId }) => {
+  execute: async ({ question, language }, { toolCallId, dataStream, onTokenUsageUpdate }: any = {}) => {
     const stateUpdates: StateEvent['data'][] = [];
     const addStateUpdate = (data: StateEvent['data']) => {
       stateUpdates.push(data);
-      dataStream.write({
-        'type': 'message-annotations',
-        'value': [{ type: 'wren_update', toolCallId, data }]
-      });
+      dataStream?.writeMessageAnnotation({ type: 'wren_update', toolCallId, data });
     }
 
     try {
-      const dbMetadata = await fetchDbMetadata();
       const generateId = () => `wren-update-${generateUUID()}`;
       await new Promise(async (resolve) => {
         await streamGenerateSql({
@@ -47,7 +40,7 @@ export const generateSqlWrenTool = (
       const responseStopUpdate = { state: WrenStreamStateEnum.RESPONSE_STOP, timestamp: Date.now(), id: generateId() };
       addStateUpdate(responseStopUpdate);
 
-      const tokenUsage = calculateApproximateTokenUsageByWren(stateUpdates, JSON.stringify(dbMetadata));
+      const tokenUsage = calculateApproximateTokenUsageByWren(stateUpdates);
       if (onTokenUsageUpdate) {
         onTokenUsageUpdate(tokenUsage);
       }
@@ -61,7 +54,6 @@ export const generateSqlWrenTool = (
 
     } catch (error) {
       console.error(`Critical error in generateSqlWrenTool tool:`, error);
-      console.log('=== WREN QUERY FAILED ===');
       return {
         success: false,
         error: error instanceof Error ? error.message : 'An unknown error occurred.',

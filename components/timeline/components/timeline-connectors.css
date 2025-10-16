@@ -1,0 +1,116 @@
+/* Timeline Connector Styles - Pure CSS Implementation */
+
+
+.timeline-item {
+  position: relative;
+}
+
+/* Background colors based on position class */
+/* Temporarily commented out for testing
+.timeline-item--only {
+  background-color: rgb(255, 0, 0); /* Bright red for only item */
+/*}
+
+.timeline-item--first {
+  background-color: rgb(0, 255, 0); /* Bright green for first item */
+/*}
+
+.timeline-item--last {
+  background-color: rgb(128, 0, 255); /* Bright purple for last item */
+/*}
+
+.timeline-item--middle {
+  background-color: rgb(0, 100, 255); /* Bright blue for middle items */
+/*}
+*/
+
+/* Vertical connector - dynamically centered on icon container */
+/* Show connector for:
+   - items that are neither last nor only (first and middle items)
+   - OR last/only items that are expanded (have children to show) */
+.timeline-item:not(.timeline-item--last):not(.timeline-item--only)::after,
+.timeline-item.timeline-item--last.timeline-item--expanded::after,
+.timeline-item.timeline-item--only.timeline-item--expanded::after {
+  content: '';
+  position: absolute;
+  left: calc(1.5rem / 2 - 0.5px); /* Center of w-6 container minus half line width */
+  top: calc(1.5rem / 2); /* Start from center of icon */
+  width: 1px;
+  height: calc(100% + 0.5rem - 1.5rem / 2);
+  background: var(--timeline-connector-color, hsl(var(--muted-foreground) / 0.4));
+  transform: scaleY(1);
+  transform-origin: top;
+  transition: transform 0.2s ease-out;
+  z-index: 1;
+}
+
+/* Horizontal connector for nested items - CSS-only detection */
+.timeline-item--nested:first-child::before {
+  content: '';
+  position: absolute;
+  left: -1.25rem; /* Extend further left to reach parent timeline */
+  top: calc(1.5rem / 2);
+  width: 2rem; /* Make it longer to reach parent */
+  height: 1px;
+  background: var(--timeline-connector-color, hsl(var(--muted-foreground) / 0.4));
+  transform: scaleX(1); /* Always show for first nested item */
+  transform-origin: left;
+  transition: transform 0.2s ease-out 0.1s;
+  z-index: 1;
+}
+
+/* Status-based connector colors using CSS custom properties */
+.timeline-item--completed {
+  --timeline-connector-color: hsl(var(--primary));
+}
+
+.timeline-item--running {
+  --timeline-connector-color: hsl(var(--primary) / 0.5);
+}
+
+.timeline-item--error {
+  --timeline-connector-color: hsl(var(--destructive));
+}
+
+.timeline-item--pending {
+  --timeline-connector-color: hsl(var(--muted-foreground) / 0.4);
+}
+
+.timeline-item--skipped {
+  --timeline-connector-color: hsl(var(--muted-foreground) / 0.4);
+}
+
+/* Staggered animation delays based on nesting level */
+.timeline-item--level-0::after { transition-delay: 0ms; }
+.timeline-item--level-1::after { transition-delay: 50ms; }
+.timeline-item--level-2::after { transition-delay: 100ms; }
+.timeline-item--level-3::after { transition-delay: 150ms; }
+
+.timeline-item--level-0::before { transition-delay: 0ms; }
+.timeline-item--level-1::before { transition-delay: 50ms; }
+.timeline-item--level-2::before { transition-delay: 100ms; }
+.timeline-item--level-3::before { transition-delay: 150ms; }
+
+/* Index-based delays for siblings */
+.timeline-item:nth-child(1)::after { transition-delay: 0ms; }
+.timeline-item:nth-child(2)::after { transition-delay: 25ms; }
+.timeline-item:nth-child(3)::after { transition-delay: 50ms; }
+.timeline-item:nth-child(4)::after { transition-delay: 75ms; }
+.timeline-item:nth-child(5)::after { transition-delay: 100ms; }
+
+.timeline-item:nth-child(1)::before { transition-delay: 25ms; }
+.timeline-item:nth-child(2)::before { transition-delay: 50ms; }
+.timeline-item:nth-child(3)::before { transition-delay: 75ms; }
+.timeline-item:nth-child(4)::before { transition-delay: 100ms; }
+.timeline-item:nth-child(5)::before { transition-delay: 125ms; }
+
+/* Adjustments for icons with custom dimensions - using dynamic calc */
+.timeline-item--icon-small::after,
+.timeline-item--icon-small::before {
+  left: calc(1rem / 2); /* Center of smaller icon container */
+}
+
+.timeline-item--icon-large::after,
+.timeline-item--icon-large::before {
+  left: calc(2rem / 2); /* Center of larger icon container */
+}

@@ -44,13 +44,15 @@ function calculateRelevanceScore(fileName: string, searchQuery: string): number 
 
 export async function POST(req: Request) {
   try {
-    const { query } = await req.json();
+    const { query, page = 1, limit = 50 } = await req.json();
 
     if (!query || query.length < 2) {
       return NextResponse.json({ files: [] });
     }
 
-    // Get files from database that might match
+    const offset = (page - 1) * limit;
+
+    // Get files from database that might match, prioritize INDEXED files
     const files = await db
       .select({
         fileName: filesMetadata.fileName,
@@ -66,15 +68,24 @@ export async function POST(req: Request) {
           ilike(filesMetadata.s3Key, `%${query}%`)
         )
       )
+      .limit(Math.min(limit, 50) + 1) // Get one extra to check if there are more
+      .offset(offset)
       .execute();
 
+    // Check if there are more files
+    const hasMore = files.length > Math.min(limit, 50);
+    const filesToScore = hasMore ? files.slice(0, Math.min(limit, 50)) : files;
+
     // Calculate relevance scores and sort results
-    const scoredFiles = files
+    const scoredFiles = filesToScore
       .map(file => ({
         file,
-        score: calculateRelevanceScore(file.fileName || file.s3Key, query)
+        score: calculateRelevanceScore(file.fileName || file.s3Key, query),
+        // Boost score for indexed files
+        finalScore: calculateRelevanceScore(file.fileName || file.s3Key, query) + 
+                   (file.ingestionStatus === 'INDEXED' ? 20 : 0)
       }))
-      .sort((a, b) => b.score - a.score) // Sort by score descending
+      .sort((a, b) => b.finalScore - a.finalScore) // Sort by final score descending
       .filter(({ score }) => score > 0) // Only include results with positive scores
       .map(({ file }) => ({
         title: file.fileName || file.s3Key.split('/').pop() || 'Unnamed File',
@@ -84,7 +95,13 @@ export async function POST(req: Request) {
         size: file.sizeBytes
       }));
 
-    return NextResponse.json({ files: scoredFiles.slice(0, 10) }); // Limit to top 10 results
+    return NextResponse.json({ 
+      files: scoredFiles,
+      hasMore,
+      page,
+      totalShown: scoredFiles.length,
+      showing: scoredFiles.length
+    });
 
   } catch (error) {
     console.error('Search error:', error);

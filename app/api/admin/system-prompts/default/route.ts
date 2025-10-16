@@ -1,30 +1,32 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getDefaultPrompt } from '@/lib/ai/prompts';
+import { getAgentConfig, AgentType } from '@/lib/ai/agents';
 
-// Check admin status
+const ASSISTANT_TO_AGENT: Record<string, AgentType> = {
+  'general-assistant': AgentType.GENERAL_AGENT,
+  'sharepoint-agent': AgentType.SHAREPOINT_AGENT,
+  'text2sql-agent': AgentType.TEXT2SQL_AGENT,
+};
+
 async function checkAdmin() {
   const session = await auth();
   if (!session?.user?.id) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // Check if user is admin
-  const isAdmin = session?.user;
+  const isAdmin = session.user.isAdmin;
   if (!isAdmin) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  return null; // No error
+  return null;
 }
 
 export async function GET(request: Request) {
-  // Check admin status
   const authError = await checkAdmin();
   if (authError) return authError;
 
   try {
-    // Get assistant id from the query string
     const { searchParams } = new URL(request.url);
     const assistantId = searchParams.get('assistantId');
 
@@ -35,7 +37,16 @@ export async function GET(request: Request) {
       );
     }
 
-    const promptText = getDefaultPrompt(assistantId);
+    const agentType = ASSISTANT_TO_AGENT[assistantId];
+    if (!agentType) {
+      return NextResponse.json(
+        { error: 'Unknown assistant ID' },
+        { status: 400 },
+      );
+    }
+
+    const config = getAgentConfig(agentType);
+    const promptText = config.prompt;
 
     return NextResponse.json({ promptText });
   } catch (error) {

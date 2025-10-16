@@ -50,7 +50,6 @@ export class ThemeGeneratorService implements IThemeGenerator {
           
       if (DEBUG_THEME_CONCURRENCY !== undefined && !Number.isNaN(DEBUG_THEME_CONCURRENCY)) {
          } else {
-        console.log(`Processing with ${workerCount} workers`);
       }
       if (progressCallback) {
         progressCallback(`Processing ${chatsToGenerateThemes.length} chats with ${workerCount} workers`);
@@ -150,10 +149,8 @@ export class ThemeGeneratorService implements IThemeGenerator {
           results.push(aiResponse);
         }
       } catch (aiError) {
-        console.error(`Failed to process chat ${chat.chatId} with AI after multiple retries:`, aiError);
       }
     } catch (error) {
-      console.error(`Failed to process chat ${chat.chatId}:`, error);
     }
   
     return { results, mergedChatIds };
@@ -244,7 +241,6 @@ export class ThemeGeneratorService implements IThemeGenerator {
           await Promise.all(messageUpdatePromises);
           updatedMessagesCount = allMessageIdsToUpdate.length;
         } else {
-          console.log('   No messages needed updating.');
         }
       }); // End transaction
   
@@ -255,7 +251,6 @@ export class ThemeGeneratorService implements IThemeGenerator {
   
     } catch (error) {
       // Error handling for bulk operations is often all-or-nothing due to transactions
-      console.error('❌ Failed to save themes to UseCase table (Bulk Operation Rolled Back):', error);
       errorCount = themes.length; // Mark all as errored if transaction fails
       return { savedCount: 0, errorCount };
     }
@@ -370,8 +365,7 @@ CHAT ID: ${chat.chatId}\n${chat.messages.map(msg =>
         mergedChatIds.push(...chatMergedIds);
         success = true;
       } catch (error) {
-        console.error(`Failed to process chat ${chat.chatId}:`, error);
-        // Decide how to handle errors, maybe collect failed IDs
+          // Decide how to handle errors, maybe collect failed IDs
       } finally {
         // Increment count regardless of success/failure for progress tracking
         const currentCount = ++processedCount;
@@ -395,7 +389,6 @@ CHAT ID: ${chat.chatId}\n${chat.messages.map(msg =>
         } catch (error) {
           // Errors within processSingleChat are logged there, 
           // but we catch potential errors in the loop structure itself
-          console.error(`Worker ${workerId} encountered unexpected error processing chat ${chat.chatId}:`, error);
         }
       } // Loop continues until chatQueue is empty
     };

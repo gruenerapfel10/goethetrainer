@@ -12,7 +12,6 @@ export function NotificationInitializer() {
     // Make diagnostics available in browser console
     if (typeof window !== 'undefined') {
       (window as any).notificationDiagnostics = runNotificationDiagnostics;
-      console.log('💡 Notification diagnostics available: Run notificationDiagnostics() in console');
     }
   }, []);
 

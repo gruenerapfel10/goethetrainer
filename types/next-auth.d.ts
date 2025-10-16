@@ -1,34 +1,15 @@
 // types/next-auth.d.ts
-// Firebase compatibility types
-export interface Session {
-  user: {
-    id: string;
-    email: string;
-    name: string;
-    image: string | null;
-    isAdmin?: boolean;
-  };
-  expires: string;
-}
+import type { DefaultSession, DefaultUser } from "next-auth"
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  image: string | null;
-  isAdmin?: boolean;
-}
-
-// Keep NextAuth module declarations for compatibility
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
       isAdmin: boolean;
-    } & import("next-auth").DefaultSession["user"]
+    } & DefaultSession["user"]
   }
 
-  interface User extends import("next-auth").DefaultUser {
+  interface User extends DefaultUser {
     isAdmin?: boolean;
   }
 }

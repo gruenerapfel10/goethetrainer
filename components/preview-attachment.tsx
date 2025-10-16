@@ -1,24 +1,30 @@
-import type { Attachment } from 'ai';
-import { FileIcon, Expand } from 'lucide-react';
+import type { Attachment } from '@/lib/ai/chat-manager';
+import { FileIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Loader2, XIcon, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { ImagePreviewModal } from './image-preview-modal';
+import { FilePreviewModal } from './file-preview-modal';
 
 export function PreviewAttachment({
   attachment,
   isUploading = false,
   isCompact = false,
   onDelete,
+  allAttachments = [],
+  isSearchFile = false,
 }: {
   attachment: Attachment;
   isUploading?: boolean;
   isCompact?: boolean;
   onDelete?: (attachment: Attachment) => void;
+  allAttachments?: Attachment[];
+  isSearchFile?: boolean;
 }) {
   const { name, url, contentType } = attachment;
   const isImage = contentType?.startsWith('image/');
+  const isPdf = contentType?.includes('pdf') || name?.toLowerCase().endsWith('.pdf');
+  const isDocx = contentType?.includes('wordprocessingml') || name?.toLowerCase().endsWith('.docx');
   const extension = name?.split('.').pop()?.toUpperCase() || '';
   const truncatedName =
     name && name.length > 15 ? `${name.slice(0, 12)}...` : name;
@@ -27,6 +33,11 @@ export function PreviewAttachment({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch presigned URL for images
   useEffect(() => {
@@ -112,86 +123,85 @@ export function PreviewAttachment({
   };
 
   return (
-    <div
-      className={cn(
-        'group relative rounded-lg border border-border/50 bg-background/95 backdrop-blur-sm overflow-hidden',
-        'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300',
-        isCompact ? 'w-20 h-20' : 'w-24 h-24',
-        (isDeleting || isUploading) && 'opacity-60',
-      )}
-    >
-      {isUploading || isDeleting ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        </div>
-      ) : isImage ? (
-        <div className="relative w-full h-full">
-          {imageUrl && (
-            <>
-              <img
-                src={imageUrl}
-                alt={name}
-                className={cn(
-                  'absolute inset-0 w-full h-full object-cover',
-                  isCompact ? 'p-0.5' : 'p-1',
-                )}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-            </>
-          )}
-        </div>
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-          <FileIcon
-            className={cn(
-              'text-primary transition-transform duration-300',
-              isCompact ? 'h-6 w-6' : 'h-8 w-8',
-              'group-hover:scale-110',
-            )}
-          />
-          <span className="text-[10px] font-medium text-muted-foreground">
-            {extension}
-          </span>
-        </div>
-      )}
-
+    <>
       <div
         className={cn(
-          'absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-border/30 p-1',
-          'opacity-100 transition-opacity duration-300',
+          'group relative rounded-lg border overflow-hidden cursor-pointer flex flex-col pt-2',
+          'bg-gradient-to-b from-card to-card/50',
+          'hover:bg-accent/5 hover:shadow-md',
+          'transform transition-all duration-200',
+          'hover:scale-[1.02] hover:-translate-y-0.5',
+          'active:scale-[0.98]',
+          isCompact ? 'w-full aspect-square' : 'w-32 h-32',
+          (isDeleting || isUploading) && 'opacity-60 hover:scale-100 hover:translate-y-0',
+          isSearchFile 
+            ? 'border-blue-500/50 hover:border-blue-500' 
+            : 'border-border/50 hover:border-border',
+        )}
+        onClick={() => !isUploading && !isDeleting && setShowPreviewModal(true)}
+      >
+      {/* Main content area */}
+      <div className="relative flex-1 min-h-0">
+        {isUploading || isDeleting ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          </div>
+        ) : isImage ? (
+          <div className="absolute inset-0">
+            {imageUrl && (
+              <>
+                <img
+                  src={imageUrl}
+                  alt={name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent group-hover:from-black/20 transition-all duration-200" />
+              </>
+            )}
+          </div>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+            <FileIcon
+              className={cn(
+                'text-primary transition-transform duration-300',
+                isCompact ? 'h-6 w-6' : 'h-8 w-8',
+                'group-hover:scale-110',
+              )}
+            />
+            <span className="text-[10px] font-medium text-muted-foreground">
+              {extension}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom label - non-absolute positioning */}
+      <div
+        className={cn(
+          'bg-gradient-to-t from-background/90 to-background/50 backdrop-blur-sm px-1 py-1',
+          'transition-all duration-200 border-t border-border/20',
         )}
       >
         <p
           className={cn(
-            'truncate text-foreground font-medium text-center',
-            'text-[10px]',
+            'truncate text-foreground/80 font-medium text-center',
+            'text-[10px] group-hover:text-foreground transition-colors',
           )}
         >
           {isDeleting ? 'Deleting...' : truncatedName}
         </p>
       </div>
 
+      {/* Hover overlay effect - similar to WebSearch cards */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
       {!isUploading && !isDeleting && (
         <div className="absolute top-0.5 right-0.5 flex gap-0.5">
-          {isImage && imageUrl && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setShowPreviewModal(true);
-              }}
-              className={cn(
-                'p-0.5 rounded-md bg-background/80 backdrop-blur-sm',
-                'opacity-0 group-hover:opacity-100 transition-opacity duration-300',
-                'hover:bg-primary hover:text-primary-foreground',
-              )}
-              title="Preview image"
-            >
-              <Expand className="h-3 w-3" />
-            </button>
-          )}
           <button
-            onClick={handleOpenFile}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenFile(e);
+            }}
             className={cn(
               'p-0.5 rounded-md bg-background/80 backdrop-blur-sm',
               'opacity-0 group-hover:opacity-100 transition-opacity duration-300',
@@ -203,7 +213,10 @@ export function PreviewAttachment({
           </button>
           {onDelete && (
             <button
-              onClick={handleDeleteFile}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDeleteFile(e);
+              }}
               disabled={isDeleting}
               className={cn(
                 'p-0.5 rounded-md bg-background/80 backdrop-blur-sm',
@@ -218,15 +231,16 @@ export function PreviewAttachment({
           )}
         </div>
       )}
+      </div>
 
-      {isImage && imageUrl && (
-        <ImagePreviewModal
+      {mounted && (
+        <FilePreviewModal
           isOpen={showPreviewModal}
           onClose={() => setShowPreviewModal(false)}
-          imageUrl={imageUrl}
-          imageName={name}
+          attachments={allAttachments.length > 0 ? allAttachments : [attachment]}
+          initialIndex={allAttachments.length > 0 ? allAttachments.findIndex(a => a.url === attachment.url) : 0}
         />
       )}
-    </div>
+    </>
   );
 }

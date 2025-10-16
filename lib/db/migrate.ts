@@ -8,7 +8,7 @@ import path from 'node:path';
 import { genSaltSync, hashSync } from 'bcrypt-ts';
 import { user, systemPrompts } from './schema';
 import { DEFAULT_GENERAL_PROMPT } from '@/lib/ai/prompts';
-import { csvAnalysisPrompt } from '@/lib/ai/prompts';
+const csvAnalysisPrompt = 'You are a CSV data analysis assistant. Help users analyze and understand their CSV data effectively.';
 
 // Ensure the system_prompts table exists
 async function ensureSystemPromptsTable(conn: postgres.Sql) {
@@ -31,10 +31,8 @@ async function ensureSystemPromptsTable(conn: postgres.Sql) {
             updated_at TIMESTAMP NOT NULL DEFAULT NOW()
           );
         `);
-        console.log('✅ Created system_prompts table manually');
       }
     } else {
-      console.log('✓ Table system_prompts already exists');
     }
   } catch (error) {
     console.error('❌ Error ensuring system_prompts table:', error);
@@ -58,9 +56,7 @@ async function seedDefaultPrompt(conn: postgres.Sql, db: ReturnType<typeof drizz
         promptText: DEFAULT_GENERAL_PROMPT,
         updatedAt: new Date(),
       }).onConflictDoNothing();
-      console.log('✅ Seeded default general-assistant prompt');
     } else {
-      console.log('✓ General assistant prompt already exists');
     }
 
     // Check and seed CSV agent prompt
@@ -76,9 +72,7 @@ async function seedDefaultPrompt(conn: postgres.Sql, db: ReturnType<typeof drizz
         promptText: csvAnalysisPrompt,
         updatedAt: new Date(),
       }).onConflictDoNothing();
-      console.log('✅ Seeded default csv-agent prompt');
     } else {
-      console.log('✓ CSV agent prompt already exists');
     }
   } catch (error) {
     console.error('❌ Error seeding default prompts:', error);
@@ -102,9 +96,7 @@ async function ensureAdminUser(conn: postgres.Sql, db: ReturnType<typeof drizzle
         password: hash,
         isAdmin: true,
       });
-      console.log('✅ Created admin user');
     } else {
-      console.log('✓ Admin user already exists');
     }
   } catch (error) {
     console.error('❌ Error ensuring admin user:', error);
@@ -125,7 +117,6 @@ async function runMigrate() {
     await seedDefaultPrompt(conn, db);
     await ensureAdminUser(conn, db);
     
-    console.log('✅ All migrations and seeding completed successfully');
   } catch (e) {
     console.error('❌ Migration failed:', e);
     process.exit(1);

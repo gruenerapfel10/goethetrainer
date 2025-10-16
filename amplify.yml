@@ -3,11 +3,46 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install -g pnpm
+        - npm install pnpm -g
         - pnpm install
+        - pnpm run db:generate
     build:
       commands:
-        - pnpm run build
+        - |
+          cat << EOF > .env.production
+          BLOB_READ_WRITE_TOKEN=${BLOB_READ_WRITE_TOKEN}
+          POSTGRES_URL=${POSTGRES_URL}
+          BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID}
+          GENERAL_AWS_REGION=${GENERAL_AWS_REGION}
+          GENERAL_AWS_ACCESS_KEY_ID=${GENERAL_AWS_ACCESS_KEY_ID}
+          GENERAL_AWS_SECRET_ACCESS_KEY=${GENERAL_AWS_SECRET_ACCESS_KEY}
+          BEDROCK_AGENT_ID=${BEDROCK_AGENT_ID}
+          BEDROCK_AGENT_ALIAS_ID=${BEDROCK_AGENT_ALIAS_ID}
+          SHAREPOINT_TENANT_ID=${SHAREPOINT_TENANT_ID}
+          SHAREPOINT_CLIENT_ID=${SHAREPOINT_CLIENT_ID}
+          SHAREPOINT_CLIENT_SECRET=${SHAREPOINT_CLIENT_SECRET}
+          SHAREPOINT_DRIVE_ID=${SHAREPOINT_DRIVE_ID}
+          AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID}
+          AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET}
+          AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID}
+          AUTH_SECRET=${AUTH_SECRET}
+          NEXTAUTH_URL=${NEXTAUTH_URL}
+          NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+          AUTH_AZURE_AD_ISSUER=https://login.microsoftonline.com/${AZURE_AD_TENANT_ID}/v2.0
+          AUTH_AZURE_AD_AUDIENCE=${AZURE_AD_CLIENT_ID}
+          SHAREPOINT_S3_BUCKET_NAME=${SHAREPOINT_S3_BUCKET_NAME}
+          SHAREPOINT_KNOWLEDGE_BASE_ID=${SHAREPOINT_KNOWLEDGE_BASE_ID}
+          SHAREPOINT_KNOWLEDGE_BASE_DATA_SOURCE_ID=${SHAREPOINT_KNOWLEDGE_BASE_DATA_SOURCE_ID}
+          BYPASS_JSON_VALIDATION=true
+          FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+          TOGETHER_API_KEY=${TOGETHER_API_KEY}
+          TOGETHER_AI_API_KEY=${TOGETHER_AI_API_KEY}
+          EOF
+        - cat .env
+        - pnpm build
+    start:
+      commands:
+        - pnpm start
   artifacts:
     baseDirectory: .next
     files:
@@ -15,25 +50,3 @@ frontend:
   cache:
     paths:
       - node_modules/**/*
-      - .pnpm-store/**/*
-  buildSpec: |
-    version: 1
-    applications:
-      - appRoot: .
-        frontend:
-          phases:
-            preBuild:
-              commands:
-                - npm install -g pnpm
-                - pnpm install
-            build:
-              commands:
-                - pnpm run build
-          artifacts:
-            baseDirectory: .next
-            files:
-              - '**/*'
-          cache:
-            paths:
-              - node_modules/**/*
-              - .pnpm-store/**/*

@@ -23,6 +23,34 @@ export class CursorManager {
     preCaretRange.selectNodeContents(this.element);
     preCaretRange.setEnd(range.endContainer, range.endOffset);
 
+    // Safari workaround: Use textContent instead of toString() for more accurate position
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      // Count actual characters including line breaks
+      let position = 0;
+      const walker = document.createTreeWalker(
+        this.element,
+        NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+        null
+      );
+
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node === range.endContainer) {
+          position += range.endOffset;
+          break;
+        } else if (node.nodeType === Node.TEXT_NODE) {
+          if (range.endContainer.contains(node) || node.contains(range.endContainer)) {
+            continue;
+          }
+          position += node.textContent?.length || 0;
+        } else if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === 'BR') {
+          position += 1;
+        }
+      }
+      return position;
+    }
+
     return preCaretRange.toString().length;
   }
 
@@ -175,31 +203,64 @@ export class CursorManager {
   syncHtmlFromText(text: string, fileMap: Map<string, { url: string }>): void {
     if (!this.element) return;
 
+    // Safari workaround: Check if content actually changed before updating
+    const currentText = this.getTextContent();
+    if (currentText === text) {
+      return; // No need to update if text hasn't changed
+    }
+
     const cursorPos = this.getCursorPosition();
     const html = this.generateHtmlFromText(text, fileMap);
     
     this.element.innerHTML = html;
     
     // Restore cursor position after HTML update
-    requestAnimationFrame(() => {
-      this.setCursorPosition(cursorPos);
-    });
+    // Safari needs special handling for cursor restoration
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    if (isSafari) {
+      // Use setTimeout for Safari to ensure DOM is fully updated
+      setTimeout(() => {
+        this.setCursorPosition(cursorPos);
+      }, 0);
+    } else {
+      requestAnimationFrame(() => {
+        this.setCursorPosition(cursorPos);
+      });
+    }
   }
 
   // Generate HTML from text with mention pills
   private generateHtmlFromText(text: string, fileMap: Map<string, { url: string }>): string {
-    const parts = text.split(/(@\[[^\]]+\])/g);
+    // Split text to find @ mentions (not just bracketed ones)
+    // This regex matches @filename where filename can contain any non-space chars
+    const mentionRegex = /@([^\s]+)/g;
+    let lastIndex = 0;
+    let html = '';
+    let match;
     
-    return parts.map(part => {
-      const match = part.match(/@\[([^\]]+)\]/);
-      if (match) {
-        const fileName = match[1];
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Add text before the mention
+      html += this.escapeHtml(text.slice(lastIndex, match.index));
+      
+      const fileName = match[1];
+      // Check if this is a valid file name from our file map
+      if (fileMap.has(fileName)) {
+        // Create highlighted mention pill
         const file = fileMap.get(fileName);
         const pill = this.createMentionPill(fileName, file?.url);
-        return pill.outerHTML;
+        html += pill.outerHTML;
+      } else {
+        // Not a valid file, just render as normal text
+        html += this.escapeHtml(match[0]);
       }
-      return this.escapeHtml(part);
-    }).join('');
+      
+      lastIndex = mentionRegex.lastIndex;
+    }
+    
+    // Add remaining text after last mention
+    html += this.escapeHtml(text.slice(lastIndex));
+    
+    return html;
   }
 
   // Escape HTML special characters

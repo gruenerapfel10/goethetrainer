@@ -1,169 +1,121 @@
-"use client"
+'use client';
+import { useRouter } from 'next/navigation';
+import { useActionState, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { AuthForm } from '@/components/auth-form';
+import { SubmitButton } from '@/components/submit-button';
+import { login, type LoginActionState, microsoftLogin } from '../actions';
+import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { GoetheLogo } from "@/components/goethe-logo"
-import { cn } from "@/lib/utils"
-import { Chrome } from "lucide-react"
-import { useAuth } from "@/context/firebase-auth-context"
-import { toast } from "sonner"
+export default function Page() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [isSuccessful, setIsSuccessful] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-export default function LoginPage() {
-  const [isLoginView, setIsLoginView] = useState(true)
-  const [isLoading, setIsLoading] = useState(false)
-  const { signIn, signUp, signInWithGoogle } = useAuth()
+  const t = useTranslations();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const [state, formAction] = useActionState<LoginActionState, FormData>(
+    login,
+    { status: 'idle' }
+  );
 
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-
+  const handleMicrosoftLogin = async () => {
     try {
-      if (isLoginView) {
-        await signIn(email, password)
-      } else {
-        await signUp(email, password)
-      }
-    } catch (error: any) {
-      if (error.code === 'auth/user-not-found') {
-        toast.error("User not found")
-      } else if (error.code === 'auth/wrong-password') {
-        toast.error("Invalid password")
-      } else if (error.code === 'auth/email-already-in-use') {
-        toast.error("Email already in use")
-      } else if (error.code === 'auth/weak-password') {
-        toast.error("Password should be at least 6 characters")
-      } else if (error.code === 'auth/invalid-email') {
-        toast.error("Invalid email address")
-      } else {
-        toast.error(error.message || "An error occurred")
-      }
-    } finally {
-      setIsLoading(false)
+      setIsLoading(true);
+      microsoftLogin();
+    } catch (error) {
+      console.error('Microsoft auth error:', error);
+      toast.error(t('login.errors.microsoftAuth'));
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleOAuthSignIn = async () => {
-    try {
-      setIsLoading(true)
-      await signInWithGoogle()
-    } catch (error: any) {
-      toast.error(error.message || "Authentication failed")
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    if (state.status === 'failed') {
+      toast.error(t('login.errors.invalidCredentials'));
+    } else if (state.status === 'invalid_data') {
+      toast.error(t('login.errors.invalidData'));
+    } else if (state.status === 'success') {
+      setIsSuccessful(true);
+      router.push('/');
     }
-  }
+  }, [state.status, router, t]);
+
+  const handleSubmit = (formData: FormData) => {
+    setEmail(formData.get('email') as string);
+    formAction(formData);
+  };
 
   return (
-    <div className="grid min-h-screen w-full lg:grid-cols-2">
-      <div className="relative hidden items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 text-white lg:flex">
-        <div className="relative z-10 text-center">
-          <h2 className="mx-auto mb-8 text-5xl font-bold text-white">Goethe</h2>
-          <h1 className="text-5xl font-bold">Find Your Perfect Job.</h1>
-          <p className="mt-4 text-lg text-blue-100">Your dream career starts here.</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-center bg-black p-8">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h2 className="text-center text-4xl font-bold text-white">
-              {isLoginView ? "Welcome Back" : "Create an Account"}
-            </h2>
-            <p className="mt-2 text-center text-gray-400">
-              {isLoginView ? "Sign in to access your dashboard." : "Join Goethe to start your journey."}
+    <div className="flex min-h-dvh w-full items-center justify-center bg-background p-4 md:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-card backdrop-blur-xl"
+      >
+        <div className="space-y-8 p-8">
+          {/* Header */}
+          <div className="space-y-2 text-center">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              {t('login.title')}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {t('login.subtitle')}
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-1 rounded-full bg-gray-900 p-1">
-            <button
-              onClick={() => setIsLoginView(true)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                isLoginView ? "bg-blue-600" : "text-gray-400 hover:bg-gray-800",
-              )}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsLoginView(false)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-medium text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                !isLoginView ? "bg-blue-600" : "text-gray-400 hover:bg-gray-800",
-              )}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-400">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-                className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-gray-400">
-                  Password
-                </Label>
-                {isLoginView && (
-                  <a href="#" className="text-sm text-blue-500 hover:underline">
-                    Forgot password?
-                  </a>
-                )}
-              </div>
-              <Input 
-                id="password" 
-                name="password"
-                type="password" 
-                required 
-                className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500" 
-                disabled={isLoading}
-              />
-            </div>
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-6"
-              disabled={isLoading}
-            >
-              {isLoading ? "Loading..." : isLoginView ? "Log In" : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-700" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-black px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <Button 
-            variant="outline" 
-            className="w-full bg-gray-900 border-gray-700 text-white hover:bg-gray-800"
-            onClick={handleOAuthSignIn}
+          {/* Microsoft Sign In */}
+          <Button
+            type="button"
+            variant="outline"
+            className="relative w-full overflow-hidden border-border bg-background hover:bg-accent text-foreground transition-colors"
+            onClick={handleMicrosoftLogin}
             disabled={isLoading}
           >
-            <Chrome className="mr-2 h-5 w-5" />
-            Continue with Google
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+                <span>{t('login.microsoftButton.loading')}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M11 3h9v9h-9z M11 18h9v-3.8h-9z M0 3h9v9H0z M0 18h9v-3.8H0z" />
+                </svg>
+                <span>{t('login.microsoftButton.default')}</span>
+              </div>
+            )}
           </Button>
+
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-4 text-muted-foreground uppercase tracking-wider">
+                {t('login.divider')}
+              </span>
+            </div>
+          </div>
+
+          {/* Email Form */}
+          <AuthForm action={handleSubmit} defaultEmail={email}>
+            <SubmitButton isSuccessful={isSuccessful}>
+              {t('login.submitButton')}
+            </SubmitButton>
+          </AuthForm>
         </div>
-      </div>
+      </motion.div>
     </div>
-  )
+  );
 }

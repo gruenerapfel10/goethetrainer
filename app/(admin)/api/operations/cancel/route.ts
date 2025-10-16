@@ -59,7 +59,6 @@ export async function POST(request: Request) {
       'User cancelled operation'
     );
 
-    console.log(`[API Cancel] Operation ${operationId} (${operation.operationType}) cancelled by user`);
 
     return NextResponse.json({
       message: 'Operation cancelled successfully',

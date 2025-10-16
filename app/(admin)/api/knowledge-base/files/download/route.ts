@@ -123,7 +123,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    console.log(`Generating signed URL for S3 object: s3://${bucket}/${key}`);
 
     const command = new GetObjectCommand({
       Bucket: bucket,

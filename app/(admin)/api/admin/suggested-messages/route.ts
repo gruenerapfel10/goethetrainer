@@ -10,7 +10,7 @@ import {
 export async function POST(request: Request) {
   // Check if user is authenticated and is an admin
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   // Check if user is authenticated and is an admin
   const session = await auth();
-  if (!session?.user) {
+  if (!session?.user || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
   }
 

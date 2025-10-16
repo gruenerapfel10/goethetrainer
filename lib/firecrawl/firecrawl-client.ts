@@ -6,35 +6,22 @@ import type {
 
 export default class FirecrawlApp {
   private readonly baseUrl: string;
-  private readonly apiKey: string;
 
-  constructor(baseUrl: string, apiKey?: string) {
+  constructor(baseUrl: string) {
     if (!baseUrl) {
       console.warn('Firecrawl baseUrl is required');
     }
     this.baseUrl = baseUrl;
-    this.apiKey = apiKey || process.env.FIRECRAWL_API_KEY || '';
   }
 
   private async makeRequest(endpoint: string, options: RequestInit = {}) {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    
-    if (this.apiKey) {
-      headers['Authorization'] = `Bearer ${this.apiKey}`;
-    }
-    
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: options.body,
     });
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Firecrawl API error:', errorText);
-      throw new Error(`Firecrawl request failed: ${response.statusText} - ${errorText}`);
+      throw new Error(`Firecrawl request failed: ${response.statusText}`);
     }
 
     return response.json();

@@ -1,5 +1,5 @@
 import { tool } from 'ai';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 
 // Chart Type Definitions for shadcn/ui charts
 export type ChartType = 'line' | 'bar' | 'area' | 'pie' | 'radar' | 'radialBar' | 'scatter';
@@ -70,7 +70,7 @@ const chartConfigSchema = z.object({
 // Chart generation tool parameters
 const chartParameters = z.object({
   chartConfig: chartConfigSchema.describe('Complete chart configuration including type, data, and display options'),
-  reasoningText: z.string().optional().describe('Optional explanation of why this chart type and configuration was chosen for the data'),
+  reasoning: z.string().optional().describe('Optional explanation of why this chart type and configuration was chosen for the data'),
 });
 
 // Utility functions for data processing
@@ -199,35 +199,19 @@ export const recommendChartType = (data: any[], userIntent?: string): ChartType 
 
 // Enhanced chart tool for AI agents
 export const chartTool = tool({
-  description: `MANDATORY VISUALIZATION TOOL: Creates beautiful, interactive charts. YOU MUST USE THIS TOOL for ANY data visualization request.
-  
-  CRITICAL: When users request charts, graphs, plots, visualizations, or ask to "show" data visually, YOU MUST USE THIS TOOL.
-  DO NOT generate HTML, SVG, or code for charts - this tool handles all rendering automatically.
-  
-  Available chart types:
-  - line: Time series data and trends
+  description: `- line: Time series data and trends
   - bar: Category comparisons
   - area: Cumulative trends
   - pie: Proportions and percentages
   - radar: Multi-dimensional comparisons
   - radialBar: Circular progress charts
-  - scatter: Correlation analysis
-  
-  Features:
-  - Automatic data processing and type detection
-  - Responsive design with light/dark themes
-  - Interactive animations
-  - Professional styling
-  
-  REMEMBER: For ALL visualization requests, use this tool - never generate code.`,
+  - scatter: Correlation analysis`,
   
   inputSchema: chartParameters,
   
-  execute: async ({ chartConfig, reasoningText }) => {
+  execute: async ({ chartConfig, reasoning }) => {
     try {
-      console.log('=== SHADCN CHART GENERATION TOOL CALLED ===');
       if (reasoning) {
-        console.log('Chart reasoning:', reasoning);
       }
       
       // Add a small delay to show the beautiful loading animation
@@ -248,9 +232,6 @@ export const chartTool = tool({
         className: chartConfig.className,
       };
       
-      console.log(`Generated ${finalConfig.type} chart with ${finalConfig.data.length} data points`);
-      console.log('Chart config keys:', Object.keys(finalConfig.config));
-      console.log('=== SHADCN CHART GENERATION COMPLETE ===');
       
       return {
         success: true,

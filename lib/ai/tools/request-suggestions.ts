@@ -1,20 +1,16 @@
-import { z } from 'zod/v3';
-import type { Session } from '@/types/next-auth';
-import { type UIMessageStreamWriter, streamObject, tool } from 'ai';
+import { streamObject, tool } from 'ai';
+import { z } from 'zod';
+import type { Session } from 'next-auth';
 import { getDocumentById, saveSuggestions } from '@/lib/db/queries';
 import type { Suggestion } from '@/lib/db/schema';
 import { generateUUID } from '@/lib/utils';
 import { myProvider } from '../models';
 
 interface RequestSuggestionsProps {
-  session: Session;
-  dataStream: UIMessageStreamWriter;
+  // Props removed - will be provided at execution time
 }
 
-export const requestSuggestions = ({
-  session,
-  dataStream,
-}: RequestSuggestionsProps) =>
+export const requestSuggestions = () =>
   tool({
     description: 'Request suggestions for a document',
     inputSchema: z.object({
@@ -22,14 +18,19 @@ export const requestSuggestions = ({
         .string()
         .describe('The ID of the document to request edits'),
     }),
-    execute: async ({ documentId }) => {
+    
+    execute: async ({ documentId }, { session, dataStream }: any = {}) => {
+      // Fetch document from database (server-side, no client dependency)
       const document = await getDocumentById({ id: documentId });
-
       if (!document || !document.content) {
-        return {
-          error: 'Document not found',
-        };
+        throw new Error('Document not found');
       }
+      
+      const documentContent = document.content;
+      console.log('🔧 [SUGGESTIONS TOOL] Using latest version from database:', {
+        documentId,
+        contentLength: documentContent.length
+      });
 
       const suggestions: Array<
         Omit<Suggestion, 'userId' | 'createdAt' | 'documentCreatedAt'>
@@ -38,8 +39,9 @@ export const requestSuggestions = ({
       const { elementStream } = streamObject({
         model: myProvider.languageModel('artifact-model'),
         system:
-          'You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.',
-        prompt: document.content,
+          'You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.' +
+          ' (Note: You are analyzing the latest version of this document.)',
+        prompt: documentContent,
         output: 'array',
         schema: z.object({
           originalSentence: z.string().describe('The original sentence'),
@@ -58,19 +60,15 @@ export const requestSuggestions = ({
           isResolved: false,
         };
 
-        dataStream.write({
-          'type': 'data',
-
-          'value': [{
-            type: 'suggestion',
-            content: suggestion,
-          }]
+        dataStream?.writeData({
+          type: 'suggestion',
+          content: suggestion,
         });
 
         suggestions.push(suggestion);
       }
 
-      if (session.user?.id) {
+      if (session?.user?.id) {
         const userId = session.user.id;
 
         await saveSuggestions({
@@ -83,6 +81,7 @@ export const requestSuggestions = ({
         });
       }
 
+      // Return native data structure
       return {
         id: documentId,
         title: document.title,

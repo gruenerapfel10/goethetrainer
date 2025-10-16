@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { jsonrepair } from 'jsonrepair';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 
 /**
  * Enhanced generateObjectWithParsing function that improves JSON reliability with Claude 3.7
@@ -48,45 +48,16 @@ export async function generateObjectWithParsing<T extends z.ZodType>(options: {
     // Optional: add prefill to force JSON mode
     const prefill = '{\n';
 
-    // First attempt with prefill to enforce JSON structure
-    try {
-      const object = await generateObject({
-        ...options,
-        prompt: enhancedPrompt,
-        system: systemPrompt,
-        temperature: temperature,
-        messages: [
-          {
-            role: 'user',
+    // In AI SDK v5, we can't use messages with prompt
+    // Just use the enhanced prompt directly
+    const object = await generateObject({
+      ...options,
+      prompt: enhancedPrompt,
+      system: systemPrompt,
+      temperature: temperature,
+    });
 
-            parts: [{
-              type: 'text',
-              text: enhancedPrompt
-            }]
-          },
-          {
-            role: 'assistant',
-
-            parts: [{
-              type: 'text',
-              text: prefill
-            }]
-          },
-        ],
-      });
-
-      return object;
-    } catch (prefillError) {
-
-      const object = await generateObject({
-        ...options,
-        prompt: enhancedPrompt,
-        system: systemPrompt,
-        temperature: temperature,
-      });
-
-      return object;
-    }
+    return object;
   } catch (error: any) {
 
     if (error.name !== 'AI_NoObjectGeneratedError') {
@@ -124,12 +95,6 @@ export async function generateObjectWithParsing<T extends z.ZodType>(options: {
 
     // Process the content
     if (originalContent) {
-      console.log(
-        'Content structure:',
-        Object.keys(originalContent).map(
-          (key) => `${key}: ${typeof originalContent?.[key]}`,
-        ),
-      );
 
       // Preprocess the content
       const processedContent = preprocessContent(originalContent);

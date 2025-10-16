@@ -2,13 +2,14 @@
 
 import type { UIMessage } from 'ai';
 import { useState, useEffect, useMemo } from 'react';
-// Auth removed - no sessions needed
-// import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { CoinsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { chatModels } from '@/lib/ai/models';
+import { calculateCost, getModelId } from '@/lib/costs';
+import { AgentType, getAgentDisplayName as getAgentDisplay, getAgentModelId } from '@/lib/ai/agents';
 
 interface CostData {
   messageId: string;
@@ -21,7 +22,7 @@ interface CostData {
   agentName?: string;
 }
 
-// Check if debug mode is enabled
+// Debug logging can be enabled via env variable
 const isDebugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true';
 
 export function MessageCost({
@@ -31,8 +32,7 @@ export function MessageCost({
   message: UIMessage;
   shouldFetch?: boolean;
 }) {
-  // Auth removed - no sessions needed
-  const session = null;
+  const { data: session } = useSession();
   const [costData, setCostData] = useState<CostData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,66 +41,97 @@ export function MessageCost({
   const models = useMemo(() => chatModels(t), [t]);
 
   useEffect(() => {
-    let isCancelled = false;
+    // Try to get token data from message or metadata
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let agentType = AgentType.GENERAL_AGENT; // Use enum value as default
+    let providedModelId = '';
+    let cost = 0;
+    let formattedCost = '';
 
-    const fetchCost = async () => {
-      // Set initial state for the fetch attempt.
-      setIsLoading(true);
-      setError(null);
+    // Check direct message properties first
+    if ((message as any).inputTokens !== undefined && (message as any).outputTokens !== undefined) {
+      inputTokens = (message as any).inputTokens || 0;
+      outputTokens = (message as any).outputTokens || 0;
+      agentType = (message as any).agentType || AgentType.GENERAL_AGENT;
+      providedModelId = (message as any).modelId || '';
+      cost = (message as any).cost;
+      formattedCost = (message as any).formattedCost;
+    }
+    
+    // Check metadata
+    else if ((message as any).metadata) {
+      const metadata = (message as any).metadata;
+      inputTokens = metadata.inputTokens || 0;
+      outputTokens = metadata.outputTokens || 0;
+      agentType = metadata.agentType || AgentType.GENERAL_AGENT;
+      providedModelId = metadata.modelId || '';
+      cost = metadata.cost;
+      formattedCost = metadata.formattedCost;
+    }
+    
+    // Skip if no token data
+    if (inputTokens === 0 && outputTokens === 0) {
+      setCostData(null);
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        const response = await fetch(
-          `/api/message-cost?messageId=${message.id}`,
-        );
+    console.log("**** cost " + cost)
+    
+    // If cost wasn't provided, calculate it
+    if (!cost || cost === 0) {
+      const modelId = getModelId(agentType);
+      const calculatedCost = calculateCost(modelId, inputTokens, outputTokens);
+      console.log('***** agent', agentType, inputTokens, outputTokens);
+      console.log(agentType, modelId);
+      cost = calculatedCost || 0;
+      formattedCost = `$${parseFloat(cost.toFixed(4))}`;
+    }
+    
+    // If formatted cost wasn't provided, format it
+    if (!formattedCost) {
+      formattedCost = `$${parseFloat(cost.toFixed(4))}`;
+    }
+    
+    setCostData({
+      messageId: message.id,
+      modelId: providedModelId || getModelId(agentType),
+      inputTokens: inputTokens,
+      outputTokens: outputTokens,
+      cost: cost,
+      formattedCost: formattedCost,
+      agentType: agentType,
+      agentName: (message as any).agentName || (message as any).metadata?.agentName
+    });
+    setIsLoading(false);
+  }, [message]); // Simplified dependencies
 
-        if (!response.ok) {
-          // Treat any non-successful response (e.g., 404, 500) as a final error.
-
-          // If 404 gracefully handle, not found yet.
-
-          if (response.status === 404) {
-            setIsLoading(false);
-            return;
-          }
-
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        const data: CostData = await response.json();
-        setCostData(data);
-      } catch (err) {
-        if (!isCancelled) {
-          console.error(`Failed to fetch cost for message ${message.id}:`, err);
-          setError(err instanceof Error ? err.message : 'Failed to fetch cost');
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchCost();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [shouldFetch, message.id]); // Added message.id as dependency
+  // Debug logging
+  if (isDebugMode && !costData) {
+    console.log('[MessageCost] No cost data for message:', message.id);
+  }
 
   if (!costData) {
     return null;
   }
 
-  if (error || !costData || costData.cost === 0) {
+  if (error || !costData) {
     return null;
   }
 
-  // Get the user-friendly agent name from chatModels
+  // Get the user-friendly agent name
   const getAgentDisplayName = (agentType?: string) => {
     if (!agentType) return '';
-
-    const model = models.find((m) => m.id === agentType);
-    return model?.name || agentType;
+    
+    // Try to get display name from agent config
+    try {
+      return getAgentDisplay(agentType as AgentType);
+    } catch {
+      // Fall back to models array
+      const model = models.find((m) => m.id === agentType);
+      return model?.name || agentType;
+    }
   };
 
   // If data was successfully fetched on the first try, display the cost.

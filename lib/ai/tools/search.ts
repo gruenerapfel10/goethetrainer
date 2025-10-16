@@ -1,53 +1,94 @@
-import type { UIMessageStreamWriter } from 'ai';
-import { z } from 'zod/v3';
-import type { Session } from '@/types/next-auth';
-import type FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
+import { z } from 'zod';
+import type { Session } from 'next-auth';
+import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
+import type { SearchResponse } from '@/lib/firecrawl/firecrawl-types';
 
 interface SearchProps {
-  session: Session;
-  dataStream: UIMessageStreamWriter;
-  app: FirecrawlApp;
-  onTokensUsed?: (tokens: number) => void;
+  // Props removed - will be provided at execution time
 }
 
-export const search = ({
-  session,
-  dataStream,
-  app,
-  onTokensUsed,
-}: SearchProps) => {
+// Initialize FirecrawlApp instance
+const getFirecrawlApp = () => {
+  const firecrawlUrl = process.env.FIRECRAWL_URL || 'http://localhost:3002';
+  return new FirecrawlApp(firecrawlUrl);
+};
+
+export const search = () => {
+  const app = getFirecrawlApp();
   return {
-    description:
-      "REQUIRED FIRST STEP: Search for web pages related to the user's query. You MUST use this tool first unless the user provides a URL.",
+    description: `Search for web pages related to the user's query. This tool can only be used ONCE per request. Provides comprehensive results for analysis without requiring additional searches or scraping. AFTERWARDS MUST USE EXTRACT TOOL TO EXTRACT SOURCES.`,
+
     inputSchema: z.object({
-      query: z.string().describe('Search query to find relevant web pages'),
+      query: z
+        .string()
+        .describe(
+          'Comprehensive search query to find relevant web pages - make it detailed to get complete information in one search',
+        ),
       maxResults: z
         .number()
+        .min(1)
+        .max(10)
         .optional()
-        .describe('Maximum number of results to return (default 10)'),
+        .describe('Maximum number of results to return (1-10, default 10)'),
     }),
-    execute: async ({ query, maxResults = 10 }: any) => {
-      // Log that the search tool is being called
-      try {
-        const searchResult = await app.search(query, {
-          limit: 10,
-        });
 
-        if (!searchResult.success) {
+    execute: async ({
+      query,
+      maxResults = 10,
+    }: {
+      query: string;
+      maxResults?: number;
+    }) => {
+      try {
+        const normalizedQuery = query.trim();
+        const normalizedMaxResults = Math.max(1, Math.min(maxResults, 10));
+
+        if (!normalizedQuery) {
           return {
-            error: `Search failed: ${searchResult.error}`,
             success: false,
+            error: 'Search query cannot be empty',
           };
         }
 
+        const searchResult = await app.search(normalizedQuery, {
+          limit: normalizedMaxResults,
+        });
+
+        if (!searchResult.success) {
+          console.error(`[SEARCH] Failed: ${searchResult.error}`);
+          return {
+            success: false,
+            error: `Search failed: ${searchResult.error}`,
+          };
+        }
+
+        console.log("*** result");
+        console.log(searchResult);
+
+        // Consistent processing for stable token usage
+        const processedData = Array.isArray(searchResult.data)
+          ? searchResult.data.slice(0, normalizedMaxResults).map((result) => ({
+              title: (result as any).title?.slice(0, 180) || 'Untitled',
+              url: (result as any).url || '',
+              description:
+                (result as any).description?.slice(0, 280) ||
+                (result as any).snippet?.slice(0, 280) ||
+                'No description available',
+            }))
+          : searchResult.data;
+
         return {
-          data: searchResult.data,
+          data: processedData,
           success: true,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        console.error(`[SEARCH] Error: ${errorMessage}`);
+
         return {
-          error: `Search failed: ${error.message}`,
           success: false,
+          error: `Search failed: ${errorMessage}`,
         };
       }
     },

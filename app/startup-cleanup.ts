@@ -4,12 +4,10 @@ export default async function StartupCleanup() {
   const startTime = Date.now();
 
   try {
-    console.log('🚀 [StartupCleanup] Starting stale operations cleanup...');
 
     await cleanupStaleOperations();
 
     const duration = Date.now() - startTime;
-    console.log(`✅ [StartupCleanup] Cleanup completed successfully in ${duration}ms`);
 
   } catch (error) {
     const duration = Date.now() - startTime;

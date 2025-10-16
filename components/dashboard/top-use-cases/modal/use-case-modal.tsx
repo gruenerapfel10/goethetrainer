@@ -78,17 +78,7 @@ export function UseCaseModal({
   const t = useTranslations('dashboard.topUseCases.modal.useCase');
 
   useEffect((): void => {
-    console.log('[UseCaseModal] Effect triggered:', {
-      isOpen,
-      useCase,
-      showFullChat,
-    });
     if (isOpen && useCase) {
-      console.log(`[UseCaseModal] UseCase details:`, {
-        id: useCase.id,
-        chatId: useCase.chatId,
-        title: useCase.title,
-      });
 
       // Fetch use case messages when opening
       fetchUseCaseMessages(useCase.id);
@@ -101,7 +91,6 @@ export function UseCaseModal({
 
     // Reset state when modal closes
     if (!isOpen) {
-      console.log('[UseCaseModal] Modal closed, resetting state');
       resetState();
     }
   }, [
@@ -114,10 +103,6 @@ export function UseCaseModal({
   ]);
 
   const handleShowFullChat = (): void => {
-    console.log('[UseCaseModal] Show full chat clicked:', {
-      chatId: useCase?.chatId,
-      currentShowFullChat: showFullChat,
-    });
     if (useCase?.chatId) {
       onShowFullChat(useCase);
       toggleFullChat(useCase);
@@ -125,7 +110,6 @@ export function UseCaseModal({
   };
 
   const renderMessageContent = (content: any): JSX.Element => {
-    console.log('content', content);
     if (Array.isArray(content)) {
       return (
         <div className="space-y-2">
@@ -161,7 +145,7 @@ export function UseCaseModal({
       const args = content.args || {};
 
       // Special handling for search results
-      if (toolName === 'search' && args.query) {
+      if (toolName === 'web_search' && args.query) {
         return (
           <div className="text-sm space-y-2">
             <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/5 border border-primary/10">
@@ -498,7 +482,6 @@ export function UseCaseModal({
   };
 
   if (!useCase) {
-    console.log('[UseCaseModal] No use case provided');
     return null;
   }
 

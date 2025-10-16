@@ -226,6 +226,30 @@ export const vote = pgTable(
 );
 export type Vote = InferSelectModel<typeof vote>;
 
+// Document permission levels
+export const documentPermissionEnum = pgEnum('document_permission_enum', [
+  'owner',      // Full control, can delete, transfer ownership
+  'admin',      // Can edit, manage permissions, cannot delete
+  'write',      // Can edit content and create versions
+  'comment',    // Can view and comment only
+  'read',       // View only
+]);
+
+// Document visibility
+export const documentVisibilityEnum = pgEnum('document_visibility_enum', [
+  'private',    // Only owner and explicitly granted users
+  'team',       // All team members
+  'organization', // All org members
+  'public',     // Anyone with link
+]);
+
+// Document lock status
+export const documentLockStatusEnum = pgEnum('document_lock_status_enum', [
+  'unlocked',   // No lock
+  'locked',     // Locked for editing by someone
+  'auto_locked', // Auto-locked due to inactivity
+]);
+
 // Documents
 export const document = pgTable(
   'Document',
@@ -234,18 +258,164 @@ export const document = pgTable(
     createdAt: timestamp('createdAt').notNull(),
     title: text('title').notNull(),
     content: text('content').notNull(),
-    kind: varchar('kind', { enum: ['text', 'code', 'image', 'sheet'] })
+    kind: varchar('kind', { enum: ['text', 'code', 'image', 'sheet', 'webpage', 'pdf', 'docx', 'xlsx', 'csv'] })
       .notNull()
       .default('text'),
+    version: integer('version').notNull().default(1),
+    author: varchar('author', { enum: ['user', 'ai'] }).notNull().default('ai'),
+    isWorkingVersion: boolean('isWorkingVersion').notNull().default(true),
+    forkedFromVersion: integer('forkedFromVersion'),
+    
+    createdBy: uuid('createdBy').references(() => user.id),
+    lastEditedBy: uuid('lastEditedBy').references(() => user.id),
+    lastEditedAt: timestamp('lastEditedAt'),
+    
+    ownerId: uuid('ownerId').references(() => user.id),
+    visibility: documentVisibilityEnum('visibility').notNull().default('private'),
+    
+    lockStatus: documentLockStatusEnum('lock_status').notNull().default('unlocked'),
+    lockedBy: uuid('locked_by').references(() => user.id),
+    lockedAt: timestamp('locked_at'),
+    lockExpiresAt: timestamp('lock_expires_at'),
+    
+    isArchived: boolean('is_archived').notNull().default(false),
+    archivedAt: timestamp('archived_at'),
+    archivedBy: uuid('archived_by').references(() => user.id),
+    
+    metadata: json('metadata'),
+    
     userId: uuid('userId')
       .notNull()
       .references(() => user.id),
+    chatId: uuid('chatId').references(() => chat.id),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.id, table.createdAt] }),
+    versionIdx: index('document_version_idx').on(table.id, table.version),
+    idIdx: index('document_id_idx').on(table.id),
+    workingVersionIdx: index('document_working_version_idx').on(table.id, table.isWorkingVersion),
+    createdByIdx: index('document_created_by_idx').on(table.createdBy),
+    ownerIdx: index('document_owner_idx').on(table.ownerId),
+    lockedByIdx: index('document_locked_by_idx').on(table.lockedBy),
+    archivedIdx: index('document_archived_idx').on(table.isArchived),
   }),
 );
 export type Document = InferSelectModel<typeof document>;
+
+// Document Permissions - Fine-grained access control
+export const documentPermissions = pgTable('document_permissions', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  permission: documentPermissionEnum('permission').notNull(),
+  grantedBy: uuid('granted_by').notNull().references(() => user.id),
+  grantedAt: timestamp('granted_at').notNull().defaultNow(),
+  expiresAt: timestamp('expires_at'),
+  canShare: boolean('can_share').notNull().default(false),
+}, (table) => ({
+  documentUserIdx: uniqueIndex('document_permissions_doc_user_idx').on(table.documentId, table.userId),
+  userIdx: index('document_permissions_user_idx').on(table.userId),
+}));
+export type DocumentPermission = InferSelectModel<typeof documentPermissions>;
+
+// Document Activity - Detailed audit log (Google Docs style)
+export const documentActivity = pgTable('document_activity', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  version: integer('version'),
+  activityType: varchar('activity_type', { length: 64 }).notNull(),
+  userId: uuid('user_id').references(() => user.id),
+  isAiAction: boolean('is_ai_action').notNull().default(false),
+  timestamp: timestamp('timestamp').notNull().defaultNow(),
+  details: json('details'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+}, (table) => ({
+  documentIdx: index('document_activity_doc_idx').on(table.documentId),
+  userIdx: index('document_activity_user_idx').on(table.userId),
+  timestampIdx: index('document_activity_timestamp_idx').on(table.timestamp),
+  typeIdx: index('document_activity_type_idx').on(table.activityType),
+}));
+export type DocumentActivity = InferSelectModel<typeof documentActivity>;
+
+// Document Comments - Threaded comments like Google Docs
+export const documentComments = pgTable('document_comments', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  version: integer('version'),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at'),
+  isResolved: boolean('is_resolved').notNull().default(false),
+  resolvedBy: uuid('resolved_by').references(() => user.id),
+  resolvedAt: timestamp('resolved_at'),
+  parentCommentId: uuid('parent_comment_id'),
+  rangeStart: integer('range_start'),
+  rangeEnd: integer('range_end'),
+  quotedText: text('quoted_text'),
+}, (table) => ({
+  documentIdx: index('document_comments_doc_idx').on(table.documentId),
+  userIdx: index('document_comments_user_idx').on(table.userId),
+  parentIdx: index('document_comments_parent_idx').on(table.parentCommentId),
+  resolvedIdx: index('document_comments_resolved_idx').on(table.isResolved),
+}));
+export type DocumentComment = InferSelectModel<typeof documentComments>;
+
+// Document Reactions - Slack-style emoji reactions
+export const documentReactions = pgTable('document_reactions', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id'),
+  commentId: uuid('comment_id').references(() => documentComments.id),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  emoji: varchar('emoji', { length: 32 }).notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  userIdx: index('document_reactions_user_idx').on(table.userId),
+}));
+export type DocumentReaction = InferSelectModel<typeof documentReactions>;
+
+// Document Collaborators - Real-time presence (who's viewing/editing)
+export const documentCollaborators = pgTable('document_collaborators', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  status: varchar('status', { enum: ['viewing', 'editing', 'idle'] }).notNull(),
+  cursorPosition: integer('cursor_position'),
+  selection: json('selection'),
+  lastSeenAt: timestamp('last_seen_at').notNull().defaultNow(),
+  sessionId: varchar('session_id', { length: 64 }).notNull(),
+}, (table) => ({
+  documentIdx: index('document_collaborators_doc_idx').on(table.documentId),
+  userIdx: index('document_collaborators_user_idx').on(table.userId),
+  lastSeenIdx: index('document_collaborators_last_seen_idx').on(table.lastSeenAt),
+}));
+export type DocumentCollaborator = InferSelectModel<typeof documentCollaborators>;
+
+// Document Tags
+export const documentTags = pgTable('document_tags', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  tag: varchar('tag', { length: 64 }).notNull(),
+  createdBy: uuid('created_by').notNull().references(() => user.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  documentIdx: index('document_tags_doc_idx').on(table.documentId),
+  tagIdx: index('document_tags_tag_idx').on(table.tag),
+}));
+export type DocumentTag = InferSelectModel<typeof documentTags>;
+
+// Document Favorites/Stars
+export const documentFavorites = pgTable('document_favorites', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  documentId: uuid('document_id').notNull(),
+  userId: uuid('user_id').notNull().references(() => user.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  documentIdx: index('document_favorites_doc_idx').on(table.documentId),
+  userIdx: index('document_favorites_user_idx').on(table.userId),
+}));
+export type DocumentFavorite = InferSelectModel<typeof documentFavorites>;
 
 // Suggestions
 export const suggestion = pgTable(
@@ -303,6 +473,3 @@ export const systemPrompts = pgTable('system_prompts', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 export type SystemPrompt = InferSelectModel<typeof systemPrompts>;
-
-// Export all application-related schemas
-export * from './schema-applications';

@@ -116,14 +116,12 @@
     }
   },
   "chat": {
-    "title": "MUA",
-    "description": "Masinis Universitetų Prašymai",
-    "brand": "MUA",
+    "title": "Moterra Chat",
+    "description": "Moterra Chat",
+    "brand": "Moterra",
     "newChat": "Naujas pokalbis",
-    "search": "Paieška",
-    "searchChats": "Paieška",
-    "noSearchResults": "Paieškos rezultatų nėra",
-    "recentChats": "Paskutiniai pokalbiai",
+    "searchChats": "Ieškoti pokalbių",
+    "noSearchResults": "Pokalbių nerasta",
     "adminPortal": "Admin'o portalas",
     "enableNotifications": "Įjungti pranešimus",
     "disableNotifications": "Išjungti pranešimus",
@@ -160,6 +158,8 @@
     "rename": "Pervadinti",
     "pin": "Prisegti pokalbį",
     "unpin": "Atsegti pokalbį",
+    "pinnedChats": "Prisegti",
+    "recentChats": "Naujausi",
     "renameChat": "Pervadinti pokalbį",
     "enterNewTitle": "Įveskite naują pavadinimą",
     "save": "Išsaugoti",
@@ -220,7 +220,24 @@
     },
     "titleLogo": "Pokalbių valdymas"
   },
+  "assistantFeaturesModal": {
+    "modelCapabilities": "Modelio galimybės",
+    "manageAvailableFeatures": "Tvarkyti galimas funkcijas",
+    "manageAvailableCapabilities": "Tvarkyti galimas galimybes",
+    "description": "Šiam modeliui papildomų nustatymų nėra",
+    "noConfigurableCapabilities": "Šiam agentui nėra konfigūruojamų galimybių",
+    "features": "Funkcijos",
+    "tools": "Įrankiai",
+    "allCapabilitiesDisplayed": "Visos galimybės yra rodomos",
+    "toolNames": {
+      "webSearch": "Interneto Paieška",
+      "deepResearch": "Išplėstinė Paieška",
+      "imageGeneration": "Vaizdo Generavimas",
+      "fileSearch": "Failų Paieška"
+    }
+  },
   "chatManagement": {
+    "sendMessage": "Siųskite pranešimą...",
     "uploadNewLogo": "Įkelti naują logotipą",
     "dragAndDrop": "Vilkite ir numeskite logotipo failą čia",
     "dropFileHere": "Numeskite failą čia",
@@ -241,7 +258,7 @@
     "setLogo": "Pasirinkti logotipą",
     "currentLogo": "Dabartinis logotipas",
     "poweredBy": "Powered by",
-    "brand": "MUA",
+    "brand": "Moterra",
     "preview": "Peržiūra",
     "uploadedLogos": "Įkelti logotipai",
     "resetToDefault": "Iš naujo nustatyti logotipą",
@@ -460,126 +477,7 @@
     "gilestaMode": "Gilesta",
     "blueMode": "Mėlynas",
     "mode": "rėžimą",
-    "colorTheme": "Spalvų rėžimas",
-    "systemMode": "Sistema",
-    "starredUniversities": "Mėgstami universitetai"
-  },
-  "keyboard": {
-    "shortcut": "⌘K"
-  },
-  "navigation": {
-    "dashboard": "Valdymo skydas",
-    "universities": "Universitetai",
-    "profile": "Profilis"
-  },
-  "dashboard": {
-    "title": "Valdymo skydas",
-    "overview": "Apžvalga",
-    "analytics": "Analitika", 
-    "reports": "Ataskaitos",
-    "notifications": "Pranešimai",
-    "universityApplications": "Universitetų prašymai",
-    "trackApplications": "Sekite savo prašymus į geriausius 500 pasaulio universitetų",
-    "viewAllUniversities": "Peržiūrėti visus universitetus",
-    "totalUniversities": "Iš viso universitetų",
-    "applied": "Pateikta",
-    "pending": "Laukiama", 
-    "offers": "Pasiūlymai",
-    "rejections": "Atmetimai",
-    "totalRevenue": "Bendros pajamos",
-    "subscriptions": "Prenumeratos",
-    "sales": "Pardavimai",
-    "activeNow": "Aktyvūs dabar",
-    "fromLastMonth": "nuo praėjusio mėnesio",
-    "sinceLastHour": "nuo praėjusios valandos",
-    "recentSales": "Paskutiniai pardavimai",
-    "salesThisMonth": "Šį mėnesį atlikote 265 pardavimus."
-  },
-  "universities": {
-    "title": "Universitetai",
-    "subtitle": "Naršykite ir teikite prašymus į geriausius 500 pasaulio universitetų",
-    "loading": "Kraunami universitetai...",
-    "searchPlaceholder": "Ieškoti universitetų ar šalių...",
-    "filterByCountry": "Filtruoti pagal šalį",
-    "filterByDegree": "Filtruoti pagal specialybę", 
-    "allCountries": "Visos šalys",
-    "allDegrees": "Visos specialybės",
-    "showingResults": "Rodoma {current} iš {total} universitetų",
-    "rank": "Reitingas",
-    "university": "Universitetas",
-    "country": "Šalis",
-    "status": "Būsena",
-    "deadline": "Terminas",
-    "employerRep": "Darbdavių reputacija",
-    "academicRep": "Akademinė reputacija",
-    "actions": "Veiksmai",
-    "viewDetails": "Peržiūrėti detales",
-    "notApplied": "Nepateikta",
-    "applied": "Pateikta",
-    "accepted": "Priimta",
-    "rejected": "Atmesta",
-    "offersSelectedDegree": "✓ Siūlo pasirinktą specialybę",
-    "degreeNotAvailable": "× Specialybė nesiūloma"
-  },
-  "university": {
-    "loading": "Kraunami universiteto duomenys...",
-    "notFound": "Universitetas nerastas",
-    "backToUniversities": "Grįžti į universitetus",
-    "applyNow": "Teikti prašymą",
-    "save": "Išsaugoti",
-    "globalRank": "Pasaulinis reitingas",
-    "academicRequirements": "Akademiniai reikalavimai",
-    "gpaMinimum": "Minimalus GPA",
-    "class12Percentage": "12 klasės %",
-    "aLevels": "A lygiai",
-    "diploma": "Diplomas",
-    "satAverage": "SAT vidurkis",
-    "actAverage": "ACT vidurkis",
-    "ibScore": "IB balas",
-    "stateExam": "Valstybinis egzaminas",
-    "financial": "Finansai",
-    "tuition2025": "Mokestis 2025",
-    "aidAvailable": "Galima pagalba",
-    "noFinancialData": "Nėra finansinių duomenų",
-    "otherRankings": "Kiti reitingai",
-    "employer": "Darbdaviai",
-    "academic": "Akademinis",
-    "application": "Prašymas",
-    "acceptanceRate": "Priėmimo lygis",
-    "recLetters": "Rekomendaciniai laiškai",
-    "interview": "Pokalbis",
-    "essaysRequired": "Reikalingi esejai",
-    "language": "Kalba",
-    "ieltsMinimum": "IELTS minimumas",
-    "toeflMinimum": "TOEFL minimumas",
-    "duolingo": "Duolingo",
-    "notRequired": "Nereikalingas",
-    "forUSStudents": "JAV studentams",
-    "checkWebsite": "Tikrinkite universiteto svetainę",
-    "forRequirements": "Reikalavimams",
-    "importantDeadlines": "Svarbūs terminai",
-    "earlyAction": "Ankstyvas veiksmas",
-    "regularDecision": "Įprastas sprendimas",
-    "international": "Tarptautinis",
-    "scholarshipOpportunities": "Stipendijų galimybės",
-    "needBasedAid": "Pagalba pagal poreikius",
-    "average": "Vidurkis",
-    "receiving": "Gaunantys",
-    "meritBased": "Pagal nuopelnus",
-    "available": "Galima",
-    "workStudy": "Darbo studijos",
-    "hoursPerWeek": "Valandos per savaitę",
-    "hourlyWage": "Valandinis užmokestis",
-    "researchOpportunities": "Tyrimų galimybės",
-    "externalScholarships": "Išorės stipendijos",
-    "foundationsAvailable": "fondai prieinami",
-    "visaRequirements": "Vizos reikalavimai",
-    "visaType": "Vizos tipas",
-    "applicationFee": "Prašymo mokestis",
-    "financialProof": "Finansinis įrodymas",
-    "successRate": "Sėkmės rodiklis",
-    "saving": "Išsaugoma...",
-    "saved": "Išsaugota"
+    "colorTheme": "Spalvų rėžimas"
   },
   "errors": {
     "fileListRefresh": "Nepavyko atnaujinti failų sąrašo",
@@ -594,6 +492,8 @@
     "userDelete": "Nepavyko ištrinti vartotojo",
     "fillAllFields": "Užpildykite visus laukus",
     "noFilesSelected": "Nepasirinkti failai",
+    "toolConflict": "Funkcijų Konfliktas",
+    "toolConflictDescription": "{tool} negali būti naudojama su {conflicts}. {conflicts} buvo išjungta.",
     "ingestionStatusFailed": "Nepavyko gauti įkėlimo būsenos",
     "uploadFailed": "Įkėlimas nepavyko",
     "deleteFailed": "Ištrynimas nepavyko",
@@ -646,8 +546,8 @@
     "sharePointUrlsFetched": "Gauta {count} SharePoint URL",
     "sharePointSyncNoChanges": "Nėra naujų failų sinchronizavimui iš SharePoint",
     "resyncStarted": "Pakartotinis sinchronizavimas pradėtas",
-    "promptSaved": "Sistemos pranešimas sėkmingai išsaugotas",
-    "promptReset": "Sistemos pranešimas atstatytas į numatytąjį",
+    "promptSaved": "Pranešimas {model} sėkmingai atnaujintas",
+    "promptReset": "Pranešimas {model} atstatytas į numatytąjį",
     "operationComplete": "Operacija sėkmingai baigta"
   },
   "warnings": {
@@ -869,7 +769,7 @@
       "invalidData": "Nepavyko patvirtinti jūsų duomenų!"
     }
   },
-  "dashboardAdmin": {
+  "dashboard": {
      "sharepointFailedSearches": "SharePoint nepavykusios paieškos",
     "noFailedSearches": "Nerasta nepavykusių SharePoint paieškų",
         "date": "Data",
@@ -1388,8 +1288,7 @@
   "toggle": "Perjungti",
   "locales": {
     "en": "Anglų",
-    "lt": "Lietuvių",
-    "ru": "Rusų"
+    "lt": "Lietuvių"
   },
   "suggestions": {
     "vacation": {
@@ -1448,6 +1347,94 @@
       "inputTokens": "Įvesties žetonai",
       "outputTokens": "Išvesties žetonai",
       "totalCost": "Bendra kaina"
+    }
+  },
+  "artifacts": {
+    "version": "Versija",
+    "workingVersion": "darbo versija",
+    "currentWorkingVersion": "Dabartinė Darbo Versija",
+    "setWorkingVersion": "Nustatyti Darbo Versiją",
+    "streaming": "Srautas...",
+    "download": "Atsisiųsti",
+    "copyContent": "Kopijuoti turinį",
+    "copiedToClipboard": "Nukopijuota į iškarpinę!",
+    "copyFailed": "Nepavyko nukopijuoti į iškarpinę",
+    "downloaded": "Atsisiųsta!",
+    "switchedToVersion": "perjungta į versiją {version}",
+    "export": "Eksportuoti"
+  },
+  "tools": {
+    "sharepoint_retrieve": {
+      "displayName": "SharePoint Paieška",
+      "description": "Gauna atitinkamus dokumentus iš SharePoint žinių bazių"
+    },
+    "text2sql": {
+      "displayName": "Tekstas į SQL",
+      "description": "Generuoti SQL iš natūralios kalbos"
+    },
+    "run_sql": {
+      "displayName": "Vykdyti SQL",
+      "description": "Vykdyti SQL užklausas"
+    },
+    "chart": {
+      "displayName": "Diagramų Generavimas",
+      "description": "Kuria gražias, interaktyvias diagramas iš duomenų"
+    },
+    "search": {
+      "displayName": "Interneto Paieška",
+      "description": "Ieškoti internete dabartinės informacijos"
+    },
+    "extract": {
+      "displayName": "Išgauti Duomenis",
+      "description": "Išgauti konkrečią informaciją iš interneto puslapių"
+    },
+    "scrape": {
+      "displayName": "Interneto Nuskaitymas",
+      "description": "Nuskaityti duomenis iš svetainių"
+    },
+    "deep_research": {
+      "displayName": "Išsamus Tyrimas",
+      "description": "Atlikti išsamų tyrimą su keletu paieškų"
+    },
+    "createDocument": {
+      "displayName": "Sukurti Dokumentą",
+      "description": "Sukurti naujus dokumentus su formatuotu turiniu"
+    },
+    "updateDocument": {
+      "displayName": "Atnaujinti Dokumentą",
+      "description": "Atnaujinti esamus dokumentus"
+    },
+    "processFile": {
+      "displayName": "Apdoroti Failą",
+      "description": "Apdoroti ir analizuoti failo turinį"
+    },
+    "getWeather": {
+      "displayName": "Oras",
+      "description": "Gauti dabartinę orų informaciją"
+    },
+    "requestSuggestions": {
+      "displayName": "Pasiūlymai",
+      "description": "Gauti AI pasiūlymus"
+    },
+    "generateImage": {
+      "displayName": "Generuoti Vaizdą",
+      "description": "Kurti vaizdus iš teksto aprašymų"
+    },
+    "editImage": {
+      "displayName": "Redaguoti Vaizdą",
+      "description": "Redaguoti ir modifikuoti esamus vaizdus"
+    },
+    "reason": {
+      "displayName": "Samprotavimas",
+      "description": "Atlikti loginį samprotavimą"
+    },
+    "reason_search": {
+      "displayName": "Samprotavimo Paieška",
+      "description": "Ieškoti su samprotavimo galimybėmis"
+    },
+    "reasoning": {
+      "displayName": "Išplėstinis Samprotavimas",
+      "description": "Atlikti išplėstinį loginį samprotavimą"
     }
   }
 }

@@ -1,0 +1,1 @@
+export { ImageGenerationMain as ImageGeneration } from './ImageGenerationMain';

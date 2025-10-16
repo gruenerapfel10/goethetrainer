@@ -1,10 +1,10 @@
-import { z } from 'zod/v3';
+import { z } from 'zod';
 import type {DBMessage} from "@/lib/db/schema";
 import { jsonrepair } from 'jsonrepair'
 
 // ----- Constants -----
 
-export const AllowedAgentTypes = ['assistant','general-bedrock-agent', 'sharepoint-agent', 'sharepoint-agent-v2', 'websearch-agent', 'text2sql-agent'] as const;
+export const AllowedAgentTypes = ['assistant','general-bedrock-agent', 'sharepoint-agent', 'websearch-agent', 'text2sql-agent'] as const;
 export type AgentType = typeof AllowedAgentTypes[number];
 
 // ----- Core Data Types -----

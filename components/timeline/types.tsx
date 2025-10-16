@@ -2,27 +2,6 @@
 
 import type { ReactNode } from "react";
 
-/**
- * Animation trigger function type
- */
-export type AnimationTrigger = () => void;
-
-/**
- * Animation state type
- */
-export type AnimationState = 'idle' | 'animating' | 'complete';
-
-/**
- * Animation orchestrator interface
- */
-export interface AnimationOrchestrator {
-  registerVerticalConnector: (id: string, trigger: AnimationTrigger) => void;
-  registerHorizontalConnector: (id: string, trigger: AnimationTrigger) => void;
-  startAnimation: (parentId?: string) => void;
-  onVerticalComplete: (id: string) => void;
-  onHorizontalComplete: (id: string) => void;
-  registerChildren: (parentId: string, childIds: string[]) => void;
-}
 
 /**
  * Standardized TimelineStep interface
@@ -170,7 +149,7 @@ export type Text2SqlStreamUpdate = {
  * Props for the GeneralTimeline component
  */
 export interface GeneralTimelineProps {
-  steps: TimelineStep[];
+  content: ReactNode;
   timelineId?: string;
 }
 
@@ -217,3 +196,13 @@ export interface StatusFlags {
   isSkipped: boolean;
   isPending: boolean;
 }
+
+/**
+ * Animation trigger type for timeline animations
+ */
+export type AnimationTrigger = () => void;
+
+/**
+ * Animation state for timeline animations
+ */
+export type AnimationState = 'idle' | 'animating' | 'complete';

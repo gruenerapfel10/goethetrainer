@@ -3,12 +3,11 @@
 import { generateText, type UIMessage } from 'ai';
 import { cookies } from 'next/headers';
 
-// Using Firebase instead of PostgreSQL
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getMessageById,
   updateChatVisiblityById,
-} from '@/lib/firebase/chat-service';
+} from '@/lib/db/queries';
 import type { VisibilityType } from '@/components/visibility-selector';
 import { myProvider } from '@/lib/ai/models';
 
@@ -36,27 +35,24 @@ export async function generateTitleFromUserMessage({
     prompt: JSON.stringify(message),
   });
 
-  return { title, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens };
+  return { title, inputTokens: usage.promptTokens, outputTokens: usage.completionTokens };
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
   const messages = await getMessageById({ id });
 
-  // Return early if no message is found (database operations are stubbed)
-  if (!messages) {
-    console.warn(`No message found with id: ${id} (database operations disabled)`);
+  // Return early if no message is found
+  if (!messages || messages.length === 0) {
+    console.warn(`No message found with id: ${id}`);
     return;
   }
 
-  const message = Array.isArray(messages) ? messages[0] : messages;
+  const message = messages[0]; // Get the first message since we know it exists
 
-  // Only proceed if message has the required properties (won't happen with stub)
-  if (message && typeof message === 'object' && 'chatId' in message && 'createdAt' in message) {
-    await deleteMessagesByChatIdAfterTimestamp({
-      chatId: (message as any).chatId,
-      timestamp: (message as any).createdAt,
-    });
-  }
+  await deleteMessagesByChatIdAfterTimestamp({
+    chatId: message.chatId,
+    timestamp: message.createdAt,
+  });
 }
 
 export async function updateChatVisibility({

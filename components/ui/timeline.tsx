@@ -3,13 +3,13 @@ import { cn } from "@/lib/utils"
 
 // Timeline container
 const Timeline = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("relative", className)} {...props} />,
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("timeline-container relative flex flex-col", className)} {...props} />,
 )
 Timeline.displayName = "Timeline"
 
-// Timeline item
+// Timeline item with pure CSS connector system
 const TimelineItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("relative pl-8", className)} {...props} />,
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("timeline-item relative pl-8", className)} {...props} />,
 )
 TimelineItem.displayName = "TimelineItem"
 

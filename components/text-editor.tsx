@@ -196,7 +196,7 @@ function PureEditor({
 
   return (
     <div
-      className="relative prose dark:prose-invert gilesta:prose-invert"
+      className="relative prose dark:prose-invert gilesta:prose-invert p-6"
       ref={containerRef}
     />
   );

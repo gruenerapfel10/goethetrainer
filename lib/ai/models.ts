@@ -1,123 +1,76 @@
-import {
-  customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-} from 'ai';
-import { togetherai } from '@ai-sdk/togetherai';
-import { google } from '@ai-sdk/google';
-import { xai } from '@ai-sdk/xai';
-import { customMiddleware } from './custom-middleware';
-
+import { customProvider } from 'ai';
+import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock';
 import { openai } from '@ai-sdk/openai';
+import { xai } from '@ai-sdk/xai';
+import { AgentType } from '@/lib/ai/agents';
+import { ModelId } from '@/lib/ai/model-registry';
 
-export const customModel = (
-  apiIdentifier: string,
-  forReasoning = false,
-) => {
-  // Handle Gemini models
-  if (apiIdentifier.includes('gemini')) {
-    return wrapLanguageModel({
-      model: google(apiIdentifier),
-      middleware: customMiddleware,
-    });
+const bedrockProvider = createAmazonBedrock({
+  region: 'eu-central-1',
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+});
+
+export const customModel = (modelId: ModelId | string) => {
+  if (modelId === ModelId.GROK_4 || modelId === 'grok-4-fast-reasoning') {
+    return xai(modelId);
   }
-
-  // Handle xAI Grok models - no middleware to avoid stream-start issues
-  if (apiIdentifier.includes('grok')) {
-    return xai(apiIdentifier);
-  }
-
-  if (forReasoning) {
-    return wrapLanguageModel({
-      // @ts-ignore
-      model: togetherai(apiIdentifier),
-      middleware: extractReasoningMiddleware({ tagName: 'think' }),
-    });
-  }
-
-  // Default fallback to Gemini 2.5 Flash for any legacy models
-  return wrapLanguageModel({
-    model: google('gemini-2.5-flash'),
-    middleware: customMiddleware,
-  });
+  return bedrockProvider(modelId);
 };
 
 export const myProvider = customProvider({
   languageModels: {
-    // Main Gemini models
-    'gemini-2.5-flash': customModel('gemini-2.5-flash'),
-    'gemini-2.0-flash-latest': customModel('gemini-2.5-flash'), // Map old model to new
-    'gemini-2.5-pro': customModel('gemini-2.5-pro'),
+    'haiku': customModel(ModelId.CLAUDE_HAIKU_3),
+    'artifact-model': customModel(ModelId.GROK_4),
+    'bedrock-sonnet-latest': customModel(ModelId.GROK_4),
+    'document-agent': customModel(ModelId.GROK_4),
     
-    // xAI Grok models
-    'grok-4-fast-non-reasoning': customModel('grok-4-fast-non-reasoning'),
-    'grok-4-fast-reasoning': customModel('grok-4-fast-reasoning'),
-    'grok-4': customModel('grok-4'),
-    'grok-3': customModel('grok-3'),
-    'grok-3-latest': customModel('grok-3-latest'),
-    'grok-beta': customModel('grok-beta'),
-    
-    // Legacy model mappings - now using Gemini
-    'haiku': customModel('gemini-2.5-flash'), // Legacy Bedrock Haiku -> Gemini
-    'bedrock-sonnet-latest': customModel('gemini-2.5-flash'), // Legacy Bedrock Sonnet -> Gemini
-    'artifacts-model': customModel('gemini-2.5-flash'), // Typo variant of artifact-model
-    
-    // Legacy agent mappings - now using Gemini
-    'general-bedrock-agent': customModel('gemini-2.5-flash'),
-    'sharepoint-agent': customModel('gemini-2.5-flash'),
-    'sharepoint-agent-v2': customModel('gemini-2.5-flash'),
-    'document-agent': customModel('gemini-2.5-flash'),
-    'csv-agent': customModel('gemini-2.5-flash'),
-    'csv-agent-v2': customModel('gemini-2.5-flash'),
-    'text2sql-agent': customModel('gemini-2.5-flash'),
-    'artifact-model': customModel('gemini-2.5-flash'),
-    
-    // Reasoning models (keep TogetherAI for now)
-    'chat-model-reasoning': customModel('deepseek-ai/DeepSeek-R1', true),
-    'deepresearch-model-reasoning': customModel(
-      'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
-      true,
-    ),
+    [AgentType.GENERAL_AGENT]: customModel(ModelId.GROK_4),
+    [AgentType.SHAREPOINT_AGENT]: customModel(ModelId.GROK_4),
+    [AgentType.TEXT2SQL_AGENT]: customModel(ModelId.GROK_4),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),
   },
 });
 
-// Define the chat model type
 export interface ChatModel {
   id: string;
   name: string;
   description: string;
-  icon: string; // Icon name to be used in the UI
+  icon: string;
 }
 
-export const chatModels: (t?: any) => Array<ChatModel> = (t?) =>
-  [
-    {
-      id: 'general-bedrock-agent',
-      name: t ? t('agents.standard.label') : 'General Assistant',
-      description: t ? t('agents.standard.description') : 'Powered by Google Gemini 2.5 Flash',
-      icon: 'sparkles', // SparklesIcon for AI/general purpose
-    },
-    {
-      id: 'sharepoint-agent',
-      name: t ? `${t('agents.sharepoint.label')} (v1)` : 'SharePoint Assistant (v1)',
-      description: t ? t('agents.sharepoint.description') : 'Document analysis and search',
-      icon: 'box', // BoxIcon for document storage/knowledge base
-    },
-    {
-      id: 'sharepoint-agent-v2',
-      name: t ? `${t('agents.sharepoint.label')} (v2)` : 'SharePoint Assistant (v2)', 
-      description: t ? `${t('agents.sharepoint.description')} - Enhanced version` : 'Enhanced document analysis and search',
-      icon: 'box', // BoxIcon for document storage/knowledge base
-    },
-    {
-      id: 'text2sql-agent',
-      name: t ? t('agents.text2sql.label') : 'SQL Assistant',
-      description: t ? t('agents.text2sql.description') : 'Natural language to SQL queries',
-      icon: 'lineChart'
-    },
-  ] as const;
+import { getAgentMetadata } from '@/lib/ai/agents';
 
-export const DEFAULT_MODEL_NAME: string = 'general-bedrock-agent';
+export const chatModels: (t?: any) => Array<ChatModel> = (t?) => {
+  const models: ChatModel[] = [];
+  
+  const generalMeta = getAgentMetadata(AgentType.GENERAL_AGENT);
+  models.push({
+    id: AgentType.GENERAL_AGENT,
+    name: (t && generalMeta.displayNameKey) ? t(generalMeta.displayNameKey) : generalMeta.displayName,
+    description: (t && generalMeta.descriptionKey) ? t(generalMeta.descriptionKey) : generalMeta.description,
+    icon: generalMeta.icon,
+  });
+  
+  const sharepointMeta = getAgentMetadata(AgentType.SHAREPOINT_AGENT);
+  models.push({
+    id: AgentType.SHAREPOINT_AGENT,
+    name: (t && sharepointMeta.displayNameKey) ? t(sharepointMeta.displayNameKey) : sharepointMeta.displayName,
+    description: (t && sharepointMeta.descriptionKey) ? t(sharepointMeta.descriptionKey) : sharepointMeta.description,
+    icon: sharepointMeta.icon,
+  });
+  
+  const text2sqlMeta = getAgentMetadata(AgentType.TEXT2SQL_AGENT);
+  models.push({
+    id: AgentType.TEXT2SQL_AGENT,
+    name: (t && text2sqlMeta.displayNameKey) ? t(text2sqlMeta.displayNameKey) : text2sqlMeta.displayName,
+    description: (t && text2sqlMeta.descriptionKey) ? t(text2sqlMeta.descriptionKey) : text2sqlMeta.description,
+    icon: text2sqlMeta.icon,
+  });
+  
+  return models;
+};
+
+export const DEFAULT_MODEL_NAME: string = AgentType.GENERAL_AGENT;

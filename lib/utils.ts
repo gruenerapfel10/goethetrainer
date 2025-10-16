@@ -2,7 +2,6 @@ import type {
   CoreAssistantMessage,
   CoreToolMessage,
   UIMessage,
-  UIMessage,
 } from 'ai';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -10,8 +9,7 @@ import { twMerge } from 'tailwind-merge';
 import type { Document } from '@/lib/db/schema';
 import type { FileSearchResult } from '@/components/chat-header';
 
-import { MODEL_PRICING } from '../types/constants';
-import { getModelId } from './costs';
+import { getModelId, getModelCosts } from './costs';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -172,22 +170,14 @@ export function calculateModelPricingUSD(usageArray: any[]): number {
 
   // Calculate cost for each usage object and sum them up
   const totalCost = usageArray.reduce((sum, usage) => {
-    // Map the model ID using getModelId to handle aliases like 'bedrock-sonnet-latest'
     const actualModelId = getModelId(usage.modelId);
-    let pricing = MODEL_PRICING[actualModelId];
-    
-    // If no pricing found with mapped ID, try the original ID as fallback
-    if (!pricing) {
-      pricing = MODEL_PRICING[usage.modelId];
-    }
+    const costs = getModelCosts(actualModelId);
 
-    if (!pricing) {
+    if (!costs) {
       console.warn(`Pricing not found for modelId: ${usage.modelId} (mapped to ${actualModelId})`);
-      // Return current sum without adding anything for this model
       return sum;
     }
 
-    // Convert tokens to numbers in case they are strings
     const input = Number(usage.inputTokens);
     const output = Number(usage.outputTokens);
 
@@ -195,11 +185,9 @@ export function calculateModelPricingUSD(usageArray: any[]): number {
       throw new Error('Invalid token counts provided');
     }
 
-    // Calculate cost per token type (pricing is per 1 tokens)
-    const inputCost = input * pricing.inputTokenPrice;
-    const outputCost = output * pricing.outputTokenPrice;
+    const inputCost = (input / 1_000_000) * costs.input;
+    const outputCost = (output / 1_000_000) * costs.output;
 
-    // Return cost for this usage object
     return sum + Number((inputCost + outputCost).toFixed(6));
   }, 0);
 
@@ -237,8 +225,13 @@ export function calculateTotalPromptTokens(
 
   // Calculate message tokens
   messages.forEach(message => {
-    if (typeof message.content === 'string') {
-      totalTokens += calculateTokens(message.content);
+    // In AI SDK v5, UIMessage uses parts instead of content
+    if (message.parts) {
+      message.parts.forEach(part => {
+        if (part.type === 'text' && part.text) {
+          totalTokens += calculateTokens(part.text);
+        }
+      });
     }
   });
   

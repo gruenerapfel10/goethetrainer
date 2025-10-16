@@ -1,24 +1,17 @@
 import { memo } from 'react';
 import { CrossIcon } from './icons';
 import { Button } from './ui/button';
-import { initialArtifactData, useArtifact } from '@/hooks/use-artifact';
+import { useArtifactsContext } from '@/contexts/artifacts-context';
 
 function PureArtifactCloseButton() {
-  const { setArtifact } = useArtifact();
+  const { setArtifactsVisible } = useArtifactsContext();
 
   return (
     <Button
       variant="outline"
       className="h-fit p-2 hover:bg-button-outline-hover"
       onClick={() => {
-        setArtifact((currentArtifact) =>
-          currentArtifact.status === 'streaming'
-            ? {
-                ...currentArtifact,
-                isVisible: false,
-              }
-            : { ...initialArtifactData, status: 'idle' },
-        );
+        setArtifactsVisible(false);
       }}
     >
       <CrossIcon size={18} />

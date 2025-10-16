@@ -68,13 +68,21 @@ export function ScrapeResults({
     }
   };
 
-  const hostname = url ? new URL(url).hostname : '';
-  const displaySource = source || hostname;
+  let hostname = '';
+  try {
+    if (url) {
+      hostname = new URL(url).hostname;
+    }
+  } catch (error) {
+    console.warn('Invalid URL provided to ScrapeResults:', url);
+    hostname = url || ''; // Use the raw url as fallback
+  }
+  const displaySource = source || hostname || 'Unknown source';
 
   // Loading state with skeleton
   if (isLoading) {
     return (
-      <div className="w-full">
+      <div className="w-full my-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-medium">{title}</span>
         </div>
@@ -99,7 +107,7 @@ export function ScrapeResults({
   // Error state
   if (isError) {
     return (
-      <div className="w-full">
+      <div className="w-full my-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-medium">{title}</span>
         </div>
@@ -144,7 +152,7 @@ export function ScrapeResults({
   if (!data) return null;
 
   return (
-    <div className="w-full">
+    <div className="w-full my-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium">{title}</span>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -191,15 +199,17 @@ export function ScrapeResults({
                     className="object-contain"
                   />
                 </div>
-              ) : (
+              ) : hostname ? (
                 <div className="relative size-4">
                   <Image
-                    src={`https://www.google.com/s2/favicons?sz=128&domain=${url}`}
+                    src={`https://www.google.com/s2/favicons?sz=128&domain=${hostname}`}
                     alt=""
                     fill
                     className="object-contain"
                   />
                 </div>
+              ) : (
+                <Globe size={16} className="text-muted-foreground" />
               )}
             </div>
             <div className="flex flex-col items-start text-left w-full">
@@ -311,14 +321,16 @@ export function ScrapeResults({
                   height={16}
                   className="object-contain"
                 />
-              ) : (
+              ) : hostname ? (
                 <Image
-                  src={`https://www.google.com/s2/favicons?sz=128&domain=${url}`}
+                  src={`https://www.google.com/s2/favicons?sz=128&domain=${hostname}`}
                   alt=""
                   width={16}
                   height={16}
                   className="object-contain"
                 />
+              ) : (
+                <Globe size={16} className="text-muted-foreground" />
               )}
             </div>
             <h4 className="font-medium text-sm">{displaySource}</h4>

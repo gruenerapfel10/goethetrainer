@@ -1,7 +1,7 @@
 "use client"
 
 import type { TimelineStep, ReasonStreamUpdate } from "./types";
-import { transformReasonStreamUpdate } from './transformers/base-reason-transformer';
+// import { transformReasonStreamUpdate } from './transformers'; // Removed unused transformer
 
 /**
  * Format a duration in milliseconds to a human-readable string
@@ -35,39 +35,73 @@ export const calculateDuration = (
  * Process stream updates into timeline steps
  */
 export function processReasonStreamUpdates(updates: ReasonStreamUpdate[]): TimelineStep[] {
-  const stepsMap = new Map<string, TimelineStep>();
-  const toolCallArgsMap = new Map<string, any>(); // Store tool args by operation ID
-  const chronologicalIds: string[] = [];
+  if (!updates || updates.length === 0) return [];
+
+  // Filter and process updates
+  const processedSteps: TimelineStep[] = [];
+  const textDeltas = new Map<string, string>();
 
   updates.forEach(update => {
-    const existingStep = stepsMap.get(update.id);
-
-    // If this is a tool-call, store the args for later use
-    if (update.type === 'tool-call' && update.details?.args) {
-      toolCallArgsMap.set(update.id, update.details.args);
+    // Skip initial status updates
+    if (update.id.includes('-start')) {
+      return;
     }
 
-    // If this is a tool-result, try to get the corresponding tool args
-    if (update.type === 'tool-result') {
-      const toolArgs = toolCallArgsMap.get(update.id);
-      if (toolArgs && update.details) {
-        update.details.toolArgs = toolArgs;
-      }
+    // Accumulate text-delta messages
+    if (update.type === 'text-delta') {
+      const existing = textDeltas.get(update.id) || '';
+      textDeltas.set(update.id, existing + update.message);
+      return; // Don't add to steps yet
     }
 
-    const newStep = transformReasonStreamUpdate(update, existingStep);
+    // Convert to timeline step
+    let step: TimelineStep;
+    
+    if (update.type === 'tool-call') {
+      step = {
+        id: update.id,
+        title: update.message || 'Tool Call',
+        message: update.details?.args?.query || '',
+        status: update.status === 'completed' ? 'completed' : 'running',
+        timestamp: update.timestamp || Date.now(),
+      };
+    } else if (update.type === 'tool-result') {
+      step = {
+        id: update.id,
+        title: update.message || 'Tool Result',
+        message: '',
+        status: update.status === 'failed' ? 'error' : 'completed',
+        timestamp: update.timestamp || Date.now(),
+      };
+    } else if (update.type === 'error') {
+      step = {
+        id: update.id,
+        title: 'Error',
+        message: update.message || '',
+        status: 'error',
+        timestamp: update.timestamp || Date.now(),
+      };
+    } else {
+      return; // Skip unknown types
+    }
 
-    if (newStep) {
-      stepsMap.set(update.id, newStep);
-      if (!chronologicalIds.includes(update.id)) {
-        chronologicalIds.push(update.id);
-      }
+    processedSteps.push(step);
+  });
+
+  // Add consolidated text-delta updates
+  textDeltas.forEach((message, id) => {
+    if (message.trim()) {
+      processedSteps.push({
+        id,
+        title: 'Processing',
+        message: message.substring(0, 200) + (message.length > 200 ? '...' : ''),
+        status: 'completed',
+        timestamp: Date.now(),
+      });
     }
   });
 
-  return chronologicalIds
-    .map(id => stepsMap.get(id)!)
-    .filter(Boolean)
-    .sort((a, b) => a.timestamp - b.timestamp);
+  // Sort by timestamp
+  return processedSteps.sort((a, b) => a.timestamp - b.timestamp);
 }
 

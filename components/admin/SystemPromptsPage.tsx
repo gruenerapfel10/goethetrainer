@@ -14,6 +14,7 @@ import {
   RotateCcw,
   InfoIcon,
   AlertTriangle,
+  ChevronDownIcon,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -23,38 +24,62 @@ import {
 } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { AgentType, getAgentMetadata } from '@/lib/ai/agents';
 import { chatModels } from '@/lib/ai/models';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import {
+  CheckCircleFillIcon,
+  SparklesIcon,
+  BoxIcon,
+  GlobeIcon,
+  LineChartIcon,
+} from '@/components/icons';
 
-// Storage key for saving drafts
 const STORAGE_KEY = 'system-prompts-drafts';
 const MAX_PROMPT_LENGTH = 5000;
 
-// Map model IDs to assistant IDs used in the API
-const MODEL_TO_ASSISTANT_ID: Record<string, string> = {
-  'general-bedrock-agent': 'general-assistant',
-  'sharepoint-agent': 'sharepoint-assistant',
-  'sharepoint-agent-v2': 'sharepoint-assistant',
-  'csv-agent': 'csv-agent',
-  'csv-agent-v2': 'csv-agent',
-  'text2sql-agent': 'text2sql-agent',
-  'document-agent': 'document-assistant',
-  'chat-model-reasoning': 'reasoning-assistant',
+const AGENT_TO_ASSISTANT_ID: Record<string, string> = {
+  [AgentType.GENERAL_AGENT]: 'general-assistant',
+  [AgentType.SHAREPOINT_AGENT]: 'sharepoint-agent',
+  [AgentType.TEXT2SQL_AGENT]: 'text2sql-agent',
 };
+
+const SearchIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+    <path d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M14 14L10.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const LayersIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 16 16" fill="none" className={className}>
+    <path d="M8 2L2 5.5L8 9L14 5.5L8 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 8L8 11.5L14 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M2 10.5L8 14L14 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const iconMap = {
+  sparkles: SparklesIcon,
+  box: BoxIcon,
+  globe: GlobeIcon,
+  search: SearchIcon,
+  layers: LayersIcon,
+  lineChart: LineChartIcon,
+} as const;
 
 export default function SystemPromptsPage() {
   const t = useTranslations();
   
-  // Get the available models from chatModels
   const availableModels = useMemo(() => chatModels(t), [t]);
   
-  const [selectedAgentType, setSelectedAgentType] = useState(availableModels[0]?.id || '');
+  const [selectedAgentType, setSelectedAgentType] = useState<string>(AgentType.GENERAL_AGENT);
 
   const {
     data: prompts,
@@ -63,7 +88,7 @@ export default function SystemPromptsPage() {
   } = useSWR<SystemPrompt[]>('/api/admin/system-prompts', fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 30000,
-    onError: () => console.log('Error fetching prompts'),
+    onError: () => {},
   });
 
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -72,9 +97,8 @@ export default function SystemPromptsPage() {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [initialized, setInitialized] = useState(false);
 
-  // Get the current assistant ID based on the selected agent type
   const currentAssistantId = useMemo(
-    () => MODEL_TO_ASSISTANT_ID[selectedAgentType] || selectedAgentType,
+    () => AGENT_TO_ASSISTANT_ID[selectedAgentType] || selectedAgentType,
     [selectedAgentType]
   );
 
@@ -85,15 +109,15 @@ export default function SystemPromptsPage() {
 
       if (promptText?.trim().length > 0 && promptText.trim().length < 10) {
         errors.push(
-          t('errors.fillAllFields', {
-            defaultValue: 'Please fill in all fields',
+          t('errors.promptTooShort', {
+            defaultValue: 'Prompt must be at least 10 characters',
           })
         );
       }
 
       if (promptText?.length > MAX_PROMPT_LENGTH) {
         errors.push(
-          t('errors.invalidFiles', { defaultValue: 'File too large' })
+          t('errors.promptTooLong', { defaultValue: 'Prompt exceeds maximum length' })
         );
       }
 
@@ -123,34 +147,46 @@ export default function SystemPromptsPage() {
     }
   }, [edits]);
 
-  // Initialize data from server
   useEffect(() => {
     if (!initialized && !isLoading && availableModels.length > 0) {
       const init = { ...edits };
       const initErrors: Record<string, string[]> = {};
 
-      if (prompts?.length) {
-        prompts.forEach((p) => {
-          if (!init[p.assistantId]) {
-            init[p.assistantId] = p.promptText;
+      const loadDefaults = async () => {
+        for (const model of availableModels) {
+          const assistantId = AGENT_TO_ASSISTANT_ID[model.id] || model.id;
+          
+          const savedPrompt = prompts?.find(p => p.assistantId === assistantId);
+          
+          if (savedPrompt?.promptText) {
+            init[assistantId] = savedPrompt.promptText;
+          } else if (!init[assistantId]) {
+            try {
+              const response = await fetch(
+                `/api/admin/system-prompts/default?assistantId=${assistantId}`
+              );
+              if (response.ok) {
+                const data = await response.json();
+                if (data.promptText) {
+                  init[assistantId] = data.promptText;
+                }
+              }
+            } catch (error) {
+              console.error(`Error loading default for ${assistantId}:`, error);
+            }
           }
 
-          initErrors[p.assistantId] = init[p.assistantId]?.trim().length
-            ? validatePrompt(init[p.assistantId])
+          initErrors[assistantId] = init[assistantId]?.trim().length
+            ? validatePrompt(init[assistantId])
             : [];
-        });
-      }
+        }
 
-      // Initialize assistants for all available models
-      availableModels.filter((model) => model.id !== 'sharepoint-agent').forEach((model) => {
-        const assistantId = MODEL_TO_ASSISTANT_ID[model.id] || model.id;
-        if (!init[assistantId]) init[assistantId] = '';
-        if (!initErrors[assistantId]) initErrors[assistantId] = [];
-      });
+        setEdits(init);
+        setErrors(initErrors);
+        setInitialized(true);
+      };
 
-      setEdits(init);
-      setErrors(initErrors);
-      setInitialized(true);
+      loadDefaults();
     }
   }, [
     prompts,
@@ -207,7 +243,8 @@ export default function SystemPromptsPage() {
         }
 
         await mutate();
-        toast.success(t('success.userUpdate'));
+        const modelName = availableModels.find(m => AGENT_TO_ASSISTANT_ID[m.id] === assistantId || m.id === assistantId)?.name || getCurrentModelName();
+        toast.success(t('success.promptSaved', { model: modelName }));
       } catch (error) {
         console.error(error);
         toast.error(
@@ -247,7 +284,8 @@ export default function SystemPromptsPage() {
             : [],
         }));
 
-        toast.success(t('success.userUpdate'));
+        const modelName = availableModels.find(m => AGENT_TO_ASSISTANT_ID[m.id] === assistantId || m.id === assistantId)?.name || getCurrentModelName();
+        toast.success(t('success.promptReset', { model: modelName }));
       } catch (error) {
         console.error(error);
         toast.error(t('errors.userUpdate'));
@@ -258,11 +296,15 @@ export default function SystemPromptsPage() {
     [t, validatePrompt]
   );
 
-  // Get current model display name
   const getCurrentModelName = useCallback(() => {
     const model = availableModels.find(model => model.id === selectedAgentType);
-    return model?.name || selectedAgentType;
+    return model?.name || getAgentMetadata(selectedAgentType as AgentType).displayName;
   }, [availableModels, selectedAgentType]);
+
+  const currentPrompt = useMemo(() => {
+    return edits[currentAssistantId] || '';
+  }, [edits, currentAssistantId]);
+
 
   // Show loading state for initial data fetch
   if (isLoading && !initialized) {
@@ -296,107 +338,151 @@ export default function SystemPromptsPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <label
-            htmlFor="agent-type"
-            className="block text-sm font-medium mb-1"
-          >
-            {t('chatManagement.selectAgentType', { defaultValue: 'Select Agent Type' })}
-          </label>
-          <Select
-            value={selectedAgentType}
-            onValueChange={(value) => setSelectedAgentType(value)}
-          >
-            <SelectTrigger className="w-full sm:w-72">
-              <SelectValue
-                placeholder={t('chatManagement.selectAgentPlaceholder', { defaultValue: 'Select agent type' })}
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {availableModels.filter((model) => model.id !== 'sharepoint-agent').map((model) => (
-                <SelectItem key={model.id} value={model.id}>
-                  {model.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col items-center space-y-4 max-w-3xl mx-auto px-4">
+        <div className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 px-3 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full sm:w-auto">
+                {(() => {
+                  const model = availableModels.find(m => m.id === selectedAgentType);
+                  const IconComponent = model?.icon ? iconMap[model.icon as keyof typeof iconMap] : SparklesIcon;
+                  return (
+                    <>
+                      <IconComponent size={14} />
+                      <span>{getCurrentModelName()}</span>
+                      <ChevronDownIcon className="h-4 w-4" />
+                    </>
+                  );
+                })()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="border-border/30 rounded-xl bg-muted w-[min(400px,calc(100vw-2rem))]" sideOffset={4}>
+              {availableModels.map((model) => {
+                const IconComponent = iconMap[model.icon as keyof typeof iconMap] || SparklesIcon;
+                return (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onSelect={() => setSelectedAgentType(model.id)}
+                    className="gap-2 md:gap-4 group/item flex flex-row justify-between items-center hover:bg-accent data-[highlighted]:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
+                    data-active={model.id === selectedAgentType}
+                  >
+                    <div className="flex flex-row gap-3 items-start">
+                      <IconComponent
+                        size={16}
+                        className={cn(
+                          "mt-0.5",
+                          model.id === selectedAgentType ? "text-foreground" : "text-muted-foreground"
+                        )}
+                      />
+                      <div className="flex flex-col gap-1 items-start">
+                        <div className="font-medium">{model.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {model.description}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-foreground opacity-0 group-data-[active=true]/item:opacity-100">
+                      <CheckCircleFillIcon />
+                    </div>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="hidden md:flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => resetToDefault(currentAssistantId)}
+              disabled={resetting[currentAssistantId] || saving[currentAssistantId]}
+              size="sm"
+            >
+              {resetting[currentAssistantId] ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-2 h-4 w-4" />
+              )}
+              {t('buttons.resetToDefault', {
+                defaultValue: 'Reset to Default',
+              })}
+            </Button>
+            <Button
+              onClick={() => savePrompt(currentAssistantId)}
+              disabled={
+                saving[currentAssistantId] ||
+                resetting[currentAssistantId] ||
+                errors[currentAssistantId]?.length > 0
+              }
+              size="sm"
+            >
+              {saving[currentAssistantId] ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {t('buttons.save')}
+            </Button>
+          </div>
         </div>
 
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-muted/50 px-4 py-3 sm:px-6">
-            <CardTitle className="text-base sm:text-lg">
-              {getCurrentModelName()}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3 sm:p-6">
-            <div className="space-y-3 sm:space-y-4">
-              <div className="relative">
-                <Textarea
-                  rows={10}
-                  className={`font-mono max-h-[700px] text-sm ${
-                    errors[currentAssistantId]?.length ? 'border-red-500' : ''
-                  } pr-16`}
-                  value={edits[currentAssistantId] || ''}
-                  onChange={(e) => updatePrompt(currentAssistantId, e.target.value)}
-                  placeholder={`Enter system prompt for ${getCurrentModelName()}...`}
-                />
-                <div className="absolute bottom-2 right-6 text-xs bg-background px-1 rounded text-muted-foreground z-10">
-                  {(edits[currentAssistantId] || '').length} / {MAX_PROMPT_LENGTH}
-                </div>
-              </div>
-
-              {errors[currentAssistantId]?.length > 0 && (
-                <Alert variant="destructive" className="mt-2 py-2 text-sm">
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <AlertDescription>
-                      <ul className="list-disc pl-5 text-sm">
-                        {errors[currentAssistantId].map((error, index) => (
-                          <li key={index}>{error}</li>
-                        ))}
-                      </ul>
-                    </AlertDescription>
-                  </div>
-                </Alert>
+        <div className="w-full space-y-4">
+          <div className="relative">
+            <Textarea
+              className={cn(
+                "font-mono h-[calc(100vh-280px)] text-[13px] leading-relaxed resize-none w-full",
+                "bg-muted border-border/30",
+                "focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
               )}
-
-              <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => resetToDefault(currentAssistantId)}
-                  disabled={resetting[currentAssistantId] || saving[currentAssistantId]}
-                  className="w-full sm:w-auto"
-                  size="sm"
-                >
-                  {resetting[currentAssistantId] && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  {t('buttons.resetToDefault', {
-                    defaultValue: 'Reset to Default',
-                  })}
-                </Button>
-                <Button
-                  onClick={() => savePrompt(currentAssistantId)}
-                  disabled={
-                    saving[currentAssistantId] ||
-                    resetting[currentAssistantId] ||
-                    errors[currentAssistantId]?.length > 0
-                  }
-                  className="w-full sm:w-auto"
-                  size="sm"
-                >
-                  {saving[currentAssistantId] && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  <Save className="mr-2 h-4 w-4" />
-                  {t('buttons.save')}
-                </Button>
+              value={currentPrompt}
+              onChange={(e) => updatePrompt(currentAssistantId, e.target.value)}
+              placeholder={`Enter system prompt for ${getCurrentModelName()}...`}
+            />
+            {errors[currentAssistantId]?.length > 0 && (
+              <div className="absolute bottom-3 left-3 text-xs px-2 py-1 rounded-md bg-destructive/10 text-destructive font-medium">
+                {errors[currentAssistantId][0]}
               </div>
+            )}
+            <div className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded-md bg-muted/80 backdrop-blur-sm text-muted-foreground font-medium">
+              {currentPrompt.length} / {MAX_PROMPT_LENGTH}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="flex md:hidden gap-2 w-full">
+            <Button
+              variant="outline"
+              onClick={() => resetToDefault(currentAssistantId)}
+              disabled={resetting[currentAssistantId] || saving[currentAssistantId]}
+              size="sm"
+              className="flex-1"
+            >
+              {resetting[currentAssistantId] ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-2 h-4 w-4" />
+              )}
+              {t('buttons.resetToDefault', {
+                defaultValue: 'Reset to Default',
+              })}
+            </Button>
+            <Button
+              onClick={() => savePrompt(currentAssistantId)}
+              disabled={
+                saving[currentAssistantId] ||
+                resetting[currentAssistantId] ||
+                errors[currentAssistantId]?.length > 0
+              }
+              size="sm"
+              className="flex-1"
+            >
+              {saving[currentAssistantId] ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              {t('buttons.save')}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

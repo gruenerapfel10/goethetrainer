@@ -1,6 +1,6 @@
 // app/api/logos/remove/route.ts
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 
 import { auth } from '../../../../(auth)/auth';
 import { removeLogo } from '../../../../../lib/db/queries';
@@ -17,7 +17,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Check if user is admin
-    const isAdmin = session?.user;
+    const isAdmin = session.user.isAdmin;
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },

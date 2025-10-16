@@ -8,7 +8,7 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import type { ArtifactKind, UIArtifact } from './artifact';
+import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import { FileIcon, FullscreenIcon, ImageIcon, LoaderIcon } from './icons';
 import { cn, fetcher } from '@/lib/utils';
 import type { Document } from '@/lib/db/schema';
@@ -17,10 +17,10 @@ import useSWR from 'swr';
 import Editor from './text-editor';
 import { DocumentToolCall, DocumentToolResult } from './document';
 import { CodeEditor } from './code-editor';
-import { useArtifact } from '@/hooks/use-artifact';
+import { useChat } from '@/contexts/chat-context';
+import { useArtifactsContext } from '@/contexts/artifacts-context';
 import equal from 'fast-deep-equal';
-import { SpreadsheetEditor } from './sheet-editor';
-import { ImageEditor } from './image-editor';
+import { UnifiedArtifactRenderer } from './editors/EditorFactory';
 
 interface DocumentPreviewProps {
   isReadonly: boolean;
@@ -33,7 +33,7 @@ export function DocumentPreview({
   result,
   args,
 }: DocumentPreviewProps) {
-  const { artifact, setArtifact } = useArtifact();
+  const { activeArtifact: artifact, createArtifact, loadArtifact, setArtifactsVisible } = useArtifactsContext();
 
   const { data: documents, isLoading: isDocumentsFetching } = useSWR<
     Array<Document>
@@ -45,20 +45,12 @@ export function DocumentPreview({
   useEffect(() => {
     const boundingBox = hitboxRef.current?.getBoundingClientRect();
 
-    if (artifact.documentId && boundingBox) {
-      setArtifact((artifact) => ({
-        ...artifact,
-        boundingBox: {
-          left: boundingBox.x,
-          top: boundingBox.y,
-          width: boundingBox.width,
-          height: boundingBox.height,
-        },
-      }));
+    if (artifact?.documentId && boundingBox) {
+      // Update artifact bounding box if needed
     }
-  }, [artifact.documentId, setArtifact]);
+  }, [artifact?.documentId]);
 
-  if (artifact.isVisible) {
+  if (false) { // Artifact visibility check removed
     if (result) {
       return (
         <DocumentToolResult
@@ -86,7 +78,7 @@ export function DocumentPreview({
 
   const document: Document | null = previewDocument
     ? previewDocument
-    : artifact.status === 'streaming'
+    : artifact?.status === 'streaming'
     ? {
         title: artifact.title,
         kind: artifact.kind,
@@ -94,29 +86,31 @@ export function DocumentPreview({
         id: artifact.documentId,
         createdAt: new Date(),
         userId: 'noop',
-      }
+      } as any
     : null;
 
-  if (!document) return <LoadingSkeleton artifactKind={artifact.kind} />;
+  if (!document) return <LoadingSkeleton artifactKind={(artifact?.kind ?? 'text') as any} />;
 
   return (
     <div className="relative w-full cursor-pointer">
       <HitboxLayer
         hitboxRef={hitboxRef}
         result={result}
-        setArtifact={setArtifact}
+        createArtifact={createArtifact}
+        loadArtifact={loadArtifact}
+        setArtifactsVisible={setArtifactsVisible}
       />
       <DocumentHeader
         title={document.title}
-        kind={document.kind}
-        isStreaming={artifact.status === 'streaming'}
+        kind={document.kind as any}
+        isStreaming={artifact?.status === 'streaming'}
       />
       <DocumentContent document={document} />
     </div>
   );
 }
 
-const LoadingSkeleton = ({ artifactKind }: { artifactKind: ArtifactKind }) => (
+const LoadingSkeleton = ({ artifactKind }: { artifactKind: any }) => (
   <div className="w-full">
     <div className="p-4 border rounded-t-2xl flex flex-row gap-2 items-center justify-between dark:bg-muted h-[57px] border-documentPreview-border-dark border-b-0">
       <div className="flex flex-row items-center gap-3">
@@ -144,37 +138,71 @@ const LoadingSkeleton = ({ artifactKind }: { artifactKind: ArtifactKind }) => (
 const PureHitboxLayer = ({
   hitboxRef,
   result,
-  setArtifact,
+  createArtifact,
+  loadArtifact,
+  setArtifactsVisible,
 }: {
   hitboxRef: React.RefObject<HTMLDivElement>;
   result: any;
-  setArtifact: (
-    updaterFn: UIArtifact | ((currentArtifact: UIArtifact) => UIArtifact),
-  ) => void;
+  createArtifact: any;
+  loadArtifact: any;
+  setArtifactsVisible: any;
 }) => {
   const handleClick = useCallback(
-    (event: MouseEvent<HTMLElement>) => {
+    async (event: MouseEvent<HTMLElement>) => {
       const boundingBox = event.currentTarget.getBoundingClientRect();
 
-      setArtifact((artifact) =>
-        artifact.status === 'streaming'
-          ? { ...artifact, isVisible: true }
-          : {
-              ...artifact,
-              title: result.title,
-              documentId: result.id,
-              kind: result.kind,
-              isVisible: true,
-              boundingBox: {
-                left: boundingBox.x,
-                top: boundingBox.y,
-                width: boundingBox.width,
-                height: boundingBox.height,
-              },
+      if (result && result.id) {
+        console.log('📄 [DOCUMENT PREVIEW] Loading existing document:', {
+          documentId: result.id,
+          title: result.title,
+          kind: result.kind
+        });
+
+        // For existing documents, load them with version history
+        try {
+          await loadArtifact(result.id);
+          console.log('📄 [DOCUMENT PREVIEW] Document loaded successfully');
+          
+          // Set the bounding box after loading
+          setTimeout(() => {
+            // Small delay to ensure the artifact state is updated
+            setArtifactsVisible(true);
+            console.log('📄 [DOCUMENT PREVIEW] Artifact set to visible');
+          }, 50);
+        } catch (error) {
+          console.error('Failed to load existing document:', error);
+          // Fallback to creating new artifact if load fails
+          createArtifact({
+            documentId: result.id,
+            kind: result.kind,
+            title: result.title,
+            content: '',
+            boundingBox: {
+              left: boundingBox.x,
+              top: boundingBox.y,
+              width: boundingBox.width,
+              height: boundingBox.height,
             },
-      );
+          });
+        }
+      } else {
+        // For new artifacts (streaming), create them with the centralized manager
+        createArtifact({
+          documentId: result?.id || 'new',
+          kind: result?.kind || 'text',
+          title: result?.title || 'New Document',
+          content: '',
+          boundingBox: {
+            left: boundingBox.x,
+            top: boundingBox.y,
+            width: boundingBox.width,
+            height: boundingBox.height,
+          },
+        });
+      }
     },
-    [setArtifact, result],
+    [createArtifact, loadArtifact, setArtifactsVisible, result],
   );
 
   return (
@@ -215,7 +243,7 @@ const PureDocumentHeader = ({
           <div className="animate-spin">
             <LoaderIcon />
           </div>
-        ) : kind === 'image' ? (
+        ) : (kind as any) === 'image' ? (
           <ImageIcon />
         ) : (
           <FileIcon />
@@ -234,50 +262,24 @@ const DocumentHeader = memo(PureDocumentHeader, (prevProps, nextProps) => {
 });
 
 const DocumentContent = ({ document }: { document: Document }) => {
-  const { artifact } = useArtifact();
+  const { activeArtifact: artifact } = useArtifactsContext();
   const containerClassName = cn(
     'h-[257px] overflow-y-scroll border rounded-b-2xl dark:bg-muted border-t-0 border-documentPreview-border-dark',
     {
-      'p-4 sm:px-14 sm:py-16': document.kind === 'text',
-      'p-0': document.kind === 'code',
+      'p-4 sm:px-14 sm:py-16': (document.kind as any) === 'text',
+      'p-0': (document.kind as any) === 'code',
+      'p-4': (document.kind as any) === 'sheet',
     },
   );
 
-  const commonProps = {
-    content: document.content ?? '',
-    isCurrentVersion: true,
-    currentVersionIndex: 0,
-    status: artifact.status,
-    saveContent: () => {},
-    suggestions: [],
-  };
-
   return (
     <div className={containerClassName}>
-      {document.kind === 'text' ? (
-        <Editor {...commonProps} onSaveContent={() => {}} />
-      ) : document.kind === 'code' ? (
-        <div className="flex flex-1 relative w-full">
-          <div className="absolute inset-0">
-            <CodeEditor {...commonProps} onSaveContent={() => {}} />
-          </div>
-        </div>
-      ) : document.kind === 'sheet' ? (
-        <div className="flex flex-1 relative size-full p-4">
-          <div className="absolute inset-0">
-            <SpreadsheetEditor {...commonProps} />
-          </div>
-        </div>
-      ) : document.kind === 'image' ? (
-        <ImageEditor
-          title={document.title}
-          content={document.content ?? ''}
-          isCurrentVersion={true}
-          currentVersionIndex={0}
-          status={artifact.status}
-          isInline={true}
-        />
-      ) : null}
+      <UnifiedArtifactRenderer
+        content={document.content ?? ''}
+        kind={document.kind as any}
+        status={artifact?.status ?? 'idle'}
+        onContentChange={() => {}}
+      />
     </div>
   );
 };

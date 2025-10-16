@@ -1,19 +1,27 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import type { UseChatHelpers } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { StopIcon } from '@/components/icons';
 import classNames from 'classnames';
 
+interface StopButtonProps {
+  stop: () => void;
+}
+
 function PureStopButton({
   stop,
-  setMessages,
-}: {
-  stop: () => void;
-  setMessages: UseChatHelpers['setMessages'];
-}) {
+}: StopButtonProps) {
+  
+  const handleStop = useCallback(async () => {
+    console.log('[StopButton] ========== STOP BUTTON CLICKED ==========');
+    console.log('[StopButton] Server onAbort will handle partial message saving');
+    
+    // Stop the stream - server onAbort callback will save partial content
+    stop();
+    console.log('[StopButton] ========== STOP SEQUENCE COMPLETE ==========');
+  }, [stop]);
   return (
     <Button
       data-testid="stop-button"
@@ -23,9 +31,9 @@ function PureStopButton({
         'shadow-md hover:shadow-lg hover:shadow-foreground/10',
       )}
       onClick={(event) => {
+        console.log('[StopButton] ========== BUTTON CLICK DETECTED ==========');
         event.preventDefault();
-        stop();
-        setMessages((messages) => messages);
+        handleStop();
       }}
     >
       <motion.div

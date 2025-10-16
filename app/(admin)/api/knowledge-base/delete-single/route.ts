@@ -16,37 +16,33 @@ export const dynamic = 'force-dynamic';
 
 async function runSingleDeletionAndProcessInBackground(operationId: number, documentId: string) {
   try {
-    console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Flagging file ${documentId} for deletion.`);
-    // flagSingleFileForDeletion throws an error (migration to Gemini)
-    try {
-      await flagSingleFileForDeletion();
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // flagSingleFileForDeletion does not update system_operations, it returns success/message
+    const flagResult = await flagSingleFileForDeletion(documentId);
+
+    if (!flagResult.success) {
       await updateSystemOperation(operationId, 'FAILED', {
-        message: `Failed to flag file ${documentId} for deletion: ${errorMessage}`,
-        error: errorMessage
-      }, errorMessage);
+        message: `Failed to flag file ${documentId} for deletion: ${flagResult.message}`,
+        flagResult
+      }, flagResult.message);
       console.warn(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Failed to flag file ${documentId}. Operation marked FAILED.`);
       return;
     }
 
-    await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', {
+    await updateSystemOperation(operationId, 'FLAGGING_FOR_BEDROCK', { // Or more specific status
       message: `File ${documentId} flagged for deletion. Processing with Bedrock.`,
+      flagResult
     });
 
-    console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Starting Bedrock Processing for deletion of ${documentId}...`);
-    const bedrockProcessingResults = await processPendingBedrockOperations();
-    console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Bedrock Processing complete for ${documentId}.`);
+    const bedrockProcessingResults = await processPendingBedrockOperations(operationId);
 
     const currentOp = (await db.select().from(systemOperations).where(eq(systemOperations.id, operationId)).limit(1))[0];
     if (currentOp?.currentStatus !== operationStatusEnum.enumValues.find(s => s === 'FAILED')) {
       await updateSystemOperation(operationId, 'COMPLETED', {
         message: `File ${documentId} deletion and subsequent Bedrock processing completed.`,
+        flagResult,
         bedrockProcessingDetails: bedrockProcessingResults
       });
-      console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Marked as COMPLETED.`);
     } else {
-      console.log(`[API Route DELETE-SINGLE BG] OpID ${operationId}: Operation was already FAILED. Not marking COMPLETED.`);
     }
 
   } catch (error: any) {
@@ -78,7 +74,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to initiate deletion: Could not create system_operations record.' }, { status: 500 });
     }
     operationIdToReturn = newOp.id;
-    console.log(`[API Route DELETE-SINGLE] OpID ${operationIdToReturn} created for ${documentId}.`);
 
     runSingleDeletionAndProcessInBackground(operationIdToReturn, documentId).catch(bgError => {
       console.error(`[API Route DELETE-SINGLE] Unhandled error from background task for OpID ${operationIdToReturn}:`, bgError);

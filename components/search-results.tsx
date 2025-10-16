@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { cn, extractHostname } from '@/lib/utils';
-import { Globe, X, ExternalLink } from 'lucide-react';
+import { Globe, X, ExternalLink, TrendingUp, Target, BarChart3 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface SearchResult {
@@ -19,6 +19,142 @@ interface SearchResultsProps {
   title?: string;
 }
 
+type AnalysisType = 'brand_analysis' | 'competitive_analysis' | 'strategy_analysis' | 'trend_analysis' | 'performance_analysis' | 'general_analysis';
+
+// Enhanced analysis functions for AI guidance
+const analyzeSearchContent = (results: SearchResult[]) => {
+  const allText = results.map(r => `${r.title} ${r.description || ''}`).join(' ').toLowerCase();
+  
+  // Detect analysis type
+  const analysisType = detectAnalysisType(allText);
+  
+  // Extract key themes
+  const themes = extractKeyThemes(allText);
+  
+  // Calculate content richness
+  const richness = calculateContentRichness(results);
+  
+  // Generate analysis readiness score
+  const readinessScore = calculateReadinessScore(results, themes);
+  
+  // Generate AI guidance
+  const guidance = generateAIGuidance(analysisType, themes, richness, readinessScore);
+  
+  return {
+    analysis_type: analysisType,
+    key_themes: themes,
+    content_richness: richness,
+    readiness_score: readinessScore,
+    ai_guidance: guidance,
+    should_proceed_to_analysis: readinessScore >= 70
+  };
+};
+
+const detectAnalysisType = (text: string): AnalysisType => {
+  const patterns: Record<AnalysisType, string[]> = {
+    brand_analysis: ['brand', 'identity', 'marketing', 'positioning', 'branding'],
+    competitive_analysis: ['competitor', 'competitive', 'market', 'industry', 'competition'],
+    strategy_analysis: ['strategy', 'strategic', 'plan', 'approach', 'framework'],
+    trend_analysis: ['trend', 'trends', 'future', 'emerging', 'forecast'],
+    performance_analysis: ['performance', 'results', 'metrics', 'analytics', 'data'],
+    general_analysis: []
+  };
+  
+  let maxScore = 0;
+  let detectedType: AnalysisType = 'general_analysis';
+  
+  (Object.entries(patterns) as [AnalysisType, string[]][]).forEach(([type, keywords]) => {
+    const score = keywords.reduce((acc, keyword) => {
+      const matches = (text.match(new RegExp(keyword, 'g')) || []).length;
+      return acc + matches;
+    }, 0);
+    
+    if (score > maxScore) {
+      maxScore = score;
+      detectedType = type;
+    }
+  });
+  
+  return detectedType;
+};
+
+const extractKeyThemes = (text: string): string[] => {
+  const themePatterns = {
+    video_marketing: ['video', 'videos', 'youtube', 'tiktok', 'reels', 'content'],
+    social_media: ['social', 'instagram', 'facebook', 'twitter', 'linkedin'],
+    brand_identity: ['brand', 'identity', 'logo', 'visual', 'design'],
+    customer_engagement: ['engagement', 'community', 'customer', 'audience'],
+    digital_strategy: ['digital', 'online', 'website', 'seo', 'advertising'],
+    market_positioning: ['positioning', 'market', 'target', 'niche', 'segment']
+  };
+  
+  return Object.entries(themePatterns)
+    .filter(([, keywords]) => 
+      keywords.some(keyword => text.includes(keyword))
+    )
+    .map(([theme]) => theme);
+};
+
+const calculateContentRichness = (results: SearchResult[]): 'high' | 'medium' | 'low' => {
+  const totalDescriptionLength = results.reduce((acc, r) => acc + (r.description?.length || 0), 0);
+  const avgDescriptionLength = totalDescriptionLength / results.length;
+  
+  if (avgDescriptionLength > 150 && results.length >= 5) return 'high';
+  if (avgDescriptionLength > 100 && results.length >= 3) return 'medium';
+  return 'low';
+};
+
+const calculateReadinessScore = (results: SearchResult[], themes: string[]): number => {
+  let score = 0;
+  
+  // Base score from number of results
+  score += Math.min(results.length * 10, 50);
+  
+  // Bonus for content quality
+  const avgDescLength = results.reduce((acc, r) => acc + (r.description?.length || 0), 0) / results.length;
+  score += Math.min(avgDescLength / 5, 20);
+  
+  // Bonus for theme diversity
+  score += Math.min(themes.length * 5, 20);
+  
+  // Bonus for authoritative sources
+  const authoritySources = results.filter(r => 
+    r.source?.includes('.edu') || 
+    r.source?.includes('harvard') ||
+    r.source?.includes('mckinsey') ||
+    r.source?.includes('forbes')
+  ).length;
+  score += authoritySources * 5;
+  
+  return Math.min(score, 100);
+};
+
+const generateAIGuidance = (
+  analysisType: AnalysisType, 
+  themes: string[], 
+  richness: string, 
+  readinessScore: number
+): string => {
+  const structureMap: Record<AnalysisType, string> = {
+    brand_analysis: "BRAND ANALYSIS STRUCTURE: Current Brand State → Market Position → Brand Strengths/Weaknesses → Differentiation Opportunities → Strategic Recommendations",
+    competitive_analysis: "COMPETITIVE ANALYSIS STRUCTURE: Market Landscape → Competitor Profiles → Competitive Gaps → Market Opportunities → Strategic Response Plan",
+    strategy_analysis: "STRATEGY ANALYSIS STRUCTURE: Current Strategy Assessment → Market Context → Strategic Options → Implementation Framework → Success Metrics",
+    trend_analysis: "TREND ANALYSIS STRUCTURE: Current Trends → Emerging Patterns → Impact Assessment → Future Implications → Strategic Response",
+    performance_analysis: "PERFORMANCE ANALYSIS STRUCTURE: Current Performance → Benchmark Comparison → Performance Gaps → Improvement Opportunities → Action Plan",
+    general_analysis: "GENERAL ANALYSIS STRUCTURE: Key Findings → Analysis → Strategic Insights → Recommendations"
+  };
+  
+  let guidance = structureMap[analysisType];
+  
+  if (themes.includes('video_marketing')) {
+    guidance += " | FOCUS: Video marketing strategy, content types, platform optimization";
+  }
+  
+  guidance += ` | READINESS: ${readinessScore}% | RICHNESS: ${richness}`;
+  
+  return guidance;
+};
+
 export function SearchResults({
   results = [],
   title = 'Search Results...',
@@ -29,9 +165,14 @@ export function SearchResults({
   const t = useTranslations('errors');
 
   const searchResults = [...results];
-
   const displayedResults = searchResults?.slice(0, 3) || [];
   const hiddenResults = searchResults?.length > 3 ? searchResults.slice(3) : [];
+
+  // Enhanced analysis for AI guidance
+  const analysisData = useMemo(() => {
+    if (!searchResults.length) return null;
+    return analyzeSearchContent(searchResults);
+  }, [searchResults]);
 
   if (!searchResults || searchResults.length === 0) return null;
 
@@ -43,8 +184,33 @@ export function SearchResults({
     }
   };
 
+  const getAnalysisIcon = (type: AnalysisType) => {
+    const iconMap: Record<AnalysisType, typeof Target> = {
+      brand_analysis: Target,
+      competitive_analysis: BarChart3,
+      strategy_analysis: TrendingUp,
+      trend_analysis: TrendingUp,
+      performance_analysis: BarChart3,
+      general_analysis: Target
+    };
+    return iconMap[type];
+  };
+
   return (
     <div className="w-full">
+      {/* Hidden AI guidance data */}
+      {analysisData && (
+        <div 
+          className="hidden"
+          data-analysis-type={analysisData.analysis_type}
+          data-key-themes={analysisData.key_themes.join(', ')}
+          data-content-richness={analysisData.content_richness}
+          data-readiness-score={analysisData.readiness_score}
+          data-ai-guidance={analysisData.ai_guidance}
+          data-should-proceed={analysisData.should_proceed_to_analysis}
+        />
+      )}
+
       <div className="flex items-center gap-2 mb-2">
         <span className="text-sm font-medium">{title}</span>
       </div>
@@ -222,6 +388,21 @@ export function SearchResults({
           </div>
         )}
       </div>
+
+      {/* Simplified hidden AI guidance only - no visible UI */}
+      {analysisData && (
+        <div 
+          className="hidden"
+          data-analysis-type={analysisData.analysis_type}
+          data-key-themes={analysisData.key_themes.join(', ')}
+          data-content-richness={analysisData.content_richness}
+          data-readiness-score={analysisData.readiness_score}
+          data-ai-guidance={analysisData.ai_guidance}
+          data-should-proceed={analysisData.should_proceed_to_analysis}
+          data-search-complete="true"
+          data-ready-for-final-analysis="true"
+        />
+      )}
     </div>
   );
 }

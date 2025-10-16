@@ -1,8 +1,8 @@
 export { MultimodalInput } from './multimodal-input';
 export { CursorManager } from './cursor-manager';
-export { AttachmentsButton } from './attachments-button';
-export { SendButton } from './send-button';
+export { AttachmentsButton } from './AttachmentsButton';
+export { SendButton } from './SendButton';
 export { StopButton } from './stop-button';
-export { FeatureToggles } from './feature-toggles';
-export * from './file-handling';
+export { CapabilitiesToggle } from './CapabilitiesToggle';
+export { uploadFiles, handleClipboardPaste, createDragHandlers, FileUploadHandler } from './AttachmentsButton';
 export * from './mention-utils';

@@ -20,5 +20,4 @@ export const publicDb = drizzle(publicSql);
 const csvSql = postgres(process.env.CSV_POSTGRES_URL, { max: 1 });
 export const csvDb = drizzle(csvSql);
 
-// For backward compatibility, export the public database as the default db
 export const db = publicDb;

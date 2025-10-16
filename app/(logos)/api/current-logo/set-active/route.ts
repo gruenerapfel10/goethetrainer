@@ -1,6 +1,6 @@
 // app/api/logos/set-active/route.ts
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod/v3';
+import { z } from 'zod';
 import { auth } from '../../../../(auth)/auth';
 import { setActiveLogo } from '../../../../../lib/db/queries';
 
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user is admin (assuming you have this in your session)
-    const isAdmin = session?.user;
+    const isAdmin = session.user.isAdmin;
     if (!isAdmin) {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },

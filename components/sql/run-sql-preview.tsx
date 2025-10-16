@@ -15,6 +15,9 @@ type RunSqlPreviewProps = {
 
 
 function transformColumns(columns: RunSqlResult['columns']): ColumnDef<any>[] {
+    if (!columns || !columns.length) {
+        return [];
+    }
     return columns.map((originalColumn) => ({
         accessorKey: originalColumn.name,
         header: ({ column }) => {
@@ -51,10 +54,10 @@ export function RunSqlPreview({ result }: RunSqlPreviewProps) {
         <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
                 <AccordionTrigger>
-                    {t('rawResult', {count: result.records.length})}
+                    {t('rawResult', {count: result?.records?.length || 0})}
                 </AccordionTrigger>
                 <AccordionContent className="flex flex-col gap-4 text-balance">
-                    <DataTable columns={columns} data={result.records} />
+                    <DataTable columns={columns} data={result.records || []} />
                 </AccordionContent>
             </AccordionItem>
         </Accordion>

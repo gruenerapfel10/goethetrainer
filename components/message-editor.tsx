@@ -10,19 +10,38 @@ import type { UseChatHelpers } from '@ai-sdk/react';
 export type MessageEditorProps = {
   message: UIMessage;
   setMode: Dispatch<SetStateAction<'view' | 'edit'>>;
-  setMessages: UseChatHelpers['setMessages'];
-  reload: UseChatHelpers['reload'];
+  setMessages: UseChatHelpers<UIMessage>['setMessages'];
+  regenerate: UseChatHelpers<UIMessage>['regenerate'];
 };
 
 export function MessageEditor({
   message,
   setMode,
   setMessages,
-  reload,
+  regenerate,
 }: MessageEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const [draftContent, setDraftContent] = useState<string>(message.content);
+  const textContent = (() => {
+    const msg = message as any;
+    
+    if (msg.parts) {
+      const textPart = msg.parts.find((part: any) => part.type === 'text');
+      if (textPart?.text) return textPart.text;
+    }
+    
+    if (msg.content) {
+      if (typeof msg.content === 'string') return msg.content;
+      if (Array.isArray(msg.content)) {
+        const textPart = msg.content.find((part: any) => part.type === 'text');
+        if (textPart?.text) return textPart.text;
+      }
+    }
+    
+    return '';
+  })();
+  
+  const [draftContent, setDraftContent] = useState<string>(textContent);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -79,12 +98,12 @@ export function MessageEditor({
 
             // @ts-expect-error todo: support UIMessage in setMessages
             setMessages((messages) => {
-              const index = messages.findIndex((m) => m.id === message.id);
+              const index = messages.findIndex((m: UIMessage) => m.id === message.id);
 
               if (index !== -1) {
                 const updatedMessage = {
                   ...message,
-                  content: draftContent,
+                  content: [{ type: 'text', text: draftContent }],
                   parts: [{ type: 'text', text: draftContent }],
                 };
 
@@ -95,7 +114,7 @@ export function MessageEditor({
             });
 
             setMode('view');
-            reload();
+            regenerate();
           }}
         >
           {isSubmitting ? 'Sending...' : 'Send'}

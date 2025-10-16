@@ -8,14 +8,12 @@ import { ThemeProvider } from '@/components/theme-provider';
 
 import './globals.css';
 import { getLocale, getMessages } from 'next-intl/server';
-import { themes } from '../types/constants';
+import { SessionProvider } from 'next-auth/react';
+import { themes } from '@/lib/constants';
 import { LogoProvider } from '../context/logo-context';
-// Database cleanup removed - no database operations needed
-// import {cleanupStaleOperations} from "@/lib/db/queries";
+import {cleanupStaleOperations} from "@/lib/db/queries";
 import { NotificationInitializer } from '@/components/notification-initializer';
-import { PageTransitionProvider } from '@/context/page-transition-context';
-import { PageTransitionOverlay } from '@/components/page-transition-overlay';
-import { FirebaseAuthProvider } from '@/context/firebase-auth-context';
+import { DeepResearchProvider } from '@/lib/deep-research-context';
 
 const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
@@ -25,20 +23,25 @@ const dmSerif = DM_Serif_Display({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://mua.app'),
-  title: 'Goethe - Mass University Applications',
-  description: 'Goethe - Your smart assistant for university applications',
+  metadataBase: new URL('https://chat.moterra.co.uk'),
+  title: 'Moterra Chat',
+  description: 'Moterra Chat - AI-powered assistant for your business',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Moterra Chat',
+  },
   openGraph: {
-    title: 'Goethe - Mass University Applications',
-    description: 'Your smart assistant for university applications',
-    url: 'https://mua.app',
-    siteName: 'Goethe',
+    title: 'Moterra Chat',
+    description: 'AI-powered assistant for your business',
+    url: 'https://chat.moterra.co.uk',
+    siteName: 'Moterra Chat',
     images: [
       {
-        url: '/mua-logo-128x128-blue.png',
+        url: '/opengraph-image.png',
         width: 1200,
         height: 630,
-        alt: 'Goethe - Mass University Applications',
+        alt: 'Moterra Chat',
       },
     ],
     locale: 'en_US',
@@ -46,14 +49,17 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Goethe - Mass University Applications',
-    description: 'Your smart assistant for university applications',
-    images: ['/mua-logo-128x128-blue.png'],
+    title: 'Moterra Chat',
+    description: 'AI-powered assistant for your business',
+    images: ['/twitter-image.png'],
   },
 };
 
 export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
   maximumScale: 1, // Disable auto-zoom on mobile Safari
+  viewportFit: 'cover', // Enable safe area insets for notch/status bar
 };
 
 const LIGHT_THEME_COLOR = 'hsl(0 0% 100%)';
@@ -86,8 +92,7 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   if (!hasRunCleanup) {
-    // Database cleanup removed - no database operations needed
-    // await cleanupStaleOperations();
+    await cleanupStaleOperations();
     hasRunCleanup = true;
   }
 
@@ -115,24 +120,34 @@ export default async function RootLayout({
       dmSerif.variable
     )}>
     <NextIntlClientProvider messages={messages}>
-      <ThemeProvider
-        themes={themes}
-        attribute="class"
-        defaultTheme="light"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <Toaster position="top-center" />
-        <NotificationInitializer />
-        <LogoProvider>
-          <FirebaseAuthProvider>
-            <PageTransitionProvider>
-              <PageTransitionOverlay />
-              {children}
-            </PageTransitionProvider>
-          </FirebaseAuthProvider>
-        </LogoProvider>
-      </ThemeProvider>
+      <SessionProvider>
+        <ThemeProvider
+          themes={themes}
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Toaster 
+            position="top-center" 
+            toastOptions={{
+              classNames: {
+                toast: 'rounded-[20px] text-primary border border-border/50 backdrop-blur-sm bg-background/95 shadow-xl',
+                title: 'font-medium text-primary',
+                description: 'text-primary',
+                error: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+                success: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+                warning: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+                info: 'bg-neutral-100 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700',
+              }
+            }}
+          />
+          <NotificationInitializer />
+          <DeepResearchProvider>
+            <LogoProvider>{children}</LogoProvider>
+          </DeepResearchProvider>
+        </ThemeProvider>
+      </SessionProvider>
     </NextIntlClientProvider>
     </body>
     </html>

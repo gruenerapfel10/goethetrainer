@@ -1,43 +1,34 @@
 import type { ComponentProps } from 'react';
-import { Button } from '@/components/ui/button';
+import { type SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  TooltipProvider,
 } from '@/components/ui/tooltip';
-import { PanelLeftClose, PanelLeft } from 'lucide-react';
+import { SidebarLeftIcon } from './icons';
+import { Button } from './ui/button';
+import { useTranslations } from 'next-intl';
 
-interface SidebarToggleProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  className?: string;
-  showText?: boolean;
-}
+export function SidebarToggle({
+  className,
+}: ComponentProps<typeof SidebarTrigger>) {
+  const { toggleSidebar } = useSidebar();
+  const t = useTranslations();
 
-export function SidebarToggle({ isOpen, onToggle, className, showText = false }: SidebarToggleProps) {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            onClick={onToggle}
-            variant="ghost"
-            className={`w-full gap-3 transition-all duration-200 text-muted-foreground hover:bg-accent hover:text-accent-foreground ${
-              showText ? "justify-start" : "justify-center px-0"
-            } ${className}`}
-          >
-            <PanelLeft className="w-4 h-4 flex-shrink-0" />
-            {showText && <span className="truncate">{isOpen ? 'Collapse sidebar' : 'Expand sidebar'}</span>}
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent align="start" className="flex items-center gap-2">
-          <span>{isOpen ? 'Collapse sidebar' : 'Expand sidebar'}</span>
-          <kbd className="px-1.5 py-0.5 text-xs rounded bg-muted font-mono opacity-70">
-            {navigator?.platform?.includes('Mac') ? '⌘' : 'Ctrl'} B
-          </kbd>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          onClick={toggleSidebar}
+          variant="outline"
+          className="md:px-2 md:h-[34px]"
+        >
+          <SidebarLeftIcon size={16} />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent align="start">
+        {t('actions.toggleSidebar')}
+      </TooltipContent>
+    </Tooltip>
   );
 }

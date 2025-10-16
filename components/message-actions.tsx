@@ -1,41 +1,117 @@
-import type { UIMessage, UIMessage } from 'ai';
+
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 import { useCopyToClipboard } from 'usehooks-ts';
-import { useState } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
+import equal from 'fast-deep-equal';
 
 import type { Vote } from '@/lib/db/schema';
-
-import { CopyIcon, ThumbDownIcon, ThumbUpIcon, ChevronDownIcon } from './icons';
+import { CopyIcon, ThumbDownIcon, ThumbUpIcon, Database } from './icons';
 import { Button } from './ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu';
-import { memo } from 'react';
-import equal from 'fast-deep-equal';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from './ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
+import { ExtractResults } from './extract-results';
 import { MessageCost } from './message-cost';
-import { GitBranch, MoreHorizontal } from 'lucide-react';
 
-// Helper function to extract text content from message parts
-function extractTextFromMessage(message: UIMessage): string {
-  if (!message.parts || !Array.isArray(message.parts)) {
-    // Fallback to content if it exists (for backward compatibility)
-    if (typeof message.content === 'string') {
-      return message.content;
+// Types for better type safety
+interface ExtractedToolResult {
+  data?: any;
+  summary?: {
+    successful: number;
+    total: number;
+  };
+}
+
+interface MessageWithTools {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  parts?: any[];
+}
+
+// Extract data utility with enhanced type safety
+const extractDataFromMessage = (message: MessageWithTools): ExtractedToolResult | null => {
+  if (!message.parts) return null;
+
+  const extractPart = message.parts.find(
+    (part: any) =>
+      part.type === 'tool-invocation' &&
+      part.toolInvocation?.toolName === 'extract' &&
+      part.toolInvocation?.state === 'result' &&
+      part.toolInvocation?.result?.data
+  );
+
+  return extractPart?.toolInvocation?.result || null;
+};
+
+// Vote handler with proper typing
+const createVoteHandler = (
+  type: 'up' | 'down',
+  chatId: string,
+  messageId: string,
+  mutate: (key: string, updater: (data: Vote[] | undefined) => Vote[], options?: { revalidate: boolean }) => void
+) => async (): Promise<void> => {
+  const voteRequest = fetch('/api/vote', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      chatId,
+      messageId,
+      type,
+    }),
+  }).then(async (response) => {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      if (errorData?.code === 'MESSAGE_NOT_FOUND') {
+        throw new Error('Please wait for the message to complete before voting.');
+      }
+      throw new Error(errorData?.error || `Failed to ${type === 'up' ? 'upvote' : 'downvote'} response.`);
     }
-    return '';
-  }
+    return response;
+  });
 
-  // Extract all text parts and join them
-  const textParts = message.parts
-    .filter((part: any) => part.type === 'text' && part.text)
-    .map((part: any) => part.text)
-    .join('\n\n');
+  toast.promise(voteRequest, {
+    loading: `${type === 'up' ? 'Upvoting' : 'Downvoting'} Response...`,
+    success: () => {
+      mutate(
+        `/api/vote?chatId=${chatId}`,
+        (currentVotes: Vote[] | undefined): Vote[] => {
+          if (!currentVotes) return [];
 
-  return textParts;
+          const votesWithoutCurrent = currentVotes.filter(
+            (vote: Vote) => vote.messageId !== messageId
+          );
+
+          const newVote: Vote = {
+            chatId,
+            messageId,
+            isUpvoted: type === 'up',
+          };
+
+          return [...votesWithoutCurrent, newVote];
+        },
+        { revalidate: false }
+      );
+
+      return `${type === 'up' ? 'Upvoted' : 'Downvoted'} Response!`;
+    },
+    error: (err) => err.message || `Failed to ${type === 'up' ? 'upvote' : 'downvote'} response.`,
+  });
+};
+
+// Component props interface
+interface MessageActionsProps {
+  chatId: string;
+  message: MessageWithTools;
+  vote: Vote | undefined;
+  isLoading: boolean;
+  shouldFetchCost?: boolean;
 }
 
 export function PureMessageActions({
@@ -43,176 +119,160 @@ export function PureMessageActions({
   message,
   vote,
   isLoading,
-  shouldCostFetch,
-  onBranch,
-}: {
-  chatId: string;
-  message: UIMessage;
-  vote: Vote | undefined;
-  isLoading: boolean;
-  shouldCostFetch?: boolean;
-  onBranch?: () => void;
-}) {
+  shouldFetchCost = false,
+}: MessageActionsProps) {
   const { mutate } = useSWRConfig();
-  const [_, copyToClipboard] = useCopyToClipboard();
-  const [open, setOpen] = useState(false);
+  const [, copyToClipboard] = useCopyToClipboard();
+  const [extractPopoverOpen, setExtractPopoverOpen] = useState(false);
 
-  if (isLoading) return null;
-  if (message.role === 'user') return null;
+  // Generate stable key for extract popover
+  const extractPopoverKey = useMemo(() => 
+    `extract-popover-${message.id}-${chatId}`, 
+    [message.id, chatId]
+  );
 
-  const handleCopy = async () => {
-    const textContent = extractTextFromMessage(message);
-    if (textContent) {
-      await copyToClipboard(textContent);
+  const handleCopy = useCallback(async (): Promise<void> => {
+    const msg = message as any;
+    const partsArray = msg.parts || msg.content || [];
+    
+    // Extract all text parts (excluding tool invocations)
+    const textParts = partsArray
+      .filter((part: any) => part.type === 'text' && part.text)
+      .map((part: any) => part.text);
+    
+    if (textParts.length > 0) {
+      const fullText = textParts.join('\n\n');
+      await copyToClipboard(fullText);
       toast.success('Copied to clipboard!');
-    } else {
-      toast.error('No text content to copy');
     }
-    setOpen(false);
-  };
+  }, [message, copyToClipboard]);
 
-  const handleUpvote = async () => {
-    const upvote = fetch('/api/vote', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        chatId,
-        messageId: message.id,
-        type: 'up',
-      }),
-    });
+  const handleUpvote = useCallback(
+    createVoteHandler('up', chatId, message.id, mutate),
+    [chatId, message.id, mutate]
+  );
 
-    toast.promise(upvote, {
-      loading: 'Upvoting Response...',
-      success: () => {
-        mutate<Array<Vote>>(
-          `/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) return [];
+  const handleDownvote = useCallback(
+    createVoteHandler('down', chatId, message.id, mutate),
+    [chatId, message.id, mutate]
+  );
 
-            const votesWithoutCurrent = currentVotes.filter(
-              (vote) => vote.messageId !== message.id,
-            );
+  // Memoize extract data to prevent unnecessary recalculations
+  const extractData = useMemo(() => 
+    extractDataFromMessage(message), 
+    [message]
+  );
 
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                messageId: message.id,
-                isUpvoted: true,
-              },
-            ];
-          },
-          { revalidate: false },
-        );
+  // Only return null for loading and user messages
+  if (isLoading || message.role === 'user') return null;
 
-        return 'Upvoted Response!';
-      },
-      error: 'Failed to upvote response.',
-    });
-    setOpen(false);
-  };
-
-  const handleDownvote = async () => {
-    const downvote = fetch('/api/vote', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        chatId,
-        messageId: message.id,
-        type: 'down',
-      }),
-    });
-
-    toast.promise(downvote, {
-      loading: 'Downvoting Response...',
-      success: () => {
-        mutate<Array<Vote>>(
-          `/api/vote?chatId=${chatId}`,
-          (currentVotes) => {
-            if (!currentVotes) return [];
-
-            const votesWithoutCurrent = currentVotes.filter(
-              (vote) => vote.messageId !== message.id,
-            );
-
-            return [
-              ...votesWithoutCurrent,
-              {
-                chatId,
-                messageId: message.id,
-                isUpvoted: false,
-              },
-            ];
-          },
-          { revalidate: false },
-        );
-
-        return 'Downvoted Response!';
-      },
-      error: 'Failed to downvote response.',
-    });
-    setOpen(false);
-  };
-
-  const handleBranch = () => {
-    onBranch?.();
-    setOpen(false);
-  };
-  
   return (
-    <div className="flex flex-row items-center">
-      <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground hover:bg-transparent mr-1"
+    <TooltipProvider delayDuration={0}>
+      <div className="flex flex-row gap-2 mt-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className="py-1 px-2 h-fit text-muted-foreground"
+              variant="outline"
+              onClick={handleCopy}
+            >
+              <CopyIcon />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Copy</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className={`py-1 px-2 h-fit !pointer-events-auto ${
+                vote?.isUpvoted 
+                  ? 'bg-foreground text-background hover:bg-foreground/90' 
+                  : 'text-muted-foreground'
+              }`}
+              variant="outline"
+              onClick={handleUpvote}
+            >
+              <ThumbUpIcon />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Upvote Response</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              className={`py-1 px-2 h-fit !pointer-events-auto ${
+                vote && !vote.isUpvoted
+                  ? 'bg-foreground text-background hover:bg-foreground/90' 
+                  : 'text-muted-foreground'
+              }`}
+              variant="outline"
+              onClick={handleDownvote}
+            >
+              <ThumbDownIcon />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Downvote Response</TooltipContent>
+        </Tooltip>
+
+        <MessageCost
+          message={message as any}
+          shouldFetch={shouldFetchCost}
+        />
+
+        {extractData && (
+          <Popover
+            key={extractPopoverKey}
+            open={extractPopoverOpen}
+            onOpenChange={setExtractPopoverOpen}
           >
-            <MoreHorizontal className="h-3 w-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={handleCopy} className="gap-2 cursor-pointer">
-            <CopyIcon className="h-3 w-3" />
-            Copy message
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={handleUpvote} 
-            disabled={vote?.isUpvoted}
-            className="gap-2 cursor-pointer"
-          >
-            <ThumbUpIcon className="h-3 w-3" />
-            Upvote
-          </DropdownMenuItem>
-          
-          <DropdownMenuItem 
-            onClick={handleDownvote} 
-            disabled={vote && !vote.isUpvoted}
-            className="gap-2 cursor-pointer"
-          >
-            <ThumbDownIcon className="h-3 w-3" />
-            Downvote
-          </DropdownMenuItem>
-          
-          {onBranch && (
-            <DropdownMenuItem onClick={handleBranch} className="gap-2 cursor-pointer">
-              <GitBranch className="h-3 w-3" />
-              Branch from here
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <MessageCost message={message} shouldFetch={shouldCostFetch} />
-    </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <PopoverTrigger asChild>
+                  <Button
+                    className="py-1 px-2 h-fit text-muted-foreground"
+                    variant="outline"
+                  >
+                    <Database className="h-4 w-4" />
+                    <span className="ml-1 text-xs">
+                      {extractData.summary
+                        ? `${extractData.summary.successful}/${extractData.summary.total}`
+                        : 'Data'}
+                    </span>
+                  </Button>
+                </PopoverTrigger>
+              </TooltipTrigger>
+              <TooltipContent>View extracted data</TooltipContent>
+            </Tooltip>
+
+            <PopoverContent
+              className="w-[600px] max-h-[400px] overflow-y-auto p-0"
+              align="start"
+              side="top"
+            >
+              <div className="p-4">
+                <ExtractResults
+                  results={extractData.data}
+                  title="Extracted Data"
+                  isLoading={false}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }
 
 export const MessageActions = memo(
   PureMessageActions,
-  (prevProps, nextProps) => {
+  (prevProps: MessageActionsProps, nextProps: MessageActionsProps): boolean => {
     if (!equal(prevProps.vote, nextProps.vote)) return false;
     if (prevProps.isLoading !== nextProps.isLoading) return false;
-
+    if (prevProps.message.id !== nextProps.message.id) return false;
+    if (prevProps.chatId !== nextProps.chatId) return false;
     return true;
-  },
+  }
 );

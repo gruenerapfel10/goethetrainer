@@ -1,30 +1,30 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { del } from '@vercel/blob';
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function DELETE(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get('key');
-  const url = searchParams.get('url');
 
-  if (!key && !url) {
+  if (!key) {
     return NextResponse.json(
-      { error: 'Missing logo key or URL' },
+      { error: 'Missing logo key' },
       { status: 400 }
     );
   }
 
   try {
-    // Vercel Blob requires the full URL to delete
-    if (url) {
-      await del(url);
-    } else {
-      // If only key is provided, we can't delete without the full URL
-      // In production, you'd store the full URL in your database
-      return NextResponse.json(
-        { error: 'Please provide the full blob URL for deletion' },
-        { status: 400 }
-      );
-    }
+    await s3.send(new DeleteObjectCommand({
+      Bucket: process.env.LOGO_S3_BUCKET_NAME!,
+      Key: decodeURIComponent(key),
+    }));
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

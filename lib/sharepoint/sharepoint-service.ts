@@ -75,7 +75,6 @@ async function listSharePointFilesRecursive(driveId: string, currentGraphItemPat
   const allFiles: SharePointFile[] = [];
   const selectParams = "$select=id,name,size,lastModifiedDateTime,webUrl,eTag,cTag,folder,file,package,parentReference,@microsoft.graph.downloadUrl";
   const url = `${GRAPH_ENDPOINT}${currentGraphItemPath}:/children?${selectParams}`;
-  console.log(`Recursive List DEBUG: Requesting children for Graph path: ${currentGraphItemPath} (relative base: '${baseRelativePath}')`);
   try {
     const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }, cache: 'no-store' });
     if (!response.ok) { const errorBody = await response.json().catch(() => ({})); console.error(`Recursive List ERROR: Failed for ${currentGraphItemPath}. Status: ${response.status}`, errorBody.error?.message || response.statusText); return []; }
@@ -125,7 +124,6 @@ export async function getSharePointChanges(driveIdToSync: string = DRIVE_ID, tar
 
   const deltaFunctionPath = targetPathKey ? `${itemGraphPathForTarget}:/delta` : `${itemGraphPathForTarget}/delta`;
   let requestUrl = currentDeltaLink || `${GRAPH_ENDPOINT}${deltaFunctionPath}?token=latest`;
-  console.log(`SharePoint Sync: Initiating for SyncID '${syncStateId}'. Using ${currentDeltaLink ? 'existing DeltaLink' : 'token=latest'}.`);
 
   try {
     do {
@@ -146,7 +144,6 @@ export async function getSharePointChanges(driveIdToSync: string = DRIVE_ID, tar
       const data = JSON.parse(responseBodyText);
       const items: SharePointFile[] = data.value || [];
       totalItemsFromGraphThisRun += items.length;
-      console.log(`SharePoint Sync DEBUG: Page received. Raw items this page: ${items.length}.`);
       // Detailed item logging (uncomment if needed for extreme cases)
       /*
       if (items.length > 0) {
@@ -181,7 +178,6 @@ export async function getSharePointChanges(driveIdToSync: string = DRIVE_ID, tar
       console.warn(`SharePoint Sync: Initial delta for '${syncStateId}' gave 0 items but a deltaLink. Falling back to recursive list.`);
       const graphPathForRecursiveRoot = `/drives/${driveIdToSync}/root${targetPathKey ? `:/${targetPathKey.split('/').map(s=>encodeURIComponent(s)).join('/')}` : ''}`;
       const recursiveFiles = await listSharePointFilesRecursive(driveIdToSync, graphPathForRecursiveRoot, "", token);
-      console.log(`SharePoint Sync: Recursive fallback found ${recursiveFiles.length} files for '${syncStateId}'.`);
       results = recursiveFiles.map(file => ({ type: 'recursive_initial_upsert', item: file }));
       totalItemsFromGraphThisRun = recursiveFiles.length;
       await storeSyncStateInDB(syncStateId, driveIdToSync, targetPathKey, finalDeltaLinkFromResponse, true);
@@ -190,12 +186,10 @@ export async function getSharePointChanges(driveIdToSync: string = DRIVE_ID, tar
 
     if (finalDeltaLinkFromResponse) {
       await storeSyncStateInDB(syncStateId, driveIdToSync, targetPathKey, finalDeltaLinkFromResponse, currentSyncState?.lastSyncWasRecursiveFullScan || false); // Preserve recursive flag if just updating delta
-      console.log(`SharePoint Sync: Processed pages for SyncID '${syncStateId}'. ${results.length} changes collected from ${totalItemsFromGraphThisRun} raw Graph items. New deltaLink stored.`);
       return { changes: results, newDeltaLinkPersisted: true, actualItemsFoundThisRun: totalItemsFromGraphThisRun, initialSyncPerformedByRecursive: currentSyncState?.lastSyncWasRecursiveFullScan };
     } else {
       if (!currentDeltaLink && !finalDeltaLinkFromResponse && results.length === 0 && totalItemsFromGraphThisRun === 0) {
         await storeSyncStateInDB(syncStateId, driveIdToSync, targetPathKey, null, false); // Initial empty scan
-        console.log(`SharePoint Sync: Initial scan for SyncID '${syncStateId}' found no items and no new deltaLink. Marked as empty scan complete.`);
       } else { console.warn(`SharePoint Sync: Sync for SyncID '${syncStateId}' completed but no new deltaLink. ${results.length} changes collected from ${totalItemsFromGraphThisRun} raw items.`);}
       return { changes: results, newDeltaLinkPersisted: false, actualItemsFoundThisRun: totalItemsFromGraphThisRun, initialSyncPerformedByRecursive: currentSyncState?.lastSyncWasRecursiveFullScan };
     }

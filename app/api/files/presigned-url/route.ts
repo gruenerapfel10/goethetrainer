@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { auth } from '@/app/(auth)/auth';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION || 'eu-central-1',
@@ -27,7 +28,8 @@ function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
         url.hostname.includes('.amazonaws.com')
       ) {
         const bucketName = url.hostname.split('.s3.')[0];
-        const key = url.pathname.substring(1); // Remove leading slash
+        // Decode the key to handle URL-encoded characters
+        const key = decodeURIComponent(url.pathname.substring(1)); // Remove leading slash and decode
         return { bucketName, key };
       }
 
@@ -38,7 +40,8 @@ function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
       ) {
         const pathParts = url.pathname.substring(1).split('/');
         const bucketName = pathParts[0];
-        const key = pathParts.slice(1).join('/');
+        // Decode the key to handle URL-encoded characters
+        const key = decodeURIComponent(pathParts.slice(1).join('/'));
         return { bucketName, key };
       }
     }
@@ -52,6 +55,20 @@ function parseS3Url(s3Url: string): { bucketName: string; key: string } | null {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+    console.log('[presigned-URL API] Session check:', {
+      hasSession: !!session,
+      hasUser: !!session?.user,
+      hasUserId: !!session?.user?.id,
+      userEmail: session?.user?.email
+    });
+    
+    if (!session || !session.user || !session.user.id) {
+      console.log('[presigned-URL API] Authentication failed - returning 401');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const { s3Url } = await req.json();
 
     if (!s3Url) {
@@ -83,6 +100,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // First check if the object exists using HeadObject
+    try {
+      const headCommand = new HeadObjectCommand({
+        Bucket: bucketName,
+        Key: key,
+      });
+      
+      // This will throw if the object doesn't exist
+      await s3Client.send(headCommand);
+    } catch (headError: any) {
+      // If the file doesn't exist, return 404
+      if (headError.name === 'NotFound' || headError.$metadata?.httpStatusCode === 404) {
+        console.log(`[presigned-URL API] File not found: ${s3Url}`);
+        return NextResponse.json(
+          { 
+            error: 'File not found',
+            details: `The file at ${key} does not exist in bucket ${bucketName}`
+          },
+          { status: 404 }
+        );
+      }
+      // For other errors, re-throw
+      throw headError;
+    }
+
+    // If file exists, generate presigned URL
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: key,

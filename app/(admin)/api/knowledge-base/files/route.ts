@@ -154,7 +154,6 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    console.log(`API Files: Returning page ${params.page}/${totalPages} (${files.length} files of ${totalCountValue} total) for query: '${params.searchQuery}'`);
     return NextResponse.json(responseData);
 
   } catch (error: any) {

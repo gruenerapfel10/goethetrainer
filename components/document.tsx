@@ -1,9 +1,10 @@
 import { memo } from 'react';
 
-import type { ArtifactKind } from './artifact';
+import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from './icons';
 import { toast } from 'sonner';
-import { useArtifact } from '@/hooks/use-artifact';
+import { useChat } from '@/contexts/chat-context';
+import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { useTranslations } from 'next-intl';
 
 interface DocumentToolResultProps {
@@ -17,7 +18,7 @@ function PureDocumentToolResult({
   result,
   isReadonly,
 }: DocumentToolResultProps) {
-  const { setArtifact } = useArtifact();
+  const { createArtifact } = useArtifactsContext();
   const t = useTranslations();
   const getActionText = (
     type: 'create' | 'update' | 'request-suggestions',
@@ -60,13 +61,11 @@ function PureDocumentToolResult({
           height: rect.height,
         };
 
-        setArtifact({
+        createArtifact({
           documentId: result.id,
-          kind: result.kind,
-          content: '',
+          kind: result.kind as any,
           title: result.title,
-          isVisible: true,
-          status: 'idle',
+          content: '',
           boundingBox,
         });
       }}
@@ -100,7 +99,7 @@ function PureDocumentToolCall({
   args,
   isReadonly,
 }: DocumentToolCallProps) {
-  const { setArtifact } = useArtifact();
+  const { setArtifactsVisible } = useArtifactsContext();
   const t = useTranslations();
 
   const getActionText = (
@@ -144,11 +143,7 @@ function PureDocumentToolCall({
           height: rect.height,
         };
 
-        setArtifact((currentArtifact) => ({
-          ...currentArtifact,
-          isVisible: true,
-          boundingBox,
-        }));
+        setArtifactsVisible(true);
       }}
     >
       <div className="flex flex-row gap-3 items-start">

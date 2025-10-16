@@ -1,0 +1,1 @@
+export { WebSearchMain as WebSearch } from './WebSearchMain';
