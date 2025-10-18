@@ -1,5 +1,5 @@
 import { auth } from '@/app/(auth)/auth';
-import { getChatsByUser } from '@/lib/db/queries';
+import { getChatsByUserId } from '@/lib/db/queries';
 
 export async function GET(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const chats = await getChatsByUser({ userId: session.user.id });
+    const chats = await getChatsByUserId({ userId: session.user.id });
     
     const chatItems = chats.map(chat => ({
       id: chat.id,
