@@ -164,7 +164,9 @@ export async function POST(request: Request) {
       return new Response('No user message found', { status: 400 });
     }
 
-    const modelId = selectedChatModel;
+    const { getAgentModelId, getAgentTypeFromModel } = await import('@/lib/ai/agents');
+    const agentType = getAgentTypeFromModel(selectedChatModel);
+    const modelId = getAgentModelId(agentType);
     if (!modelId) {
       return new Response('Model not specified', { status: 400 });
     }
