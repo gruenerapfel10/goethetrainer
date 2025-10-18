@@ -31,7 +31,7 @@ export function getAgentConfig(agentType: AgentType): AgentConfig {
 
 // Get agent type from model ID
 export function getAgentTypeFromModel(modelId: string): AgentType {
-  return MODEL_TO_AGENT_TYPE[modelId] || AgentType.GENERAL_AGENT;
+  return MODEL_TO_AGENT_TYPE[modelId] || AgentType.GOETHE_AGENT;
 }
 
 // Get all tools for an agent (filtered by enabled state)

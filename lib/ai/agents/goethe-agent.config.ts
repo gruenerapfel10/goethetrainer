@@ -16,15 +16,7 @@ export const goetheAgentConfig = {
   },
   // Tools this agent has access to
   tools: [
-    ToolName.REQUEST_SUGGESTIONS,
-    ToolName.PROCESS_FILE,
-    ToolName.CREATE_DOCUMENT,
-    ToolName.UPDATE_DOCUMENT,
-    ToolName.GENERATE_IMAGE,
-    // Web tools (toggleable)
     ToolName.SEARCH,
-    ToolName.EXTRACT,
-    ToolName.DEEP_RESEARCH,
   ],
   
   // Features this agent supports (user-facing UI features)
