@@ -20,10 +20,9 @@ import { useTranslations } from 'next-intl';
 import { PlusIcon } from './icons';
 import LanguageSwitcher from './language-switcher';
 import { cn } from '@/lib/utils';
-import { useState, } from 'react';
+import { useState } from 'react';
 import { useWindowSize } from 'usehooks-ts';
 import { SidebarSearch } from './sidebar-search';
-import { useSearchModal } from './search-modal-provider';
 
 
 // New Chat Button Component
@@ -79,16 +78,9 @@ function LanguageNav() {
 
 
 export function AppSidebar({ user }: { user: User | undefined }) {
-  const { state, setOpenMobile } = useSidebar();
+  const { state } = useSidebar();
   const { width } = useWindowSize();
-  const { openSearchModal } = useSearchModal();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResultCount, setSearchResultCount] = useState<number | undefined>();
-  
-  const handleOpenSearchModal = () => {
-    setOpenMobile(false); // Close sidebar on mobile
-    openSearchModal();
-  };
   
   return (
     <Sidebar collapsible="icon">
@@ -98,8 +90,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           <SidebarSearch 
             value={searchQuery} 
             onChange={setSearchQuery}
-            resultCount={searchQuery ? searchResultCount : undefined}
-            onOpenModal={handleOpenSearchModal}
+            onOpenModal={() => {}}
           />
           <div className="space-y-1">
             <LanguageNav />
@@ -109,9 +100,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       <SidebarContent>
         {(state === 'expanded' || width < 1024) && (
           <SidebarHistory 
-            user={user} 
-            searchQuery={searchQuery}
-            onSearchResultsChange={setSearchResultCount}
+            user={user}
           />
         )}
       </SidebarContent>

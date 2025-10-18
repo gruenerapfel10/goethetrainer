@@ -59,6 +59,7 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean
     open?: boolean
     onOpenChange?: (open: boolean) => void
+    keyboardShortcut?: string
   }
 >(
   (
@@ -69,6 +70,7 @@ const SidebarProvider = React.forwardRef<
       className,
       style,
       children,
+      keyboardShortcut = SIDEBAR_KEYBOARD_SHORTCUT,
       ...props
     },
     ref
@@ -106,7 +108,7 @@ const SidebarProvider = React.forwardRef<
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (
-          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+          event.key === keyboardShortcut &&
           (event.metaKey || event.ctrlKey)
         ) {
           event.preventDefault()
@@ -116,7 +118,7 @@ const SidebarProvider = React.forwardRef<
 
       window.addEventListener("keydown", handleKeyDown)
       return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [toggleSidebar])
+    }, [toggleSidebar, keyboardShortcut])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
