@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { useRightSidebar } from '@/lib/right-sidebar-context';
 import { SidebarChat } from './sidebar-chat';
-import { generateUUID } from '@/lib/utils';
+import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION } from '@/lib/sidebar-constants';
 
@@ -12,6 +13,12 @@ export function AppRightbar() {
   const [chatId, setChatId] = useState('');
 
   useEffect(() => setChatId(generateUUID()), []);
+
+  const { data: chatData } = useSWR<{ messages: any[]; title?: string }>(
+    chatId ? `/api/chat/${chatId}` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
   if (!chatId) return null;
 
@@ -27,7 +34,16 @@ export function AppRightbar() {
       data-side="right"
     >
       <div className="p-0 flex flex-col h-full overflow-hidden">
-        <SidebarChat id={chatId} initialMessages={[]} selectedChatModel="gpt-4" isReadonly={false} isAdmin={false} selectedVisibilityType="private" onChatChange={setChatId} />
+        <SidebarChat 
+          id={chatId} 
+          initialMessages={chatData?.messages || []} 
+          selectedChatModel="gpt-4" 
+          isReadonly={false} 
+          isAdmin={false} 
+          selectedVisibilityType="private" 
+          onChatChange={setChatId}
+          chat={chatData?.title ? { title: chatData.title } : undefined}
+        />
       </div>
     </aside>
   );
