@@ -1,10 +1,9 @@
-// auth.ts - Keep PKCE fixes, remove problematic cookie config
 import { compare } from 'bcrypt-ts';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
-import { getUser, createUser } from '@/lib/db/queries';
 import { authConfig } from './auth.config';
+import { getUserByEmail, createUser } from '@/lib/firebase/firestore-queries';
 
 const handler = NextAuth({
   ...authConfig,
@@ -12,22 +11,18 @@ const handler = NextAuth({
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  // REMOVE: The explicit cookie configuration - this is likely causing JWT issues
-  // cookies: { ... },
-
-  // KEEP: Debug logging
   debug: process.env.NODE_ENV === "development",
   providers: [
     Credentials({
       async authorize({ email, password }: any) {
-        const users = await getUser(email);
-        if (users.length === 0) return null;
-        const passwordsMatch = await compare(password, users[0].password!);
+        const user = await getUserByEmail(email);
+        if (!user) return null;
+        const passwordsMatch = await compare(password, user.password!);
         if (!passwordsMatch) return null;
         return {
-          id: users[0].id,
-          email: users[0].email,
-          isAdmin: users[0].isAdmin || false,
+          id: user.id,
+          email: user.email,
+          isAdmin: user.isAdmin || false,
         };
       },
     }),
@@ -35,7 +30,6 @@ const handler = NextAuth({
       clientId: process.env.AZURE_AD_CLIENT_ID!,
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
       issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0`,
-      // KEEP: Explicit checks for PKCE (this fixes the original issue)
       checks: ["pkce", "state"],
       authorization: {
         params: {
@@ -45,7 +39,6 @@ const handler = NextAuth({
         }
       },
       profile(profile) {
-        // KEEP: String coercion for safety, but simpler
         return {
           id: profile.oid || profile.sub,
           name: profile.name,
@@ -64,11 +57,14 @@ const handler = NextAuth({
       if (account?.provider === 'microsoft-entra-id' && profile?.preferred_username) {
         try {
           const userEmail = profile.preferred_username;
-          const [existingUser] = await getUser(userEmail);
+          const existingUser = await getUserByEmail(userEmail);
 
           if (!existingUser) {
-            await createUser(userEmail, '');
-            const [newUser] = await getUser(userEmail);
+            await createUser({
+              email: userEmail,
+              isAdmin: false,
+            });
+            const newUser = await getUserByEmail(userEmail);
 
             if (!newUser) {
               console.error('[auth] Failed to create user for:', userEmail);
@@ -91,7 +87,7 @@ const handler = NextAuth({
 
       return true;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -109,7 +105,7 @@ const handler = NextAuth({
     }
   },
   events: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       console.log('[auth] Successful sign in:', {
         provider: account?.provider,
         email: user.email
