@@ -10,6 +10,7 @@ export function SidebarToggle() {
 
   return (
     <Button
+      type="button"
       onClick={toggleSidebar}
       variant="ghost"
       size="icon"
