@@ -1321,6 +1321,10 @@
     }
   },
   "agents": {
+    "goethe": {
+      "label": "Goethe Agent",
+      "description": "Specialized in language learning and practice"
+    },
     "standard": {
       "label": "General Assistant",
       "description": "Creates emails, reports, analyzes web and generates images."
