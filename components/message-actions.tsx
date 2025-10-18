@@ -89,9 +89,11 @@ const createVoteHandler = (
           );
 
           const newVote: Vote = {
+            id: `vote-${Date.now()}`,
             chatId,
             messageId,
             isUpvoted: type === 'up',
+            createdAt: new Date(),
           };
 
           return [...votesWithoutCurrent, newVote];

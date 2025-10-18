@@ -39,15 +39,13 @@ export async function generateTitleFromUserMessage({
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  const messages = await getMessageById({ id });
+  const message = await getMessageById({ id });
 
   // Return early if no message is found
-  if (!messages || messages.length === 0) {
+  if (!message) {
     console.warn(`No message found with id: ${id}`);
     return;
   }
-
-  const message = messages[0]; // Get the first message since we know it exists
 
   await deleteMessagesByChatIdAfterTimestamp({
     chatId: message.chatId,

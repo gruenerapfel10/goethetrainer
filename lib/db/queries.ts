@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { genSaltSync, hashSync } from 'bcrypt-ts';
-import { adminDb } from './firebase/admin';
+import { adminDb } from '@/lib/firebase/admin';
 import { Timestamp, FieldValue } from 'firebase-admin/firestore';
 
 export interface User {
@@ -13,13 +13,15 @@ export interface User {
   updatedAt: Date;
 }
 
+export type VisibilityType = 'private' | 'public';
+
 export interface Chat {
   id: string;
   userId: string;
   title: string;
   customTitle?: string | null;
-  visibility?: string;
-  isPinned?: boolean;
+  visibility: VisibilityType;
+  isPinned: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +39,14 @@ export interface DBMessage {
   inputTokens?: number;
   outputTokens?: number;
   processed?: boolean;
+}
+
+export interface Vote {
+  id: string;
+  chatId: string;
+  messageId: string;
+  isUpvoted: boolean;
+  createdAt: Date;
 }
 
 export async function getUser(email: string): Promise<Array<User>> {
@@ -198,11 +208,11 @@ export async function getChatsByUserId({
         userId: data.userId,
         title: data.title,
         customTitle: data.customTitle || null,
-        visibility: data.visibility,
-        isPinned: data.isPinned,
+        visibility: (data.visibility || 'private') as VisibilityType,
+        isPinned: data.isPinned || false,
         createdAt: (data.createdAt as Timestamp).toDate(),
         updatedAt: (data.updatedAt as Timestamp).toDate(),
-      };
+      } as Chat;
     });
     
     const unpinnedChats = unpinnedSnapshot.docs.map(doc => {
@@ -212,11 +222,11 @@ export async function getChatsByUserId({
         userId: data.userId,
         title: data.title,
         customTitle: data.customTitle || null,
-        visibility: data.visibility,
-        isPinned: data.isPinned,
+        visibility: (data.visibility || 'private') as VisibilityType,
+        isPinned: data.isPinned || false,
         createdAt: (data.createdAt as Timestamp).toDate(),
         updatedAt: (data.updatedAt as Timestamp).toDate(),
-      };
+      } as Chat;
     });
     
     return [...pinnedChats, ...unpinnedChats].slice(offset, offset + limit);
@@ -226,7 +236,7 @@ export async function getChatsByUserId({
   }
 }
 
-export async function getChatById({ id }: { id: string }) {
+export async function getChatById({ id }: { id: string }): Promise<Chat | null> {
   try {
     const chatDoc = await adminDb.collection('chats').doc(id).get();
     
@@ -239,10 +249,10 @@ export async function getChatById({ id }: { id: string }) {
       updatedAt: (data.updatedAt as Timestamp).toDate(),
       title: data.title,
       userId: data.userId,
-      visibility: data.visibility,
-      isPinned: data.isPinned,
+      visibility: (data.visibility || 'private') as VisibilityType,
+      isPinned: data.isPinned || false,
       customTitle: data.customTitle || null,
-    };
+    } as Chat;
   } catch (error) {
     console.error('Failed to get chat by id from Firestore');
     throw error;
@@ -365,7 +375,7 @@ export async function getPaginatedMessagesByChatId(
   }
 }
 
-export async function getMessageById({ id }: { id: string }) {
+export async function getMessageById({ id }: { id: string }): Promise<DBMessage | null> {
   try {
     // Search across all chats for this message (inefficient but works for now)
     const chatsSnapshot = await adminDb.collection('chats').get();
@@ -379,12 +389,15 @@ export async function getMessageById({ id }: { id: string }) {
           chatId: data.chatId,
           role: data.role,
           parts: data.parts,
-          attachments: data.attachments,
+          attachments: data.attachments || [],
           createdAt: (data.createdAt as Timestamp).toDate(),
-          agentType: data.agentType || null,
+          agentType: data.agentType || undefined,
           useCaseId: data.useCaseId || null,
-          modelId: data.modelId || null,
-        };
+          modelId: data.modelId || undefined,
+          inputTokens: data.inputTokens || 0,
+          outputTokens: data.outputTokens || 0,
+          processed: data.processed || false,
+        } as DBMessage;
       }
     }
     
@@ -642,4 +655,66 @@ export async function saveSystemPrompt(assistantId: string, prompt: string) {
     console.error('Failed to save system prompt to Firestore');
     throw error;
   }
+}
+
+export interface Document {
+  id: string;
+  title: string;
+  content: string;
+  kind?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function saveDocument(doc: Partial<Document> & { id: string }): Promise<void> {
+  try {
+    await adminDb.collection('documents').doc(doc.id).set({
+      ...doc,
+      updatedAt: Timestamp.now(),
+    }, { merge: true });
+  } catch (error) {
+    console.error('Failed to save document to Firestore');
+    throw error;
+  }
+}
+
+export async function getDocumentsById({ id }: { id: string }): Promise<Document | null> {
+  try {
+    const docSnapshot = await adminDb.collection('documents').doc(id).get();
+    if (!docSnapshot.exists) return null;
+    const data = docSnapshot.data();
+    return {
+      id: docSnapshot.id,
+      title: data?.title || '',
+      content: data?.content || '',
+      kind: data?.kind,
+      createdAt: (data?.createdAt as Timestamp)?.toDate() || new Date(),
+      updatedAt: (data?.updatedAt as Timestamp)?.toDate() || new Date(),
+    };
+  } catch (error) {
+    console.error('Failed to get document from Firestore');
+    return null;
+  }
+}
+
+export async function getDocumentById({ id }: { id: string }): Promise<Document | null> {
+  return getDocumentsById({ id });
+}
+
+export function getWorkingVersion(): string {
+  return '';
+}
+
+export async function saveSuggestions(suggestions: any[]): Promise<void> {
+  // Stub function for suggestions
+}
+
+export interface Suggestion {
+  id: string;
+  content: string;
+  description?: string;
+}
+
+export async function getSuggestions(): Promise<Suggestion[]> {
+  return [];
 }

@@ -1,5 +1,4 @@
 import { generalAgentConfig } from './general-agent.config';
-import { text2sqlAgentConfig } from './text2sql-agent.config';
 import { AgentType, AgentConfig, SuggestedAction } from './types';
 import type { ToolName } from '@/lib/ai/tools/tool-registry';
 import type { FeatureName } from '@/lib/ai/features/feature-registry';
@@ -10,14 +9,12 @@ export { AgentType, type AgentConfig, type SuggestedAction } from './types';
 // Map of all agent configurations
 export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
   [AgentType.GENERAL_AGENT]: generalAgentConfig,
-  [AgentType.TEXT2SQL_AGENT]: text2sqlAgentConfig,
 };
 
 
 // Map model IDs to agent types
 export const MODEL_TO_AGENT_TYPE: Record<string, AgentType> = {
   'general-bedrock-agent': AgentType.GENERAL_AGENT,
-  'text2sql-agent': AgentType.TEXT2SQL_AGENT,
 };
 
 // Get agent configuration
@@ -94,7 +91,6 @@ export function getAgentSupportsFileAttachments(agentType: AgentType): boolean {
 
 export const AGENT_TO_ASSISTANT: Record<string, string> = {
   [AgentType.GENERAL_AGENT]: 'general-assistant',
-  [AgentType.TEXT2SQL_AGENT]: 'text2sql-agent',
 };
 
 // Get agent prompt

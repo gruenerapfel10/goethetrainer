@@ -93,8 +93,6 @@ const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<
       metadata: { model: 'mock-image-editor', timestamp: new Date().toISOString() }
     }),
   }),
-  [ToolName.TEXT2SQL]: async () => (await import('@/lib/ai/tools/wren/generate-sql-wren.tool')).generateSqlWrenTool(),
-  [ToolName.RUN_SQL]: async () => (await import('@/lib/ai/tools/wren/run-sql-wren.tool')).runSqlWrenTool,
 };
 
 async function initializeTool(toolName: ToolName, session: Session, chatId: string): Promise<any> {

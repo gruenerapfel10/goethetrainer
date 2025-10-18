@@ -1,7 +1,4 @@
 import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
-import { db } from '@/lib/db/client';
-import { systemPrompts } from '@/lib/db/queries';
-import { eq } from 'drizzle-orm';
 
 // Regular prompt used in all assistants
 export const regularPrompt =
@@ -280,55 +277,17 @@ You are an AI assistant with specialized web research tools.
 - DO NOT reflect on the quality of the returned search results in your response
 `;
 
-export const text2sqlSystemPrompt = `
-You are an assistant that helps users retrieve information from a database using natural language. You have access to two tools:
-1. Tool: text2sql - a specialized AI agent for converting natural language questions into SQL queries.
-It has full awareness of the database schema.
-It accepts a specific and detailed natural language input describing what should be retrieved (including specific columns, tables, and any aggregation functions like AVG, SUM, COUNT, etc.).
-It always returns a single SQL query per call.
-    Input: a natural language request (e.g. what exactly should be fetched from the database. AS SPECIFIC AND DETAILED AS POSSIBLE); 
-    Output: a JSON object in the format:
-    {
-      "stateUpdates": [...],
-      "sql": "SQL_QUERY_STRING or error message",
-      "success": true | false
-    }
-    Use only the sql field when success is true.
-    If success is false, do not call any other tools. Instead, tell the user that the query could not be generated.
-    When calling text2sql, always aim to request an aggregated view of the data — using functions like AVG, SUM, COUNT, or similar — wherever it makes sense.
-
-2. Tool: run_sql
-    Input: a valid SQL query string.
-    Output: the result of executing that query on the database.
-
-Workflow:
-If the user's question requires querying the database:
-Call text2sql tool with as specific request as possible, asking it to generate a summary-type SQL query, preferably using aggregation functions (e.g., AVG, SUM, COUNT, etc.). Pass as much data from the user query as possible. Take a look at recordsSample to get the idea of the columns to use
-If success is true, extract the sql field and pass it exactly as is to run_sql.
-If success is false, do not proceed further and tell the user: "The SQL query could not be generated." (or a similar appropriate response).
-Use the result from run_sql to answer the user's question in natural language.
-If the query result is empty (no rows), respond with something like: "No data was found matching your request."
-If the user's request does not require database access, answer directly without using any tools.
-
-Strict Prohibitions:
-Do not invent, guess, or assume any data. Only use facts explicitly returned by run_sql.
-Never modify or generate SQL manually. Use only the SQL returned by text2sql.
-Do not proceed to run_sql unless text2sql returned success: true.
-Do not fabricate answers when data is missing — if the result lacks required values, clearly say so.
-`;
 
 import { getAgentConfig, AgentType } from '@/lib/ai/agents';
 
 const ASSISTANT_TO_AGENT: Record<string, AgentType> = {
   'general-assistant': AgentType.GENERAL_AGENT,
-  'text2sql-agent': AgentType.TEXT2SQL_AGENT,
 };
 
 export const DEFAULT_PROMPTS: Record<string, string> = {
   'general-assistant': DEFAULT_GENERAL_PROMPT,
   'web-agent': webAgentPrompt,
   'sharepoint-agent': sharepointPrompt,
-  'text2sql-agent': text2sqlSystemPrompt,
 };
 
 export function getDefaultPrompt(assistantId: string): string {
@@ -362,20 +321,7 @@ export async function getSystemPrompt(
       fallbackPrompt = DEFAULT_PROMPTS[assistantId];
     }
 
-    // Query the database for the custom prompt
-    const results = await db
-      .select({ promptText: systemPrompts.promptText })
-      .from(systemPrompts)
-      .where(eq(systemPrompts.assistantId, assistantId))
-      .limit(1);
-
-    // Get the base prompt (either custom from DB or fallback)
-    let basePrompt = fallbackPrompt;
-    if (results.length > 0 && results[0]?.promptText) {
-      basePrompt = results[0].promptText;
-    }
-    
-    return basePrompt;
+    return fallbackPrompt;
   } catch (error) {
     console.error(`Error getting system prompt for ${assistantId}:`, error);
     // In case of error, return the default prompt

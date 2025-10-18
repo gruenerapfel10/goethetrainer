@@ -38,7 +38,7 @@ export class ChatManager {
   private messages: UIMessage[] = [];
   private settings: ChatSettings;
   private chat: Chat | null = null;
-  private contextInfo: { messageIds: string[]; totalTokens: number; maxTokens: number } | null = null;
+  private contextInfo: { messageIds: string[]; totalTokens: number; maxTokens?: number } | null = null;
   private contextWindow: number = 150000; // Default context window
 
   constructor(chatId: string) {
@@ -158,7 +158,7 @@ export class ChatManager {
     return {
       messageIds: this.contextInfo.messageIds,
       totalTokens: this.contextInfo.totalTokens,
-      maxOutputTokens: this.contextInfo.maxTokens  // Map maxTokens to maxOutputTokens
+      maxOutputTokens: this.contextInfo.maxTokens || this.contextWindow
     };
   }
 

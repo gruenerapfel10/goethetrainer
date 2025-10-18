@@ -177,20 +177,6 @@ export const ToolHandler = memo<ToolHandlerProps>(({
         />
       );
 
-    case ToolName.TEXT2SQL:
-      const wrenUpdates = message?.annotations
-        ?.filter((a: any) => a.type === 'wren_update' && a.toolCallId === toolCallId)
-        .map((a: any) => a.data) || [];
-      return (
-       <div></div>
-      );
-
-    case ToolName.RUN_SQL:
-      if (isComplete) {
-        return <RunSqlPreview result={output} />;
-      }
-      break;
-
     case ToolName.REQUEST_SUGGESTIONS:
       // REQUEST_SUGGESTIONS no longer handled here - should be processed elsewhere
       return null;

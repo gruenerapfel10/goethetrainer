@@ -17,7 +17,6 @@ export async function POST(req: Request) {
 
     await toggleChatPinned({
       chatId,
-      isPinned,
     });
 
     return NextResponse.json({ success: true });

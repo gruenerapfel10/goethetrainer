@@ -16,7 +16,6 @@ export const myProvider = customProvider({
     'document-agent': customModel(ModelId.CLAUDE_HAIKU_4_5),
     
     [AgentType.GENERAL_AGENT]: customModel(ModelId.CLAUDE_HAIKU_4_5),
-    [AgentType.TEXT2SQL_AGENT]: customModel(ModelId.CLAUDE_HAIKU_4_5),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),
@@ -41,15 +40,6 @@ export const chatModels: (t?: any) => Array<ChatModel> = (t?) => {
     name: (t && generalMeta.displayNameKey) ? t(generalMeta.displayNameKey) : generalMeta.displayName,
     description: (t && generalMeta.descriptionKey) ? t(generalMeta.descriptionKey) : generalMeta.description,
     icon: generalMeta.icon,
-  });
-  
-  
-  const text2sqlMeta = getAgentMetadata(AgentType.TEXT2SQL_AGENT);
-  models.push({
-    id: AgentType.TEXT2SQL_AGENT,
-    name: (t && text2sqlMeta.displayNameKey) ? t(text2sqlMeta.displayNameKey) : text2sqlMeta.displayName,
-    description: (t && text2sqlMeta.descriptionKey) ? t(text2sqlMeta.descriptionKey) : text2sqlMeta.description,
-    icon: text2sqlMeta.icon,
   });
   
   return models;

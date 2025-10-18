@@ -1,7 +1,5 @@
 export enum ToolName {
   // Data & Analysis Tools
-  TEXT2SQL = 'text2sql',
-  RUN_SQL = 'run_sql',
   CHART = 'chart',
   
   // Web Tools
@@ -54,26 +52,6 @@ export interface ToolMetadata {
 
 // Complete tool registry with all metadata
 export const TOOL_METADATA: Record<ToolName, ToolMetadata> = {
-  [ToolName.TEXT2SQL]: {
-    name: ToolName.TEXT2SQL,
-    displayName: 'Text to SQL',
-    description: 'Generate SQL from natural language',
-    displayNameKey: 'tools.text2sql.displayName',
-    descriptionKey: 'tools.text2sql.description',
-    category: 'data',
-    icon: 'database',
-    toggle: false,
-  },
-  [ToolName.RUN_SQL]: {
-    name: ToolName.RUN_SQL,
-    displayName: 'Execute SQL',
-    description: 'Execute SQL queries',
-    displayNameKey: 'tools.run_sql.displayName',
-    descriptionKey: 'tools.run_sql.description',
-    category: 'data',
-    icon: 'database',
-    toggle: false,
-  },
   [ToolName.CHART]: {
     name: ToolName.CHART,
     displayName: 'Chart Generation',

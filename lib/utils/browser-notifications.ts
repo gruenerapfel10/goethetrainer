@@ -191,7 +191,6 @@ export function showAgentCompletionNotification(agentType: string): void {
     'deep-research-agent': 'Deep Research',
     'general-bedrock-agent': 'Standard Assistant',
     'sharepoint-agent': 'SharePoint Assistant',
-    'text2sql-agent': 'SQL Assistant',
   };
 
   const agentName = agentNames[agentType] || agentType;
