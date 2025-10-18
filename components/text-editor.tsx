@@ -7,7 +7,7 @@ import { EditorView } from 'prosemirror-view';
 import React, { memo, useEffect, useRef, useCallback } from 'react';
 import { useDebounceCallback } from 'usehooks-ts';
 
-import type { Suggestion } from '@/lib/db/schema';
+import type { Suggestion } from '@/lib/db/queries';
 import {
   documentSchema,
   handleTransaction,

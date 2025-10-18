@@ -5,7 +5,7 @@ import { Search, X, Clock, MessageSquare, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import type { Chat } from '@/lib/db/schema';
+import type { Chat } from '@/lib/db/queries';
 import { formatDistanceToNow } from 'date-fns';
 import { useSidebar } from '@/components/ui/sidebar';
 import { LoaderIcon } from './icons';

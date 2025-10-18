@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 import { ChatHeader } from '@/components/chat-header';
-import type { Vote } from '@/lib/db/schema';
+import type { Vote } from '@/lib/db/queries';
 import { fetcher } from '@/lib/utils';
 import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';

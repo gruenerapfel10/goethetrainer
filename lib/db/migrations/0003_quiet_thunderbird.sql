@@ -1,1 +1,0 @@
-ALTER TYPE "ingestion_status_enum" ADD VALUE 'BEDROCK_PROCESSING';

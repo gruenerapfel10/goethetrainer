@@ -10,7 +10,7 @@ import {
   withinContext,
   getAttachmentsFromDb
 } from '@/lib/db/queries';
-import type { DBMessage, Chat } from '@/lib/db/schema';
+import type { DBMessage, Chat } from '@/lib/db/queries';
 import type { FileSearchResult } from '@/components/chat-header';
 
 export type Attachment = {

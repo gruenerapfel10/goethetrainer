@@ -2,7 +2,7 @@ import type { UIMessage } from 'ai';
 import { memo, useMemo, useState, } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircleIcon } from 'lucide-react';
-import type { Vote } from '@/lib/db/schema';
+import type { Vote } from '@/lib/db/queries';
 
 import {
   PreviewMessage,

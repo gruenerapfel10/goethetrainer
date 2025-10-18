@@ -1,5 +1,5 @@
 import type { UIMessage, JSONValue } from 'ai';
-import type { Vote } from '@/lib/db/schema';
+import type { Vote } from '@/lib/db/queries';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import type { FileSearchResult } from '@/components/chat-header';
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { systemPrompts } from '@/lib/db/schema';
+import { systemPrompts } from '@/lib/db/queries';
 import { auth } from '@/app/(auth)/auth';
 
 // Middleware to check admin status

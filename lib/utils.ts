@@ -6,7 +6,7 @@ import type {
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-import type { Document } from '@/lib/db/schema';
+import type { Document } from '@/lib/db/queries';
 import type { FileSearchResult } from '@/components/chat-header';
 
 import { getModelId, getModelCosts } from './costs';

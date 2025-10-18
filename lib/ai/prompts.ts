@@ -1,6 +1,6 @@
 import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import { db } from '@/lib/db/client';
-import { systemPrompts } from '@/lib/db/schema';
+import { systemPrompts } from '@/lib/db/queries';
 import { eq } from 'drizzle-orm';
 
 // Regular prompt used in all assistants

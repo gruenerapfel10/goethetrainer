@@ -5,7 +5,7 @@ import { useCopyToClipboard } from 'usehooks-ts';
 import { memo, useState, useCallback, useMemo } from 'react';
 import equal from 'fast-deep-equal';
 
-import type { Vote } from '@/lib/db/schema';
+import type { Vote } from '@/lib/db/queries';
 import { CopyIcon, ThumbDownIcon, ThumbUpIcon, Database } from './icons';
 import { Button } from './ui/button';
 import {

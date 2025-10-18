@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { ArtifactKind } from '@/components/artifact';
 import { getDocumentsById, saveDocument, getWorkingVersion } from '@/lib/db/queries';
-import type { Document } from '@/lib/db/schema';
+import type { Document } from '@/lib/db/queries';
 
 export interface WebSource {
   url: string;
