@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { PlusIcon, LayoutDashboardIcon, ShieldIcon } from './icons';
+import { PlusIcon } from './icons';
 import LanguageSwitcher from './language-switcher';
 import { cn } from '@/lib/utils';
 import { useState, } from 'react';
@@ -62,61 +62,6 @@ function NewChatButton() {
   );
 }
 
-// Admin Navigation Component
-function AdminNav({ user }: { user: User | undefined }) {
-  const t = useTranslations();
-  const { setOpenMobile, state } = useSidebar();
-
-  if (!user?.isAdmin) return null;
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton tooltip={t('chat.adminPortal')} asChild>
-          <Link 
-            href="/admin" 
-            onClick={() => setOpenMobile(false)}
-            className={cn(
-              "flex items-center gap-2 text-sm font-medium w-full px-2 py-2",
-              "hover:bg-sidebar-accent/50 rounded-md transition-colors"
-            )}
-          >
-            <ShieldIcon className="h-4 w-4" />
-            <span>{t('chat.adminPortal')}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
-}
-
-// Dashboard Navigation Component
-function DashboardNav({ user }: { user: User | undefined }) {
-  const t = useTranslations();
-  const { setOpenMobile, state } = useSidebar();
-
-  if (!user?.isAdmin) return null;
-
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton tooltip={t('chat.dashboard')} asChild>
-          <Link 
-            href="/dashboard" 
-            onClick={() => setOpenMobile(false)}
-            className={cn(
-              "flex items-center gap-2 text-sm font-medium w-full px-2 py-2",
-              "hover:bg-sidebar-accent/50 rounded-md transition-colors"
-            )}
-          >
-            <LayoutDashboardIcon className="h-4 w-4" />
-            <span>{t('chat.dashboard')}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
-}
 
 // Language Switcher Component
 function LanguageNav() {
@@ -157,8 +102,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             onOpenModal={handleOpenSearchModal}
           />
           <div className="space-y-1">
-            <AdminNav user={user} />
-            <DashboardNav user={user} />
             <LanguageNav />
           </div>
         </div>
