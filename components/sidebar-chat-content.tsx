@@ -11,6 +11,7 @@ import { ArtifactPanel } from './ArtifactPanel';
 import { ArtifactInset } from './artifact-inset';
 import { useChat } from '@/contexts/chat-context';
 import { ArtifactsProvider, useArtifactsContext } from '@/contexts/artifacts-context';
+import { ChatSelector } from './chat-selector';
 
 function SidebarChatContentInner({
   selectedVisibilityType,
@@ -60,7 +61,18 @@ function SidebarChatContentInner({
     <div className="flex h-full w-full overflow-hidden bg-transparent relative">
       <ArtifactInset>
         <div ref={contentRef} className="flex flex-col h-full bg-transparent w-full relative overflow-hidden min-w-0">
-          {/* No header in sidebar - messages only */}
+          {/* Chat selector header */}
+          <div className="px-2 py-2 border-b border-border/20 flex-shrink-0">
+            <ChatSelector 
+              currentChatId={id}
+              onChatSelect={(chatId) => {
+                window.location.href = `/chat/${chatId}`;
+              }}
+              chevronDirection="down"
+              buttonClassName="w-full h-8 px-2 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
+            />
+          </div>
+          
           <div className="flex-1 relative overflow-hidden scrollable-y">
             <Messages
               bottomPadding={100}
