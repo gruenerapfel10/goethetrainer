@@ -166,13 +166,30 @@ function extractFilesFromMessages(messages: UIMessage[]): Array<{
   const files: Array<{ name: string; url: string; contentType?: string }> = [];
   
   for (const message of messages) {
-    if (message.attachments && Array.isArray(message.attachments)) {
-      for (const attachment of message.attachments) {
+    // Handle both v4 and v5 attachment formats
+    const msg = message as any;
+    
+    // v4 format: message.attachments
+    if (msg.attachments && Array.isArray(msg.attachments)) {
+      for (const attachment of msg.attachments) {
         if (attachment.url && attachment.name) {
           files.push({
             name: attachment.name,
             url: attachment.url,
             contentType: attachment.contentType,
+          });
+        }
+      }
+    }
+    
+    // v5 format: message.content with type 'file'
+    if (msg.content && Array.isArray(msg.content)) {
+      for (const part of msg.content) {
+        if (part.type === 'file' && part.data && part.mimeType) {
+          files.push({
+            name: part.data.name || 'file',
+            url: part.data.url,
+            contentType: part.mimeType,
           });
         }
       }
@@ -183,26 +200,25 @@ function extractFilesFromMessages(messages: UIMessage[]): Array<{
 }
 
 // Create the processFile tool
-export function processFile(): ReturnType<typeof tool> {
-  return tool({
-    description: 'Process and analyze uploaded files using Firebase Storage',
-    parameters: z.object({
-      fileUrls: z.array(z.string()).describe('Array of Firebase Storage URLs to process'),
-      analysisType: z.enum(['summary', 'detailed', 'extract']).optional().describe('Type of analysis to perform'),
-    }),
-    execute: async ({ fileUrls, analysisType = 'summary' }) => {
+export const processFile = tool({
+  description: 'Process and analyze uploaded files using Firebase Storage',
+  inputSchema: z.object({
+    fileUrls: z.array(z.string()).describe('Array of Firebase Storage URLs to process'),
+    analysisType: z.enum(['summary', 'detailed', 'extract']).optional().describe('Type of analysis to perform'),
+  }),
+  execute: async ({ fileUrls, analysisType = 'summary' }) => {
       try {
-        // For direct tool usage, create mock messages with file attachments
+        // For direct tool usage, create mock messages with file attachments  
         const mockMessages: UIMessage[] = fileUrls.map(url => ({
           id: generateUUID(),
           role: 'user',
-          content: '',
+          content: [{ type: 'text', text: '' }],
           attachments: [{
             url,
             name: url.split('/').pop() || 'unknown-file',
             contentType: 'application/octet-stream',
           }],
-        }));
+        } as any));
         
         const result = await processFiles(mockMessages);
         
@@ -223,6 +239,5 @@ export function processFile(): ReturnType<typeof tool> {
           hasFiles: false,
         };
       }
-    },
+    }
   });
-}

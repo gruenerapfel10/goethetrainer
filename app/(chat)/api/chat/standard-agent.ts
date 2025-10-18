@@ -69,7 +69,7 @@ async function initializeActiveTools(
 const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<any>> = {
   [ToolName.CHART]: async () => chartTool,
   [ToolName.GET_WEATHER]: async () => getWeather,
-  [ToolName.PROCESS_FILE]: async () => processFile(),
+  [ToolName.PROCESS_FILE]: async () => processFile,
   [ToolName.CREATE_DOCUMENT]: async (session, chatId) => (await import('@/lib/ai/tools/create-document')).createDocument(session, chatId),
   [ToolName.UPDATE_DOCUMENT]: async (session, chatId) => (await import('@/lib/ai/tools/update-document')).updateDocument(session, chatId),
   [ToolName.REQUEST_SUGGESTIONS]: async () => requestSuggestions(),

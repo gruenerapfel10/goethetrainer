@@ -321,7 +321,6 @@ import { getAgentConfig, AgentType } from '@/lib/ai/agents';
 
 const ASSISTANT_TO_AGENT: Record<string, AgentType> = {
   'general-assistant': AgentType.GENERAL_AGENT,
-  'sharepoint-agent': AgentType.SHAREPOINT_AGENT,
   'text2sql-agent': AgentType.TEXT2SQL_AGENT,
 };
 

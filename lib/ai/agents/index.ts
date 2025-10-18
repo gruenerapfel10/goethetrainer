@@ -1,5 +1,4 @@
 import { generalAgentConfig } from './general-agent.config';
-import { sharepointAgentConfig } from './sharepoint-agent.config';
 import { text2sqlAgentConfig } from './text2sql-agent.config';
 import { AgentType, AgentConfig, SuggestedAction } from './types';
 import type { ToolName } from '@/lib/ai/tools/tool-registry';
@@ -11,7 +10,6 @@ export { AgentType, type AgentConfig, type SuggestedAction } from './types';
 // Map of all agent configurations
 export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
   [AgentType.GENERAL_AGENT]: generalAgentConfig,
-  [AgentType.SHAREPOINT_AGENT]: sharepointAgentConfig,
   [AgentType.TEXT2SQL_AGENT]: text2sqlAgentConfig,
 };
 
@@ -19,7 +17,6 @@ export const AGENT_CONFIGS: Record<AgentType, AgentConfig> = {
 // Map model IDs to agent types
 export const MODEL_TO_AGENT_TYPE: Record<string, AgentType> = {
   'general-bedrock-agent': AgentType.GENERAL_AGENT,
-  'sharepoint-agent': AgentType.SHAREPOINT_AGENT,
   'text2sql-agent': AgentType.TEXT2SQL_AGENT,
 };
 
@@ -97,7 +94,6 @@ export function getAgentSupportsFileAttachments(agentType: AgentType): boolean {
 
 export const AGENT_TO_ASSISTANT: Record<string, string> = {
   [AgentType.GENERAL_AGENT]: 'general-assistant',
-  [AgentType.SHAREPOINT_AGENT]: 'sharepoint-agent',
   [AgentType.TEXT2SQL_AGENT]: 'text2sql-agent',
 };
 

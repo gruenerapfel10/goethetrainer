@@ -52,10 +52,21 @@ export class ChatManager {
     };
   }
 
-  async initialize(): Promise<void> {
+  async initialize(userId?: string): Promise<void> {
     this.chat = await getChatById({ id: this.chatId });
     if (!this.chat) {
-      throw new Error(`Chat ${this.chatId} not found`);
+      // Chat not found in Firestore - this is expected after migration from PostgreSQL
+      // Create a new chat with this ID to maintain compatibility
+      const { saveChat } = await import('../db/queries');
+      await saveChat({
+        id: this.chatId,
+        userId: userId || 'unknown-user',
+        title: 'Migrated Chat'
+      });
+      this.chat = await getChatById({ id: this.chatId });
+      if (!this.chat) {
+        throw new Error(`Failed to create chat ${this.chatId}`);
+      }
     }
 
     const dbMessages = await getMessagesByChatId({ id: this.chatId });
@@ -368,9 +379,9 @@ export class ChatManager {
   }
 }
 
-export async function getChatContext(chatId: string): Promise<ChatManager> {
+export async function getChatContext(chatId: string, userId?: string): Promise<ChatManager> {
   const context = new ChatManager(chatId);
-  await context.initialize();
+  await context.initialize(userId);
   return context;
 }
 

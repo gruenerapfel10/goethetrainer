@@ -18,7 +18,6 @@ import {
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { PlusIcon, LayoutDashboardIcon, ShieldIcon } from './icons';
-import { LogoComponent } from './logo-component';
 import LanguageSwitcher from './language-switcher';
 import { cn } from '@/lib/utils';
 import { useState, } from 'react';
@@ -26,27 +25,6 @@ import { useWindowSize } from 'usehooks-ts';
 import { SidebarSearch } from './sidebar-search';
 import { useSearchModal } from './search-modal-provider';
 
-// Logo Header Component
-function LogoHeader() {
-  const { state } = useSidebar();
-  const { width } = useWindowSize();
-  
-  // Show collapsed logo only when sidebar is truly collapsed (not on mobile or intermediate widths)
-  const isMobile = width < 768;
-  const shouldShowCollapsed = state === 'collapsed' && width >= 1024;
-  
-  return (
-    <SidebarMenu className={state === 'expanded' ? 'px-2' : 'px-0'}>
-      <SidebarMenuItem>
-        <SidebarMenuButton size="lg" asChild>
-          <Link href="/" className="flex items-center justify-center">
-            <LogoComponent collapsed={shouldShowCollapsed} />
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  );
-}
 
 // New Chat Button Component
 function NewChatButton() {
@@ -170,7 +148,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <LogoHeader />
         <div className="space-y-2">
           <NewChatButton />
           <SidebarSearch 

@@ -4,7 +4,6 @@ import type { FeatureName } from '@/lib/ai/features/feature-registry';
 // Agent type enum
 export enum AgentType {
   GENERAL_AGENT = 'general-bedrock-agent',
-  SHAREPOINT_AGENT = 'sharepoint-agent',
   TEXT2SQL_AGENT = 'text2sql-agent',
 }
 
@@ -22,7 +21,7 @@ export interface SuggestedAction {
 // Agent configuration interface
 export interface AgentConfig {
   // Agent type identifier
-  agentType: 'general-bedrock-agent' | 'sharepoint-agent' | 'text2sql-agent';
+  agentType: 'general-bedrock-agent' | 'text2sql-agent';
   // Agent metadata
   metadata: {
     displayName: string;

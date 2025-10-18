@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can read and write their own chats
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Users can read and write messages in their own chats
+    match /chats/{chatId}/messages/{messageId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId;
+    }
+    
+    // Users can read and write votes on messages in their own chats
+    match /chats/{chatId}/votes/{voteId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == get(/databases/$(database)/documents/chats/$(chatId)).data.userId;
+    }
+    
+    // Use cases - allow authenticated users to read and write
+    match /useCases/{useCaseId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    match /useCaseCategories/{categoryId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // System prompts - read access for authenticated users, write for admins
+    match /systemPrompts/{promptId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Suggestions - allow read/write for authenticated users
+    match /suggestions/{suggestionId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Logos - allow read for all, write for authenticated users
+    match /logos/{logoId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Suggested messages - allow read for all, write for authenticated users
+    match /suggestedMessages/{messageId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

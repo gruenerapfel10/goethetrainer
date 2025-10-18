@@ -10,7 +10,6 @@ import './globals.css';
 import { getLocale, getMessages } from 'next-intl/server';
 import { SessionProvider } from 'next-auth/react';
 import { themes } from '@/lib/constants';
-import { LogoProvider } from '../context/logo-context';
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { DeepResearchProvider } from '@/lib/deep-research-context';
 
@@ -136,7 +135,7 @@ export default async function RootLayout({
           />
           <NotificationInitializer />
           <DeepResearchProvider>
-            <LogoProvider>{children}</LogoProvider>
+            {children}
           </DeepResearchProvider>
         </ThemeProvider>
       </SessionProvider>

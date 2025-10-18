@@ -159,7 +159,7 @@ export async function POST(request: Request) {
 
     // Get conversation history from database for context
     const { getChatContext } = await import('@/lib/ai/chat-manager');
-    const chatContext = await getChatContext(id);
+    const chatContext = await getChatContext(id, session.user.id);
     const contextMessages = await chatContext.getMessages();
 
     const allMessages = [...contextMessages, userMessage];

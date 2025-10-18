@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Initialize Firebase Admin (server-side only)
 const initializeFirebaseAdmin = () => {
@@ -18,7 +19,8 @@ const initializeFirebaseAdmin = () => {
   return getApps()[0];
 };
 
-// Initialize app and get storage
+// Initialize app and get services
 const adminApp = initializeFirebaseAdmin();
 export const adminStorage = getStorage(adminApp);
+export const adminDb = getFirestore(adminApp);
 export default adminApp;

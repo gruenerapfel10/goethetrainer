@@ -8,8 +8,6 @@ import { SidebarToggle } from '@/components/sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from './ui/sidebar';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
-import { useLogo } from '../context/logo-context';
-import { LogoComponent } from './logo-component';
 import { PlusIcon } from './icons';
 import { ArtifactToggle } from './ArtifactToggle';
 
@@ -53,9 +51,6 @@ function PureChatHeader({
   const { open } = useSidebar();
   const t = useTranslations();
   const { width: windowWidth } = useWindowSize();
-  const {
-    state: { currentLogo, defaultLogoUrl, isLoading },
-  } = useLogo();
   const headerRef = useRef<HTMLDivElement>(null);
 
   // Measure and report header height
@@ -159,33 +154,6 @@ function PureChatHeader({
         </div>
       </header>
 
-      {/* Client Logo Display with Watermark and Chat Title - Desktop Only */}
-      <div className="hidden md:flex flex-col justify-center items-center py-4 relative">
-        <div className="relative">
-          <div
-            className="relative"
-            style={{
-              width: '140px',
-              height: '30px',
-            }}
-          >
-            <LogoComponent />
-            {!isLoading &&
-              currentLogo &&
-              currentLogo.url !== defaultLogoUrl && (
-                <div
-                  className="absolute text-xs text-muted-foreground opacity-60"
-                  style={{
-                    right: `-10px`,
-                    bottom: `-18px`,
-                  }}
-                >
-                  Powered by Moterra
-                </div>
-              )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

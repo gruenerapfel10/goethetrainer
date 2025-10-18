@@ -49,17 +49,6 @@ export const ToolHandler = memo<ToolHandlerProps>(({
   const isError = state === 'output-error' || error;
 
 
-  if (toolName === ToolName.SHAREPOINT_RETRIEVE) {
-    console.log("*** SharePoint output:", {
-      toolName,
-      isComplete,
-      outputType: typeof output,
-      outputIsArray: Array.isArray(output),
-      outputDocs: output?.documents,
-      outputDocsIsArray: Array.isArray(output?.documents),
-      firstDoc: output?.documents?.[0]
-    });
-  }
 
   // Handle tools by name
   switch (toolName) {
@@ -205,91 +194,6 @@ export const ToolHandler = memo<ToolHandlerProps>(({
     case ToolName.REQUEST_SUGGESTIONS:
       // REQUEST_SUGGESTIONS no longer handled here - should be processed elsewhere
       return null;
-
-    case ToolName.SHAREPOINT_RETRIEVE:
-      const sharePointIconParams = {
-        src: "/sharepoint.svg",
-        alt: "SharePoint",
-        width: 6,
-        height: 6,
-        className: "w-6 h-6"
-      };
-
-      // Handle different states properly
-      const searchQuery = input?.query || output?.query || "";
-      let description = searchQuery 
-        ? `Searching for "${searchQuery}" across knowledgebases...`
-        : "Searching SharePoint documents...";
-      let status = "running";  // Changed from "in-progress" to "running" for timeline compatibility
-      let outputData: any[] = [];
-
-      if (isComplete && Array.isArray(output?.documents)) {
-        outputData = output.documents;
-        description = searchQuery
-          ? `Found ${outputData.length} documents for "${searchQuery}"`
-          : `Found ${outputData.length} documents`;
-        status = "completed";
-      } else if (isComplete && Array.isArray(output)) {
-        outputData = output;
-        description = searchQuery
-          ? `Found ${outputData.length} documents for "${searchQuery}"`
-          : `Found ${outputData.length} documents`;
-        status = "completed";
-      } else if (isError) {
-        description = "Error retrieving documents";
-        status = "error";
-      }
-
-      // Disabled: Click to trigger artifacts
-      // const handleDocumentClick = (data?: Record<string, any>) => {
-      //   if (!data || !createArtifact || !setArtifactsVisible) return;
-      //   
-      //   const fileExt = data.title?.split('.').pop()?.toLowerCase();
-      //   let kind: 'pdf' | 'docx' | 'xlsx' | 'csv' | null = null;
-      //   
-      //   if (fileExt === 'pdf') kind = 'pdf';
-      //   else if (fileExt === 'docx') kind = 'docx';
-      //   else if (fileExt === 'xlsx' || fileExt === 'xls') kind = 'xlsx';
-      //   else if (fileExt === 'csv') kind = 'csv';
-      //   
-      //   if (!kind) return;
-      //   
-      //   createArtifact({
-      //     documentId: `sharepoint-${data.url}`,
-      //     kind,
-      //     title: data.title,
-      //     content: data.url,
-      //   });
-      //   setArtifactsVisible(true);
-      // };
-
-      return (
-        <TimelineStep
-          id={`sharepoint-${toolCallId}`}
-          title="SharePoint Document Retrieval"
-          description={description}
-          status={status as any}
-          timestamp={Date.now()}
-          iconParams={sharePointIconParams}
-          position={position}
-        >
-          {outputData.length > 0 ? outputData.map((doc: any, index: number) => (
-            <TimelineStep
-              key={doc.id || index}
-              id={doc.id || `sharepoint-child-${index}`}
-              title={doc.title || "Unknown Document"}
-              description={doc.content || doc.message || `Score: ${doc.score || 0} | Size: ${doc.sizeInBytes ? (doc.sizeInBytes / 1024).toFixed(1) + ' KB' : 'Unknown'}`}
-              status="completed"
-              timestamp={Date.now()}
-              iconParams={sharePointIconParams}
-              badgeText={doc.score ? `${(doc.score * 100).toFixed(0)}%` : undefined}
-              data={doc}
-              type="tool-result"
-              // onClick={handleDocumentClick}
-            />
-          )) : undefined}
-        </TimelineStep>
-      );
 
     case ToolName.CREATE_DOCUMENT:
       return (

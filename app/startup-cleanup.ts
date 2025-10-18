@@ -1,13 +1,12 @@
-import { cleanupStaleOperations } from "@/lib/db/queries";
-
 export default async function StartupCleanup() {
   const startTime = Date.now();
 
   try {
-
-    await cleanupStaleOperations();
-
+    // Cleanup operations can be added here if needed for Firestore
+    // Currently no cleanup operations are required
+    
     const duration = Date.now() - startTime;
+    console.log(`✅ [StartupCleanup] Completed in ${duration}ms`);
 
   } catch (error) {
     const duration = Date.now() - startTime;

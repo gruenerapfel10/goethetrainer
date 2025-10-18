@@ -46,7 +46,6 @@ const MAX_PROMPT_LENGTH = 5000;
 
 const AGENT_TO_ASSISTANT_ID: Record<string, string> = {
   [AgentType.GENERAL_AGENT]: 'general-assistant',
-  [AgentType.SHAREPOINT_AGENT]: 'sharepoint-agent',
   [AgentType.TEXT2SQL_AGENT]: 'text2sql-agent',
 };
 
