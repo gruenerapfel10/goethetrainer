@@ -27,12 +27,11 @@ export async function getFirebaseFileContent(url: string): Promise<FileContentRe
     if (mimeType.startsWith('text/') || mimeType === 'application/json') {
       content = fileBuffer.toString('utf-8');
     } else if (mimeType === 'application/pdf') {
-      // For PDF files, we'd need a PDF parser library
-      content = `[PDF File: ${fileName}] - Binary content (${fileBuffer.length} bytes)`;
+      content = fileBuffer.toString('base64');
     } else if (mimeType.startsWith('image/')) {
-      content = `[Image File: ${fileName}] - Binary image content (${fileBuffer.length} bytes)`;
+      content = fileBuffer.toString('base64');
     } else {
-      content = `[Binary File: ${fileName}] - Binary content (${fileBuffer.length} bytes)`;
+      content = fileBuffer.toString('base64');
     }
     
     return {

@@ -186,6 +186,17 @@ export async function POST(request: Request) {
 
     const cleanedMessages = cleanupOrphanedToolCalls(allMessages);
     let finalMessages = cleanupEmptyMessages(cleanedMessages);
+    
+    // Log messages before processing
+    console.log(`[api/chat] Processing ${finalMessages.length} messages`);
+    for (const msg of finalMessages) {
+      if (msg.parts && Array.isArray(msg.parts)) {
+        const fileParts = msg.parts.filter(p => p.type === 'file');
+        if (fileParts.length > 0) {
+          console.log(`[api/chat] Message has ${fileParts.length} file parts:`, fileParts.map(p => ({ filename: p.filename, mediaType: p.mediaType })));
+        }
+      }
+    }
 
     const processedMessages = await Promise.all(
       finalMessages.map(async (message) => {
@@ -198,25 +209,22 @@ export async function POST(request: Request) {
             // Handle file parts
             if (part.type === 'file' && part.url) {
               const filename = part.filename || 'unknown';
-              const isImage = part.mediaType?.startsWith('image/') || 
-                           filename.match(/\.(png|jpg|jpeg|gif|webp)$/i);
+              const mediaType = part.mediaType || 'application/octet-stream';
               
               // For images, keep them as file parts for proper AI SDK handling
-              if (isImage) {
+              if (mediaType.startsWith('image/')) {
                 // Ensure mediaType is set correctly for images
-                if (!part.mediaType) {
-                  const ext = filename.split('.').pop()?.toLowerCase();
-                  switch (ext) {
-                    case 'png': part.mediaType = 'image/png'; break;
-                    case 'jpg':
-                    case 'jpeg': part.mediaType = 'image/jpeg'; break;
-                    case 'gif': part.mediaType = 'image/gif'; break;
-                    case 'webp': part.mediaType = 'image/webp'; break;
-                    default: part.mediaType = 'image/jpeg';
-                  }
-                }
+                const ext = filename.split('.').pop()?.toLowerCase();
+                const correctMediaType = {
+                  'png': 'image/png',
+                  'jpg': 'image/jpeg',
+                  'jpeg': 'image/jpeg',
+                  'gif': 'image/gif',
+                  'webp': 'image/webp'
+                }[ext as keyof typeof correctMediaType] || mediaType;
                 
                 // Convert S3 URLs to presigned URLs for images
+                let finalUrl = part.url;
                 if (part.url.startsWith('s3://')) {
                   try {
                     const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/files/presigned-url`, {
@@ -231,7 +239,7 @@ export async function POST(request: Request) {
                     if (response.ok) {
                       const data = await response.json();
                       if (data.presignedUrl) {
-                        part.url = data.presignedUrl;
+                        finalUrl = data.presignedUrl;
                       }
                     }
                   } catch (error) {
@@ -239,54 +247,40 @@ export async function POST(request: Request) {
                   }
                 }
                 
-                // Return image as file part for proper SDK handling
-                return part;
+                return {
+                  ...part,
+                  url: finalUrl,
+                  mediaType: correctMediaType
+                };
               }
               
-              // For non-image files (documents), embed content as text
-              try {
-                let fileContent = '';
+              // For documents (PDF, text, etc.), keep as file parts too
+              // Claude SDK v5 now supports native file handling for these types
+              const supportedDocumentTypes = ['application/pdf', 'text/plain', 'text/markdown', 'application/json'];
+              const isSupportedDocument = supportedDocumentTypes.some(type => mediaType === type || mediaType.startsWith(type.split('/')[0] + '/'));
+              
+              if (isSupportedDocument) {
+                // Ensure mediaType is correctly set for documents
+                const correctedMediaType = {
+                  'pdf': 'application/pdf',
+                  'txt': 'text/plain',
+                  'md': 'text/markdown',
+                  'markdown': 'text/markdown',
+                  'json': 'application/json'
+                }[filename.split('.').pop()?.toLowerCase() as keyof typeof correctedMediaType] || mediaType;
                 
-                if (part.url.startsWith('http')) {
-                  // For HTTP/HTTPS URLs (including Firebase signed URLs)
-                  console.log(`[api/chat] Fetching document from URL: ${part.url.substring(0, 50)}...`);
-                  try {
-                    const response = await fetch(part.url);
-                    if (response.ok) {
-                      // Check content type to determine how to read
-                      const contentType = response.headers.get('content-type');
-                      if (contentType?.includes('text') || contentType?.includes('json')) {
-                        fileContent = await response.text();
-                        console.log(`[api/chat] Successfully fetched text document: ${fileContent.length} chars`);
-                      } else if (contentType?.includes('pdf')) {
-                        // For PDFs, just note it was processed
-                        fileContent = `[PDF File] - Processed binary content`;
-                        console.log(`[api/chat] Processed PDF file`);
-                      } else {
-                        console.warn(`Cannot process binary file as text: ${part.url}`);
-                        return null; // Skip binary files that aren't images
-                      }
-                    } else {
-                      console.warn(`Could not fetch content from URL: ${part.url}`);
-                      return null;
-                    }
-                  } catch (fetchError) {
-                    console.warn(`Error fetching file content from URL: ${part.url}`, fetchError);
-                    return null;
-                  }
-                }
+                console.log(`[api/chat] Passing document as file part: ${filename} (${correctedMediaType})`);
                 
-                if (fileContent) {
-                  // Convert document content to text part
-                  return {
-                    type: 'text' as const,
-                    text: `[File: ${filename}]\n\n${fileContent}\n\n[End of file: ${filename}]`
-                  };
-                }
-              } catch (error) {
-                console.error(`Error processing document ${part.filename || part.url}:`, error);
-                return null;
+                return {
+                  ...part,
+                  mediaType: correctedMediaType,
+                  url: part.url
+                };
               }
+              
+              // For unsupported file types, skip them
+              console.warn(`Skipping unsupported file type: ${filename} (${mediaType})`);
+              return null;
             }
             
             // Return non-file parts as-is
@@ -309,18 +303,25 @@ export async function POST(request: Request) {
     // Log file processing summary
     let imageCount = 0;
     let documentCount = 0;
+    let filePartsCount = 0;
     
     for (const message of finalMessages) {
       if (message.parts && Array.isArray(message.parts)) {
         for (const part of message.parts) {
           if (part.type === 'file' && part.mediaType?.startsWith('image/')) {
             imageCount++;
-          } else if (part.type === 'text' && part.text && part.text.startsWith('[File:')) {
+            filePartsCount++;
+          } else if (part.type === 'file' && (part.mediaType === 'application/pdf' || part.mediaType?.startsWith('text/'))) {
             documentCount++;
+            filePartsCount++;
+            console.log(`[api/chat] Passing file part to Claude: ${part.filename} (${part.mediaType})`);
           }
         }
       }
     }
+    
+    console.log(`[api/chat] Final processing summary: ${imageCount} images, ${documentCount} documents, ${filePartsCount} total file parts`);
+    
     
     // Override metadata to ensure S3 files are treated as attachments
     if (selectedFiles?.length > 0) {
