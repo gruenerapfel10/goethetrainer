@@ -1,6 +1,5 @@
 import { auth } from '@/app/(auth)/auth';
-import { storage } from '@/lib/firebase/config';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { adminStorage } from '@/lib/firebase/admin';
 
 export const maxDuration = 60;
 
@@ -42,27 +41,36 @@ export async function POST(request: Request) {
     console.log(`[api/files/upload] Uploading to Firebase Storage: ${storagePath}`);
 
     try {
-      // Upload to Firebase Storage
-      const storageRef = ref(storage, storagePath);
+      // Get the bucket from admin storage
+      const bucket = adminStorage.bucket();
+      const file_ref = bucket.file(storagePath);
+
+      console.log(`[api/files/upload] Creating Firebase storage reference and uploading...`);
+      
+      // Upload file with metadata
       const metadata = {
         contentType: file.type || 'application/octet-stream',
-        customMetadata: {
+        metadata: {
           uploadedBy: session.user.email,
           originalName: file.name,
         },
       };
 
-      console.log(`[api/files/upload] Creating Firebase storage reference and uploading...`);
-      const uploadResult = await uploadBytes(storageRef, uint8Array, metadata);
-      console.log(`[api/files/upload] Upload successful, getting download URL...`);
+      await file_ref.save(Buffer.from(uint8Array), { metadata });
+      console.log(`[api/files/upload] Upload successful, generating signed URL...`);
 
-      // Get download URL
-      const downloadURL = await getDownloadURL(uploadResult.ref);
-      console.log(`[api/files/upload] Download URL obtained: ${downloadURL.substring(0, 50)}...`);
+      // Generate a signed URL that expires in 7 days
+      const [signedUrl] = await file_ref.getSignedUrl({
+        version: 'v4',
+        action: 'read',
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      console.log(`[api/files/upload] Signed URL obtained: ${signedUrl.substring(0, 50)}...`);
 
       return new Response(
         JSON.stringify({
-          url: downloadURL,
+          url: signedUrl,
           name: file.name,
           contentType: file.type || 'application/octet-stream',
           size: file.size,
