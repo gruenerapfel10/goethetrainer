@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 import { 
   CheckCircleFillIcon, 
   ChevronDownIcon,
-  MessageCircleIcon,
+  MessageIcon,
 } from './icons';
 
 export interface ChatItem {
@@ -69,7 +69,7 @@ export function ChatSelector({
           variant={buttonVariant} 
           className={buttonClassName || "h-8 px-3 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"}
         >
-          <MessageCircleIcon size={14} />
+          <MessageIcon size={14} />
           <span className="hidden sm:inline truncate max-w-[100px]">{selectedChat?.title || 'Chat'}</span>
           <ChevronDownIcon className={cn("h-4 w-4", chevronDirection === "up" && "rotate-180")} />
         </Button>
@@ -107,7 +107,7 @@ export function ChatSelector({
               data-active={chat.id === optimisticChatId}
             >
               <div className="flex flex-row gap-3 items-start min-w-0">
-                <MessageCircleIcon 
+                <MessageIcon 
                   size={16} 
                   className={cn(
                     "mt-0.5 flex-shrink-0",
