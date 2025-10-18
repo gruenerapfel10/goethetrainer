@@ -27,7 +27,7 @@ export function AppRightbar() {
       data-side="right"
     >
       <div className="p-0 flex flex-col h-full overflow-hidden">
-        <SidebarChat id={chatId} initialMessages={[]} selectedChatModel="gpt-4" isReadonly={false} isAdmin={false} selectedVisibilityType="private" />
+        <SidebarChat id={chatId} initialMessages={[]} selectedChatModel="gpt-4" isReadonly={false} isAdmin={false} selectedVisibilityType="private" onChatChange={setChatId} />
       </div>
     </aside>
   );

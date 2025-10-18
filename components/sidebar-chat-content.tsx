@@ -18,6 +18,7 @@ function SidebarChatContentInner({
   selectedVisibilityType,
   isAdmin,
   chat,
+  onChatChange,
 }: {
   selectedVisibilityType: VisibilityType;
   isAdmin: boolean;
@@ -25,6 +26,7 @@ function SidebarChatContentInner({
     title: string;
     customTitle?: string | null;
   };
+  onChatChange?: (chatId: string) => void;
 }) {
   const router = useRouter();
   const {
@@ -68,10 +70,15 @@ function SidebarChatContentInner({
             <ChatSelector 
               currentChatId={id}
               onChatSelect={(chatId) => {
-                router.push(`/chat/${chatId}`);
+                if (onChatChange) {
+                  onChatChange(chatId);
+                }
               }}
               chevronDirection="down"
               buttonClassName="w-full h-8 px-2 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
+              onExport={() => {
+                router.push(`/chat/${id}`);
+              }}
             />
           </div>
           
@@ -98,6 +105,7 @@ export function SidebarChatContent({
   isAdmin,
   chat,
   initialArtifacts,
+  onChatChange,
 }: {
   selectedVisibilityType: VisibilityType;
   isAdmin: boolean;
@@ -106,12 +114,14 @@ export function SidebarChatContent({
     customTitle?: string | null;
   };
   initialArtifacts?: Record<string, any>;
+  onChatChange?: (chatId: string) => void;
 }) {
   return (
     <ArtifactsProvider initialArtifacts={initialArtifacts}>
       <SidebarChatContentInner
         selectedVisibilityType={selectedVisibilityType}
         isAdmin={isAdmin}
+        onChatChange={onChatChange}
         chat={chat}
       />
     </ArtifactsProvider>

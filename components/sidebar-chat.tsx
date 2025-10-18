@@ -14,6 +14,7 @@ export function SidebarChat({
   isAdmin,
   chat,
   selectedVisibilityType,
+  onChatChange,
 }: {
   id: string;
   initialMessages: Array<UIMessage>;
@@ -26,6 +27,7 @@ export function SidebarChat({
     title: string;
     customTitle?: string | null;
   };
+  onChatChange?: (chatId: string) => void;
 }) {
   return (
     <ChatProvider
@@ -40,6 +42,7 @@ export function SidebarChat({
         isAdmin={isAdmin}
         chat={chat}
         initialArtifacts={initialArtifacts}
+        onChatChange={onChatChange}
       />
     </ChatProvider>
   );

@@ -18,6 +18,7 @@ import {
   CheckCircleFillIcon, 
   ChevronDownIcon,
   MessageIcon,
+  ArrowUpIcon,
 } from './icons';
 
 export interface ChatItem {
@@ -32,6 +33,7 @@ export function ChatSelector({
   buttonVariant = "ghost",
   buttonClassName,
   chevronDirection = "up",
+  onExport,
 }: {
   currentChatId: string;
   onChatSelect: (chatId: string) => void;
@@ -39,6 +41,7 @@ export function ChatSelector({
   buttonVariant?: "ghost" | "outline";
   buttonClassName?: string;
   chevronDirection?: "up" | "down";
+  onExport?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -58,22 +61,37 @@ export function ChatSelector({
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        asChild
-        className={cn(
-          'w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground shrink-0',
-          className,
-        )}
-      >
-        <Button 
-          variant={buttonVariant} 
-          className={buttonClassName || "h-8 px-3 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"}
+      <div className="flex items-center gap-2 w-full">
+        <DropdownMenuTrigger
+          asChild
+          className={cn(
+            'w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground shrink-0 flex-1',
+            className,
+          )}
         >
-          <MessageIcon size={14} />
-          <span className="hidden sm:inline truncate max-w-[100px]">{selectedChat?.title || 'Chat'}</span>
-          <ChevronDownIcon className={cn("h-4 w-4", chevronDirection === "up" && "rotate-180")} />
-        </Button>
-      </DropdownMenuTrigger>
+          <Button 
+            variant={buttonVariant} 
+            className={buttonClassName || "h-8 px-3 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full justify-between"}
+          >
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <MessageIcon size={14} />
+              <span className="hidden sm:inline truncate max-w-[100px]">{selectedChat?.title || 'Chat'}</span>
+            </div>
+            <ChevronDownIcon className={cn("h-4 w-4 flex-shrink-0", chevronDirection === "up" && "rotate-180")} />
+          </Button>
+        </DropdownMenuTrigger>
+        {onExport && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 hover:bg-accent"
+            onClick={onExport}
+            title="Open in full view"
+          >
+            <ArrowUpIcon size={14} />
+          </Button>
+        )}
+      </div>
       <DropdownMenuContent 
         align={isMobile ? "center" : "start"} 
         side="top" 
