@@ -4,6 +4,7 @@ import type { FeatureName } from '@/lib/ai/features/feature-registry';
 // Agent type enum
 export enum AgentType {
   GENERAL_AGENT = 'general-bedrock-agent',
+  GOETHE_AGENT = 'goethe-language-agent',
 }
 
 // Suggested action interface
