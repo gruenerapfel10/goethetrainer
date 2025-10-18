@@ -1,6 +1,7 @@
 import React, { useTransition } from 'react';
 import { Languages } from 'lucide-react';
 import type { Locale } from '@/i18n/config';
+import { locales } from '@/i18n/config';
 import { setUserLocale } from '@/services/locale';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSidebar } from '@/components/ui/sidebar';
@@ -18,16 +19,10 @@ export default function LocaleSwitcherSelect() {
   const t = useTranslations();
   const locale = useLocale();
 
-  const items = [
-    {
-      value: 'lt',
-      label: t('locales.lt'),
-    },
-    {
-      value: 'en',
-      label: t('locales.en'),
-    },
-  ];
+  const items = locales.map((loc) => ({
+    value: loc,
+    label: t(`locales.${loc}`),
+  }));
 
   const currentLanguage = items.find((item) => item.value === locale)?.label;
 

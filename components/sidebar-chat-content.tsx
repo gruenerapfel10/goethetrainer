@@ -57,9 +57,9 @@ function SidebarChatContentInner({
   );
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden bg-transparent">
+    <div className="flex h-full w-full overflow-hidden bg-transparent relative">
       <ArtifactInset>
-        <div ref={contentRef} className="flex flex-col h-[100dvh] bg-transparent w-full relative overflow-hidden min-w-0">
+        <div ref={contentRef} className="flex flex-col h-full bg-transparent w-full relative overflow-hidden min-w-0">
           {/* No header in sidebar - messages only */}
           <div className="flex-1 relative overflow-hidden scrollable-y">
             <Messages
@@ -71,7 +71,7 @@ function SidebarChatContentInner({
           </div>
 
           {/* Input stays at bottom always */}
-          {!isReadonly && <MultimodalInput disableCenter={true} />}
+          {!isReadonly && <MultimodalInput disableCenter={true} disableMargin={true} hideModelSelector={true} />}
         </div>
       </ArtifactInset>
       <ArtifactPanel />

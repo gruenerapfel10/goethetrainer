@@ -381,6 +381,28 @@
         "action": "Man reikia parengti atsakymą į kliento skundą. Pirmiausia paklauskite detalių apie problemą ir ankstesnes sąveikas. Tada patvirtinkite mūsų tipinį sprendimo būdą prieš generuojant profesionalų atsakymą."
       }
     },
+    "goethe": {
+      "vocabulary": {
+        "title": "Treniruotis žodyną",
+        "label": "konkrečia tema.",
+        "action": "Noriu treniruotis žodyną konkrečia tema. Pirmiausia paklauskite, kokią kalbą mokausi ir kuri tema mane domina (pvz., verslas, kelionės, maistas). Tada pateikite žodyną su vertimais, pavyzdinėmis frazėmis ir tarimu."
+      },
+      "grammar": {
+        "title": "Gramatikos paaiškinimas",
+        "label": "su pavyzdžiais.",
+        "action": "Padėkite man suprasti gramatikos sąvoką. Pirmiausia paklauskite, kokią kalbą mokausi ir kuri gramatikos tema mane supainioja (pvz., laikai, skaičius, atvejai). Tada aiškiai paaiškinkite taisyklę su praktiniais pavyzdžiais ir dažnomis klaidomis."
+      },
+      "conversation": {
+        "title": "Sukurkite pokalbio praktiką",
+        "label": "su realiu scenarijumi.",
+        "action": "Treniruokimės pokalbio kalbą. Pirmiausia paklauskite, kokią kalbą mokausi ir kokią situaciją nori treniruoti (pvz., užsakymas restorane, darbo pokalbis, paprasti pokalbiai). Tada pateikite dialogą su vertimais ir paaiškinimais."
+      },
+      "feedback": {
+        "title": "Patikrinkite mano vertimą",
+        "label": "ir pateikite grįžtamąjį ryšį.",
+        "action": "Kažką parašiau ir noriu grįžtamojo ryšio. Pateikite savo tekstą arba sakinį, o aš pateiksiu taisymus, patobulinsiu pasiūlymus ir paaiškinsiu bet kokius gramatikos arba žodyno pakeitimus."
+      }
+    },
     "csv": {
       "analysis": {
         "title": "Analizuoti šiuos duomenis",
@@ -1288,7 +1310,8 @@
   "toggle": "Perjungti",
   "locales": {
     "en": "Anglų",
-    "lt": "Lietuvių"
+    "lt": "Lietuvių",
+    "de": "Vokiečių"
   },
   "suggestions": {
     "vacation": {

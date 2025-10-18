@@ -1,0 +1,1481 @@
+{
+  "toasts": {
+    "fileListUpdateError": "Dateiliste konnte nicht aktualisiert werden",
+    "sharepointUpdateSuccess": "SharePoint-Daten erfolgreich aktualisiert",
+    "selectFilesUpload": "Dateien zum Hochladen auswählen",
+    "filesUploadSuccess": "Dateien erfolgreich hochgeladen",
+    "filesUploadError": "Fehler beim Hochladen von Dateien",
+    "sharepointSyncStarted": "SharePoint-Synchronisierung gestartet",
+    "sharepointSyncError": "SharePoint-Synchronisierung konnte nicht gestartet werden",
+    "filesDeleteSuccess": "${data.deletedCount} Dateien gelöscht",
+    "filesDeleteError": "Fehler beim Löschen von Dateien",
+    "copySuccess": "Kopiert!"
+  },
+  "sharepoint": {
+    "synchronizing": "Synchronisierung läuft...",
+    "syncWithSharepoint": "Mit SharePoint synchronisieren",
+    "filesCount": "Anzahl der Dateien in SharePoint:",
+    "newModifiedFiles": "Neue/Geänderte Dateien:",
+    "processing": "Verarbeitung: {syncProgress.currentFile} ({syncProgress.filesProcessed + 1} von {syncProgress.newFiles})",
+    "syncStatus": "Synchronisierungsstatus:",
+    "syncProgress": "Synchronisierungsfortschritt",
+    "syncingFile": "Datei wird synchronisiert",
+    "lastSyncTitle": "Letzte SharePoint-Synchronisierung",
+    "neverSynced": "Nie"
+  },
+  "fileUpload": {
+    "dragActive": "Dateien hier ablegen",
+    "dragInactive": "Dateien hier ablegen oder zum Auswählen anklicken",
+    "limit": "Maximale Dateigröße: 5 MB pro Datei, 25 MB insgesamt",
+    "selectedFiles": "Ausgewählte Dateien:",
+    "uploading": "Wird hochgeladen..."
+  },
+  "dataTable": {
+    "noResults": "Keine Ergebnisse.",
+    "rowsPerPage": "Zeilen pro Seite",
+    "page": "Seite",
+    "of": "von",
+    "goToFirst": "Zur ersten Seite",
+    "goToPrevious": "Zur vorherigen Seite",
+    "goToNext": "Zur nächsten Seite",
+    "goToLast": "Zur letzten Seite"
+  },
+  "runSqlPreview": {
+    "rawResult": "Rohes Ausführungsergebnis ({count} Zeilen)"
+  },
+  "files": {
+    "title": "Dateien",
+    "deleteAll": "Alle Dateien löschen",
+    "deleteConfirmTitle": "Sind Sie sicher, dass Sie alles löschen möchten?",
+    "deleteConfirmMessage": "Diese Aktion kann nicht rückgängig gemacht werden. Dateien werden permanent gelöscht.",
+    "cancel": "Abbrechen",
+    "deleting": "Wird gelöscht...",
+    "deleteAllAction": "Alle löschen",
+    "refresh": "Aktualisieren",
+    "fileManagement": "Dateiverwaltung",
+    "search": "Dateien durchsuchen...",
+    "columns": {
+      "name": "Name",
+      "size": "Größe",
+      "date": "Datum",
+      "status": "Status",
+      "actions": "Aktionen",
+      "ingested": "Verfügbar",
+      "processingFailed": "Verarbeitung fehlgeschlagen",
+      "viewOnSharePoint": "Auf SharePoint anzeigen",
+      "deleteFile": "Datei löschen",
+      "noFiles": "Keine Dateien gefunden",
+      "loading": "Wird geladen",
+      "longLoading": "Dies dauert länger als erwartet. Bitte warten Sie...",
+      "selectAll": "Alle Dateien auswählen",
+      "selectFile": "{name} auswählen",
+      "viewOnSharePointTooltip": "Datei auf SharePoint anzeigen",
+      "deleteFileTooltip": "Diese Datei löschen",
+      "tooltips": {
+        "disabledDuringOperation": "Aktionen sind während eines Vorgangs deaktiviert"
+      }
+    },
+    "viewKnowledgeBase": "KB-Dokumente anzeigen",
+    "viewS3": "S3-Dateien anzeigen",
+    "deleteSelectedTitle": "Ausgewählte Dokumente löschen",
+    "deleteSelectedMessage": "Dies entfernt {count} ausgewählte Dokumente aus Ihrer Wissensdatenbank. Diese Aktion kann nicht rückgängig gemacht werden.",
+    "noFilesSelected": "Keine Dateien ausgewählt",
+    "noFiles": "Keine Dateien gefunden",
+    "statusMappings": {
+      "unknown": "Unbekannt",
+      "new": "Neu",
+      "synced": "Synchronisiert",
+      "uploaded": "Hochgeladen",
+      "metadataStored": "Metadaten gespeichert",
+      "pendingIngestion": "Ausstehend",
+      "ingestionInProgress": "Verarbeitung läuft",
+      "bedrockProcessing": "Verarbeitung läuft",
+      "indexed": "Bereit",
+      "failedIngestion": "Fehlgeschlagen",
+      "pendingDeletion": "Wird gelöscht",
+      "deleted": "Gelöscht",
+      "archived": "Archiviert",
+      "new_tooltip": "Datei wurde hinzugefügt, aber noch nicht verarbeitet",
+      "synced_tooltip": "Datei wurde aus SharePoint synchronisiert",
+      "uploaded_tooltip": "Datei wurde in den Speicher hochgeladen",
+      "metadatastored_tooltip": "Dateimetadaten wurden gespeichert",
+      "metadata_stored_tooltip": "Dateimetadaten wurden gespeichert",
+      "pendingingestion_tooltip": "Datei wartet auf Verarbeitung",
+      "pending_ingestion_tooltip": "Datei wartet auf Verarbeitung",
+      "ingestioninprogress_tooltip": "Datei wird gerade verarbeitet",
+      "ingestion_in_progress_tooltip": "Datei wird gerade verarbeitet",
+      "bedrockprocessing_tooltip": "Datei wird vom KI-System verarbeitet",
+      "bedrock_processing_tooltip": "Datei wird vom KI-System verarbeitet",
+      "indexed_tooltip": "Datei ist bereit und durchsuchbar",
+      "failedingestion_tooltip": "Dateiversar beitung fehlgeschlagen - möglicherweise erneut hochladen",
+      "failed_ingestion_tooltip": "Dateiverarbeitung fehlgeschlagen - möglicherweise erneut hochladen",
+      "pendingdeletion_tooltip": "Datei ist zum Löschen geplant",
+      "pending_deletion_tooltip": "Datei ist zum Löschen geplant",
+      "deleted_tooltip": "Datei wurde aus dem System entfernt",
+      "archived_tooltip": "Datei wurde archiviert"
+    }
+  },
+  "chat": {
+    "title": "Moterra Chat",
+    "description": "Moterra Chat",
+    "brand": "Moterra",
+    "newChat": "Neuer Chat",
+    "searchChats": "Chats durchsuchen",
+    "noSearchResults": "Keine Chats gefunden",
+    "adminPortal": "Admin-Portal",
+    "enableNotifications": "Benachrichtigungen aktivieren",
+    "disableNotifications": "Benachrichtigungen deaktivieren",
+    "knowledgeBaseControl": "Wissensdatenbank",
+    "knowledgeBase": "Wissensdatenbank",
+    "thinking": "Wird überlegt...",
+    "thinkingMessage1": "Wird überlegt...",
+    "thinkingMessage2": "Wird nachgedacht...",
+    "thinkingMessage3": "Wird analysiert...",
+    "thinkingMessage4": "Wird durchdacht...",
+    "thinkingMessage5": "Wird reflektiert...",
+    "thinkingMessage6": "Wird analysiert...",
+    "thinkingMessage7": "Wird verarbeitet...",
+    "thinkingMessage8": "Wird überprüft...",
+    "thinkingMessage9": "Wird überdacht...",
+    "thinkingMessage10": "Wird daran gearbeitet...",
+    "thinkingMessage11": "Wird zusammengesetzt...",
+    "thinkingMessage12": "Es werden Verbindungen hergestellt...",
+    "processingMessage1": "Wird verarbeitet...",
+    "processingMessage2": "Daten werden analysiert...",
+    "processingMessage3": "Zahlen werden berechnet...",
+    "processingMessage4": "Wird durchgearbeitet...",
+    "processingMessage5": "Gedanken werden organisiert...",
+    "processingMessage6": "Informationen werden sortiert...",
+    "processingMessage7": "Wird zusammengefügt...",
+    "processingMessage8": "Fast fertig...",
+    "processingMessage9": "Details werden finalisiert...",
+    "processingMessage10": "Wird abgewickelt...",
+    "askPlaceholder": "Stellen Sie eine Frage...",
+    "share": "Teilen",
+    "makePrivate": "Privat machen",
+    "makePublic": "Öffentlich machen",
+    "delete": "Löschen",
+    "rename": "Umbenennen",
+    "pin": "Chat anheften",
+    "unpin": "Chat ablösen",
+    "pinnedChats": "Angeheftet",
+    "recentChats": "Kürzlich",
+    "renameChat": "Chat umbenennen",
+    "enterNewTitle": "Neuen Titel eingeben",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "maxPinnedReached": "Maximale Anzahl angehefteter Chats erreicht (5)",
+    "dashboard": "Dashboard",
+    "userManagement": "Benutzerverwaltung",
+    "systemPrompts": "Systemeingabeaufforderungen",
+    "csvManagement": "Datenverwaltung",
+    "csvTitle": "Datenverwaltung",
+    "csvAlertTitle": "Datenquellenverwaltung",
+    "csvAlertDescription": "CSV-Dateien hochladen und verwalten, um Datenbanktabellen zu erstellen. Jede Datei wird in eine abfragbare Tabelle konvertiert.",
+    "csvDatabaseTablesTitle": "Datenbanktabellen",
+    "csvSearchPlaceholder": "Tabellen durchsuchen...",
+    "csvRefreshTablesButton": "Tabellen aktualisieren",
+    "csvErrorInvalidFileType": "Ungültiger Dateityp. Unterstützte Typen: {supportedTypes}",
+    "csvErrorFileSizeExceeds": "Dateigröße überschreitet {maxSize}",
+    "csvErrorFileEmpty": "Datei ist leer",
+    "csvErrorNoValidFiles": "Keine gültigen Dateien zum Hochladen",
+    "csvErrorUploadFailed": "{fileName} konnte nicht hochgeladen werden: {message}",
+    "csvErrorNetworkError": "Netzwerkfehler beim Hochladen von {fileName}",
+    "csvErrorUnknownUploadError": "Unbekannter Fehler während des Hochladens",
+    "csvSuccessFileUpload": "{fileName} erfolgreich als {tableName} hochgeladen",
+    "csvSuccessAllFilesUploaded": "{count} Dateien erfolgreich hochgeladen",
+    "csvInfoPartialUpload": "{successCount} Dateien hochgeladen, {errorCount} fehlgeschlagen",
+    "csvErrorAllUploadsFailed": "{count} Dateien konnten nicht hochgeladen werden",
+    "csvErrorFailedToLoadTableData": "Tabellendaten konnten nicht geladen werden",
+    "csvNoDataFoundInTable": "Keine Daten in der Tabelle gefunden",
+    "csvShowingFirst100Rows": "Zeige erste 100 Zeilen",
+    "csvErrorFailedToFetchTables": "Tabellen konnten nicht abgerufen werden",
+    "csvUnexpectedErrorFetchingTables": "Unerwarteter Fehler beim Abrufen von Tabellen",
+    "csvWarningDeletionIssues": "Es gab Probleme beim Löschen vorhandener Tabellen. Fortfahren mit dem Hochladen.",
+    "csvErrorGeneralUploadProcess": "Ein Fehler ist während des Hochladensvorgangs aufgetreten. Bitte versuchen Sie es erneut.",
+    "text2sqlTimeline": {
+      "sqlGeneration": "SQL-Generierung",
+      "understandingQuestion": "Verständnis der Benutzerfrage",
+      "rephrasedQuestion": "Umformulierte Frage: {question}",
+      "sqlPlanning": "SQL-Planung",
+      "reasoning": "Begründung",
+      "sqlSuccess": "SQL erfolgreich generiert",
+      "sqlFailed": "SQL-Generierung fehlgeschlagen",
+      "error": "Fehler während der SQL-Generierung",
+      "executionStart": "SQL-Ausführung gestartet",
+      "executionEnd": "SQL-Ausführung abgeschlossen",
+      "executionError": "SQL-Ausführungsfehler",
+      "resultGenerated": "Ergebnis generiert"
+    },
+    "systemPromptsDescription": "System-Prompts definieren das Verhalten, die Fähigkeiten und die Persönlichkeit von KI-Assistenten. Bearbeiten Sie diese Prompts, um anzupassen, wie Assistenten auf Benutzeranfragen reagieren.",
+    "assistants": {
+      "general-assistant": "Allgemeiner Assistent",
+      "csv-agent": "CSV-Analyse-Assistent",
+      "enterPrompt": "System-Prompt eingeben für",
+      "systemPrompts": "System-Prompts definieren das Verhalten, die Fähigkeiten und die Persönlichkeit von KI-Assistenten"
+    },
+    "promptErrors": {
+      "tooShort": "Prompt ist zu kurz (mindestens 10 Zeichen)",
+      "tooLong": "Prompt ist zu lang (maximal 5000 Zeichen)"
+    },
+    "titleLogo": "Chat-Verwaltung"
+  },
+  "assistantFeaturesModal": {
+    "modelCapabilities": "Modellfähigkeiten",
+    "manageAvailableFeatures": "Verfügbare Funktionen verwalten",
+    "manageAvailableCapabilities": "Verfügbare Fähigkeiten verwalten",
+    "description": "Keine zusätzlichen Einstellungen für dieses Modell verfügbar",
+    "noConfigurableCapabilities": "Keine konfigurierbaren Fähigkeiten für diesen Agenten",
+    "features": "Funktionen",
+    "tools": "Werkzeuge",
+    "allCapabilitiesDisplayed": "Alle Fähigkeiten werden angezeigt",
+    "toolNames": {
+      "webSearch": "Websuche",
+      "deepResearch": "Tiefgehende Recherche",
+      "imageGeneration": "Bildgenerierung",
+      "fileSearch": "Dateisuche"
+    }
+  },
+  "chatManagement": {
+    "sendMessage": "Nachricht senden...",
+    "uploadNewLogo": "Neues Logo hochladen",
+    "dragAndDrop": "Logo-Datei hier ablegen",
+    "dropFileHere": "Datei hier ablegen",
+    "orClickToUpload": "oder klicken zum Auswählen",
+    "loading": "Wird geladen...",
+    "noLogosUploaded": "Noch keine Logos hochgeladen",
+    "logo": "Logo",
+    "logos": "Logos",
+    "titleLogo": "Chat-Verwaltung",
+    "logoManagement": "Logo-Verwaltung",
+    "suggestionsManagement": "Vorschläge-Verwaltung",
+    "uploadButton": "Logo hochladen",
+    "uploadSuccess": "Logo erfolgreich hochgeladen",
+    "uploadError": "Logo konnte nicht hochgeladen werden",
+    "logoSelected": "Logo erfolgreich ausgewählt",
+    "imageDeleted": "Bild erfolgreich gelöscht",
+    "deleteError": "Bild konnte nicht gelöscht werden",
+    "setLogo": "Logo festlegen",
+    "currentLogo": "Aktuelles Logo",
+    "poweredBy": "Unterstützt von",
+    "brand": "Moterra",
+    "preview": "Vorschau",
+    "uploadedLogos": "Hochgeladene Logos",
+    "resetToDefault": "Auf Standard zurücksetzen",
+    "invalidFileType": "Ungültiger Dateityp",
+    "fileTooLarge": "Dateigröße überschreitet 2MB-Grenze",
+    "uploadedLogo": "Hochgeladenes Logo",
+    "selectFile": "Datei auswählen",
+    "fetchError": "Logos konnten nicht abgerufen werden",
+    "suggestedInquiries": "Vorgeschlagene Anfragen",
+    "selectAgentType": "Agententyp auswählen",
+    "selectAgentPlaceholder": "Agententyp auswählen",
+    "editSuggestions": "Vorschläge bearbeiten",
+    "suggestion": "Vorschlag",
+    "suggestionTitle": "Titel",
+    "suggestionLabel": "Untertitel",
+    "suggestionAction": "Vollständiger Anfrage-Text",
+    "enterTitle": "Titel eingeben",
+    "enterLabel": "Untertitel eingeben",
+    "enterAction": "Anfrage-Text eingeben",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "saveSuggestions": "Vorschläge speichern",
+    "suggestionsSaved": "Vorschläge erfolgreich gespeichert",
+    "saveFailed": "Vorschläge konnten nicht gespeichert werden",
+    "suggestionsReset": "Vorschläge auf Standard zurückgesetzt",
+    "resetFailed": "Vorschläge konnten nicht zurückgesetzt werden",
+    "previewSuggestions": "Vorschläge-Vorschau",
+    "delete": "Löschen",
+    "limitReached": "Zeichenlimit erreicht: {limit}",
+    "emptyFieldsError": "Alle Felder sind erforderlich. Bitte füllen Sie alle leeren Felder aus."
+  },
+  "userManagement": {
+    "title": "Benutzer",
+    "addUser": "Benutzer hinzufügen",
+    "createUser": {
+      "title": "Neuen Benutzer erstellen",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "creating": "Wird erstellt...",
+      "create": "Benutzer erstellen",
+      "emailPlaceholder": "benutzer@beispiel.de",
+      "passwordPlaceholder": "••••••••"
+    },
+    "deleteUser": {
+      "title": "Benutzer löschen",
+      "confirmation": "Sind Sie sicher, dass Sie diesen Benutzer löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "deleting": "Wird gelöscht...",
+      "delete": "Löschen"
+    },
+    "table": {
+      "email": "E-Mail",
+      "adminStatus": "Admin-Status",
+      "actions": "Aktionen"
+    }
+  },
+  "suggestedActions": {
+    "sharepoint": {
+      "winningProposals": {
+        "title": "Erfolgreiche Angebote abrufen",
+        "label": "relevant für einen neuen Kunden.",
+        "action": "Erfolgreiche Angebote oder Fallstudien abrufen, die für einen neuen Kunden relevant sind. Fragen Sie mich vor dem Abrufen nach dem Namen oder der Branche des Kunden, um die Relevanz sicherzustellen. Fassen Sie dann die wichtigsten Punkte zusammen, die zum Erfolg beigetragen haben."
+      },
+      "pricing": {
+        "title": "Zeigen Sie mir unsere Preise",
+        "label": "und Servicepakete.",
+        "action": "Zeigen Sie mir unsere Preisstrukturen und Servicepakete. Heben Sie flexible Optionen oder Anpassungsmöglichkeiten hervor."
+      },
+      "successFactors": {
+        "title": "Wichtige Erfolgsfaktoren abrufen",
+        "label": "aus unseren Top-Projekten.",
+        "action": "Informationen über unsere erfolgreichsten Kundenprojekte abrufen. Fragen Sie mich vor dem Abrufen, ob ich nach bestimmten Branchen, Projekttypen oder Geschäftsgrößen suche. Fassen Sie dann die wichtigsten Faktoren zusammen, die zum Erfolg beigetragen haben."
+      },
+      "remoteWork": {
+        "title": "Remote-Arbeitsrichtlinien zusammenfassen",
+        "label": "und wichtige Leitlinien.",
+        "action": "Fassen Sie unsere Remote-Arbeitsrichtlinien zusammen. Heben Sie wichtige Regeln, flexible Optionen und aktuelle Updates hervor."
+      }
+    },
+    "crawler": {
+      "trends": {
+        "title": "Was sind die neuesten Trends",
+        "label": "die unsere Branche prägen?",
+        "action": "Was sind die neuesten Trends, die unsere Branche prägen? Fassen Sie wichtige Erkenntnisse zusammen und erklären Sie, wie sie Unternehmen wie unseres beeinflussen."
+      },
+      "caseStudies": {
+        "title": "Fallstudien finden",
+        "label": "erfolgreicher Strategien in unserer Branche.",
+        "action": "Fallstudien erfolgreicher Strategien in unserer Branche finden. Fragen Sie mich vor dem Abrufen, ob ich an Beispielen von Konkurrenten, Marktführern oder spezifischen Anwendungsfällen interessiert bin. Fassen Sie dann die wichtigsten Erkenntnisse zusammen."
+      },
+      "differentiation": {
+        "title": "Wie differenzieren sich Top-Unternehmen",
+        "label": "in unserer Branche?",
+        "action": "Wie differenzieren sich die Top-Unternehmen in unserer Branche? Fragen Sie mich vor dem Abrufen, ob ich einen breiten Überblick oder Einblicke in ein bestimmtes Marktsegment möchte. Geben Sie dann Beispiele für ihre Positionierung und Wettbewerbsvorteile."
+      },
+      "regulations": {
+        "title": "Welche neuen Vorschriften",
+        "label": "betreffen unsere Branche?",
+        "action": "Welche neuen Vorschriften betreffen unsere Branche? Fassen Sie wichtige Änderungen zusammen und wie sich Unternehmen daran anpassen."
+      }
+    },
+    "general": {
+      "proposal": {
+        "title": "Lasst uns ein Angebot erstellen",
+        "label": "für einen neuen Kunden.",
+        "action": "Ich muss ein Angebot für einen neuen Kunden entwerfen. Fragen Sie mich vor dem Entwurf Schritt für Schritt nach wichtigen Details wie dem Namen des Kunden, der Website, interessanten Dienstleistungen/Produkten und spezifischen Anforderungen. Erstellen Sie dann ein strukturiertes Angebot."
+      },
+      "timeline": {
+        "title": "Helfen Sie mir einen Zeitplan zu erstellen",
+        "label": "für ein Projekt.",
+        "action": "Helfen Sie mir einen Projekt-Zeitplan zu erstellen. Fragen Sie zuerst nach wichtigen Meilensteinen und Liefergegenständen, bestätigen Sie dann Fristen und Abhängigkeiten, bevor Sie einen strukturierten Plan erstellen."
+      },
+      "campaign": {
+        "title": "Eine Kampagne brainstormen",
+        "label": "mit kreativen Ideen.",
+        "action": "Lassen Sie uns eine kreative Marketing-Kampagne brainstormen. Fragen Sie mich vor dem Vorschlagen von Ideen nach Details wie dem Kampagnenziel, der Zielgruppe, dem Produktfokus und dem bevorzugten Ton. Erstellen Sie dann drei kreative Richtungen."
+      },
+      "response": {
+        "title": "Eine Antwort entwerfen",
+        "label": "auf eine Kundenbeschwerde.",
+        "action": "Ich muss eine Antwort auf eine Kundenbeschwerde entwerfen. Fragen Sie zuerst nach Details über das Problem und vorherige Interaktionen. Bestätigen Sie dann unseren typischen Lösungsansatz, bevor Sie eine professionelle Antwort erstellen."
+      }
+    },
+    "goethe": {
+      "vocabulary": {
+        "title": "Vokabeln üben",
+        "label": "zu einem bestimmten Thema.",
+        "action": "Ich möchte Vokabeln zu einem bestimmten Thema üben. Fragen Sie mich zunächst, welche Sprache ich lerne und welches Thema mich interessiert (z. B. Geschäft, Reisen, Essen). Geben Sie dann Vokabeln mit Übersetzungen, Beispielsätzen und Aussprache tipps an."
+      },
+      "grammar": {
+        "title": "Grammatikerklärung",
+        "label": "mit Beispielen.",
+        "action": "Helfen Sie mir, ein Grammatikkonzept zu verstehen. Fragen Sie mich zunächst, welche Sprache ich lerne und welches Grammatikthema mich verwirrt (z. B. Zeiten, Geschlecht, Fälle). Erklären Sie dann die Regel klar mit praktischen Beispielen und häufigen Fehlern, die Sie vermeiden sollten."
+      },
+      "conversation": {
+        "title": "Gesprächspraxis erstellen",
+        "label": "in einem realen Szenario.",
+        "action": "Üben wir die Konversationssprache. Fragen Sie mich zunächst, welche Sprache ich lerne und welche Situation ich üben möchte (z. B. Bestellung im Restaurant, Vorstellungsgespräch, Small Talk). Geben Sie dann einen Dialog mit Übersetzungen und Erklärungen an."
+      },
+      "feedback": {
+        "title": "Überprüfen Sie meine Übersetzung",
+        "label": "und geben Sie Feedback.",
+        "action": "Ich habe etwas geschrieben und möchte Feedback. Bitte teilen Sie Ihren Text oder Satz mit, und ich werde Korrektionen, Verbesserungsvorschläge und Erklärungen der Grammatik- oder Vokabeländerungen vornehmen."
+      }
+    },
+    "csv": {
+      "analysis": {
+        "title": "Diese Daten analysieren",
+        "label": "auf Muster und Erkenntnisse.",
+        "action": "Analysieren Sie die hochgeladenen CSV-Daten auf Muster, Trends und Erkenntnisse. Geben Sie eine umfassende Zusammenfassung der wichtigsten Erkenntnisse."
+      },
+      "summary": {
+        "title": "Wichtige Statistiken zusammenfassen",
+        "label": "aus dem Datensatz.",
+        "action": "Geben Sie eine statistische Zusammenfassung der Daten einschließlich Mittelwerte, Mediane, Bereiche und Verteilungen für numerische Spalten."
+      },
+      "trends": {
+        "title": "Trends identifizieren",
+        "label": "über Zeiträume.",
+        "action": "Identifizieren und analysieren Sie Trends in den Daten über die Zeit. Suchen Sie nach Mustern, Saisonalität oder Anomalien."
+      },
+      "visualization": {
+        "title": "Visualisierungen erstellen",
+        "label": "für die Daten.",
+        "action": "Erstellen Sie geeignete Diagramme und Visualisierungen, um die wichtigsten Erkenntnisse in den Daten darzustellen."
+      }
+    },
+    "sql": {
+      "showTables": {
+        "title": "Verfügbare Tabellen anzeigen",
+        "label": "und ihre Struktur.",
+        "action": "Zeigen Sie mir alle verfügbaren Tabellen in der Datenbank und beschreiben Sie ihre Struktur, einschließlich Spaltennamen und Datentypen."
+      },
+      "topRecords": {
+        "title": "Beispieldaten anzeigen",
+        "label": "aus den Haupttabellen.",
+        "action": "Zeigen Sie mir die ersten 10 Datensätze aus den Haupttabellen, um die Datenstruktur und den Inhalt zu verstehen."
+      },
+      "aggregate": {
+        "title": "Aggregierte Datenanalyse",
+        "label": "mit wichtigen Kennzahlen.",
+        "action": "Führen Sie eine aggregierte Analyse der Daten durch. Zeigen Sie Zählungen, Summen und Durchschnitte gruppiert nach relevanten Kategorien."
+      },
+      "relationships": {
+        "title": "Tabellenbeziehungen erklären",
+        "label": "und Datenverbindungen.",
+        "action": "Erklären Sie die Beziehungen zwischen verschiedenen Tabellen und wie die Daten in der Datenbank verbunden sind."
+      }
+    }
+  },
+  "reasoning": {
+    "risks": {
+      "title": "Welche Risiken und Chancen",
+      "label": "sollten wir vorbereiten?",
+      "action": "Was sind die wichtigsten Risiken und Chancen für unser Unternehmen in diesem Jahr? Fragen Sie mich vor der Analyse, ob ich mich auf finanzielle, betriebliche oder Marktrisiken konzentriere. Priorisieren Sie sie dann und schlagen Sie vor, wie wir uns vorbereiten können."
+    },
+    "competitive": {
+      "title": "Wie können wir stärken",
+      "label": "unsere Wettbewerbsposition?",
+      "action": "Wie können wir unsere Wettbewerbsposition stärken? Fragen Sie mich vor der Analyse, ob wir uns auf Preisgestaltung, Markenbildung, Markterweiterung oder einen anderen Bereich konzentrieren sollten. Schlagen Sie dann strategische Maßnahmen vor, die wir ergreifen sollten."
+    },
+    "decision": {
+      "title": "Vor einer Geschäftsentscheidung",
+      "label": "was sollten wir berücksichtigen?",
+      "action": "Welche kritischen Faktoren sollten wir vor einer wichtigen Geschäftsentscheidung bewerten? Stellen Sie eine strukturierte Checkliste zur Verfügung."
+    },
+    "ai": {
+      "title": "KI-Investition bewerten",
+      "label": "für unser Unternehmen.",
+      "action": "Was sind die wichtigsten Überlegungen für die Implementierung von KI in unserem Unternehmen? Stellen Sie einen Kosten-Nutzen-Analyse-Rahmen und potenzielle Risiken zur Bewertung bereit."
+    }
+  },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "subtitle": "Die gesuchte Seite existiert nicht",
+    "description": "Die angeforderte Seite existiert nicht oder Sie haben keinen Zugriff darauf.",
+    "chatNotFound": "Chat nicht gefunden",
+    "chatDescription": "Der angeforderte Chat existiert nicht oder Sie haben keinen Zugriff darauf.",
+    "adminNotFound": "Zugriff verweigert",
+    "adminDescription": "Sie haben keine Berechtigung, auf diese Admin-Seite zuzugreifen.",
+    "backToHome": "Zur Startseite",
+    "backToMain": "Zurück zur Hauptseite"
+  },
+  "timeframes": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "days7": "Letzte 7 Tage",
+    "days30": "Letzte 30 Tage",
+    "older": "Älter"
+  },
+  "sidebar": {
+    "toggle": "Seitenleiste umschalten",
+    "themeToggle": "${theme === 'light' ? 'Dunklen' : 'Hellen'} Modus umschalten",
+    "logout": "Abmelden",
+    "turnOn": "Einschalten",
+    "lightMode": "Hell",
+    "darkMode": "Dunkel",
+    "gilestaMode": "Gilesta",
+    "blueMode": "Blau",
+    "mode": "Modus",
+    "colorTheme": "Farbthema"
+  },
+  "errors": {
+    "fileListRefresh": "Dateiliste konnte nicht aktualisiert werden",
+    "fileUploadNoSelection": "Dateien zum Hochladen auswählen",
+    "fileUploadFailed": "Dateien konnten nicht hochgeladen werden",
+    "singleFileUploadFailed": "Datei konnte nicht hochgeladen werden, bitte versuchen Sie es erneut!",
+    "sharePointSyncFailed": "SharePoint-Synchronisierung konnte nicht gestartet werden",
+    "fileDeleteFailed": "Fehler beim Löschen von Dateien",
+    "userFetch": "Benutzer konnten nicht abgerufen werden",
+    "userCreate": "Benutzer konnte nicht erstellt werden",
+    "userUpdate": "Benutzer konnte nicht aktualisiert werden",
+    "userDelete": "Benutzer konnte nicht gelöscht werden",
+    "fillAllFields": "Bitte füllen Sie alle Felder aus",
+    "noFilesSelected": "Keine Dateien ausgewählt",
+    "toolConflict": "Funktionskonflikt",
+    "toolConflictDescription": "{tool} kann nicht mit {conflicts} verwendet werden. {conflicts} wurde deaktiviert.",
+    "ingestionStatusFailed": "Aufnahmestatus konnte nicht abgerufen werden",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "deleteFailed": "Löschen fehlgeschlagen",
+    "syncFailed": "Synchronisierung fehlgeschlagen",
+    "ingestionFailed": "Wissensdatenbank-Update fehlgeschlagen: {error}",
+    "uploadStatusFailed": "Upload-Status konnte nicht abgerufen werden",
+    "deleteStatusFailed": "Lösch-Status konnte nicht abgerufen werden",
+    "syncStatusFailed": "Sync-Status konnte nicht abgerufen werden",
+    "sharePointUrlsFetchFailed": "SharePoint-URLs konnten nicht abgerufen werden",
+    "invalidFiles": "Ungültige Dateien ausgewählt",
+    "resyncFailed": "Erneute Synchronisierung fehlgeschlagen",
+    "unknown": "Unbekannte Quelle",
+    "untitled": "Ohne Titel",
+    "promptTooShort": "System-Prompt ist zu kurz",
+    "promptTooLong": "System-Prompt überschreitet maximale Länge (5000 Zeichen)",
+    "promptSaveFailed": "System-Prompt konnte nicht gespeichert werden",
+    "promptResetFailed": "System-Prompt konnte nicht zurückgesetzt werden",
+    "tooManyFiles": "Zu viele Dateien ausgewählt. Maximal {max} Dateien erlaubt.",
+    "totalSizeExceeded": "Gesamtdateigröße überschreitet das Limit von {limit}",
+    "emptyFiles": "Die folgenden Dateien sind leer und können nicht hochgeladen werden: {files}",
+    "oversizedFiles": "Die folgenden Dateien überschreiten das Größenlimit von {limit}: {files}",
+    "unsupportedFileTypes": "Die folgenden Dateien haben nicht unterstützte Dateitypen: {files}",
+    "defaultValidation": "Dateivalidierung fehlgeschlagen",
+    "fetchInitialStatusFailed": "Anfänglicher Systemstatus konnte nicht abgerufen werden",
+    "systemBusy": "System ist derzeit mit einem anderen Vorgang beschäftigt",
+    "httpError": "HTTP-Fehler {status}",
+    "invalidJsonResponse": "Ungültige Serverantwort",
+    "operationFailed": "Operation fehlgeschlagen",
+    "cancelFailed": "Operation konnte nicht abgebrochen werden",
+    "validationErrorTitle": "Validierungsfehler",
+    "batchRejectedTotalSizeFull": "Batch voll",
+    "batchRejectedAllInvalidFiles": "Nicht unterstützte Datei oder Dateityp"
+  },
+  "success": {
+    "sharePointSync": "SharePoint-Daten erfolgreich aktualisiert",
+    "fileUpload": "Dateien erfolgreich hochgeladen",
+    "sharePointSyncStarted": "SharePoint-Synchronisierung gestartet",
+    "filesDeleted": "{count} Dateien gelöscht",
+    "copied": "Kopiert!",
+    "userCreate": "Benutzer erfolgreich erstellt",
+    "userUpdate": "Benutzer erfolgreich aktualisiert",
+    "userDelete": "Benutzer erfolgreich gelöscht",
+    "fileDeleted": "Datei {name} erfolgreich gelöscht",
+    "selectedFilesDeleted": "{count} Dateien erfolgreich gelöscht",
+    "ingestionComplete": "Wissensdatenbank-Update erfolgreich abgeschlossen",
+    "uploadComplete": "Dateien erfolgreich hochgeladen und verarbeitet",
+    "deleteComplete": "Dateien gelöscht und Wissensdatenbank erfolgreich aktualisiert",
+    "syncComplete": "SharePoint-Synchronisierung erfolgreich abgeschlossen",
+    "sharePointSyncComplete": "SharePoint-Dateien erfolgreich synchronisiert und verarbeitet",
+    "sharePointUrlsFetched": "{count} SharePoint-URLs abgerufen",
+    "sharePointSyncNoChanges": "Keine neuen Dateien zur Synchronisierung von SharePoint",
+    "resyncStarted": "Erneute Synchronisierung erfolgreich gestartet",
+    "promptSaved": "Prompt für {model} erfolgreich aktualisiert",
+    "promptReset": "Prompt für {model} auf Standard zurückgesetzt",
+    "operationComplete": "Operation erfolgreich abgeschlossen"
+  },
+  "warnings": {
+    "someInvalidFiles": "{count} ungültige Dateien übersprungen",
+    "noFilesUploaded": "Keine Dateien wurden hochgeladen",
+    "partialSuccess": "Einige Dateien hochgeladen, aber Aufnahme fehlgeschlagen: {error}",
+    "noIngestionStarted": "Dateien hochgeladen, aber Aufnahme nicht gestartet",
+    "areYouSure": "Sind Sie absolut sicher?",
+    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden. Dies wird Ihren Chat dauerhaft löschen und von unseren Servern entfernen.",
+    "maxFilesReached": "Maximum von {max} Dateien erreicht",
+    "someFilesSkipped": "Nur {taken} von {max} Dateien wurden hinzugefügt (maximal {max} Dateien erlaubt)",
+    "skippedUnsupportedType": "Nicht unterstützter Dateityp gefunden.",
+    "skippedTotalSizeLimitReached": "Gesamtgrößenlimit erreicht."
+  },
+  "info": {
+    "noSharePointUrlsFound": "Keine SharePoint-URLs für ausgewählte Dateien gefunden",
+    "pleaseReuploadFiles": "Bitte laden Sie die Dateien manuell erneut hoch",
+    "usingS3Files": "Anzeige von Dateien aus dem S3-Speicher"
+  },
+  "actions": {
+    "refresh": "Aktualisieren",
+    "deleteAll": "Alle Dateien löschen",
+    "cancel": "Abbrechen",
+    "continue": "Fortfahren",
+    "share": "Teilen",
+    "signOut": "Abmelden",
+    "copy": "Kopieren",
+    "toggleSidebar": "Seitenleiste umschalten",
+    "delete": "Löschen",
+    "clearAll": "Alles löschen",
+    "deleteSelected": "Ausgewählte löschen ({count})",
+    "fetchSharePointUrls": "SharePoint-URLs abrufen",
+    "reSync": "Dateien erneut synchronisieren",
+    "forceIngest": "Aufnahme erzwingen",
+    "confirm": "Bestätigen",
+    "refreshList": "Liste aktualisieren",
+    "processAllPending": "Ausstehende Dateien verarbeiten",
+    "stop": "Stoppen"
+  },
+  "status": {
+    "synchronizing": "Synchronisierung läuft...",
+    "thinking": "Wird überlegt...",
+    "deleting": "Wird gelöscht...",
+    "uploadingFiles": "Dateien werden hochgeladen...",
+    "deletingFiles": "Dateien werden gelöscht...",
+    "deletingMultipleFiles": "{count} Dateien werden gelöscht...",
+    "deletingSingleFile": "Datei {name} wird gelöscht...",
+    "syncingWithSharePoint": "Synchronisierung mit SharePoint...",
+    "resyncingFiles": "Dateien werden erneut synchronisiert...",
+    "ingestionInProgress": "Wissensdatenbank-Update läuft...",
+    "uploadInProgress": "Upload läuft...",
+    "deleteInProgress": "Löschen läuft...",
+    "syncInProgress": "Synchronisierung läuft...",
+    "loadingSharePointUrls": "SharePoint-URLs werden geladen...",
+    "syncComplete": "Synchronisierung abgeschlossen",
+    "saving": "Wird gespeichert...",
+    "initializing": "System wird initialisiert...",
+    "operationAlreadyInProgress": "Ein anderer Vorgang läuft bereits",
+    "operationStarting": "{type} wird gestartet...",
+    "operationStarted": "{type} erfolgreich gestartet",
+    "operationCompleted": "Operation erfolgreich abgeschlossen",
+    "operationFailed": "Operation fehlgeschlagen",
+    "operationCancelled": "Operation abgebrochen",
+    "idle": "System ist inaktiv",
+    "starting": "Operation wird gestartet...",
+    "pullingFromSharePoint": "Änderungen werden von SharePoint abgerufen...",
+    "preparingForProcessing": "Dateien werden für die Verarbeitung vorbereitet...",
+    "submittedToProcessor": "An Dokumentenprozessor übermittelt...",
+    "processingDocuments": "Dokumente werden verarbeitet...",
+    "processing": "Wird verarbeitet...",
+    "success": "Erfolg",
+    "failed": "Fehlgeschlagen",
+    "progress": "Fortschritt",
+    "initiatingOp": "{type} wird gestartet...",
+    "genericProgress": "Fortschritt",
+    "currentFileLabel": "Aktuell",
+    "tableDisabledDuringOperation": "Aktionen während Operation deaktiviert",
+    "filesBeingProcessed": "{count} Dateien warten auf Verarbeitung",
+    "filesBeingDeleted": "{count} Dateien werden gelöscht",
+    "filesCurrentlyActive": "{count} Dateien werden gerade verarbeitet",
+    "filesCompleted": "{count} Dateien in dieser Sitzung abgeschlossen",
+    "processingFiles": "Dateien werden verarbeitet...",
+    "finalizingProcessing": "Verarbeitung wird abgeschlossen...",
+    "processingAndDeleting": "Verarbeitung von {processing} Dateien und Löschen von {deleting} Dateien... {active} aktiv",
+    "completingProcessing": "Verarbeitung wird abgeschlossen... {active} Dateien werden fertiggestellt"
+  },
+  "status_old": {
+    "synchronizing": "Synchronisierung läuft...",
+    "thinking": "Wird überlegt...",
+    "deleting": "Wird gelöscht...",
+    "processing": "Verarbeitung: {file} ({current} von {total})",
+    "upvoting": "Positives Feedback wird aufgezeichnet...",
+    "downvoting": "Negatives Feedback wird aufgezeichnet..."
+  },
+  "operations": {
+    "type": {
+      "upload": "Hochladen",
+      "deleteMultiple": "Ausgewählte löschen",
+      "deleteSingle": "Datei löschen",
+      "syncSharepoint": "SharePoint-Synchronisierung",
+      "processPending": "Ausstehende verarbeiten"
+    },
+    "types": {
+      "manual_upload_and_process": "Datei-Upload",
+      "sharepoint_sync_and_process": "SharePoint-Synchronisierung",
+      "file_deletion_and_process": "Datei-Löschung",
+      "bedrock_process_pending": "Dokumentenverarbeitung"
+    },
+    "starting": {
+      "manual_upload_and_process": "Datei-Upload wird gestartet...",
+      "sharepoint_sync_and_process": "SharePoint-Synchronisierung wird gestartet...",
+      "file_deletion_and_process": "Datei-Löschung wird gestartet...",
+      "bedrock_process_pending": "Dokumentenverarbeitung wird gestartet..."
+    },
+    "complete": {
+      "manual_upload_and_process": "Dateien erfolgreich hochgeladen und verarbeitet",
+      "sharepoint_sync_and_process": "SharePoint-Synchronisierung erfolgreich abgeschlossen",
+      "file_deletion_and_process": "Dateien erfolgreich gelöscht",
+      "bedrock_process_pending": "Dokumentenverarbeitung erfolgreich abgeschlossen"
+    },
+    "lastOperation": "Letzte Operation"
+  },
+  "labels": {
+    "files": "Dateien",
+    "name": "Name",
+    "size": "Größe",
+    "actions": "Aktionen",
+    "selectedFiles": "Ausgewählte Dateien",
+    "fileLimit": "Max. Dateigröße: 100MB",
+    "sources": "Quellen:",
+    "private": "Privat",
+    "public": "Öffentlich",
+    "status": "Status",
+    "knowledgeBaseFiles": "Wissensdatenbank-Dateien",
+    "s3Files": "S3-Dateien",
+    "page": "Seite",
+    "loadingPagination": "Einträge werden geladen...",
+    "paginationInfo": "Anzeige {start}-{end} von {total} Einträgen (Seite {page} von {totalPages})"
+  },
+  "placeholders": {
+    "dragActive": "Dateien hier ablegen...",
+    "dragInactive": "Dateien hier per Drag & Drop ablegen oder zum Durchsuchen klicken",
+    "message": "Stellen Sie eine Frage..."
+  },
+  "dialogs": {
+    "deleteConfirmTitle": "Sind Sie sicher, dass Sie alles löschen möchten?",
+    "deleteConfirmMessage": "Diese Aktion kann nicht rückgängig gemacht werden. Dateien werden dauerhaft gelöscht.",
+    "deleteSelectedTitle": "Ausgewählte Dateien löschen",
+    "deleteSelectedMessage": "Sind Sie sicher, dass Sie {count} ausgewählte Dateien löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "buttons": {
+    "uploadFiles": "Dateien hochladen",
+    "save": "Speichern",
+    "resetToDefault": "Auf Standard zurücksetzen"
+  },
+  "alerts": {
+    "knowledgeBaseInfo": "Wissensdatenbank-Verwaltung",
+    "knowledgeBaseDescription": "Laden Sie Dokumente hoch, synchronisieren und verwalten Sie sie, die Ihren KI-Assistenten antreiben. Änderungen werden automatisch verarbeitet und in Chat-Antworten reflektiert.",
+    "ingestionComplete": "Aufnahme erfolgreich abgeschlossen!",
+    "ingestionFailed": "Aufnahme fehlgeschlagen",
+    "ingestionInProgress": "Wissensdatenbank-Update läuft"
+  },
+  "ingestion": {
+    "status": "Aufnahme-Status",
+    "progress": "Fortschritt",
+    "processedFiles": "Verarbeitete Dateien"
+  },
+  "document": {
+    "actions": {
+      "creating": "Wird erstellt",
+      "created": "Erstellt",
+      "updating": "Wird aktualisiert",
+      "updated": "Aktualisiert",
+      "requestingSuggestions": "Vorschläge werden hinzugefügt",
+      "suggestionsAdded": "Vorschläge hinzugefügt zu"
+    },
+    "errors": {
+      "viewSharedFiles": "Das Anzeigen von Dateien in geteilten Chats wird derzeit nicht unterstützt."
+    }
+  },
+  "login": {
+    "title": "Willkommen zurück",
+    "subtitle": "Melden Sie sich in Ihrem Konto an",
+    "microsoftButton": {
+      "default": "Mit Microsoft anmelden",
+      "loading": "Verbindung wird hergestellt..."
+    },
+    "divider": "Oder mit E-Mail fortfahren",
+    "submitButton": "Anmelden",
+    "signup": {
+      "text": "Haben Sie noch kein Konto?",
+      "link": "Registrieren",
+      "suffix": "kostenlos."
+    },
+    "errors": {
+      "invalidCredentials": "Ungültige Anmeldedaten!",
+      "invalidData": "Ihre Daten konnten nicht validiert werden!",
+      "microsoftAuth": "Verbindung zu Microsoft fehlgeschlagen"
+    },
+    "email": "E-Mail",
+    "password": "Passwort"
+  },
+  "register": {
+    "title": "Registrierung",
+    "subtitle": "Erstellen Sie ein Konto mit E-Mail und Passwort",
+    "submitButton": "Registrieren",
+    "login": {
+      "text": "Haben Sie bereits ein Konto?",
+      "link": "Anmelden",
+      "suffix": "stattdessen."
+    },
+    "success": "Konto erfolgreich erstellt",
+    "errors": {
+      "userExists": "Konto existiert bereits",
+      "createFailed": "Konto konnte nicht erstellt werden",
+      "invalidData": "Ihre Daten konnten nicht validiert werden!"
+    }
+  },
+  "dashboard": {
+    "sharepointFailedSearches": "Fehlgeschlagene SharePoint-Suchen",
+    "noFailedSearches": "Keine fehlgeschlagenen SharePoint-Suchen gefunden",
+    "date": "Datum",
+    "query": "Abfrage",
+    "response": "Antwort",
+    "status": "Status",
+    "user": "Benutzer",
+    "reviewed": "Überprüft",
+    "pending": "Ausstehend",
+    "expand": "Erweitern",
+    "collapse": "Reduzieren",
+    "notes": "Notizen",
+    "addNotes": "Notizen hinzufügen (optional)",
+    "markAsReviewed": "Als überprüft markieren",
+    "updating": "Wird aktualisiert...",
+    "loadingDashboard": "Wird geladen...",
+    "actionsDashboard": "Aktionen",
+    "title": "Dashboard",
+    "actions": {
+      "view": "Anzeigen",
+      "back": "Zurück",
+      "viewMessages": "Unterhaltung anzeigen",
+      "searchPlaceholder": "Kategorien oder Anwendungsfälle durchsuchen...",
+      "noSearchResults": "Keine Kategorien oder Anwendungsfälle entsprechen Ihrer Suche.",
+      "refresh": "Aktualisieren"
+    },
+    "agentTypeUsage": {
+      "title": "Agententyp-Nutzung",
+      "description": "Nutzungsstatistiken für jeden Agententyp",
+      "noData": "Keine Daten für diesen Agententyp verfügbar",
+      "noDataForChart": "Keine Daten für das Diagramm vorhanden.",
+      "agentTypeCount": "{count} Agententyp",
+      "agentTypeCount_plural": "{count} Agententypen"
+    },
+    "totalTokens": {
+      "title": "Gesamte Tokens",
+      "description": "Tokens, die in allen Chats verwendet wurden"
+    },
+    "dashboard": {
+      "actions": {
+        "view": "Anzeigen"
+      }
+    },
+    "userAdoption": {
+      "title": "Benutzerakzeptanz",
+      "ofWorkforce": "{workforce}",
+      "active": "der aktiven wöchentlichen Benutzer",
+      "outOfTotal": "Aktiv in den letzten 7 Tagen"
+    },
+    "useCaseCategories": {
+      "title": "Top-Anwendungsfälle",
+      "useCasesTitle": "Anwendungsfälle",
+      "noData": "Keine Anwendungsfall-Kategorien gefunden. Erstellen Sie sie zuerst.",
+      "noSearchResults": "Keine Kategorien oder Anwendungsfälle entsprechen Ihrer Suche.",
+      "noUseCases": "Keine Anwendungsfälle in dieser Kategorie gefunden.",
+      "noUseCasesForCategory": "Keine Anwendungsfälle für Kategorie gefunden: {category}",
+      "noDataForChart": "Keine Daten für das Diagramm vorhanden.",
+      "useCaseCount": "{count} Anwendungsfall",
+      "useCaseCount_plural": "{count} Anwendungsfälle",
+      "noDescription": "Keine Beschreibung",
+      "generatingInfo": "Anwendungsfälle werden generiert und kategorisiert...",
+      "generating": "Wird generiert...",
+      "generate": "Anwendungsfälle generieren",
+      "generateSuccess": "Anwendungsfälle erfolgreich generiert und kategorisiert!",
+      "alreadyCategorized": "Alle verwandten Nachrichten sind bereits kategorisiert.",
+      "columns": {
+        "title": "Titel",
+        "description": "Beschreibung",
+        "timeSaved": "Gesparte Zeit",
+        "lastUpdated": "Zuletzt aktualisiert",
+        "actions": "Aktionen"
+      },
+      "useCaseColumns": {
+        "title": "Titel",
+        "type": "Typ",
+        "topic": "Thema",
+        "timeSaved": "Gesparte Zeit",
+        "lastUpdated": "Zuletzt aktualisiert",
+        "actions": "Aktionen"
+      },
+      "details": {
+        "type": "Typ",
+        "topic": "Thema",
+        "timeSaved": "Gesparte Zeit",
+        "lastUpdated": "Zuletzt aktualisiert",
+        "messagesTitle": "Nachrichten",
+        "noMessages": "Keine Nachrichten für diesen Anwendungsfall gefunden"
+      },
+      "searchPlaceholder": "Kategorien oder Anwendungsfälle durchsuchen...",
+      "table": {
+        "category": {
+          "title": "Category",
+          "tooltip": "The primary topic or function",
+          "noCases": "No use cases found in this category",
+          "cases": "{count} case",
+          "cases_plural": "{count} cases",
+          "single": "category",
+          "plural": "categories",
+          "noCategories": "No categories found",
+          "generateHint": "Generate or create categories to see them here"
+        },
+        "lastUpdated": {
+          "title": "Zuletzt aktualisiert",
+          "tooltip": "When a use case in this category was last modified or engaged with",
+          "updated": "Updated: {date}"
+        },
+        "users": {
+          "title": "Users",
+          "tooltip": "Number of unique users who have interacted with use cases in this category",
+          "count": "Users: {count}"
+        },
+        "timeSaved": {
+          "title": "Gesparte Zeit",
+          "tooltip": "Estimated total time saved across all use cases in this category",
+          "value": "Time Saved: {time}"
+        },
+        "trend": {
+          "title": "Trend",
+          "tooltip": "Usage trend over time for this category",
+          "value": "Trend: {value}",
+          "month": "Month",
+          "count": "Count"
+        }
+      },
+      "search": {
+        "placeholder": "Search categories or use cases...",
+        "noResults": "No results found for \"{query}\"",
+        "tryAnotherQuery": "Try a different search term or browse all categories",
+        "found": "found",
+        "clear": "Clear search",
+        "filters": {
+          "categories": "Categories",
+          "all": "All"
+        }
+      },
+      "actions": {
+        "generate": "Generate",
+        "generateShort": "Gen",
+        "refresh": "Refresh",
+        "refreshShort": "Rsh",
+        "view": "View",
+        "viewChat": "Chat anzeigen",
+        "showFullChat": "Vollständigen Chat anzeigen",
+        "showUseCaseOnly": "Nur Anwendungsfall anzeigen",
+        "previous": "Previous",
+        "next": "Next",
+        "itemsPerPage": "Elemente pro Seite:",
+        "cancel": "Cancel",
+        "close": "Close",
+        "retry": "Retry",
+        "generateAgain": "Erneut generieren"
+      },
+      "modal": {
+        "generate": {
+          "title": "Generate Use Cases",
+          "description": "Generate use cases by analyzing conversation history. This process runs in the background.",
+          "progress": "Generating Use Cases",
+          "progressDesc": "Analyzing messages and generating use cases. You can close this window and check back later.",
+          "complete": "Generierung abgeschlossen",
+          "completeDesc": "Use case generation is complete. Here's a summary of the results.",
+          "stage": "Stage {current} of {total}",
+          "initializing": "Initialisierung...",
+          "pleaseWait": "Please wait while the process is initialized...",
+          "features": {
+            "analyze": "Analyzes raw messages in your conversation history",
+            "group": "Groups messages into related topics",
+            "create": "Automatically creates and categorizes use cases",
+            "consolidate": "Consolidates similar use cases to avoid duplication"
+          },
+          "stats": {
+            "messagesProcessed": "Verarbeitete Nachrichten",
+            "newUseCases": "Neue Anwendungsfälle",
+            "messagesMerged": "Zusammengeführte Nachrichten",
+            "categoriesCreated": "Erstellte Kategorien",
+            "categoryAssignments": "Kategorie-Zuweisungen",
+            "existing": "Existing",
+            "new": "New",
+            "processingTime": "Gesamte Verarbeitungszeit",
+            "seconds": "Sekunden",
+            "processed": "Processed",
+            "elapsed": "Elapsed"
+          },
+          "metrics": {
+            "elapsed": "Elapsed time: {time}",
+            "processed": "Processed",
+            "speed": "Speed",
+            "eta": "ETA"
+          },
+          "runningInBackground": "Running in Background",
+          "runningInBackgroundDesc": "The generation process is running in the background. You can close this window and check back later.",
+          "actions": {
+            "cancel": "Cancel",
+            "generate": "Generate",
+            "processing": "Processing...",
+            "close": "Close",
+            "retry": "Retry",
+            "generateAgain": "Erneut generieren"
+          },
+          "error": "Failed to generate use cases. Please try again."
+        },
+        "useCase": {
+          "fullChat": "Full Chat History",
+          "useCaseMessages": "Use Case Messages",
+          "noMessages": "No messages found.",
+          "noUseCaseMessages": "No Use Case messages found.",
+          "errorLoading": "Error loading messages: {error}",
+          "you": "You",
+          "assistant": "Assistant",
+          "useCase": "Use Case",
+          "showFullChat": "Vollständigen Chat anzeigen",
+          "showUseCaseOnly": "Show Use Case Only"
+        }
+      },
+      "viewModes": {
+        "table": "Table",
+        "analytics": "Analytics"
+      },
+      "pagination": {
+        "page": "Page {current} of {total}",
+        "showing": "Showing {start}-{end} of {total}"
+      },
+      "analytics": {
+        "title": "Use Case Analytics",
+        "description": "Analyze trends and insights from use cases",
+        "noData": "No analytics data currently available. Generate use cases first.",
+        "error": "Error loading analytics data",
+        "tryRefresh": "Try refreshing the data.",
+        "refreshing": "Refreshing data",
+        "updatingData": "Updating table and analytics data...",
+        "actions": {
+          "refresh": "Refresh"
+        },
+        "stats": {
+          "totalUseCases": "Total Use Cases",
+          "totalUseCasesDesc": "The total number of individual use cases across all categories",
+          "totalCategories": "Total Categories",
+          "totalCategoriesDesc": "The number of distinct categories in which use cases are grouped",
+          "recentActivityTrend": "Recent Activity Trend",
+          "recentActivityTrendDesc": "Indicates whether the total number of use cases has increased, decreased, or remained stable compared to the previous month",
+          "currentlyDefined": "Currently Defined",
+          "basedOnLastTwoMonths": "Based on the last two months",
+          "usageOverTime": "Usage Over Time (Monthly)",
+          "usageOverTimeDesc": "Total number of use cases created or engaged with per month",
+          "topCategories": "Top {count} Categories",
+          "topCategoriesDesc": "The categories with the highest number of use cases"
+        },
+        "trends": {
+          "increasing": "Increasing",
+          "decreasing": "Decreasing",
+          "stable": "Stable",
+          "new": "New",
+          "lowData": "Low data",
+          "noActivity": "No activity"
+        }
+      }
+    },
+    "messages": {
+      "title": "Gesamte Nachrichten",
+      "description": "Nachrichten über alle Chats",
+      "thisWeek": "diese Woche",
+      "comparedToPrevious": "Verglichen mit der vorherigen Woche"
+    },
+    "cost": {
+      "title": "Kosten",
+      "perActiveUser": "pro aktivem Benutzer"
+    },
+    "modelUsage": {
+      "title": "Modellnutzung"
+    },
+    "assistantUsage": {
+      "title": "Assistenten-Nutzung",
+      "description": "Nutzungsstatistiken für jeden Assistenten"
+    },
+    "topUseCases": {
+      "title": "Top Use Cases",
+      "description": "Browse and manage use cases by category",
+      "analytics": {
+        "title": "Use Case Analytics",
+        "description": "Analyze trends and insights from use cases",
+        "noData": "No analytics data currently available. Generate use cases first.",
+        "error": "Error loading analytics data",
+        "tryRefresh": "Try refreshing the data.",
+        "refreshing": "Refreshing data",
+        "updatingData": "Updating table and analytics data...",
+        "actions": {
+          "refresh": "Refresh"
+        },
+        "stats": {
+          "totalUseCases": "Total Use Cases",
+          "totalUseCasesDesc": "The total number of individual use cases across all categories",
+          "totalCategories": "Total Categories",
+          "totalCategoriesDesc": "The number of distinct categories in which use cases are grouped",
+          "recentActivityTrend": "Recent Activity Trend",
+          "recentActivityTrendDesc": "Indicates whether the total number of use cases has increased, decreased, or remained stable compared to the previous month",
+          "currentlyDefined": "Currently Defined",
+          "basedOnLastTwoMonths": "Based on the last two months",
+          "usageOverTime": "Usage Over Time (Monthly)",
+          "usageOverTimeDesc": "Total number of use cases created or engaged with per month",
+          "topCategories": "Top {count} Categories",
+          "topCategoriesDesc": "The categories with the highest number of use cases"
+        },
+        "trends": {
+          "increasing": "Increasing",
+          "decreasing": "Decreasing",
+          "stable": "Stable",
+          "new": "New",
+          "lowData": "Low data",
+          "noActivity": "No activity"
+        }
+      },
+      "table": {
+        "category": {
+          "title": "Category",
+          "tooltip": "The primary topic or function",
+          "noCases": "No use cases found in this category",
+          "cases": "{count} case",
+          "cases_plural": "{count} cases",
+          "single": "category",
+          "plural": "categories",
+          "noCategories": "No categories found",
+          "generateHint": "Generate or create categories to see them here"
+        },
+        "lastUpdated": {
+          "title": "Zuletzt aktualisiert",
+          "tooltip": "When a use case in this category was last modified or engaged with",
+          "updated": "Updated: {date}"
+        },
+        "users": {
+          "title": "Users",
+          "tooltip": "Number of unique users who have interacted with use cases in this category",
+          "count": "Users: {count}"
+        },
+        "timeSaved": {
+          "title": "Gesparte Zeit",
+          "tooltip": "Estimated total time saved across all use cases in this category",
+          "value": "Time Saved: {time}"
+        },
+        "trend": {
+          "title": "Trend",
+          "tooltip": "Usage trend over time for this category",
+          "value": "Trend: {value}",
+          "month": "Month",
+          "count": "Count"
+        }
+      },
+      "search": {
+        "placeholder": "Search categories or use cases...",
+        "noResults": "No results found for \"{query}\"",
+        "tryAnotherQuery": "Try a different search term or browse all categories",
+        "found": "found",
+        "clear": "Clear search",
+        "filters": {
+          "categories": "Categories",
+          "all": "All"
+        }
+      },
+      "actions": {
+        "generate": "Generate",
+        "generateShort": "Gen",
+        "refresh": "Refresh",
+        "refreshShort": "Rsh",
+        "view": "View",
+        "viewChat": "Chat anzeigen",
+        "showFullChat": "Vollständigen Chat anzeigen",
+        "showUseCaseOnly": "Nur Anwendungsfall anzeigen",
+        "previous": "Previous",
+        "next": "Next",
+        "itemsPerPage": "Elemente pro Seite:",
+        "cancel": "Cancel",
+        "close": "Close",
+        "retry": "Retry",
+        "generateAgain": "Erneut generieren"
+      },
+      "modal": {
+        "generate": {
+          "title": "Generate Use Cases",
+          "description": "Generate use cases by analyzing conversation history. This process runs in the background.",
+          "progress": "Generating Use Cases",
+          "progressDesc": "Analyzing messages and generating use cases. You can close this window and check back later.",
+          "complete": "Generierung abgeschlossen",
+          "completeDesc": "Use case generation is complete. Here's a summary of the results.",
+          "stage": "Stage {current} of {total}",
+          "initializing": "Initialisierung...",
+          "pleaseWait": "Please wait while the process is initialized...",
+          "features": {
+            "analyze": "Analyzes raw messages in your conversation history",
+            "group": "Groups messages into related topics",
+            "create": "Automatically creates and categorizes use cases",
+            "consolidate": "Consolidates similar use cases to avoid duplication"
+          },
+          "stats": {
+            "messagesProcessed": "Verarbeitete Nachrichten",
+            "newUseCases": "Neue Anwendungsfälle",
+            "messagesMerged": "Zusammengeführte Nachrichten",
+            "categoriesCreated": "Erstellte Kategorien",
+            "categoryAssignments": "Kategorie-Zuweisungen",
+            "existing": "Existing",
+            "new": "New",
+            "processingTime": "Gesamte Verarbeitungszeit",
+            "seconds": "Sekunden",
+            "processed": "Processed",
+            "elapsed": "Elapsed"
+          },
+          "metrics": {
+            "elapsed": "Elapsed time: {time}",
+            "processed": "Processed",
+            "speed": "Speed",
+            "eta": "ETA"
+          },
+          "runningInBackground": "Running in Background",
+          "runningInBackgroundDesc": "The generation process is running in the background. You can close this window and check back later.",
+          "actions": {
+            "cancel": "Cancel",
+            "generate": "Generate",
+            "processing": "Processing...",
+            "close": "Close",
+            "retry": "Retry",
+            "generateAgain": "Erneut generieren"
+          },
+          "error": "Failed to generate use cases. Please try again."
+        },
+        "useCase": {
+          "fullChat": "Full Chat History",
+          "useCaseMessages": "Use Case Messages",
+          "noMessages": "No messages found.",
+          "noUseCaseMessages": "No Use Case messages found.",
+          "errorLoading": "Error loading messages: {error}",
+          "you": "You",
+          "assistant": "Assistant",
+          "useCase": "Use Case",
+          "showFullChat": "Vollständigen Chat anzeigen",
+          "showUseCaseOnly": "Show Use Case Only"
+        }
+      },
+      "viewModes": {
+        "table": "Table",
+        "analytics": "Analytics"
+      },
+      "pagination": {
+        "page": "Page {current} of {total}",
+        "showing": "Showing {start}-{end} of {total}"
+      }
+    },
+    "usageStats": {
+      "title": "Nutzungsstatistiken",
+      "timeframes": {
+        "daily": "Täglich",
+        "weekly": "Wöchentlich",
+        "monthly": "Monatlich"
+      },
+      "metrics": {
+        "messages": "Nachrichten",
+        "users": "Benutzer"
+      }
+    },
+    "stats": {
+      "totalMessages": {
+        "title": "Gesamte Nachrichten",
+        "description": "Nachrichten über alle Chats"
+      },
+      "totalUsers": {
+        "title": "Gesamte Benutzer",
+        "description": "Registrierte Plattform-Benutzer"
+      },
+      "positiveFeedback": {
+        "title": "Positives Feedback",
+        "description": "Basierend auf {count} Gesamtstimmen",
+        "outOfTotal": "von {count} Gesamtnachrichten"
+      }
+    },
+    "tables": {
+      "userUsage": {
+        "title": "Benutzernutzungsübersicht",
+        "columns": {
+          "user": "Benutzer",
+          "messages": "Nachrichten",
+          "lastActive": "Zuletzt aktiv"
+        }
+      },
+      "flaggedMessages": {
+        "title": "Markierte Nachrichten",
+        "columns": {
+          "message": "Nachricht",
+          "chat": "Chat",
+          "user": "Benutzer",
+          "date": "Datum",
+          "downvotes": "Negative Bewertungen",
+          "userQuery": "Benutzeranfrage",
+          "response": "Assistenten-Antwort"
+        }
+      }
+    },
+    "loading": {
+      "title": "Dashboard-Daten werden geladen..."
+    },
+    "error": {
+      "fetchFailed": "Dashboard-Daten konnten nicht abgerufen werden"
+    }
+  },
+  "feedback": {
+    "sources": "Quellen:",
+    "positive": {
+      "loading": "Positives Feedback wird aufgezeichnet...",
+      "success": "Positives Feedback erhalten!",
+      "tooltip": "Positiv bewerten"
+    },
+    "negative": {
+      "loading": "Negatives Feedback wird aufgezeichnet...",
+      "success": "Negatives Feedback erhalten!",
+      "tooltip": "Negativ bewerten"
+    }
+  },
+  "message": {
+    "cost": {
+      "breakdown": "Kostenaufschlüsselung",
+      "assistant": "Assistent",
+      "model": "Modell",
+      "inputTokens": "Eingabe-Tokens",
+      "outputTokens": "Ausgabe-Tokens",
+      "totalCost": "Gesamtkosten"
+    }
+  },
+  "privacy": {
+    "private": {
+      "label": "Privat",
+      "description": "Nur Sie können auf diesen Chat zugreifen"
+    },
+    "public": {
+      "label": "Öffentlich",
+      "description": "Chat wird für jeden mit dem geteilten Link zugänglich sein"
+    }
+  },
+  "agents": {
+    "standard": {
+      "label": "Allgemeiner Assistent",
+      "description": "Erstellt E-Mails, Berichte, analysiert das Web und generiert Bilder."
+    },
+    "sharepoint": {
+      "label": "Interner Wissens-Assistent",
+      "description": "Findet Antworten aus Ihren Geschäftsdokumenten"
+    },
+    "web": {
+      "label": "Web-Assistent",
+      "description": "Durchsucht das Web und führt Recherchen durch"
+    },
+    "csv": {
+      "label": "Datenanalyse-Assistent",
+      "description": "Analysiert Daten aus Datenbanken und Tabellenkalkulationen"
+    },
+    "image": {
+      "label": "Bilderstellungs-Assistent",
+      "description": "Erstellt und bearbeitet Bilder aus Textanweisungen"
+    },
+    "text2sql": {
+      "label": "Datenbank-Assistent",
+      "description": "Analysiert und liefert Erkenntnisse aus der Datenbank"
+    }
+  },
+  "toggle": "Umschalten",
+  "locales": {
+    "en": "Englisch",
+    "lt": "Litauisch",
+    "de": "Deutsch"
+  },
+  "suggestions": {
+    "vacation": {
+      "policy": {
+        "title": "Was ist die Urlaubsregelung",
+        "label": "im Unternehmen?",
+        "action": "Was ist die Urlaubsregelung im Unternehmen?"
+      },
+      "responsibility": {
+        "title": "Wer ist verantwortlich",
+        "label": "für Urlaubszuteilungen?",
+        "action": "Wer ist verantwortlich für Urlaubszuteilungen?"
+      },
+      "request": {
+        "title": "Helfen Sie mir zu schreiben",
+        "label": "einen Urlaubsantrag",
+        "action": "Helfen Sie mir einen Urlaubsantrag zu schreiben"
+      },
+      "benefits": {
+        "title": "Könnten Sie finden",
+        "label": "zusätzliche Vorteile bei der Urlaubszuteilung?",
+        "action": "Könnten Sie zusätzliche Vorteile bei der Urlaubszuteilung finden?"
+      }
+    }
+  },
+  "csvSuccessFilesMerged": "{originalCount} Dateien erfolgreich in {count} Tabellen hochgeladen ({mergedCount} wurden zusammengefügt)",
+  "csvInfoTableMerged": "Tabelle {tableName} aus {fileCount} zusammengefügten Dateien erstellt: {files}",
+  "dropzone": {
+    "fileEmpty": "Datei ist leer und kann nicht hochgeladen werden"
+  },
+  "pagination": {
+    "label": "Seitennavigation",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite"
+  },
+  "tooltips": {
+    "disabledDuringOperation": "Aktionen sind während eines laufenden Vorgangs deaktiviert"
+  },
+  "locale": "de-DE",
+  "artifacts": {
+    "version": "Version",
+    "workingVersion": "Arbeitsversion",
+    "currentWorkingVersion": "Aktuelle Arbeitsversion",
+    "setWorkingVersion": "Arbeitsversion festlegen",
+    "streaming": "Streaming...",
+    "download": "Herunterladen",
+    "export": "Exportieren",
+    "copyContent": "Inhalt kopieren",
+    "copiedToClipboard": "In die Zwischenablage kopiert!",
+    "copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen",
+    "downloaded": "Heruntergeladen!",
+    "switchedToVersion": "zu Version {version} gewechselt"
+  },
+  "tools": {
+    "sharepoint_retrieve": {
+      "displayName": "SharePoint-Suche",
+      "description": "Ruft relevante Dokumente aus SharePoint-Wissensdatenbanken ab"
+    },
+    "text2sql": {
+      "displayName": "Text zu SQL",
+      "description": "SQL aus natürlicher Sprache generieren"
+    },
+    "run_sql": {
+      "displayName": "SQL ausführen",
+      "description": "SQL-Abfragen ausführen"
+    },
+    "chart": {
+      "displayName": "Diagramm-Generierung",
+      "description": "Erstellt schöne, interaktive Diagramme aus Daten"
+    },
+    "search": {
+      "displayName": "Websuche",
+      "description": "Das Internet nach aktuellen Informationen durchsuchen"
+    },
+    "extract": {
+      "displayName": "Daten extrahieren",
+      "description": "Spezifische Informationen aus Webseiten extrahieren"
+    },
+    "scrape": {
+      "displayName": "Web-Scraping",
+      "description": "Daten von Websites extrahieren"
+    },
+    "deep_research": {
+      "displayName": "Tiefgehende Recherche",
+      "description": "Umfassende Recherche mit mehreren Suchvorgängen durchführen"
+    },
+    "createDocument": {
+      "displayName": "Dokument erstellen",
+      "description": "Neue Dokumente mit formatiertem Inhalt erstellen"
+    },
+    "updateDocument": {
+      "displayName": "Dokument aktualisieren",
+      "description": "Bestehende Dokumente aktualisieren"
+    },
+    "processFile": {
+      "displayName": "Datei verarbeiten",
+      "description": "Dateiinhalte verarbeiten und analysieren"
+    },
+    "getWeather": {
+      "displayName": "Wetter",
+      "description": "Aktuelle Wetterinformationen abrufen"
+    },
+    "requestSuggestions": {
+      "displayName": "Vorschläge",
+      "description": "KI-gestützte Vorschläge erhalten"
+    },
+    "generateImage": {
+      "displayName": "Bild generieren",
+      "description": "Bilder aus Textbeschreibungen erstellen"
+    },
+    "editImage": {
+      "displayName": "Bild bearbeiten",
+      "description": "Bestehende Bilder bearbeiten und modifizieren"
+    },
+    "reason": {
+      "displayName": "Logisches Denken",
+      "description": "Logisches Denken durchführen"
+    },
+    "reason_search": {
+      "displayName": "Denkende Suche",
+      "description": "Suche mit logischen Fähigkeiten"
+    },
+    "reasoning": {
+      "displayName": "Erweiterte Logik",
+      "description": "Erweiterte logische Denkprozesse durchführen"
+    }
+  }
+}

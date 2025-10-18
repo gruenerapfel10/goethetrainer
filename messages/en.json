@@ -381,6 +381,28 @@
         "action": "I need to draft a response to a customer complaint. First, ask for details about the issue and any prior interactions. Then, confirm our typical resolution approach before generating a professional response."
       }
     },
+    "goethe": {
+      "vocabulary": {
+        "title": "Practice vocabulary",
+        "label": "for a specific topic.",
+        "action": "I want to practice vocabulary on a specific topic. First, ask me what language I'm learning and what topic interests me (e.g., business, travel, food). Then, provide vocabulary with translations, example sentences, and pronunciation tips."
+      },
+      "grammar": {
+        "title": "Grammar explanation",
+        "label": "with examples.",
+        "action": "Help me understand a grammar concept. First, ask me what language I'm learning and which grammar topic confuses me (e.g., tenses, gender, cases). Then, explain the rule clearly with practical examples and common mistakes to avoid."
+      },
+      "conversation": {
+        "title": "Create conversation practice",
+        "label": "on a real-world scenario.",
+        "action": "Let's practice conversational language. First, ask me what language I'm learning and what situation I want to practice (e.g., ordering at a restaurant, job interview, making small talk). Then, provide a dialogue with translations and explanations."
+      },
+      "feedback": {
+        "title": "Check my translation",
+        "label": "and provide feedback.",
+        "action": "I've written something and want feedback. Please share your text or sentence, and I'll provide corrections, suggestions for improvement, and explanations of any grammar or vocabulary changes."
+      }
+    },
     "csv": {
       "analysis": {
         "title": "Analyze this data",
@@ -1327,7 +1349,8 @@
   "toggle": "Toggle",
   "locales": {
     "en": "English",
-    "lt": "Lithuanian"
+    "lt": "Lithuanian",
+    "de": "German"
   },
   "suggestions": {
     "vacation": {

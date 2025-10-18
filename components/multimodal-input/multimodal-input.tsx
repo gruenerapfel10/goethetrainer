@@ -7,7 +7,6 @@ import {
   useState,
 } from 'react';
 import classNames from 'classnames';
-import { SuggestedActions } from '@/components/SuggestedActions';
 import { FileMentions } from './FileMentions';
 import { ModelSelector } from '@/components/model-selector';
 import { useChat } from '@/contexts/chat-context';
@@ -22,13 +21,18 @@ import { FileSearch } from '@/components/FileSearch';
 import { ScrollToBottomButton } from './ScrollToBottomButton';
 import { AttachmentsDropOverlay } from './AttachmentsDropOverlay';
 import { StreamContinuationNotice } from '@/components/StreamContinuationNotice';
+import { SuggestedActions } from '@/components/SuggestedActions';
 
 function PureMultimodalInput({
   className,
   disableCenter = false,
+  disableMargin = false,
+  hideModelSelector = false,
 }: {
   className?: string;
   disableCenter?: boolean;
+  disableMargin?: boolean;
+  hideModelSelector?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLFormElement>(null);
@@ -98,16 +102,13 @@ function PureMultimodalInput({
         >
           <div
             ref={containerRef}
-            className="relative w-full flex flex-col gap-2 max-w-3xl z-50 ml-11 [[data-narrow=true]_&]:ml-0"
+            className={`relative w-full flex flex-col gap-2 max-w-3xl z-50 ${!disableMargin ? 'ml-11' : ''} [[data-narrow=true]_&]:ml-0 max-h-[calc(100dvh-2rem)] overflow-y-auto`}
           >
             {/* Components above the input area */}
 
             {/* <StreamContinuationNotice /> */}
 
             <ScrollToBottomButton />
-
-            {/* Suggested Actions UI - shows when no messages sent */}
-            <SuggestedActions />
 
             {/* File Mentions UI - shows the @ mentions like in cursor @attachment-name */}
             <FileMentions />
@@ -116,6 +117,8 @@ function PureMultimodalInput({
             <FileSearch
               isCompact={true}
             />
+
+            <SuggestedActions />
 
             <div
               className={classNames(
@@ -143,7 +146,7 @@ function PureMultimodalInput({
                   <CapabilitiesToggle />
                 </div>
 
-                <ModelSelector />
+                {!hideModelSelector && <ModelSelector />}
 
                 <SendButton />
               </div>
