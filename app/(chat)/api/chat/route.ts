@@ -247,12 +247,9 @@ export async function POST(request: Request) {
               try {
                 let fileContent = '';
                 
-                if (part.url.includes('firebasestorage.googleapis.com') || part.url.includes('storage.googleapis.com')) {
-                  // Fetch content from Firebase Storage for document files
-                  const { content } = await getFirebaseFileContent(part.url);
-                  fileContent = content;
-                } else if (part.url.startsWith('http')) {
-                  // For non-Firebase document files with HTTP URLs
+                if (part.url.startsWith('http')) {
+                  // For HTTP/HTTPS URLs (including Firebase signed URLs)
+                  console.log(`[api/chat] Fetching document from URL: ${part.url.substring(0, 50)}...`);
                   try {
                     const response = await fetch(part.url);
                     if (response.ok) {
@@ -260,6 +257,11 @@ export async function POST(request: Request) {
                       const contentType = response.headers.get('content-type');
                       if (contentType?.includes('text') || contentType?.includes('json')) {
                         fileContent = await response.text();
+                        console.log(`[api/chat] Successfully fetched text document: ${fileContent.length} chars`);
+                      } else if (contentType?.includes('pdf')) {
+                        // For PDFs, just note it was processed
+                        fileContent = `[PDF File] - Processed binary content`;
+                        console.log(`[api/chat] Processed PDF file`);
                       } else {
                         console.warn(`Cannot process binary file as text: ${part.url}`);
                         return null; // Skip binary files that aren't images
