@@ -35,6 +35,7 @@ export function AppRightbar() {
     >
       <div className="p-0 flex flex-col h-full overflow-hidden">
         <SidebarChat 
+          key={chatId}
           id={chatId} 
           initialMessages={chatData?.messages || []} 
           selectedChatModel="gpt-4" 
