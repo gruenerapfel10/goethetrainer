@@ -14,10 +14,10 @@ export default async function MainLayout({
   return (
     <div className="flex flex-col h-screen">
       <AppNavbar />
-      <SidebarProvider className="flex-1 min-h-0">
+      <SidebarProvider className="flex-1 min-h-0 bg-sidebar">
         <AppSidebar user={session?.user} />
-        <SidebarInset className="bg-red-500 flex flex-col flex-1 min-h-0 p-4">
-          <div className="flex-1 bg-blue-500 rounded-lg p-4 min-h-0 overflow-auto">
+        <SidebarInset className="!bg-sidebar flex flex-col flex-1 min-h-0 p-2">
+          <div className="flex-1 bg-background border border-border rounded-lg p-4 min-h-0 overflow-auto">
             {children}
           </div>
         </SidebarInset>
