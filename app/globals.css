@@ -221,7 +221,7 @@
     /* Dark theme */
     .dark {
         /* Base theme colors */
-        --background: var(--light-dark-zinc);
+        --background: 240 5% 8%;
         --foreground: var(--off-white);
 
         /* Card variants */
@@ -257,7 +257,7 @@
         --chart-5: var(--chart-dark-5);
 
         /* Sidebar */
-        --sidebar-background: var(--near-black);
+        --sidebar-background: 0 0% 0%;
         --sidebar-foreground: var(--light-gray-2);
         --sidebar-primary: var(--blue-dark);
         --sidebar-primary-foreground: var(--white);
