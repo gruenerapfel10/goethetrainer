@@ -43,12 +43,12 @@ export default function LocaleSwitcherSelect() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
-          className="w-full bg-transparent hover:bg-sidebar-accent/50 text-sidebar-foreground hover:text-sidebar-foreground flex items-center justify-start gap-2 px-2 py-2 h-8 text-sm font-medium rounded-md transition-colors"
+          size="icon"
+          className="h-10 w-10 bg-transparent hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground flex items-center justify-center text-sm font-medium rounded-md transition-colors"
           disabled={isPending}
+          title={currentLanguage}
         >
-          <Languages className="h-4 w-4 shrink-0" />
-          <span className="truncate">{currentLanguage}</span>
+          <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
