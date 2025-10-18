@@ -21,7 +21,6 @@ import {
   GlobeIcon,
   LineChartIcon,
   ImageIcon,
-  BookIcon,
 } from './icons';
 import { chatModels } from '../lib/ai/models';
 import { useTranslations } from 'next-intl';
@@ -84,6 +83,59 @@ const SearchIcon = ({ size = 16, className }: { size?: number; className?: strin
   </svg>
 );
 
+const BookOpenIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    className={className}
+  >
+    <path
+      d="M2 3C2 2.44772 2.44772 2 3 2H13C13.5523 2 14 2.44772 14 3V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V3Z"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M8 2V13"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 5H6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 8H6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10 5H12"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10 8H12"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 // Map icon names to icon components
 const iconMap = {
   sparkles: SparklesIcon,
@@ -93,7 +145,7 @@ const iconMap = {
   layers: LayersIcon,
   lineChart: LineChartIcon,
   image: ImageIcon,
-  'book-open': BookIcon,
+  'book-open': BookOpenIcon,
 } as const;
 
 export function ModelSelector({
