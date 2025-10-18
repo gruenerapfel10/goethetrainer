@@ -4,6 +4,7 @@ import { AppRightbar } from '@/components/app-rightbar';
 import { AppNavbar } from '@/components/app-navbar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { RightSidebarProvider } from '@/lib/right-sidebar-context';
+import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler';
 
 export default async function MainLayout({
   children,
@@ -15,6 +16,7 @@ export default async function MainLayout({
   return (
     <RightSidebarProvider>
       <SidebarProvider className="flex flex-col h-screen">
+        <KeyboardShortcutHandler />
         <AppNavbar />
         <div className="flex-1 min-h-0 bg-sidebar flex">
           <AppSidebar user={session?.user} />

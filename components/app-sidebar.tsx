@@ -3,19 +3,10 @@
 import type { User } from 'next-auth';
 import Link from 'next/link';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { BarChart3, BookOpen, Headphones, PenTool, Mic } from 'lucide-react';
 
-const skillItems = [
+const SKILL_ITEMS = [
   { label: 'Reading', href: '/reading', icon: BookOpen },
   { label: 'Listening', href: '/listening', icon: Headphones },
   { label: 'Writing', href: '/writing', icon: PenTool },
@@ -38,16 +29,15 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
-        
         <SidebarGroup>
           <SidebarGroupLabel>Skills</SidebarGroupLabel>
           <SidebarMenu className="gap-1">
-            {skillItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
+            {SKILL_ITEMS.map(({ label, href, icon: Icon }) => (
+              <SidebarMenuItem key={href}>
                 <SidebarMenuButton asChild>
-                  <Link href={item.href} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                  <Link href={href} className="flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

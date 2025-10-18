@@ -1,38 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Sidebar,
-  SidebarContent,
-} from '@/components/ui/sidebar';
 import { useRightSidebar } from '@/lib/right-sidebar-context';
 import { SidebarChat } from './sidebar-chat';
 import { generateUUID } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION } from '@/lib/sidebar-constants';
 
 export function AppRightbar() {
   const { isOpen } = useRightSidebar();
-  const [chatId, setChatId] = useState<string>('');
+  const [chatId, setChatId] = useState('');
 
-  useEffect(() => {
-    setChatId(generateUUID());
-  }, []);
-
-  if (!isOpen) return null;
+  useEffect(() => setChatId(generateUUID()), []);
 
   if (!chatId) return null;
 
   return (
-    <Sidebar side="right" variant="sidebar" collapsible="none">
-      <SidebarContent className="p-0 flex flex-col">
-        <SidebarChat 
-          id={chatId}
-          initialMessages={[]}
-          selectedChatModel="gpt-4"
-          isReadonly={false}
-          isAdmin={false}
-          selectedVisibilityType="private"
-        />
-      </SidebarContent>
-    </Sidebar>
+    <aside 
+      className={cn(
+        SIDEBAR_BASE_CLASSES,
+        SIDEBAR_TRANSITION,
+        isOpen ? "w-[16rem]" : "w-0"
+      )}
+      data-state={isOpen ? 'expanded' : 'collapsed'}
+      data-side="right"
+    >
+      <div className="p-0 flex flex-col h-full">
+        <SidebarChat id={chatId} initialMessages={[]} selectedChatModel="gpt-4" isReadonly={false} isAdmin={false} selectedVisibilityType="private" />
+      </div>
+    </aside>
   );
 }

@@ -25,11 +25,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 
+import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON, SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION } from "@/lib/sidebar-constants"
+
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContextProps = {
@@ -104,21 +104,6 @@ const SidebarProvider = React.forwardRef<
         : setOpen((open) => !open)
     }, [isMobile, setOpen, setOpenMobile])
 
-    // Adds a keyboard shortcut to toggle the sidebar.
-    React.useEffect(() => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (
-          event.key === keyboardShortcut &&
-          (event.metaKey || event.ctrlKey)
-        ) {
-          event.preventDefault()
-          toggleSidebar()
-        }
-      }
-
-      window.addEventListener("keydown", handleKeyDown)
-      return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [toggleSidebar, keyboardShortcut])
 
     // We add a state so that we can do data-state="expanded" or "collapsed".
     // This makes it easier to style the sidebar with Tailwind classes.
@@ -227,7 +212,7 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className="h-full w-64 flex-shrink-0 flex flex-col bg-sidebar text-sidebar-foreground overflow-y-auto"
+        className={cn(SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION, state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]")}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
