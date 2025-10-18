@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import type { Vote } from '@/lib/db/queries';
 import { fetcher } from '@/lib/utils';
@@ -25,6 +26,7 @@ function SidebarChatContentInner({
     customTitle?: string | null;
   };
 }) {
+  const router = useRouter();
   const {
     id,
     messages,
@@ -66,7 +68,7 @@ function SidebarChatContentInner({
             <ChatSelector 
               currentChatId={id}
               onChatSelect={(chatId) => {
-                window.location.href = `/chat/${chatId}`;
+                router.push(`/chat/${chatId}`);
               }}
               chevronDirection="down"
               buttonClassName="w-full h-8 px-2 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 justify-start"
