@@ -86,7 +86,8 @@ export async function getUserById(id: string): Promise<FirestoreUser | null> {
 }
 
 export async function getUserByEmail(email: string): Promise<FirestoreUser | null> {
-  const querySnapshot = await adminDb.collection('users').where('email', '==', email).get();
+  const normalizedEmail = email.toLowerCase().trim();
+  const querySnapshot = await adminDb.collection('users').where('email', '==', normalizedEmail).get();
   
   if (querySnapshot.empty) return null;
   
@@ -97,6 +98,43 @@ export async function getUserByEmail(email: string): Promise<FirestoreUser | nul
     ...data,
     createdAt: data.createdAt as Timestamp,
   } as FirestoreUser;
+}
+
+export async function getAllUsers(): Promise<FirestoreUser[]> {
+  const querySnapshot = await adminDb.collection('users').get();
+  
+  return querySnapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      createdAt: data.createdAt as Timestamp,
+    } as FirestoreUser;
+  });
+}
+
+export async function updateUser(
+  userId: string,
+  updates: Partial<Omit<FirestoreUser, 'id' | 'createdAt'>>
+): Promise<void> {
+  await adminDb.collection('users').doc(userId).update({
+    ...updates,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function updateUserAdmin(
+  userId: string,
+  isAdmin: boolean
+): Promise<void> {
+  await adminDb.collection('users').doc(userId).update({
+    isAdmin,
+    updatedAt: Timestamp.now(),
+  });
+}
+
+export async function deleteUserById(userId: string): Promise<void> {
+  await adminDb.collection('users').doc(userId).delete();
 }
 
 // Chat functions

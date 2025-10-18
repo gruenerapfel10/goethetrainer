@@ -52,11 +52,21 @@ const db = drizzle(client);
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
-    // Convert email to lowercase for case-insensitive comparison
-    const normalizedEmail = email.toLowerCase().trim();
-    return await db.select().from(user).where(eq(user.email, normalizedEmail));
+    const { getUserByEmail } = await import('../firebase/firestore-queries');
+    const firestoreUser = await getUserByEmail(email);
+    
+    if (!firestoreUser) return [];
+    
+    return [{
+      id: firestoreUser.id,
+      email: firestoreUser.email,
+      password: firestoreUser.password || null,
+      isAdmin: firestoreUser.isAdmin,
+      createdAt: firestoreUser.createdAt.toDate(),
+      updatedAt: firestoreUser.createdAt.toDate(),
+    }] as User[];
   } catch (error) {
-    console.error('Failed to get user from database');
+    console.error('Failed to get user from Firestore');
     throw error;
   }
 }
@@ -66,11 +76,16 @@ export async function createUser(email: string, password: string) {
   const hash = hashSync(password, salt);
 
   try {
-    // Convert email to lowercase for case-insensitive storage
+    const { createUser: createFirestoreUser } = await import('../firebase/firestore-queries');
     const normalizedEmail = email.toLowerCase().trim();
-    return await db.insert(user).values({ email: normalizedEmail, password: hash });
+    await createFirestoreUser({
+      email: normalizedEmail,
+      password: hash,
+      isAdmin: false,
+    });
+    return []; // Return empty array for consistency
   } catch (error) {
-    console.error('Failed to create user in database');
+    console.error('Failed to create user in Firestore');
     throw error;
   }
 }
@@ -810,9 +825,19 @@ export async function toggleChatPinned({
 
 export async function getAllUsers() {
   try {
-    return await db.select().from(user).orderBy(asc(user.createdAt));
+    const { getAllUsers: getAllFirestoreUsers } = await import('../firebase/firestore-queries');
+    const firestoreUsers = await getAllFirestoreUsers();
+    
+    return firestoreUsers.map(user => ({
+      id: user.id,
+      email: user.email,
+      password: user.password || null,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt.toDate(),
+      updatedAt: user.createdAt.toDate(),
+    })) as User[];
   } catch (error) {
-    console.error('Failed to get all users from database');
+    console.error('Failed to get all users from Firestore');
     throw error;
   }
 }
@@ -825,15 +850,19 @@ export async function updateUserAdmin({
   isAdmin: boolean;
 }) {
   try {
-    return await db.update(user).set({ isAdmin }).where(eq(user.id, userId));
+    const { updateUserAdmin: updateFirestoreUserAdmin } = await import('../firebase/firestore-queries');
+    await updateFirestoreUserAdmin(userId, isAdmin);
+    return [];
   } catch (error) {
-    console.error('Failed to update user admin status');
+    console.error('Failed to update user admin status in Firestore');
     throw error;
   }
 }
 
 export async function deleteUserById(userId: string) {
   try {
+    const { deleteUserById: deleteFirestoreUser } = await import('../firebase/firestore-queries');
+    
     // First delete all related data
     const userChats = await getChatsByUserId({
       id: userId,
@@ -848,10 +877,11 @@ export async function deleteUserById(userId: string) {
     // Delete user's documents
     await db.delete(document).where(eq(document.userId, userId));
 
-    // Finally delete the user
-    return await db.delete(user).where(eq(user.id, userId));
+    // Finally delete the user from Firestore
+    await deleteFirestoreUser(userId);
+    return [];
   } catch (error) {
-    console.error('Failed to delete user');
+    console.error('Failed to delete user from Firestore');
     throw error;
   }
 }
