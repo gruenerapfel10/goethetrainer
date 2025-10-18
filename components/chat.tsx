@@ -14,6 +14,7 @@ export function Chat({
   isAdmin,
   chat,
   selectedVisibilityType,
+  shouldUpdateUrl = true,
 }: {
   id: string;
   initialMessages: Array<UIMessage>;
@@ -26,6 +27,7 @@ export function Chat({
     title: string;
     customTitle?: string | null;
   };
+  shouldUpdateUrl?: boolean;
 }) {
   return (
     <ChatProvider
@@ -33,6 +35,7 @@ export function Chat({
       initialMessages={initialMessages}
       initialModel={selectedChatModel}
       isReadonly={isReadonly}
+      shouldUpdateUrl={shouldUpdateUrl}
     >
       <ChatContent
         selectedVisibilityType={selectedVisibilityType}

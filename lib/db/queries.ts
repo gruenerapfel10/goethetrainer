@@ -705,13 +705,13 @@ export function getWorkingVersion(): string {
   return '';
 }
 
-export async function saveSuggestions(suggestions: any[]): Promise<void> {
+export async function saveSuggestions(data: { suggestions: any[]; userId?: string }): Promise<void> {
   // Stub function for suggestions
 }
 
 export interface Suggestion {
   id: string;
-  content: string;
+  content?: string;
   description?: string;
 }
 

@@ -90,12 +90,14 @@ export function ChatProvider({
   initialModel,
   isReadonly,
   children,
+  shouldUpdateUrl = true,
 }: {
   chatId: string;
   initialMessages: UIMessage[];
   initialModel: string;
   isReadonly: boolean;
   children: React.ReactNode;
+  shouldUpdateUrl?: boolean;
 }) {
   const { mutate } = useSWRConfig();
   
@@ -417,7 +419,9 @@ export function ChatProvider({
       return;
     }
 
-    window.history.replaceState({}, '', `/chat/${chatId}`);
+    if (shouldUpdateUrl) {
+      window.history.replaceState({}, '', `/chat/${chatId}`);
+    }
     
     // Ensure content is never empty to prevent AI SDK v5 errors
     const safeContent = messageContent.trim() || ' ';

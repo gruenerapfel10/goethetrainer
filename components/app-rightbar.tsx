@@ -22,6 +22,7 @@ export function AppRightbar() {
           isReadonly={false}
           isAdmin={false}
           selectedVisibilityType="private"
+          shouldUpdateUrl={false}
         />
       </SidebarContent>
     </Sidebar>
