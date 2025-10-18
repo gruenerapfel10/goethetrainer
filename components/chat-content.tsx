@@ -75,9 +75,9 @@ function ChatContentInner({
   );
 
   return (
-    <div className="flex h-[100dvh] w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       <ArtifactInset>
-        <div ref={contentRef} className="flex flex-col h-[100dvh] bg-background w-full relative overflow-hidden min-w-0" data-narrow={isNarrowContent}>
+        <div ref={contentRef} className="flex flex-col h-full bg-background w-full relative overflow-hidden min-w-0" data-narrow={isNarrowContent}>
           <ChatHeader
             chatId={id}
             selectedVisibilityType={selectedVisibilityType}
