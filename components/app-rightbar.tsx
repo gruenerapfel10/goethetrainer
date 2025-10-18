@@ -3,9 +3,9 @@
 import {
   Sidebar,
   SidebarContent,
-  SidebarHeader,
 } from '@/components/ui/sidebar';
 import { useRightSidebar } from '@/lib/right-sidebar-context';
+import { Chat } from './chat';
 
 export function AppRightbar() {
   const { isOpen } = useRightSidebar();
@@ -14,15 +14,15 @@ export function AppRightbar() {
 
   return (
     <Sidebar side="right" variant="sidebar" collapsible="none">
-      <SidebarHeader>
-        <div className="space-y-2">
-          <div className="text-sm font-semibold">Properties</div>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <div className="text-sm text-muted-foreground p-2">
-          Rightbar content goes here
-        </div>
+      <SidebarContent className="p-0 flex flex-col">
+        <Chat 
+          id="right-sidebar-chat"
+          initialMessages={[]}
+          selectedChatModel="gpt-4"
+          isReadonly={false}
+          isAdmin={false}
+          selectedVisibilityType="private"
+        />
       </SidebarContent>
     </Sidebar>
   );
