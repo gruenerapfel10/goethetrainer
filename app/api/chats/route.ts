@@ -9,7 +9,7 @@ export async function GET(request: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const chats = await getChatsByUserId({ userId: session.user.id });
+    const chats = await getChatsByUserId({ id: session.user.id });
     
     const chatItems = chats.map(chat => ({
       id: chat.id,
