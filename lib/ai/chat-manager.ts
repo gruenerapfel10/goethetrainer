@@ -90,14 +90,16 @@ export class ChatManager {
       }
       
       if (Array.isArray(parts)) {
-        parts = parts.map((part: any, partIdx: number) => {
+        parts = parts.filter(Boolean).map((part: any, partIdx: number) => {
+          if (!part) return null;
+          
           if (part.type?.startsWith('tool-') && !part.type.includes('call') && !part.type.includes('result')) {
             if (!part.state) {
               part.state = part.output ? 'output-available' : 'input-available';
             }
           }
           return part;
-        });
+        }).filter(Boolean);
       }
       
       // Convert attachments to file parts and add to parts

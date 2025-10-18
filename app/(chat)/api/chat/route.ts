@@ -24,13 +24,19 @@ export async function POST(request: Request) {
     if (json.messages && json.messages.length > 0) {
       const lastMessage = json.messages[json.messages.length - 1];
       if (lastMessage.role === 'user' && Array.isArray(lastMessage.parts)) {
-        const fileParts = lastMessage.parts.filter((part: any) => part.type === 'file');
-        attachments = fileParts.map((part: any) => ({
-          url: part.url,
-          name: part.filename || part.name,
-          contentType: part.mediaType || part.contentType,
-          size: part.size
-        }));
+        // Filter out null/undefined parts and only get file parts with valid URLs
+        const fileParts = lastMessage.parts
+          .filter((part: any) => part && part.type === 'file' && part.url)
+          .map((part: any) => ({
+            url: part.url,
+            name: part.filename || part.name || 'file',
+            contentType: part.mediaType || part.contentType || 'application/octet-stream',
+            size: part.size
+          }));
+        attachments = fileParts;
+        
+        // Clean up message parts to remove null/undefined entries
+        lastMessage.parts = lastMessage.parts.filter((part: any) => part !== null && part !== undefined);
       }
     }
     
