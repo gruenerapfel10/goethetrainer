@@ -662,43 +662,96 @@ export interface Document {
   title: string;
   content: string;
   kind?: string;
+  userId?: string;
+  chatId?: string;
+  author?: 'user' | 'ai';
+  version: number;
+  isWorkingVersion: boolean;
+  forkedFromVersion?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export async function saveDocument(doc: Partial<Document> & { id: string }): Promise<void> {
   try {
-    await adminDb.collection('documents').doc(doc.id).set({
-      ...doc,
-      updatedAt: Timestamp.now(),
-    }, { merge: true });
+    const { version, ...docData } = doc;
+    
+    if (version) {
+      const parentDocId = doc.id.split('-v')[0];
+      const versionId = `v${version}`;
+      
+      await adminDb.collection('documents').doc(parentDocId).collection('versions').doc(versionId).set({
+        ...docData,
+        version,
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+      
+      await adminDb.collection('documents').doc(parentDocId).set({
+        title: doc.title,
+        kind: doc.kind,
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+    } else {
+      await adminDb.collection('documents').doc(doc.id).set({
+        ...docData,
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+    }
   } catch (error) {
     console.error('Failed to save document to Firestore');
     throw error;
   }
 }
 
-export async function getDocumentsById({ id }: { id: string }): Promise<Document | null> {
+export async function getDocumentsById({ id }: { id: string }): Promise<Document[]> {
   try {
-    const docSnapshot = await adminDb.collection('documents').doc(id).get();
-    if (!docSnapshot.exists) return null;
-    const data = docSnapshot.data();
-    return {
-      id: docSnapshot.id,
-      title: data?.title || '',
-      content: data?.content || '',
-      kind: data?.kind,
-      createdAt: (data?.createdAt as Timestamp)?.toDate() || new Date(),
-      updatedAt: (data?.updatedAt as Timestamp)?.toDate() || new Date(),
-    };
+    const versionsSnapshot = await adminDb.collection('documents').doc(id).collection('versions').orderBy('version').get();
+    
+    if (versionsSnapshot.empty) {
+      const docSnapshot = await adminDb.collection('documents').doc(id).get();
+      if (!docSnapshot.exists) return [];
+      const data = docSnapshot.data();
+      return [{
+        id: docSnapshot.id,
+        title: data?.title || '',
+        content: data?.content || '',
+        kind: data?.kind,
+        userId: data?.userId,
+        chatId: data?.chatId,
+        author: data?.author as 'user' | 'ai' | undefined,
+        version: 1,
+        isWorkingVersion: true,
+        createdAt: (data?.createdAt as Timestamp)?.toDate() || new Date(),
+        updatedAt: (data?.updatedAt as Timestamp)?.toDate() || new Date(),
+      }];
+    }
+    
+    return versionsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.id || doc.ref.parent.parent?.id || '',
+        title: data.title || '',
+        content: data.content || '',
+        kind: data.kind,
+        userId: data.userId,
+        chatId: data.chatId,
+        author: data.author as 'user' | 'ai' | undefined,
+        version: data.version || 1,
+        isWorkingVersion: data.isWorkingVersion || false,
+        forkedFromVersion: data.forkedFromVersion,
+        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+        updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
+      };
+    });
   } catch (error) {
-    console.error('Failed to get document from Firestore');
-    return null;
+    console.error('Failed to get documents from Firestore');
+    return [];
   }
 }
 
 export async function getDocumentById({ id }: { id: string }): Promise<Document | null> {
-  return getDocumentsById({ id });
+  const docs = await getDocumentsById({ id });
+  return docs.length > 0 ? docs[0] : null;
 }
 
 export function getWorkingVersion(): string {
@@ -713,6 +766,7 @@ export interface Suggestion {
   id: string;
   content?: string;
   description?: string;
+  originalText: string;
 }
 
 export async function getSuggestions(): Promise<Suggestion[]> {

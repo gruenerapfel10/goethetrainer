@@ -220,7 +220,7 @@ export class ArtifactManager {
     const latestDoc = sortedDocs[sortedDocs.length - 1];
     const artifact: ArtifactData = {
       documentId,
-      kind: latestDoc.kind,
+      kind: (latestDoc.kind as ArtifactKind) || 'code',
       title: latestDoc.title,
       content: currentVersionData.content,
       status: 'idle',

@@ -14,6 +14,7 @@ import { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 export interface UISuggestion extends Suggestion {
   selectionStart: number;
   selectionEnd: number;
+  suggestedText: string;
 }
 
 interface Position {
@@ -56,6 +57,7 @@ export function projectWithPositions(
         ...suggestion,
         selectionStart: 0,
         selectionEnd: 0,
+        suggestedText: suggestion.content || '',
       };
     }
 
@@ -63,6 +65,7 @@ export function projectWithPositions(
       ...suggestion,
       selectionStart: positions.start,
       selectionEnd: positions.end,
+      suggestedText: suggestion.content || '',
     };
   });
 }
