@@ -13,8 +13,10 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   try {
     const json = await request.json();
+    console.log('[api/chat] Received chat request');
     
     if (!json.data) {
+      console.error('[api/chat] Invalid request format - no data');
       return new Response('Invalid request format', { status: 400 });
     }
     
@@ -22,7 +24,10 @@ export async function POST(request: Request) {
     
     // Check if messages have attachments in parts
     if (json.messages && json.messages.length > 0) {
+      console.log(`[api/chat] Processing ${json.messages.length} messages`);
       const lastMessage = json.messages[json.messages.length - 1];
+      console.log(`[api/chat] Last message role: ${lastMessage.role}, parts count: ${Array.isArray(lastMessage.parts) ? lastMessage.parts.length : 'no parts'}`);
+      
       if (lastMessage.role === 'user' && Array.isArray(lastMessage.parts)) {
         // Filter out null/undefined parts and only get file parts with valid URLs
         const fileParts = lastMessage.parts
@@ -33,10 +38,18 @@ export async function POST(request: Request) {
             contentType: part.mediaType || part.contentType || 'application/octet-stream',
             size: part.size
           }));
+        
+        console.log(`[api/chat] Found ${fileParts.length} file attachments`);
+        if (fileParts.length > 0) {
+          console.log('[api/chat] File attachments:', fileParts.map(f => `${f.name} (${f.contentType})`));
+        }
+        
         attachments = fileParts;
         
         // Clean up message parts to remove null/undefined entries
-        lastMessage.parts = lastMessage.parts.filter((part: any) => part !== null && part !== undefined);
+        const cleanParts = lastMessage.parts.filter((part: any) => part !== null && part !== undefined);
+        console.log(`[api/chat] Cleaned ${lastMessage.parts.length} parts to ${cleanParts.length} (removed ${lastMessage.parts.length - cleanParts.length})`);
+        lastMessage.parts = cleanParts;
       }
     }
     

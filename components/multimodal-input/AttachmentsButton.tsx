@@ -34,6 +34,7 @@ export const uploadFiles = async (
   setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>,
 ) => {
   const fileArray = Array.from(files);
+  console.log('[AttachmentsButton] Starting file upload for', fileArray.length, 'files:', fileArray.map(f => f.name));
   
   // Create uploading attachments immediately for optimistic UI
   const uploadingAttachments: Attachment[] = fileArray.map((file) => ({
@@ -50,6 +51,7 @@ export const uploadFiles = async (
 
   try {
     const uploadPromises = fileArray.map(async (file) => {
+      console.log(`[AttachmentsButton] Uploading file: ${file.name} (${file.size} bytes, type: ${file.type})`);
       const formData = new FormData();
       formData.append('file', file);
       
@@ -59,8 +61,11 @@ export const uploadFiles = async (
           body: formData,
         });
 
+        console.log(`[AttachmentsButton] Upload response status for ${file.name}:`, response.status);
+
         if (response.ok) {
           const data = await response.json();
+          console.log(`[AttachmentsButton] Upload successful for ${file.name}, URL:`, data.url);
           
           // Update the uploading attachment to ready state
           setAttachments((currentAttachments) =>
@@ -81,6 +86,7 @@ export const uploadFiles = async (
         }
         
         const { error } = await response.json();
+        console.error(`[AttachmentsButton] Upload failed for ${file.name}:`, error);
         toast.error(error);
         
         // Update the processing attachment to error state
