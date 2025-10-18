@@ -21,6 +21,7 @@ import {
   GlobeIcon,
   LineChartIcon,
   ImageIcon,
+  BookIcon,
 } from './icons';
 import { chatModels } from '../lib/ai/models';
 import { useTranslations } from 'next-intl';
@@ -92,6 +93,7 @@ const iconMap = {
   layers: LayersIcon,
   lineChart: LineChartIcon,
   image: ImageIcon,
+  'book-open': BookIcon,
 } as const;
 
 export function ModelSelector({
