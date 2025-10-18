@@ -20,7 +20,7 @@ export function AppRightbar() {
       className={cn(
         SIDEBAR_BASE_CLASSES,
         SIDEBAR_TRANSITION,
-        isOpen ? "w-[16rem]" : "w-0"
+        isOpen ? "w-[20rem]" : "w-0"
       )}
       data-state={isOpen ? 'expanded' : 'collapsed'}
       data-side="right"
