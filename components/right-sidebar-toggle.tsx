@@ -11,9 +11,7 @@ export function RightSidebarToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className={`h-10 w-10 gap-2 text-sm font-normal hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
-        isOpen ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
-      }`}
+      className="h-10 w-10 gap-2 text-sm font-normal hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       title={isOpen ? 'Close sidebar' : 'Open sidebar'}
       onClick={toggle}
     >
