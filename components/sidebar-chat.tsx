@@ -2,10 +2,10 @@
 
 import type { UIMessage } from 'ai';
 import { ChatProvider } from '@/contexts/chat-context';
-import { ChatContent } from './chat-content';
+import { SidebarChatContent } from './sidebar-chat-content';
 import type { VisibilityType } from './visibility-selector';
 
-export function Chat({
+export function SidebarChat({
   id,
   initialMessages,
   initialArtifacts,
@@ -33,8 +33,9 @@ export function Chat({
       initialMessages={initialMessages}
       initialModel={selectedChatModel}
       isReadonly={isReadonly}
+      shouldUpdateUrl={false}
     >
-      <ChatContent
+      <SidebarChatContent
         selectedVisibilityType={selectedVisibilityType}
         isAdmin={isAdmin}
         chat={chat}

@@ -25,8 +25,10 @@ import { StreamContinuationNotice } from '@/components/StreamContinuationNotice'
 
 function PureMultimodalInput({
   className,
+  disableCenter = false,
 }: {
   className?: string;
+  disableCenter?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLFormElement>(null);
@@ -66,7 +68,7 @@ function PureMultimodalInput({
 
 
   const hasMessages = debugMessages || messages.length > 0;
-  const shouldCenter = !hasMessages && !isMobile;
+  const shouldCenter = disableCenter ? false : (!hasMessages && !isMobile);
 
   return (
     <motion.div

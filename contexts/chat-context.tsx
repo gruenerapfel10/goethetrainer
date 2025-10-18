@@ -97,7 +97,7 @@ export function ChatProvider({
   initialModel: string;
   isReadonly: boolean;
   children: React.ReactNode;
-  shouldUpdateUrl?: boolean;
+  shouldUpdateUrl?: boolean; 
 }) {
   const { mutate } = useSWRConfig();
   
