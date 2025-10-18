@@ -5,10 +5,15 @@ import {
   SidebarContent,
   SidebarHeader,
 } from '@/components/ui/sidebar';
+import { useRightSidebar } from '@/lib/right-sidebar-context';
 
 export function AppRightbar() {
+  const { isOpen } = useRightSidebar();
+
+  if (!isOpen) return null;
+
   return (
-    <Sidebar side="right" variant="sidebar" collapsible="icon">
+    <Sidebar side="right" variant="sidebar" collapsible="none">
       <SidebarHeader>
         <div className="space-y-2">
           <div className="text-sm font-semibold">Properties</div>
