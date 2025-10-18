@@ -87,15 +87,11 @@ export async function saveChat({
   title: string;
 }) {
   try {
-    return await db.insert(chat).values({
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId,
-      title,
-    });
+    const { saveChat: saveFirestoreChat } = await import('../firebase/firestore-queries');
+    await saveFirestoreChat({ id, userId, title });
+    return [{ id }]; // Return format matching PostgreSQL for compatibility
   } catch (error) {
-    console.error('Failed to save chat in database');
+    console.error('Failed to save chat to Firestore');
     throw error;
   }
 }
@@ -128,80 +124,53 @@ export async function getChatsByUserId({
   endingBefore: string | null;
 }) {
   try {
-    const extendedLimit = limit + 1;
+    const { getChatsByUserId: getFirestoreChats } = await import('../firebase/firestore-queries');
+    const firestoreChats = await getFirestoreChats(id, limit + 1);
+    
+    // Convert Firestore format to expected PostgreSQL format
+    const convertedChats = firestoreChats.map(chat => ({
+      id: chat.id,
+      createdAt: chat.createdAt.toDate(),
+      updatedAt: chat.updatedAt.toDate(),
+      title: chat.title,
+      userId: chat.userId,
+      visibility: chat.visibility,
+      isPinned: chat.isPinned,
+      customTitle: chat.customTitle,
+    }));
 
-    const query = (whereCondition?: SQL<any>) =>
-      db
-        .select()
-        .from(chat)
-        .where(
-          whereCondition
-            ? and(whereCondition, eq(chat.userId, id))
-            : eq(chat.userId, id),
-        )
-        .orderBy(desc(chat.isPinned), desc(chat.updatedAt), desc(chat.id))
-        .limit(extendedLimit);
-
-    let filteredChats: Array<Chat> = [];
-
-    if (startingAfter) {
-      const [selectedChat] = await db
-        .select()
-        .from(chat)
-        .where(eq(chat.id, startingAfter))
-        .limit(1);
-
-      if (!selectedChat) {
-        throw new Error(`Chat with id ${startingAfter} not found`);
-      }
-
-      filteredChats = await query(
-        or(
-          and(eq(chat.isPinned, selectedChat.isPinned), gt(chat.updatedAt, selectedChat.updatedAt)),
-          and(eq(chat.isPinned, selectedChat.isPinned), eq(chat.updatedAt, selectedChat.updatedAt), gt(chat.id, startingAfter)),
-          and(eq(chat.isPinned, false), sql`${selectedChat.isPinned} = true`)
-        )
-      );
-    } else if (endingBefore) {
-      const [selectedChat] = await db
-        .select()
-        .from(chat)
-        .where(eq(chat.id, endingBefore))
-        .limit(1);
-
-      if (!selectedChat) {
-        throw new Error(`Chat with id ${endingBefore} not found`);
-      }
-
-      filteredChats = await query(
-        or(
-          and(eq(chat.isPinned, selectedChat.isPinned), lt(chat.updatedAt, selectedChat.updatedAt)),
-          and(eq(chat.isPinned, selectedChat.isPinned), eq(chat.updatedAt, selectedChat.updatedAt), lt(chat.id, endingBefore)),
-          and(eq(chat.isPinned, true), sql`${selectedChat.isPinned} = false`)
-        )
-      );
-    } else {
-      filteredChats = await query();
-    }
-
-    const hasMore = filteredChats.length > limit;
+    const hasMore = convertedChats.length > limit;
 
     return {
-      chats: hasMore ? filteredChats.slice(0, limit) : filteredChats,
+      chats: hasMore ? convertedChats.slice(0, limit) : convertedChats,
       hasMore,
     };
   } catch (error) {
-    console.error('Failed to get chats by user from database');
+    console.error('Failed to get chats by user from Firestore');
     throw error;
   }
 }
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));
-    return selectedChat;
+    const { getChatById: getFirestoreChat } = await import('../firebase/firestore-queries');
+    const firestoreChat = await getFirestoreChat(id);
+    
+    if (!firestoreChat) return null;
+    
+    // Convert Firestore format to expected PostgreSQL format
+    return {
+      id: firestoreChat.id,
+      createdAt: firestoreChat.createdAt.toDate(),
+      updatedAt: firestoreChat.updatedAt.toDate(),
+      title: firestoreChat.title,
+      userId: firestoreChat.userId,
+      visibility: firestoreChat.visibility,
+      isPinned: firestoreChat.isPinned,
+      customTitle: firestoreChat.customTitle || null,
+    };
   } catch (error) {
-    console.error('Failed to get chat by id from database');
+    console.error('Failed to get chat by id from Firestore');
     throw error;
   }
 }
@@ -212,53 +181,44 @@ export async function saveMessages({
   messages: Array<DBMessage>;
 }) {
   try {
-
-    // Validate parts can be serialized
-    const serializedMessages = messages.map(msg => {
+    const { saveMessage } = await import('../firebase/firestore-queries');
+    
+    // Save each message to Firestore
+    const results = [];
+    for (const msg of messages) {
       try {
         // Ensure parts is defined and serializable
         const parts = msg.parts || [{ type: 'text', text: '' }];
         const serializedParts = JSON.parse(JSON.stringify(parts));
-        return {
-          ...msg,
-          parts: serializedParts
+        
+        const messageData: any = {
+          chatId: msg.chatId,
+          role: msg.role,
+          parts: serializedParts,
+          attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
+          processed: msg.processed || false,
         };
+        
+        if (msg.agentType) messageData.agentType = msg.agentType;
+        if (msg.useCaseId) messageData.useCaseId = msg.useCaseId;
+        if (msg.modelId) messageData.modelId = msg.modelId;
+        if (msg.inputTokens !== undefined) messageData.inputTokens = msg.inputTokens;
+        if (msg.outputTokens !== undefined) messageData.outputTokens = msg.outputTokens;
+        
+        const messageId = await saveMessage(messageData);
+        results.push({ id: messageId });
       } catch (serializationError) {
-        console.error(`[saveMessages] Serialization failed for message ${msg.id}:`, serializationError);
-        // Fallback to empty text part
-        return {
-          ...msg,
-          parts: [{ type: 'text', text: '' }]
-        };
+        console.error(`[saveMessages] Failed to save message ${msg.id}:`, serializationError);
+        throw serializationError;
       }
-    });
-
-    const result = await db.insert(message).values(serializedMessages);
-
-    // Update the updatedAt field for all affected chats
-    const chatIds = [...new Set(messages.map(msg => msg.chatId))];
-    if (chatIds.length > 0) {
-      await Promise.all(
-        chatIds.map(chatId =>
-          db.update(chat)
-            .set({ updatedAt: new Date() })
-            .where(eq(chat.id, chatId))
-        )
-      );
     }
 
-    return result;
+    return results;
   } catch (error) {
-    console.error('[saveMessages] Failed to save messages in database:', {
+    console.error('[saveMessages] Failed to save messages to Firestore:', {
       error: (error as Error).message,
       messageCount: messages?.length || 0,
       messageIds: messages?.map(m => m.id) || [],
-      partsInfo: messages?.map(m => ({
-        id: m.id,
-        partsCount: Array.isArray(m.parts) ? m.parts.length : 0,
-        partTypes: Array.isArray(m.parts) ? m.parts.map((p: any) => p?.type) : [],
-        partsPreview: JSON.stringify(m.parts || []).substring(0, 200)
-      })) || []
     });
     throw error;
   }
@@ -267,15 +227,26 @@ export async function saveMessages({
 
 export async function getMessagesByChatId({ id }: { id: string }) {
   try {
-    const messages = await db
-      .select()
-      .from(message)
-      .where(eq(message.chatId, id))
-      .orderBy(asc(message.createdAt));
+    const { getMessagesByChatId: getFirestoreMessages } = await import('../firebase/firestore-queries');
+    const firestoreMessages = await getFirestoreMessages(id);
     
-    return messages;
+    // Convert Firestore format to expected PostgreSQL format
+    return firestoreMessages.map(msg => ({
+      id: msg.id,
+      chatId: msg.chatId,
+      role: msg.role,
+      parts: msg.parts,
+      attachments: msg.attachments,
+      createdAt: msg.createdAt.toDate(),
+      agentType: msg.agentType || null,
+      useCaseId: msg.useCaseId || null,
+      modelId: msg.modelId || null,
+      inputTokens: msg.inputTokens || null,
+      outputTokens: msg.outputTokens || null,
+      processed: msg.processed,
+    }));
   } catch (error) {
-    console.error('Failed to get messages by chat id from database', error);
+    console.error('Failed to get messages by chat id from Firestore', error);
     throw error;
   }
 }

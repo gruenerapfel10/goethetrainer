@@ -1,23 +1,22 @@
 import { customProvider } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { xai } from '@ai-sdk/xai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { AgentType } from '@/lib/ai/agents';
 import { ModelId } from '@/lib/ai/model-registry';
 
 export const customModel = (modelId: ModelId | string) => {
-  return xai(modelId);
+  return anthropic(modelId);
 };
 
 export const myProvider = customProvider({
   languageModels: {
-    'grok-4-fast-reasoning': customModel(ModelId.GROK_4),
-    'artifact-model': customModel(ModelId.GROK_4),
-    'bedrock-sonnet-latest': customModel(ModelId.GROK_4),
-    'document-agent': customModel(ModelId.GROK_4),
+    'grok-4-fast-reasoning': customModel(ModelId.CLAUDE_HAIKU_4_5),
+    'artifact-model': customModel(ModelId.CLAUDE_HAIKU_4_5),
+    'bedrock-sonnet-latest': customModel(ModelId.CLAUDE_HAIKU_4_5),
+    'document-agent': customModel(ModelId.CLAUDE_HAIKU_4_5),
     
-    [AgentType.GENERAL_AGENT]: customModel(ModelId.GROK_4),
-    [AgentType.SHAREPOINT_AGENT]: customModel(ModelId.GROK_4),
-    [AgentType.TEXT2SQL_AGENT]: customModel(ModelId.GROK_4),
+    [AgentType.GENERAL_AGENT]: customModel(ModelId.CLAUDE_HAIKU_4_5),
+    [AgentType.TEXT2SQL_AGENT]: customModel(ModelId.CLAUDE_HAIKU_4_5),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),
@@ -44,13 +43,6 @@ export const chatModels: (t?: any) => Array<ChatModel> = (t?) => {
     icon: generalMeta.icon,
   });
   
-  const sharepointMeta = getAgentMetadata(AgentType.SHAREPOINT_AGENT);
-  models.push({
-    id: AgentType.SHAREPOINT_AGENT,
-    name: (t && sharepointMeta.displayNameKey) ? t(sharepointMeta.displayNameKey) : sharepointMeta.displayName,
-    description: (t && sharepointMeta.descriptionKey) ? t(sharepointMeta.descriptionKey) : sharepointMeta.description,
-    icon: sharepointMeta.icon,
-  });
   
   const text2sqlMeta = getAgentMetadata(AgentType.TEXT2SQL_AGENT);
   models.push({
