@@ -31,7 +31,6 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
     };
   }, []);
 
-  // Pre-fill example answer
   useEffect(() => {
     const exampleQuestion = questions.find(q => q.isExample);
     if (exampleQuestion && exampleQuestion.exampleAnswer) {
@@ -40,7 +39,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
         [exampleQuestion.id]: exampleQuestion.exampleAnswer!
       }));
     }
-  }, []);
+  }, [questions]);
 
   const handleSelectOption = (questionId: string, optionId: string, isExample: boolean) => {
     if (!isSubmitted && !isExample) {
@@ -53,10 +52,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
 
   const handleSubmit = () => {
     if (!isMountedRef.current) return;
-
     setIsSubmitted(true);
-
-    // Use setTimeout to ensure state update completes before navigation
     setTimeout(() => {
       if (isMountedRef.current) {
         onSubmit(selectedAnswers);
@@ -75,25 +71,21 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
       </div>
 
       <div className="p-6 space-y-6">
-        {/* All questions displayed vertically */}
         <div className="space-y-4">
           {questions.map((question, qIndex) => (
             <div key={`q-${qIndex}-${question.id}`} className="flex gap-6">
-              {/* Question number */}
               <div className="font-bold text-lg min-w-[30px] pt-1">
                 {qIndex}
               </div>
 
-              {/* Question content */}
               <div className="flex-1">
                 {question.isExample && (
                   <div className="font-medium text-sm mb-2">Beispiel:</div>
                 )}
 
-                {/* Options displayed horizontally */}
                 <div className="flex gap-6 flex-wrap">
                   {question.options?.map((option, index) => {
-                    const optionLetter = String.fromCharCode(97 + index); // a, b, c, d
+                    const optionLetter = String.fromCharCode(97 + index);
                     const isSelected = selectedAnswers[question.id] === option.id ||
                                        (question.isExample && question.exampleAnswer === option.id);
                     const isCorrect = question.correctOptionId === option.id;
@@ -143,29 +135,23 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
           ))}
         </div>
 
-          {/* Submit button */}
-          <div className="flex justify-end pt-6 border-t">
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitted || !allQuestionsAnswered}
-              className="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
-            </button>
-          </div>
-
-          {/* Results summary when submitted */}
-          {isSubmitted && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="font-medium">
-                Test abgeschlossen!
-                {' '}Ergebnis: {
-                  questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length
-                } von {questions.filter(q => !q.isExample).length} richtig
-              </p>
-            </div>
-          )}
+        <div className="flex justify-end pt-6 border-t">
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitted || !allQuestionsAnswered}
+            className="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
+          </button>
         </div>
+
+        {isSubmitted && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <p className="font-medium">
+              Test abgeschlossen! Ergebnis: {questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length} von {questions.filter(q => !q.isExample).length} richtig
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
