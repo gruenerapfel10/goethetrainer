@@ -53,13 +53,14 @@ export const SidebarProvider = React.forwardRef<
           <div
             style={
               {
-                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width": `${contextValue.width}px`,
                 "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
                 ...style,
               } as React.CSSProperties
             }
             className={cn(
               "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              contextValue.isResizing && "select-none",
               className
             )}
             ref={ref}
@@ -95,7 +96,7 @@ export const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, width, isResizing } = useSidebar()
 
     if (collapsible === "none") {
       return (
@@ -143,10 +144,14 @@ export const Sidebar = React.forwardRef<
         ref={ref}
         className={cn(
           SIDEBAR_BASE_CLASSES, 
-          SIDEBAR_TRANSITION, 
+          !isResizing && SIDEBAR_TRANSITION, 
           state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]", 
-          resizable && "relative"
+          resizable && "relative",
+          isResizing && "transition-none"
         )}
+        style={{
+          width: state === "collapsed" ? undefined : width,
+        }}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
