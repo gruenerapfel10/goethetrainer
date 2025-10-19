@@ -132,8 +132,8 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                     {question.prompt}
                   </p>
 
-                  {/* Options in grid - 2 columns with fixed width */}
-                  <div className="grid grid-cols-2 gap-6">
+                  {/* Options in single row - 4 columns */}
+                  <div className="grid grid-cols-4 gap-4">
                     {question.options?.map((option, index) => {
                       const optionLetter = String.fromCharCode(97 + index);
                       const isSelected = selectedAnswers[question.id] === option.id ||
@@ -146,7 +146,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                         <div
                           key={option.id}
                           className={cn(
-                            "flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 min-h-[80px] transition-all",
+                            "flex flex-col items-center gap-2 p-3 rounded-lg border-2 border-gray-200 transition-all",
                             !isSubmitted && isSelected && !question.isExample && "border-blue-600 bg-blue-50",
                             showCorrect && "border-green-600 bg-green-50",
                             showIncorrect && "border-red-600 bg-red-50",
@@ -163,7 +163,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                             showFeedback={isSubmitted}
                           />
                           <span className={cn(
-                            "text-sm flex-1 pt-1",
+                            "text-sm text-center",
                             showCorrect && "text-green-700 font-medium",
                             showIncorrect && "text-red-700"
                           )}>
