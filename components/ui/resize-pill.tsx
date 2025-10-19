@@ -18,54 +18,61 @@ export const ResizePill = ({
   maxWidth = 600,
   defaultWidth = 256
 }: ResizePillProps) => {
-  const [isResizing, setIsResizing] = React.useState(false)
-  const [isHovering, setIsHovering] = React.useState(false)
-  const containerRef = React.useRef<HTMLDivElement>(null)
-  const finalWidthRef = React.useRef(defaultWidth)
+  const [isDragging, setIsDragging] = React.useState(false)
+  const startX = React.useRef(0)
+  const startWidth = React.useRef(defaultWidth)
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+    startX.current = e.clientX
+    
+    // Get current width from the sidebar element
+    const sidebar = (e.target as HTMLElement).closest('aside') || (e.target as HTMLElement).closest('[data-resizable="true"]')
+    if (sidebar) {
+      startWidth.current = sidebar.getBoundingClientRect().width
+    }
+    
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
 
   React.useEffect(() => {
-    if (!isResizing) return
+    if (!isDragging) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return
+      const deltaX = e.clientX - startX.current
       
-      // Get the sidebar element (parent of the resize pill container)
-      const sidebar = containerRef.current.closest('aside') || containerRef.current.closest('[data-sidebar]') || containerRef.current.parentElement
-      if (!sidebar) return
-
-      const sidebarRect = sidebar.getBoundingClientRect()
-      let newWidth: number
-
-      if (side === "left") {
-        // Left sidebar: measure from left edge to mouse
-        newWidth = e.clientX - sidebarRect.left
-      } else {
-        // Right sidebar: measure from mouse to right edge
-        newWidth = sidebarRect.right - e.clientX
+      // For left sidebar: drag right = positive delta = increase width
+      // For right sidebar: drag left = negative delta = increase width
+      const newWidth = side === "left" 
+        ? startWidth.current + deltaX
+        : startWidth.current - deltaX
+      
+      const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
+      
+      // Find and update the sidebar directly
+      const sidebar = document.querySelector(`aside[data-side="${side}"]`) as HTMLElement
+      if (sidebar) {
+        sidebar.style.width = `${clampedWidth}px`
       }
-
-      // Clamp the width
-      newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth))
-      
-      // Directly update the DOM for instant feedback
-      sidebar.style.width = `${newWidth}px`
-      finalWidthRef.current = newWidth
     }
 
-    const handleMouseUp = () => {
-      setIsResizing(false)
-      setIsHovering(false)
+    const handleMouseUp = (e: MouseEvent) => {
+      setIsDragging(false)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
       
-      // Call the callback with the final width
-      if (onWidthChange) {
-        onWidthChange(finalWidthRef.current)
+      // Get final width and save
+      const sidebar = document.querySelector(`aside[data-side="${side}"]`) as HTMLElement
+      if (sidebar) {
+        const finalWidth = sidebar.getBoundingClientRect().width
+        onWidthChange?.(finalWidth)
+        
+        // Save to cookie
+        const cookieName = `${side}_sidebar_width`
+        document.cookie = `${cookieName}=${finalWidth}; path=/; max-age=${60 * 60 * 24 * 7}`
       }
-      
-      // Save width to cookie
-      const cookieName = side === "left" ? "left_sidebar_width" : "right_sidebar_width"
-      document.cookie = `${cookieName}=${finalWidthRef.current}; path=/; max-age=${60 * 60 * 24 * 7}`
     }
 
     document.addEventListener('mousemove', handleMouseMove)
@@ -75,47 +82,22 @@ export const ResizePill = ({
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isResizing, side, minWidth, maxWidth, onWidthChange])
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsResizing(true)
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }
+  }, [isDragging, side, minWidth, maxWidth, onWidthChange])
 
   return (
     <>
-      {/* Invisible hit area for better UX */}
       <div 
-        ref={containerRef}
+        onMouseDown={handleMouseDown}
         className={cn(
-          "absolute top-0 h-full w-2 z-50",
-          side === "left" ? "-right-1" : "-left-1"
+          "absolute top-1/2 -translate-y-1/2 h-16 w-1.5 rounded-full cursor-col-resize z-50",
+          "bg-border/50 hover:bg-primary/50 transition-colors",
+          side === "left" ? "-right-0.75" : "-left-0.75",
+          isDragging && "bg-primary"
         )}
-      >
-        {/* The visible pill */}
-        <div 
-          onMouseDown={handleMouseDown}
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => !isResizing && setIsHovering(false)}
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 h-16 w-1.5 rounded-full cursor-col-resize",
-            "transition-all duration-200",
-            side === "left" ? "right-0.5" : "left-0.5",
-            isResizing ? "bg-primary h-24" : isHovering ? "bg-primary/50" : "bg-border/50",
-            isHovering && !isResizing && "scale-y-110"
-          )}
-        />
-      </div>
+      />
       
-      {/* Overlay to capture mouse events when resizing */}
-      {isResizing && (
-        <div 
-          className="fixed inset-0 z-[100] cursor-col-resize" 
-          style={{ pointerEvents: 'auto' }}
-        />
+      {isDragging && (
+        <div className="fixed inset-0 z-40 cursor-col-resize" />
       )}
     </>
   )
