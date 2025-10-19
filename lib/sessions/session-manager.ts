@@ -466,7 +466,3 @@ export async function getSessionManager(
   }
   return manager;
 }
-
-// Export v2 names for backwards compatibility during migration
-export { SessionManager as SessionManagerV2 };
-export { getSessionManager as getSessionManagerV2 };
