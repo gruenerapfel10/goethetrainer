@@ -147,8 +147,8 @@ export const Sidebar = React.forwardRef<
       <aside
         ref={ref}
         className={cn(
-          "flex h-full flex-col bg-sidebar text-sidebar-foreground",
-          SIDEBAR_TRANSITION,
+          "flex h-full flex-col bg-sidebar text-sidebar-foreground overflow-y-auto",
+          !resizable && SIDEBAR_TRANSITION, // Only add transition when not resizable
           resizable && "relative",
           className
         )}
