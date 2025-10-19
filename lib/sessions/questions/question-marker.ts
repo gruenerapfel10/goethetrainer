@@ -31,9 +31,17 @@ class AutomaticMarker implements MarkingAlgorithm {
       case AnswerType.GAP_TEXT_MULTIPLE_CHOICE:
         isCorrect = this.markMultipleChoice(question, answer.answer as string);
         score = isCorrect ? question.points : 0;
-        feedback = isCorrect 
-          ? 'Correct! Well done.' 
-          : `Incorrect. The correct answer is ${question.correctAnswer}.`;
+        if (isCorrect) {
+          feedback = 'Correct! Well done.';
+        } else {
+          // Find the correct option text
+          const correctOption = question.options?.find(
+            opt => opt.id === question.correctOptionId || opt.isCorrect
+          );
+          feedback = correctOption
+            ? `Incorrect. The correct answer is: ${correctOption.text}`
+            : 'Incorrect.';
+        }
         break;
 
       case AnswerType.TRUE_FALSE:
@@ -84,7 +92,13 @@ class AutomaticMarker implements MarkingAlgorithm {
 
   private markMultipleChoice(question: Question, answer: string): boolean {
     if (!question.options) return false;
-    
+
+    // Check if question uses correctOptionId field (new format)
+    if (question.correctOptionId) {
+      return answer === question.correctOptionId;
+    }
+
+    // Fallback to isCorrect flag on options (legacy format)
     const selectedOption = question.options.find(opt => opt.id === answer);
     return selectedOption?.isCorrect || false;
   }

@@ -16,10 +16,11 @@ export async function GET(
     const manager = await getSessionManager(authSession.user.email, sessionId);
     const questions = manager.getAllQuestions();
 
-    // Log the full questions data for debugging
-    console.log('=== GENERATED QUESTIONS ===');
-    console.log(JSON.stringify(questions, null, 2));
-    console.log('=== END QUESTIONS ===');
+    // Log summary of generated questions
+    console.log(`\n📝 Generated ${questions.length} questions for session ${sessionId}`);
+    questions.forEach((q, idx) => {
+      console.log(`   Q${idx + 1}: ${q.prompt} [Context: ${q.context ? 'Yes' : 'No'}]`);
+    });
 
     return NextResponse.json(questions);
   } catch (error) {

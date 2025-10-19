@@ -1,4 +1,4 @@
 {
-  "externalUrl": "http://127.0.0.1:60028/ingest",
+  "externalUrl": "http://127.0.0.1:61244/ingest",
   "logPath": "/Users/green/Desktop/Developer/goethe/.cursor/debug.log"
 }

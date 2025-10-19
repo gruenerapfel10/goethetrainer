@@ -5,6 +5,7 @@ import { QuestionTypeName } from './question-enums';
 import { multipleChoiceConfig } from './configs/multiple-choice.config';
 import type { QuestionDifficulty } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
+import { generateSourceWithGaps } from './source-generator';
 
 export const maxDuration = 30;
 
@@ -115,48 +116,85 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
 }
 
 /**
- * Generate questions for a session with shared context
+ * Generate questions for a session with shared context (Two-pass system)
+ * Pass 1: Generate source with diverse theme
+ * Pass 2: Identify 9 gaps and generate questions
  */
 export async function generateSessionQuestions(
   _sessionType: SessionTypeEnum,
-  _difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty
+  difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty
 ): Promise<any> {
-  // For now, only support multiple choice session generation
-  const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
-  const config = QUESTION_CONFIGS[questionType];
-
-  if (!config) {
-    throw new Error(`No configuration found for question type: ${questionType}`);
-  }
-
-  const { aiGeneration } = config;
-
-  // Check if session generation is supported
-  if (!aiGeneration.sessionSystemPrompt || !config.sessionGenerationSchema) {
-    throw new Error(`Session generation not supported for question type: ${questionType}`);
-  }
-
-  // Initialize the model
-  const model = anthropic(aiGeneration.modelId);
-
   try {
-    // Generate all questions at once
-    const generateParams: any = {
-      model,
-      schema: config.sessionGenerationSchema,
-      system: aiGeneration.sessionSystemPrompt,
-      prompt: aiGeneration.sessionUserPrompt,
-      temperature: aiGeneration.temperature,
-      mode: 'tool',
-    };
+    // Use two-pass system: generate source with gaps
+    const sourceWithGaps = await generateSourceWithGaps(difficulty);
 
-    if (aiGeneration.maxTokens) {
-      generateParams.maxTokens = aiGeneration.maxTokens;
+    // Now generate 9 questions based on the gaps
+    const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
+    const config = QUESTION_CONFIGS[questionType];
+
+    if (!config) {
+      throw new Error(`No configuration found for question type: ${questionType}`);
     }
 
-    const result = await generateObject(generateParams);
+    const { aiGeneration } = config;
+    const model = anthropic(aiGeneration.modelId);
 
-    return result.object;
+    // Generate 4 options for each gap
+    const questionPromises = sourceWithGaps.gaps.map(async (gap, index) => {
+      const gapPrompt = `Generate 4 multiple choice options for this gap fill exercise.
+
+Gap number: ${gap.gapNumber}
+Correct answer: "${gap.removedWord}"
+Context: ${sourceWithGaps.gappedContext}
+
+Create 4 plausible options where one is the correct answer "${gap.removedWord}".
+Options should be 1-3 words each.
+Return as JSON with id (0-3) and text for each option.`;
+
+      const optionsSchema = z.object({
+        options: z.array(
+          z.object({
+            id: z.string().describe('Option ID: 0, 1, 2, or 3'),
+            text: z.string().describe('Option text (1-3 words)'),
+          })
+        ).length(4).describe('Exactly 4 options'),
+        correctOptionId: z.string().describe('ID of correct option (0-3)'),
+      });
+
+      try {
+        const result = await generateObject({
+          model,
+          schema: optionsSchema,
+          system: 'You are a German language expert creating multiple choice options for gap fill exercises.',
+          prompt: gapPrompt,
+          temperature: 0.7,
+        });
+
+        return {
+          prompt: `Lücke ${gap.gapNumber}: Welches Wort passt hier?`,
+          options: result.object.options,
+          correctOptionId: result.object.correctOptionId,
+          explanation: `Das richtige Wort ist "${gap.removedWord}".`,
+        };
+      } catch (error) {
+        console.error(`Error generating options for gap ${gap.gapNumber}:`, error);
+        throw error;
+      }
+    });
+
+    const questions = await Promise.all(questionPromises);
+
+    return {
+      theme: sourceWithGaps.theme,
+      title: sourceWithGaps.title,
+      subtitle: sourceWithGaps.subtitle,
+      context: sourceWithGaps.gappedContext,
+      questions: questions.map((q, idx) => ({
+        ...q,
+        isExample: idx === 0, // First question is example
+        exampleAnswer: idx === 0 ? q.correctOptionId : undefined,
+      })),
+    };
   } catch (error) {
     console.error('Error generating session questions with AI:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

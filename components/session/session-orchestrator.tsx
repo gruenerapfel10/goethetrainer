@@ -113,6 +113,7 @@ export function SessionOrchestrator() {
             key="all-questions-view"
             questions={allQuestions}
             showA4Format={showA4Format}
+            sessionId={sessionId}
             onSubmit={(answers) => {
               if (isNavigating) return;
 

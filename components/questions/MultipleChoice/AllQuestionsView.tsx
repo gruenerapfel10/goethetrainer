@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
+import { SessionResultsView } from '../SessionResultsView';
+import { QuestionResult } from '@/lib/sessions/questions/question-types';
 
 interface Question {
   id: string;
@@ -24,15 +26,30 @@ interface AllQuestionsViewProps {
   questions: Question[];
   onSubmit: (answers: Record<string, string>) => void;
   showA4Format?: boolean;
+  sessionId?: string; // Optional: if provided, will use marking API
 }
 
-export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: AllQuestionsViewProps) {
+export function AllQuestionsView({ questions, onSubmit, showA4Format = true, sessionId }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isMarking, setIsMarking] = useState(false);
+  const [results, setResults] = useState<{
+    results: QuestionResult[];
+    summary: {
+      totalQuestions: number;
+      correctAnswers: number;
+      incorrectAnswers: number;
+      totalScore: number;
+      maxScore: number;
+      percentage: number;
+    };
+  } | null>(null);
   const [activeView, setActiveView] = useState<'fragen' | 'quelle'>('fragen');
   const isMountedRef = useRef(true);
 
+  // Track if component is mounted
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -69,19 +86,88 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
     }
   };
 
-  const handleSubmit = () => {
-    if (!isMountedRef.current) return;
+  const handleSubmit = async () => {
+    console.log('🔵 handleSubmit called');
+    console.log('🔵 isMountedRef.current:', isMountedRef.current);
+    console.log('🔵 sessionId:', sessionId);
+    console.log('🔵 selectedAnswers:', selectedAnswers);
+
+    // Don't check isMountedRef here - it causes issues with React StrictMode
+    // The ref will be checked before state updates in callbacks
+
     setIsSubmitted(true);
-    setTimeout(() => {
-      if (isMountedRef.current) {
+    console.log('✅ Set isSubmitted to true');
+
+    // If sessionId is provided, use the marking API
+    if (sessionId) {
+      console.log('✅ SessionId found, using marking API');
+      setIsMarking(true);
+      try {
+        const url = `/api/sessions/${sessionId}/mark`;
+        console.log('🔵 Fetching:', url);
+        console.log('🔵 Request body:', { answers: selectedAnswers });
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            answers: selectedAnswers,
+          }),
+        });
+
+        console.log('🔵 Response status:', response.status);
+        console.log('🔵 Response ok:', response.ok);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('🔴 Response error:', errorText);
+          throw new Error('Failed to mark questions');
+        }
+
+        const data = await response.json();
+        console.log('✅ Received results:', data);
+        setResults(data);
+        console.log('✅ Set results state');
+      } catch (error) {
+        console.error('🔴 Error marking questions:', error);
+        // Fallback to simple marking
+        console.log('🔵 Falling back to onSubmit callback');
         onSubmit(selectedAnswers);
+      } finally {
+        setIsMarking(false);
+        console.log('✅ Set isMarking to false');
       }
-    }, 0);
+    } else {
+      console.log('⚠️ No sessionId, using fallback behavior');
+      // Fallback to old behavior
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          console.log('🔵 Calling onSubmit callback');
+          onSubmit(selectedAnswers);
+        }
+      }, 0);
+    }
   };
 
   const allQuestionsAnswered = questions
     .filter(q => !q.isExample)
     .every(q => selectedAnswers[q.id]);
+
+  // Show results view if results are available
+  if (results) {
+    console.log('✅ Rendering SessionResultsView with results:', results);
+    return (
+      <SessionResultsView
+        results={results.results}
+        summary={results.summary}
+        onClose={() => setResults(null)}
+      />
+    );
+  }
+
+  console.log('🔵 Rendering AllQuestionsView - isSubmitted:', isSubmitted, 'isMarking:', isMarking);
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -112,7 +198,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center bg-background dark:bg-sidebar"
+        className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar"
       >
         <div
           className="w-full h-full flex flex-col dark:bg-background"
@@ -162,14 +248,14 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
                                   !isSubmitted && !question.isExample && "cursor-pointer",
                                   isSubmitted && !isSelected && !showIncorrect && "text-muted-foreground"
                                 )}
-                                onClick={() => !isSubmitted && !question.isExample && handleSelectOption(question.id, option.id, question.isExample || false)}
+                                onClick={() => !isSubmitted && !question.isExample && handleSelectOption(question.id, option.id, !!question.isExample)}
                               >
                                 <MCQCheckbox
                                   letter={optionLetter}
                                   checked={isSelected}
-                                  onChange={() => handleSelectOption(question.id, option.id, question.isExample || false)}
-                                  disabled={isSubmitted || (question.isExample || false)}
-                                  isExample={question.isExample || false}
+                                  onChange={() => handleSelectOption(question.id, option.id, !!question.isExample)}
+                                  disabled={isSubmitted || !!question.isExample}
+                                  isExample={!!question.isExample}
                                   isCorrect={isCorrect}
                                   showFeedback={isSubmitted}
                                 />
@@ -227,9 +313,27 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
                         </p>
                       )}
 
-                      {/* Main text */}
-                      <p className="leading-7 whitespace-pre-wrap text-foreground text-sm" style={{ lineHeight: '1.6' }}>
-                        {questions[0].context}
+                      {/* Main text with gaps */}
+                      <p className="leading-7 text-foreground text-sm" style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                        {questions[0].context?.split(/(\[GAP_\d+\])/).map((part, idx) => {
+                          const match = part.match(/\[GAP_(\d+)\]/);
+                          if (match) {
+                            const gapNumber = match[1];
+                            const isExample = gapNumber === '0';
+                            return (
+                              <span key={idx} className="inline-block border border-foreground px-2 py-0 mx-1 text-foreground align-middle" style={{ lineHeight: '1.2' }}>
+                                {isExample ? (
+                                  <span className="font-bold">Beispiel 0</span>
+                                ) : (
+                                  <>
+                                    <span className="font-bold">{gapNumber}</span> ...
+                                  </>
+                                )}
+                              </span>
+                            );
+                          }
+                          return part;
+                        })}
                       </p>
                     </div>
                   </>
@@ -255,11 +359,14 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
 
             {/* Submit Button */}
             <button
-              onClick={handleSubmit}
-              disabled={isSubmitted || !allQuestionsAnswered}
+              onClick={() => {
+                console.log('🟡 Button clicked!');
+                handleSubmit();
+              }}
+              disabled={isSubmitted || !allQuestionsAnswered || isMarking}
               className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
             >
-              {isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
+              {isMarking ? 'Wird bewertet...' : isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
             </button>
           </div>
 
