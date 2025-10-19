@@ -155,6 +155,7 @@ const Sidebar = React.forwardRef<
     side?: "left" | "right"
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
+    resizable?: boolean
   }
 >(
   (
@@ -162,6 +163,7 @@ const Sidebar = React.forwardRef<
       side = "left",
       variant = "sidebar",
       collapsible = "offcanvas",
+      resizable = false,
       className,
       children,
       ...props
@@ -175,11 +177,15 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+            resizable && side === "right" && "relative",
             className
           )}
           ref={ref}
           {...props}
         >
+          {resizable && side === "right" && (
+            <div className="absolute -left-2 top-0 bottom-0 w-1.5 rounded-full bg-sidebar-border/30 hover:bg-sidebar-border/60 transition-colors"></div>
+          )}
           {children}
         </div>
       )
@@ -212,12 +218,16 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn(SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION, state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]")}
+        className={cn(SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION, state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]", resizable && side === "right" && "relative")}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
+        data-resizable={resizable}
       >
+        {resizable && side === "right" && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1.5 rounded-full bg-sidebar-border hover:bg-sidebar-accent transition-colors"></div>
+        )}
         {children}
       </aside>
     )

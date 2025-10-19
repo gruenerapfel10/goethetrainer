@@ -3,7 +3,7 @@ import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -12,7 +12,8 @@ export async function GET(
       return new Response('Unauthorized', { status: 401 });
     }
 
-    const chat = await getChatById({ id: params.id });
+    const { id } = await params;
+    const chat = await getChatById({ id });
     
     if (!chat) {
       return new Response('Chat not found', { status: 404 });
@@ -23,7 +24,7 @@ export async function GET(
       return new Response('Forbidden', { status: 403 });
     }
 
-    const messages = await getMessagesByChatId({ id: params.id });
+    const messages = await getMessagesByChatId({ id });
 
     return new Response(
       JSON.stringify({

@@ -278,7 +278,7 @@ export function ChatProvider({
   } = useAiChat({
     id: chatId,
     generateId: generateUUID,
-    resume: true, // Enable stream resumption
+    resume: initialMessages.length > 0, // Only resume if there are existing messages
     transport: new DefaultChatTransport({
       // Configure how to prepare the reconnection request
       prepareReconnectToStreamRequest: ({ id }) => ({

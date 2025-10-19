@@ -1,8 +1,11 @@
+import { SessionPageProvider } from '@/lib/sessions/session-page-context';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import SessionPage from '@/components/session/session-page';
+
 export default function ReadingPage() {
   return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold">Reading</h1>
-      <p className="text-gray-600 mt-4">Reading comprehension training</p>
-    </div>
+    <SessionPageProvider sessionType={SessionTypeEnum.READING}>
+      <SessionPage />
+    </SessionPageProvider>
   );
 }
