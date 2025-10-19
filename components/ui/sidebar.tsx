@@ -184,7 +184,7 @@ const Sidebar = React.forwardRef<
           {...props}
         >
           {resizable && side === "right" && (
-            <div className="absolute -left-2 top-0 bottom-0 w-1.5 rounded-full bg-sidebar-border/30 hover:bg-sidebar-border/60 transition-colors"></div>
+            <div className="absolute -left-2 top-1/2 -translate-y-1/2 h-20 w-1.5 rounded-full bg-black/80 hover:bg-black transition-colors"></div>
           )}
           {children}
         </div>
@@ -225,9 +225,6 @@ const Sidebar = React.forwardRef<
         data-side={side}
         data-resizable={resizable}
       >
-        {resizable && side === "right" && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1.5 rounded-full bg-sidebar-border hover:bg-sidebar-accent transition-colors"></div>
-        )}
         {children}
       </aside>
     )
@@ -264,9 +261,7 @@ SidebarTrigger.displayName = "SidebarTrigger"
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button">
->(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
-
+>(() => {
   return null // Remove the rail completely
 })
 SidebarRail.displayName = "SidebarRail"
