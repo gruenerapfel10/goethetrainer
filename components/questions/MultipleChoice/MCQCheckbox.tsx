@@ -33,9 +33,9 @@ export function MCQCheckbox({
         'font-bold text-xs font-mono transition-all',
         'cursor-pointer',
         // Default state - no visible border
-        !checked && !showFeedback && 'border-gray-300 bg-white',
+        !checked && !showFeedback && 'border-gray-300 bg-white hover:bg-gray-50',
         // Selected state
-        !showFeedback && checked && !isExample && 'border-blue-600 bg-white text-blue-600',
+        !showFeedback && checked && !isExample && 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50',
         // Example state (always unchecked but greyed out)
         isExample && !showFeedback && 'border-gray-300 bg-gray-50 text-gray-500 cursor-default',
         // Correct answer
