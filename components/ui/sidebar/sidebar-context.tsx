@@ -30,8 +30,8 @@ export function useSidebar() {
   return context
 }
 
-const SIDEBAR_WIDTH_DEFAULT = 256
-const SIDEBAR_WIDTH_MIN = 200
+const SIDEBAR_WIDTH_DEFAULT = 160
+const SIDEBAR_WIDTH_MIN = 140
 const SIDEBAR_WIDTH_MAX = 400
 const SIDEBAR_WIDTH_COOKIE = 'sidebar_width'
 

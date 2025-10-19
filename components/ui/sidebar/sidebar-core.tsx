@@ -105,7 +105,7 @@ export const Sidebar = React.forwardRef<
         if (saved) return parseInt(saved[1])
       }
       // Default widths
-      return side === "left" ? 256 : 480
+      return side === "left" ? 160 : 480
     })
 
     const handleWidthChange = React.useCallback((newWidth: number) => {
