@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { MCQCheckbox } from './MCQCheckbox';
 
 interface Question {
   id: string;
@@ -142,43 +143,33 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                       const showIncorrect = isSubmitted && isSelected && !isCorrect;
 
                       return (
-                        <label
+                        <div
                           key={option.id}
                           className={cn(
-                            "flex items-start gap-3 cursor-pointer transition-all p-4 rounded-lg border-2 border-gray-200 min-h-[80px]",
+                            "flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 min-h-[80px] transition-all",
                             !isSubmitted && isSelected && !question.isExample && "border-blue-600 bg-blue-50",
                             showCorrect && "border-green-600 bg-green-50",
                             showIncorrect && "border-red-600 bg-red-50",
-                            question.isExample && "cursor-default",
                             !isSubmitted && !isSelected && "hover:border-gray-400 hover:bg-gray-50"
                           )}
                         >
-                          <input
-                            type="checkbox"
+                          <MCQCheckbox
+                            letter={optionLetter}
                             checked={isSelected}
                             onChange={() => handleSelectOption(question.id, option.id, question.isExample || false)}
                             disabled={isSubmitted || question.isExample}
-                            className={cn(
-                              "w-5 h-5 mt-0.5 flex-shrink-0",
-                              question.isExample ? "cursor-default" : "cursor-pointer"
-                            )}
+                            isExample={question.isExample || false}
+                            isCorrect={isCorrect}
+                            showFeedback={isSubmitted}
                           />
-                          <div className="flex-1 flex flex-col">
-                            <span className="text-gray-700 font-semibold">
-                              {optionLetter})
-                            </span>
-                            <span className={cn(
-                              "text-sm mt-1 flex-1",
-                              showCorrect && "text-green-700 font-medium",
-                              showIncorrect && "text-red-700"
-                            )}>
-                              {option.text}
-                            </span>
-                          </div>
-                          {question.isExample && isSelected && (
-                            <span className="text-black font-bold flex-shrink-0 mt-1">✗</span>
-                          )}
-                        </label>
+                          <span className={cn(
+                            "text-sm flex-1 pt-1",
+                            showCorrect && "text-green-700 font-medium",
+                            showIncorrect && "text-red-700"
+                          )}>
+                            {option.text}
+                          </span>
+                        </div>
                       );
                     })}
                   </div>
