@@ -89,10 +89,10 @@ export const ResizePill = ({
       <div 
         onMouseDown={handleMouseDown}
         className={cn(
-          "absolute top-1/2 -translate-y-1/2 h-16 w-1.5 rounded-full cursor-col-resize z-50",
-          "bg-border/50 hover:bg-primary/50 transition-colors",
-          side === "left" ? "-right-0.75" : "-left-0.75",
-          isDragging && "bg-primary"
+          "absolute top-1/2 -translate-y-1/2 h-20 w-2 rounded-full cursor-col-resize z-50",
+          "bg-primary/30 hover:bg-primary/60 transition-all",
+          side === "left" ? "-right-1" : "-left-1",
+          isDragging && "bg-primary scale-y-125"
         )}
       />
       
