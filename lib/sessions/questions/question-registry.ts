@@ -2,7 +2,13 @@ import { z } from 'zod';
 import { SessionTypeEnum } from '../session-registry';
 
 export enum QuestionTypeName {
-  // Reading question types
+  // Reading question types (Goethe C1 compliant)
+  GAP_TEXT_MULTIPLE_CHOICE = 'gap_text_multiple_choice', // Lückentext mit Multiple-Choice
+  MULTIPLE_CHOICE_3 = 'multiple_choice_3', // Multiple-Choice (3-gliedrig)
+  GAP_TEXT_MATCHING = 'gap_text_matching', // Lückentext mit Zuordnung
+  STATEMENT_MATCHING = 'statement_matching', // Zuordnung von Aussagen
+  
+  // Legacy question types (kept for backward compatibility)
   MULTIPLE_CHOICE = 'multiple_choice',
   TRUE_FALSE = 'true_false',
   SHORT_ANSWER = 'short_answer',
@@ -98,6 +104,150 @@ const MultipleChoiceMarkingSchema = z.object({
 
 // Complete registry of all question types
 export const QUESTION_METADATA: Record<QuestionTypeName, QuestionMetadata> = {
+  // Goethe C1 Reading Question Types
+  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: {
+    name: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
+    displayName: 'Gap Text with Multiple Choice',
+    description: 'Fill gaps in text by selecting from 4 options',
+    category: 'selection',
+    supportedSessions: [SessionTypeEnum.READING],
+    markingMethod: MarkingMethod.AUTOMATIC,
+    markingSchema: z.object({
+      selectedOptions: z.array(z.string()),
+      correctOptions: z.array(z.string()),
+      points: z.number(),
+    }),
+    generationSchema: z.object({
+      text: z.string().describe('Text with [GAP_1], [GAP_2] markers'),
+      gaps: z.array(z.object({
+        id: z.string(),
+        options: z.array(z.object({
+          id: z.string(),
+          text: z.string(),
+        })).length(4),
+        correctOptionId: z.string(),
+      })),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
+      points: z.number().default(8),
+    }),
+    answerSchema: z.object({
+      selectedOptions: z.record(z.string(), z.string()),
+      timeSpent: z.number().optional(),
+    }),
+    supportsHints: false,
+    supportsPartialCredit: true,
+    defaultPoints: 8,
+    defaultTimeLimit: 600,
+  },
+
+  [QuestionTypeName.MULTIPLE_CHOICE_3]: {
+    name: QuestionTypeName.MULTIPLE_CHOICE_3,
+    displayName: 'Multiple Choice (3 Options)',
+    description: 'Select the correct answer from 3 options',
+    category: 'selection',
+    supportedSessions: [SessionTypeEnum.READING],
+    markingMethod: MarkingMethod.AUTOMATIC,
+    markingSchema: z.object({
+      selectedOptionId: z.string(),
+      correctOptionId: z.string(),
+      points: z.number(),
+    }),
+    generationSchema: z.object({
+      prompt: z.string().describe('The question prompt text'),
+      context: z.string().describe('Reading passage or context'),
+      options: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        isCorrect: z.boolean().optional(),
+      })).length(3),
+      correctOptionId: z.string(),
+      explanation: z.string(),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
+      points: z.number().default(7),
+    }),
+    answerSchema: z.object({
+      selectedOptionId: z.string(),
+      timeSpent: z.number().optional(),
+    }),
+    supportsHints: false,
+    supportsPartialCredit: false,
+    defaultPoints: 7,
+    defaultTimeLimit: 300,
+  },
+
+  [QuestionTypeName.GAP_TEXT_MATCHING]: {
+    name: QuestionTypeName.GAP_TEXT_MATCHING,
+    displayName: 'Gap Text with Sentence Matching',
+    description: 'Match sentences to gaps in the text',
+    category: 'selection',
+    supportedSessions: [SessionTypeEnum.READING],
+    markingMethod: MarkingMethod.AUTOMATIC,
+    markingSchema: z.object({
+      matches: z.record(z.string(), z.string()),
+      correctMatches: z.record(z.string(), z.string()),
+      points: z.number(),
+    }),
+    generationSchema: z.object({
+      text: z.string().describe('Text with numbered gaps'),
+      sentences: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        correctGapId: z.string().optional(),
+      })).min(8).max(10),
+      gaps: z.array(z.object({
+        id: z.string(),
+        correctSentenceId: z.string(),
+      })),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
+      points: z.number().default(8),
+    }),
+    answerSchema: z.object({
+      matches: z.record(z.string(), z.string()),
+      timeSpent: z.number().optional(),
+    }),
+    supportsHints: false,
+    supportsPartialCredit: true,
+    defaultPoints: 8,
+    defaultTimeLimit: 900,
+  },
+
+  [QuestionTypeName.STATEMENT_MATCHING]: {
+    name: QuestionTypeName.STATEMENT_MATCHING,
+    displayName: 'Statement Matching',
+    description: 'Match statements to different texts or authors',
+    category: 'selection',
+    supportedSessions: [SessionTypeEnum.READING],
+    markingMethod: MarkingMethod.AUTOMATIC,
+    markingSchema: z.object({
+      matches: z.record(z.string(), z.string()),
+      correctMatches: z.record(z.string(), z.string()),
+      points: z.number(),
+    }),
+    generationSchema: z.object({
+      texts: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        content: z.string(),
+      })).min(2).max(4),
+      statements: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        correctTextId: z.string().nullable(),
+      })).min(5).max(10),
+      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
+      points: z.number().default(7),
+    }),
+    answerSchema: z.object({
+      matches: z.record(z.string(), z.string().nullable()),
+      timeSpent: z.number().optional(),
+    }),
+    supportsHints: false,
+    supportsPartialCredit: true,
+    defaultPoints: 7,
+    defaultTimeLimit: 750,
+  },
+
+  // Legacy question types (kept for backward compatibility)
   [QuestionTypeName.MULTIPLE_CHOICE]: {
     name: QuestionTypeName.MULTIPLE_CHOICE,
     displayName: 'Multiple Choice',

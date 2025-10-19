@@ -27,6 +27,10 @@ import {
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
+import { GapTextMultipleChoice } from '@/components/questions/GapTextMultipleChoice/GapTextMultipleChoice';
+import { MultipleChoice3 } from '@/components/questions/MultipleChoice3/MultipleChoice3';
+import { GapTextMatching } from '@/components/questions/GapTextMatching/GapTextMatching';
+import { StatementMatching } from '@/components/questions/StatementMatching/StatementMatching';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 
@@ -258,6 +262,20 @@ export function SessionOrchestrator() {
     const registryType = currentQuestion.registryType as QuestionTypeName;
     
     switch (registryType) {
+      // Goethe C1 Reading Question Types
+      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
+        return <GapTextMultipleChoice {...questionProps} />;
+        
+      case QuestionTypeName.MULTIPLE_CHOICE_3:
+        return <MultipleChoice3 {...questionProps} />;
+        
+      case QuestionTypeName.GAP_TEXT_MATCHING:
+        return <GapTextMatching {...questionProps} />;
+        
+      case QuestionTypeName.STATEMENT_MATCHING:
+        return <StatementMatching {...questionProps} />;
+        
+      // Legacy question types (kept for backward compatibility)
       case QuestionTypeName.MULTIPLE_CHOICE:
         return <MultipleChoice {...questionProps} />;
         

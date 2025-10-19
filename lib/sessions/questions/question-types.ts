@@ -46,6 +46,7 @@ export interface QuestionOption {
   id: string;
   text: string;
   isCorrect?: boolean;
+  label?: string; // For MULTIPLE_CHOICE_3 (e.g., 'a)', 'b)', 'c)')
 }
 
 export interface Question {
@@ -63,6 +64,32 @@ export interface Question {
   context?: string; // For reading/listening passages
   options?: QuestionOption[]; // For multiple choice
   correctAnswer?: string | string[]; // For validation
+  
+  // Goethe C1 specific fields
+  gaps?: Array<{
+    id: string;
+    options?: string[];
+    correctAnswer?: string;
+  }>; // For GAP_TEXT_MULTIPLE_CHOICE and GAP_TEXT_MATCHING
+  
+  sentences?: Array<{
+    id: string;
+    text: string;
+  }>; // For GAP_TEXT_MATCHING
+  
+  texts?: Array<{
+    id: string;
+    label: string;
+    content: string;
+  }>; // For STATEMENT_MATCHING
+  
+  statements?: Array<{
+    id: string;
+    text: string;
+  }>; // For STATEMENT_MATCHING
+  
+  correctMatches?: Record<string, string>; // For GAP_TEXT_MATCHING and STATEMENT_MATCHING
+  label?: string; // For MULTIPLE_CHOICE_3 options
   
   // Metadata
   points: number;

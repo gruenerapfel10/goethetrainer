@@ -123,12 +123,12 @@ export const readingSessionConfig: SessionConfig = {
     },
   },
   
-  // Supported question types for reading sessions
+  // Supported question types for reading sessions (Goethe C1 compliant)
   supportedQuestions: [
-    QuestionTypeName.MULTIPLE_CHOICE,
-    QuestionTypeName.TRUE_FALSE,
-    QuestionTypeName.SHORT_ANSWER,
-    QuestionTypeName.FILL_IN_BLANK,
+    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
+    QuestionTypeName.MULTIPLE_CHOICE_3,
+    QuestionTypeName.GAP_TEXT_MATCHING,
+    QuestionTypeName.STATEMENT_MATCHING,
   ],
   
   features: {
