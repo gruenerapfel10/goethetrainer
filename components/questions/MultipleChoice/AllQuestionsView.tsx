@@ -85,7 +85,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
               {/* Question row with number and options */}
               <div className="flex gap-8 items-start">
                 {/* Question number */}
-                <div className="font-bold text-lg min-w-[30px] flex-shrink-0">
+                <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
                   {qIndex}
                 </div>
 
