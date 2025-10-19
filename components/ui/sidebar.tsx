@@ -276,7 +276,7 @@ const SidebarRail = React.forwardRef<
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "absolute top-1/2 z-20 hidden h-16 w-1 -translate-y-1/2 -translate-x-1/2 rounded-full bg-sidebar-border/50 transition-all ease-linear hover:h-24 hover:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
+        "absolute top-1/2 -translate-y-1/2 z-20 hidden h-40 w-1.5 rounded-full bg-sidebar-border/30 transition-colors hover:bg-sidebar-border/60 group-data-[side=left]:-right-2 group-data-[side=right]:-left-2 sm:block",
         "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:hover:bg-sidebar",
