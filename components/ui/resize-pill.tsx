@@ -19,16 +19,17 @@ export const ResizePill = ({
   defaultWidth = 256
 }: ResizePillProps) => {
   const [isResizing, setIsResizing] = React.useState(false)
+  const [isHovering, setIsHovering] = React.useState(false)
   const [width, setWidth] = React.useState(defaultWidth)
-  const containerRef = React.useRef<HTMLDivElement>(null)
+  const pillRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     if (!isResizing) return
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!containerRef.current) return
+      if (!pillRef.current) return
       
-      const container = containerRef.current.parentElement
+      const container = pillRef.current.parentElement
       if (!container) return
 
       const containerRect = container.getBoundingClientRect()
@@ -56,6 +57,7 @@ export const ResizePill = ({
 
     const handleMouseUp = () => {
       setIsResizing(false)
+      setIsHovering(false)
       document.body.style.cursor = ''
       document.body.style.userSelect = ''
       
@@ -75,6 +77,7 @@ export const ResizePill = ({
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setIsResizing(true)
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
@@ -82,22 +85,29 @@ export const ResizePill = ({
 
   return (
     <>
+      {/* Invisible hit area for better UX */}
       <div 
-        ref={containerRef}
-        onMouseDown={handleMouseDown}
         className={cn(
-          "absolute top-0 h-full w-3 z-50 cursor-col-resize group",
-          side === "left" ? "-right-1.5" : "-left-1.5",
-          "hover:bg-primary/10 active:bg-primary/20"
+          "absolute top-0 h-full w-2 z-50",
+          side === "left" ? "-right-1" : "-left-1"
         )}
       >
-        <div className={cn(
-          "absolute top-1/2 -translate-y-1/2 h-20 w-1 rounded-full",
-          side === "left" ? "right-1" : "left-1",
-          "bg-border group-hover:bg-primary/50 transition-colors",
-          isResizing && "bg-primary"
-        )} />
+        {/* The visible pill */}
+        <div 
+          ref={pillRef}
+          onMouseDown={handleMouseDown}
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => !isResizing && setIsHovering(false)}
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 h-16 w-1.5 rounded-full cursor-col-resize",
+            "transition-all duration-200",
+            side === "left" ? "right-0.5" : "left-0.5",
+            isResizing ? "bg-primary h-24" : isHovering ? "bg-primary/50" : "bg-border/50",
+            isHovering && !isResizing && "scale-y-110"
+          )}
+        />
       </div>
+      
       {/* Overlay to capture mouse events when resizing */}
       {isResizing && (
         <div 
