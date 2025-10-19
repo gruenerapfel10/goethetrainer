@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { useRightSidebar } from '@/lib/right-sidebar-context';
 import { SidebarChat } from './sidebar-chat';
+import { Sidebar } from '@/components/ui/sidebar';
 import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
@@ -31,14 +32,16 @@ export function AppRightbar() {
     }
   );
 
-  // Simple div with direct width control - no complex sidebar component
+  // Use the improved Sidebar component with externalOpen prop
   return (
-    <div
+    <Sidebar
+      side="right"
+      resizable={true}
+      collapsible="none"
+      externalOpen={isOpen}
       className={cn(
-        "bg-sidebar text-sidebar-foreground transition-all duration-200 ease-in-out overflow-hidden flex-shrink-0",
-        !isOpen && "w-0"
+        "flex-shrink-0"
       )}
-      style={{ width: isOpen ? '480px' : '0px' }}
     >
       {isOpen && chatId && (
         <div className="p-0 flex flex-col h-full overflow-hidden">
@@ -55,6 +58,6 @@ export function AppRightbar() {
           />
         </div>
       )}
-    </div>
+    </Sidebar>
   );
 }

@@ -6,19 +6,26 @@ import { cn } from "@/lib/utils"
 interface ResizePillProps {
   side: "left" | "right"
   onWidthChange?: (width: number) => void
+  onDraggingChange?: (isDragging: boolean) => void
   minWidth?: number
   maxWidth?: number
   defaultWidth?: number
 }
 
-export const ResizePill = ({ 
-  side, 
+export const ResizePill = ({
+  side,
   onWidthChange,
+  onDraggingChange,
   minWidth = 200,
   maxWidth = 600,
   defaultWidth = 256
 }: ResizePillProps) => {
   const [isDragging, setIsDragging] = React.useState(false)
+
+  // Notify parent when dragging state changes
+  React.useEffect(() => {
+    onDraggingChange?.(isDragging)
+  }, [isDragging, onDraggingChange])
   const startX = React.useRef(0)
   const startWidth = React.useRef(defaultWidth)
 

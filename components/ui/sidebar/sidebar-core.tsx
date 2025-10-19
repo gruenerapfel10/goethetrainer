@@ -81,6 +81,7 @@ export const Sidebar = React.forwardRef<
     variant?: "sidebar" | "floating" | "inset"
     collapsible?: "offcanvas" | "icon" | "none"
     resizable?: boolean
+    externalOpen?: boolean  // New prop for external control (e.g., from RightSidebarProvider)
   }
 >(
   (
@@ -89,6 +90,7 @@ export const Sidebar = React.forwardRef<
       variant = "sidebar",
       collapsible = "offcanvas",
       resizable = false,
+      externalOpen,
       className,
       children,
       ...props
@@ -96,6 +98,11 @@ export const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+
+    // Use external open state if provided, otherwise use context state
+    const actualState = externalOpen !== undefined
+      ? (externalOpen ? "expanded" : "collapsed")
+      : state
     
     // Manage width independently for each sidebar
     const [sidebarWidth, setSidebarWidth] = React.useState(() => {
@@ -107,6 +114,8 @@ export const Sidebar = React.forwardRef<
       // Default widths
       return side === "left" ? 160 : 480
     })
+
+    const [isDragging, setIsDragging] = React.useState(false)
 
     const handleWidthChange = React.useCallback((newWidth: number) => {
       setSidebarWidth(newWidth)
@@ -140,24 +149,37 @@ export const Sidebar = React.forwardRef<
     }
 
     // Desktop view - unified logic for both left and right sidebars
-    const isCollapsed = collapsible !== "none" && state === "collapsed"
+    const isCollapsed = collapsible !== "none" && actualState === "collapsed"
     const showResizePill = resizable && !isCollapsed
+
+    // If externally controlled and closed, render empty sidebar
+    if (externalOpen !== undefined && !externalOpen) {
+      return (
+        <aside
+          ref={ref}
+          className={cn("w-0 overflow-hidden", className)}
+          data-state="collapsed"
+          data-side={side}
+          {...props}
+        />
+      )
+    }
 
     return (
       <aside
         ref={ref}
         className={cn(
           "flex h-full flex-col bg-sidebar text-sidebar-foreground overflow-y-auto",
-          !resizable && SIDEBAR_TRANSITION, // Only add transition when not resizable
+          (!resizable || !isDragging) && SIDEBAR_TRANSITION, // Add transition when not dragging
           resizable && "relative",
           className
         )}
         style={{
-          width: resizable 
+          width: resizable
             ? (isCollapsed ? "3rem" : `${sidebarWidth}px`)
             : (isCollapsed ? "var(--sidebar-width-icon)" : "var(--sidebar-width)")
         }}
-        data-state={state}
+        data-state={actualState}
         data-collapsible={isCollapsed ? collapsible : ""}
         data-variant={variant}
         data-side={side}
@@ -165,10 +187,11 @@ export const Sidebar = React.forwardRef<
         {...props}
       >
         {showResizePill && (
-          <ResizePill 
+          <ResizePill
             side={side}
             defaultWidth={sidebarWidth}
             onWidthChange={handleWidthChange}
+            onDraggingChange={setIsDragging}
             minWidth={200}
             maxWidth={side === "left" ? 400 : 600}
           />
