@@ -25,6 +25,7 @@ interface AllQuestionsViewProps {
 export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [activeView, setActiveView] = useState<'fragen' | 'quelle'>('fragen');
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -71,6 +72,35 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-12 py-6 overflow-x-visible pt-8">
         <div className="w-full overflow-visible">
+          {/* Quelle/Fragen Toggle */}
+          <div className="mb-6 flex gap-2">
+            <button
+              onClick={() => setActiveView('fragen')}
+              className={cn(
+                "px-4 py-2 rounded font-medium transition-colors",
+                activeView === 'fragen'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              Fragen
+            </button>
+            <button
+              onClick={() => setActiveView('quelle')}
+              className={cn(
+                "px-4 py-2 rounded font-medium transition-colors",
+                activeView === 'quelle'
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              )}
+            >
+              Quelle
+            </button>
+          </div>
+
+          {/* Show based on active view */}
+          {activeView === 'fragen' ? (
+            <>
           {/* Goethe Exam Header */}
           <GoetheHeader />
 
@@ -130,6 +160,23 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
               </div>
             </div>
           ))}
+            </>
+          ) : (
+            // Quelle (Source) View
+            <div className="space-y-6 max-w-3xl mx-auto">
+              {questions[0]?.context ? (
+                <div className="bg-card p-8 rounded-lg border border-border">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
+                    {questions[0].context}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-12">
+                  Keine Quelle verfügbar
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
