@@ -53,14 +53,13 @@ export const SidebarProvider = React.forwardRef<
           <div
             style={
               {
-                "--sidebar-width": `${contextValue.width}px`,
+                "--sidebar-width": SIDEBAR_WIDTH,
                 "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
                 ...style,
               } as React.CSSProperties
             }
             className={cn(
               "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
-              contextValue.isResizing && "select-none",
               className
             )}
             ref={ref}
@@ -105,6 +104,7 @@ export const Sidebar = React.forwardRef<
         const saved = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`))
         if (saved) return parseInt(saved[1])
       }
+      // Default widths
       return side === "left" ? 256 : 480
     })
 
@@ -114,38 +114,7 @@ export const Sidebar = React.forwardRef<
       document.cookie = `${cookieName}=${newWidth}; path=/; max-age=${60 * 60 * 24 * 7}`
     }, [side])
 
-    // For non-collapsible sidebars (like the right sidebar)
-    if (collapsible === "none") {
-      return (
-        <div
-          className={cn(
-            "flex h-full flex-col bg-sidebar text-sidebar-foreground",
-            resizable && "relative",
-            className
-          )}
-          style={{ 
-            width: resizable ? `${sidebarWidth}px` : 'auto',
-            minWidth: resizable ? '200px' : undefined,
-            maxWidth: resizable ? '600px' : undefined
-          }}
-          ref={ref}
-          {...props}
-        >
-          {resizable && (
-            <ResizePill 
-              side={side}
-              defaultWidth={sidebarWidth}
-              onWidthChange={handleWidthChange}
-              minWidth={200}
-              maxWidth={side === "left" ? 400 : 600}
-            />
-          )}
-          {children}
-        </div>
-      )
-    }
-
-    // Mobile view
+    // Mobile view - show as sheet
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -170,28 +139,32 @@ export const Sidebar = React.forwardRef<
       )
     }
 
-    // Desktop collapsible sidebar (left sidebar)
+    // Desktop view - unified logic for both left and right sidebars
+    const isCollapsed = collapsible !== "none" && state === "collapsed"
+    const showResizePill = resizable && !isCollapsed
+
     return (
       <aside
         ref={ref}
         className={cn(
-          SIDEBAR_BASE_CLASSES, 
+          "flex h-full flex-col bg-sidebar text-sidebar-foreground",
           SIDEBAR_TRANSITION,
           resizable && "relative",
           className
         )}
         style={{
           width: resizable 
-            ? (state === "collapsed" ? "3rem" : `${sidebarWidth}px`)
-            : (state === "collapsed" ? "var(--sidebar-width-icon)" : "var(--sidebar-width)")
+            ? (isCollapsed ? "3rem" : `${sidebarWidth}px`)
+            : (isCollapsed ? "var(--sidebar-width-icon)" : "var(--sidebar-width)")
         }}
         data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
+        data-collapsible={isCollapsed ? collapsible : ""}
         data-variant={variant}
         data-side={side}
         data-resizable={resizable}
+        {...props}
       >
-        {resizable && state !== "collapsed" && (
+        {showResizePill && (
           <ResizePill 
             side={side}
             defaultWidth={sidebarWidth}
