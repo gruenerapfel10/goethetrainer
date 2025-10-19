@@ -15,7 +15,15 @@ type RightSidebarContextProps = {
 const RightSidebarContext = createContext<RightSidebarContextProps | undefined>(undefined);
 
 export function RightSidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setOpenState] = useState(true);
+  const [isOpen, setOpenState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = document.cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+      if (saved) {
+        return saved[1] === 'true';
+      }
+    }
+    return false; // Default to closed
+  });
 
   const setOpen = useCallback((open: boolean) => {
     setOpenState(open);

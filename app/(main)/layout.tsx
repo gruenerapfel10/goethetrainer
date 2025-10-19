@@ -17,7 +17,7 @@ export default async function MainLayout({
   return (
     <LearningSessionProvider>
       <RightSidebarProvider>
-        <SidebarProvider defaultOpen={true} className="flex flex-col h-screen">
+        <SidebarProvider defaultOpen={false} className="flex flex-col h-screen">
           <KeyboardShortcutHandler />
           <AppNavbar />
           <div className="flex-1 min-h-0 bg-sidebar flex">
