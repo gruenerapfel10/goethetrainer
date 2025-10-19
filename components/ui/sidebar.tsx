@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/tooltip"
 
 import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON, SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION } from "@/lib/sidebar-constants"
+import { ResizePill } from "@/components/ui/resize-pill"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -177,15 +178,13 @@ const Sidebar = React.forwardRef<
         <div
           className={cn(
             "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
-            resizable && side === "right" && "relative",
+            resizable && "relative",
             className
           )}
           ref={ref}
           {...props}
         >
-          {resizable && side === "right" && (
-            <div className="absolute -left-2 top-1/2 -translate-y-1/2 h-20 w-1.5 rounded-full bg-black/80 hover:bg-black transition-colors"></div>
-          )}
+          {resizable && <ResizePill side={side} />}
           {children}
         </div>
       )
@@ -218,13 +217,14 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn(SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION, state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]", resizable && side === "right" && "relative")}
+        className={cn(SIDEBAR_BASE_CLASSES, SIDEBAR_TRANSITION, state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]", resizable && "relative")}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
         data-side={side}
         data-resizable={resizable}
       >
+        {resizable && <ResizePill side={side} />}
         {children}
       </aside>
     )
