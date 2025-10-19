@@ -44,7 +44,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
       percentage: number;
     };
   } | null>(null);
-  const [activeView, setActiveView] = useState<'fragen' | 'quelle'>('fragen');
+  const [activeView, setActiveView] = useState<'fragen' | 'quelle'>('quelle');
   const isMountedRef = useRef(true);
 
   // Track if component is mounted
@@ -237,7 +237,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
                           const isFirstOption = index === 0;
 
                           return (
-                            <div key={option.id} className="flex-1 relative">
+                            <div key={option.id} className="flex-1 min-w-0 relative">
                               {/* Example label above first option */}
                               {isFirstOption && question.isExample && (
                                 <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
@@ -259,7 +259,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
                                   isCorrect={isCorrect}
                                   showFeedback={isSubmitted}
                                 />
-                                <span className="text-sm">
+                                <span className="text-sm break-words hyphens-auto" lang="de">
                                   {option.text}
                                 </span>
                               </div>
