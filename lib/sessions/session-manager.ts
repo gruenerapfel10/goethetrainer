@@ -1,5 +1,3 @@
-import 'server-only';
-
 import { generateUUID } from '@/lib/utils';
 import { 
   SessionTypeEnum,
@@ -10,6 +8,10 @@ import {
 } from './session-registry';
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
+import { generateQuestions } from './questions/question-generator';
+import { markQuestions } from './questions/question-marker';
+import type { Question, UserAnswer, QuestionResult, QuestionDifficulty } from './questions/question-types';
+import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
 
 export class SessionManager {
   private sessionId: string;
@@ -18,6 +20,12 @@ export class SessionManager {
   private startTime: Date | null = null;
   private pausedDuration: number = 0;
   private lastPauseTime: Date | null = null;
+  
+  // Question flow management
+  private questions: Question[] = [];
+  private currentQuestionIndex: number = 0;
+  private userAnswers: UserAnswer[] = [];
+  private questionResults: QuestionResult[] = [];
 
   constructor(userId: string, sessionId?: string) {
     this.userId = userId;
@@ -32,6 +40,19 @@ export class SessionManager {
       if (!this.session) {
         throw new Error(`Session ${sessionId} not found`);
       }
+      
+      // Restore questions from session data if available
+      if (this.session.data?.allQuestions) {
+        this.questions = this.session.data.allQuestions;
+        this.currentQuestionIndex = this.session.data.currentQuestionIndex || 0;
+        this.userAnswers = this.session.data.answers || [];
+        this.questionResults = this.session.data.results || [];
+      } else {
+        this.questions = [];
+        this.currentQuestionIndex = 0;
+        this.userAnswers = [];
+        this.questionResults = [];
+      }
     }
   }
 
@@ -42,6 +63,16 @@ export class SessionManager {
     const config = getSessionConfig(type);
     const initialData = initializeSessionData(type);
     
+    // Generate questions for the session
+    const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
+    const questionCount = metadata?.questionCount || 10;
+    
+    this.questions = generateQuestions(type, difficulty, questionCount);
+    
+    this.currentQuestionIndex = 0;
+    this.userAnswers = [];
+    this.questionResults = [];
+    
     const session: Session = {
       id: this.sessionId,
       userId: this.userId,
@@ -49,14 +80,29 @@ export class SessionManager {
       status: 'active' as SessionStatus,
       startedAt: new Date(),
       duration: 0,
-      data: initialData,
+      data: {
+        ...initialData,
+        // Store question-related data
+        totalQuestions: this.questions.length,
+        questionsAnswered: 0,
+        currentQuestionIndex: 0,
+        allQuestions: this.questions, // Store the full questions array
+        answers: [],
+        results: [],
+      },
       metadata: {
         ...metadata,
         config: {
           displayName: config.metadata.displayName,
           icon: config.metadata.icon,
           color: config.metadata.color,
-        }
+        },
+        questions: this.questions.map(q => ({
+          id: q.id,
+          type: q.type,
+          difficulty: q.difficulty,
+          points: q.points
+        }))
       }
     } as Session;
 
@@ -76,9 +122,16 @@ export class SessionManager {
 
     const type = this.session.type as SessionTypeEnum;
     
+    // Always keep questions synced
+    const questionsData = {
+      allQuestions: this.questions,
+      currentQuestionIndex: this.currentQuestionIndex,
+    };
+    
     // Merge updates with existing data
     const updatedData = {
       ...this.session.data,
+      ...questionsData,
       ...updates
     };
 
@@ -204,6 +257,175 @@ export class SessionManager {
     
     const type = this.session.type as SessionTypeEnum;
     return calculateSessionMetrics(type, this.session.data, this.calculateDuration());
+  }
+
+  // Question flow methods
+  getCurrentQuestion(): Question | null {
+    if (!this.questions.length || this.currentQuestionIndex >= this.questions.length) {
+      return null;
+    }
+    return this.questions[this.currentQuestionIndex];
+  }
+
+  getNextQuestion(): Question | null {
+    if (this.currentQuestionIndex < this.questions.length - 1) {
+      this.currentQuestionIndex++;
+      if (this.session) {
+        this.session.data.currentQuestionIndex = this.currentQuestionIndex;
+      }
+      return this.questions[this.currentQuestionIndex];
+    }
+    return null;
+  }
+
+  getPreviousQuestion(): Question | null {
+    if (this.currentQuestionIndex > 0) {
+      this.currentQuestionIndex--;
+      if (this.session) {
+        this.session.data.currentQuestionIndex = this.currentQuestionIndex;
+      }
+      return this.questions[this.currentQuestionIndex];
+    }
+    return null;
+  }
+
+  async submitAnswer(
+    questionId: string,
+    answer: string | string[] | boolean,
+    timeSpent: number = 0,
+    hintsUsed: number = 0
+  ): Promise<QuestionResult> {
+    if (!this.session) {
+      throw new Error('No active session');
+    }
+
+    const question = this.questions.find(q => q.id === questionId);
+    if (!question) {
+      throw new Error('Question not found');
+    }
+
+    // Create user answer
+    const userAnswer: UserAnswer = {
+      questionId,
+      answer,
+      timeSpent,
+      attempts: 1,
+      hintsUsed,
+      timestamp: new Date()
+    };
+
+    // Check if already answered
+    const existingIndex = this.userAnswers.findIndex(a => a.questionId === questionId);
+    if (existingIndex >= 0) {
+      // Update attempts count
+      userAnswer.attempts = this.userAnswers[existingIndex].attempts + 1;
+      this.userAnswers[existingIndex] = userAnswer;
+    } else {
+      this.userAnswers.push(userAnswer);
+    }
+
+    // Mark the answer
+    const [result] = await markQuestions([question], [userAnswer]);
+    
+    // Update or add result
+    const resultIndex = this.questionResults.findIndex(r => r.questionId === questionId);
+    if (resultIndex >= 0) {
+      this.questionResults[resultIndex] = result;
+    } else {
+      this.questionResults.push(result);
+    }
+
+    // Update session data
+    await this.updateSessionData({
+      questionsAnswered: this.userAnswers.length,
+      currentScore: this.questionResults.reduce((sum, r) => sum + r.score, 0),
+      maxPossibleScore: this.questions.reduce((sum, q) => sum + q.points, 0),
+      lastAnsweredQuestion: questionId,
+      answers: this.userAnswers,
+      results: this.questionResults.map(r => ({
+        questionId: r.questionId,
+        score: r.score,
+        maxScore: r.maxScore,
+        isCorrect: r.isCorrect,
+        feedback: r.feedback
+      }))
+    });
+
+    return result;
+  }
+
+  async completeQuestionFlow(): Promise<{
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+    results: QuestionResult[];
+  }> {
+    if (!this.session) {
+      throw new Error('No active session');
+    }
+
+    // Mark any unanswered questions as incorrect
+    const allResults = await markQuestions(this.questions, this.userAnswers);
+    this.questionResults = allResults;
+
+    const totalScore = allResults.reduce((sum, r) => sum + r.score, 0);
+    const maxScore = this.questions.reduce((sum, q) => sum + q.points, 0);
+    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+
+    // Update session with final results
+    await this.updateSessionData({
+      questionsCompleted: true,
+      finalScore: totalScore,
+      finalMaxScore: maxScore,
+      scorePercentage: percentage,
+      allResults: allResults.map(r => ({
+        questionId: r.questionId,
+        score: r.score,
+        maxScore: r.maxScore,
+        isCorrect: r.isCorrect,
+        feedback: r.feedback,
+        markedBy: r.markedBy
+      }))
+    });
+
+    return {
+      totalScore,
+      maxScore,
+      percentage,
+      results: allResults
+    };
+  }
+
+  getQuestionProgress(): {
+    current: number;
+    total: number;
+    answered: number;
+    unanswered: number;
+    percentage: number;
+  } {
+    const answered = this.userAnswers.length;
+    const total = this.questions.length;
+    
+    return {
+      current: this.currentQuestionIndex + 1,
+      total,
+      answered,
+      unanswered: total - answered,
+      percentage: total > 0 ? (answered / total) * 100 : 0
+    };
+  }
+
+  getAllQuestions(): Question[] {
+    return this.questions;
+  }
+
+  getQuestionResults(): QuestionResult[] {
+    return this.questionResults;
+  }
+  
+  getSupportedQuestionTypes(): QuestionTypeName[] {
+    if (!this.session) return [];
+    return getQuestionsForSession(this.session.type as SessionTypeEnum);
   }
 
   // Static helper methods

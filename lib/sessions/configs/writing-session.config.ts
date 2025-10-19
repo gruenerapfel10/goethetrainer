@@ -1,4 +1,5 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
+import { QuestionTypeName } from '../questions/question-registry';
 
 export const writingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.WRITING,
@@ -182,6 +183,15 @@ export const writingSessionConfig: SessionConfig = {
       ],
     },
   },
+  
+  // Supported question types for writing sessions
+  supportedQuestions: [
+    QuestionTypeName.SHORT_ANSWER,
+    QuestionTypeName.FILL_IN_BLANK,
+    QuestionTypeName.ESSAY,
+    QuestionTypeName.TRANSLATION,
+    QuestionTypeName.SENTENCE_CORRECTION,
+  ],
   
   features: {
     supportsTextInput: true,

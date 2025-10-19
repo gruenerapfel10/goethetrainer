@@ -2,30 +2,48 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { SessionTypeEnum } from './session-registry';
 import type { 
   Session, 
-  SessionType, 
   SessionStats,
-  ReadingSession,
-  ListeningSession,
-  WritingSession,
-  SpeakingSession
 } from './types';
+import type { Question, QuestionResult } from './questions/question-types';
+import type { QuestionTypeName } from './questions/question-registry';
 
 interface LearningSessionContextType {
+  // Session state
   activeSession: Session | null;
+  currentQuestion: Question | null;
+  allQuestions: Question[];
+  questionProgress: {
+    current: number;
+    total: number;
+    answered: number;
+    unanswered: number;
+    percentage: number;
+  };
+  
+  // Loading/error states
   isLoading: boolean;
   error: string | null;
   stats: SessionStats | null;
   
   // Session actions
-  startSession: (type: SessionType, metadata?: Record<string, any>) => Promise<Session | null>;
+  startSession: (type: SessionTypeEnum, metadata?: Record<string, any>) => Promise<Session | null>;
   pauseSession: () => Promise<void>;
   resumeSession: () => Promise<void>;
   endSession: (status?: 'completed' | 'abandoned') => Promise<void>;
   
-  // Unified session update
-  updateSessionProgress: (data: Record<string, any>) => Promise<void>;
+  // Question actions
+  submitAnswer: (answer: string | string[] | boolean, timeSpent?: number) => Promise<QuestionResult | null>;
+  nextQuestion: () => void;
+  previousQuestion: () => void;
+  completeQuestions: () => Promise<any>;
+  
+  // Session data getters
+  getSupportedQuestionTypes: () => QuestionTypeName[];
+  getAllQuestions: () => Question[];
+  getQuestionResults: () => QuestionResult[];
   
   // Utility functions
   refreshStats: () => Promise<void>;
@@ -44,7 +62,22 @@ export function useLearningSession() {
 
 export function LearningSessionProvider({ children }: { children: React.ReactNode }) {
   const { data: authSession } = useSession();
+  
+  // Core state
   const [activeSession, setActiveSession] = useState<Session | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionResults, setQuestionResults] = useState<QuestionResult[]>([]);
+  const [questionProgress, setQuestionProgress] = useState({
+    current: 0,
+    total: 0,
+    answered: 0,
+    unanswered: 0,
+    percentage: 0
+  });
+  
+  // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<SessionStats | null>(null);
@@ -53,12 +86,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   useEffect(() => {
     if (authSession?.user?.email) {
       refreshStats();
-    }
-  }, [authSession?.user?.email]);
-
-  // Check for active sessions on mount
-  useEffect(() => {
-    if (authSession?.user?.email) {
       checkActiveSession();
     }
   }, [authSession?.user?.email]);
@@ -71,7 +98,19 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       if (response.ok) {
         const sessions = await response.json();
         if (sessions.length > 0) {
-          setActiveSession(sessions[0]);
+          const session = sessions[0];
+          setActiveSession(session);
+          
+          // Load questions for the session
+          const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
+          if (questionsRes.ok) {
+            const questions = await questionsRes.json();
+            setAllQuestions(questions);
+            if (questions.length > 0) {
+              setCurrentQuestion(questions[0]);
+              updateProgress(0, questions.length, 0);
+            }
+          }
         }
       }
     } catch (err) {
@@ -94,7 +133,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   }, [authSession?.user?.email]);
 
   const startSession = useCallback(async (
-    type: SessionType, 
+    type: SessionTypeEnum, 
     metadata?: Record<string, any>
   ): Promise<Session | null> => {
     if (!authSession?.user?.email) {
@@ -123,8 +162,30 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
       const session = await response.json();
       setActiveSession(session);
+      
+      // Load questions
+      const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
+      if (questionsRes.ok) {
+        const questions = await questionsRes.json();
+        setAllQuestions(questions);
+        setCurrentQuestionIndex(0);
+        setQuestionResults([]);
+        
+        if (questions.length > 0) {
+          setCurrentQuestion(questions[0]);
+          updateProgress(0, questions.length, 0);
+        }
+        
+        console.log('Session started:', {
+          sessionId: session.id,
+          type,
+          totalQuestions: questions.length
+        });
+      }
+      
       return session;
     } catch (err) {
+      console.error('Failed to start session:', err);
       setError(err instanceof Error ? err.message : 'Failed to start session');
       return null;
     } finally {
@@ -140,7 +201,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       const response = await fetch(`/api/sessions/${activeSession.id}/pause`, {
         method: 'POST'
       });
-
+      
       if (response.ok) {
         const updated = await response.json();
         setActiveSession(updated);
@@ -160,7 +221,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       const response = await fetch(`/api/sessions/${activeSession.id}/resume`, {
         method: 'POST'
       });
-
+      
       if (response.ok) {
         const updated = await response.json();
         setActiveSession(updated);
@@ -185,6 +246,17 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
       if (response.ok) {
         setActiveSession(null);
+        setCurrentQuestion(null);
+        setAllQuestions([]);
+        setCurrentQuestionIndex(0);
+        setQuestionResults([]);
+        setQuestionProgress({
+          current: 0,
+          total: 0,
+          answered: 0,
+          unanswered: 0,
+          percentage: 0
+        });
         await refreshStats();
       }
     } catch (err) {
@@ -194,27 +266,112 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     }
   }, [activeSession, refreshStats]);
 
-  const updateSessionProgress = useCallback(async (data: Record<string, any>) => {
-    if (!activeSession) return;
+  const updateProgress = (currentIndex: number, total: number, answered: number) => {
+    setQuestionProgress({
+      current: currentIndex + 1,
+      total,
+      answered,
+      unanswered: total - answered,
+      percentage: total > 0 ? (answered / total) * 100 : 0
+    });
+  };
+
+  const submitAnswer = useCallback(async (
+    answer: string | string[] | boolean,
+    timeSpent: number = 0
+  ): Promise<QuestionResult | null> => {
+    if (!activeSession || !currentQuestion) {
+      setError('No active question to answer');
+      return null;
+    }
 
     try {
-      const response = await fetch(`/api/sessions/${activeSession.id}/update`, {
+      const response = await fetch(`/api/sessions/${activeSession.id}/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data, type: activeSession.type })
+        body: JSON.stringify({
+          questionId: currentQuestion.id,
+          answer,
+          timeSpent,
+          hintsUsed: 0
+        })
       });
 
-      if (response.ok) {
-        const updated = await response.json();
-        setActiveSession(updated);
-      } else {
-        const error = await response.json();
-        setError(error.message || `Failed to update ${activeSession.type} progress`);
+      if (!response.ok) {
+        throw new Error('Failed to submit answer');
       }
+
+      const result = await response.json();
+      
+      // Update results
+      setQuestionResults(prev => [...prev, result]);
+      
+      // Update progress
+      const answered = questionResults.length + 1;
+      updateProgress(currentQuestionIndex, allQuestions.length, answered);
+      
+      return result;
     } catch (err) {
-      setError(`Failed to update ${activeSession?.type || 'session'} progress`);
+      console.error('Failed to submit answer:', err);
+      setError('Failed to submit answer');
+      return null;
     }
+  }, [activeSession, currentQuestion, currentQuestionIndex, allQuestions.length, questionResults.length]);
+
+  const nextQuestion = useCallback(() => {
+    if (currentQuestionIndex < allQuestions.length - 1) {
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
+      setCurrentQuestion(allQuestions[newIndex]);
+      updateProgress(newIndex, allQuestions.length, questionResults.length);
+    }
+  }, [currentQuestionIndex, allQuestions, questionResults.length]);
+
+  const previousQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      const newIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(newIndex);
+      setCurrentQuestion(allQuestions[newIndex]);
+      updateProgress(newIndex, allQuestions.length, questionResults.length);
+    }
+  }, [currentQuestionIndex, allQuestions, questionResults.length]);
+
+  const completeQuestions = useCallback(async () => {
+    if (!activeSession) return null;
+    
+    try {
+      const response = await fetch(`/api/sessions/${activeSession.id}/complete`, {
+        method: 'POST'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to complete session');
+      }
+      
+      const results = await response.json();
+      await endSession('completed');
+      return results;
+    } catch (err) {
+      console.error('Failed to complete questions:', err);
+      setError('Failed to complete session');
+      return null;
+    }
+  }, [activeSession, endSession]);
+
+  // Getters
+  const getSupportedQuestionTypes = useCallback((): QuestionTypeName[] => {
+    if (!activeSession) return [];
+    // This would need to be fetched from the server or stored in session metadata
+    return [];
   }, [activeSession]);
+
+  const getAllQuestions = useCallback((): Question[] => {
+    return allQuestions;
+  }, [allQuestions]);
+
+  const getQuestionResults = useCallback((): QuestionResult[] => {
+    return questionResults;
+  }, [questionResults]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -224,6 +381,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     <LearningSessionContext.Provider
       value={{
         activeSession,
+        currentQuestion,
+        allQuestions,
+        questionProgress,
         isLoading,
         error,
         stats,
@@ -231,7 +391,13 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         pauseSession,
         resumeSession,
         endSession,
-        updateSessionProgress,
+        submitAnswer,
+        nextQuestion,
+        previousQuestion,
+        completeQuestions,
+        getSupportedQuestionTypes,
+        getAllQuestions,
+        getQuestionResults,
         refreshStats,
         clearError
       }}

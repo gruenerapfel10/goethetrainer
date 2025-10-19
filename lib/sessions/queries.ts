@@ -10,15 +10,42 @@ import type {
 
 const SESSIONS_COLLECTION = 'sessions';
 
+// Helper to remove undefined values from objects (Firestore doesn't allow undefined)
+function removeUndefinedValues(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefinedValues(item));
+  }
+  
+  if (typeof obj === 'object' && obj.constructor === Object) {
+    const cleaned: any = {};
+    for (const key in obj) {
+      const value = obj[key];
+      if (value !== undefined) {
+        cleaned[key] = removeUndefinedValues(value);
+      }
+    }
+    return cleaned;
+  }
+  
+  return obj;
+}
+
 // Save a new session
 export async function saveSession(session: Session): Promise<void> {
   try {
-    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).set({
+    // Clean the session object to remove undefined values
+    const cleanedSession = removeUndefinedValues({
       ...session,
       startedAt: session.startedAt,
       endedAt: session.endedAt || null,
       updatedAt: new Date()
     });
+    
+    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).set(cleanedSession);
   } catch (error) {
     console.error('Error saving session:', error);
     throw new Error('Failed to save session');
@@ -49,10 +76,13 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
 // Update existing session
 export async function updateSession(session: Session): Promise<void> {
   try {
-    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).update({
+    // Clean the session object to remove undefined values
+    const cleanedSession = removeUndefinedValues({
       ...session,
       updatedAt: new Date()
     });
+    
+    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).update(cleanedSession);
   } catch (error) {
     console.error('Error updating session:', error);
     throw new Error('Failed to update session');

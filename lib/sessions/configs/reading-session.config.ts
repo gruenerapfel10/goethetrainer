@@ -1,4 +1,5 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
+import { QuestionTypeName } from '../questions/question-registry';
 
 export const readingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.READING,
@@ -121,6 +122,14 @@ export const readingSessionConfig: SessionConfig = {
       ],
     },
   },
+  
+  // Supported question types for reading sessions
+  supportedQuestions: [
+    QuestionTypeName.MULTIPLE_CHOICE,
+    QuestionTypeName.TRUE_FALSE,
+    QuestionTypeName.SHORT_ANSWER,
+    QuestionTypeName.FILL_IN_BLANK,
+  ],
   
   features: {
     supportsTextInput: true,

@@ -1,4 +1,5 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
+import { QuestionTypeName } from '../questions/question-registry';
 
 export const speakingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.SPEAKING,
@@ -195,6 +196,13 @@ export const speakingSessionConfig: SessionConfig = {
       ],
     },
   },
+  
+  // Supported question types for speaking sessions
+  supportedQuestions: [
+    QuestionTypeName.PRONUNCIATION,
+    QuestionTypeName.CONVERSATION,
+    QuestionTypeName.ORAL_PRESENTATION,
+  ],
   
   features: {
     supportsAudioRecording: true,

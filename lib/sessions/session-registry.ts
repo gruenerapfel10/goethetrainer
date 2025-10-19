@@ -1,4 +1,5 @@
 import type { SessionType } from './types';
+import { QuestionTypeName } from './questions/question-registry';
 
 export enum SessionTypeEnum {
   READING = 'reading',
@@ -40,6 +41,9 @@ export interface SessionConfig {
     fields: Record<string, SessionFieldDefinition>;
     metrics: SessionMetrics;
   };
+  
+  // Supported question types for this session
+  supportedQuestions: QuestionTypeName[];
   
   // Features and capabilities
   features: {

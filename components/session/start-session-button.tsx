@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Square, Loader2 } from 'lucide-react';
 import { useLearningSession } from '@/lib/sessions/learning-session-context';
@@ -22,6 +23,7 @@ export function StartSessionButton({
   onSessionStart,
   onSessionEnd
 }: StartSessionButtonProps) {
+  const router = useRouter();
   const { 
     activeSession, 
     isLoading, 
@@ -37,8 +39,14 @@ export function StartSessionButton({
 
   const handleStart = async () => {
     const session = await startSession(type, metadata);
-    if (session && onSessionStart) {
-      onSessionStart(session.id);
+    if (session) {
+      // Navigate to the session detail page
+      router.push(`/${type}/session/${session.id}`);
+      
+      // Also call the callback if provided
+      if (onSessionStart) {
+        onSessionStart(session.id);
+      }
     }
   };
 

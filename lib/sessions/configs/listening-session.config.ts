@@ -1,4 +1,5 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
+import { QuestionTypeName } from '../questions/question-registry';
 
 export const listeningSessionConfig: SessionConfig = {
   type: SessionTypeEnum.LISTENING,
@@ -144,6 +145,14 @@ export const listeningSessionConfig: SessionConfig = {
       ],
     },
   },
+  
+  // Supported question types for listening sessions
+  supportedQuestions: [
+    QuestionTypeName.MULTIPLE_CHOICE,
+    QuestionTypeName.TRUE_FALSE,
+    QuestionTypeName.AUDIO_COMPREHENSION,
+    QuestionTypeName.DICTATION,
+  ],
   
   features: {
     supportsAudioRecording: true,
