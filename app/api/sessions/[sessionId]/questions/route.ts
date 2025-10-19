@@ -16,6 +16,11 @@ export async function GET(
     const manager = await getSessionManager(authSession.user.email, sessionId);
     const questions = manager.getAllQuestions();
 
+    // Log the full questions data for debugging
+    console.log('=== GENERATED QUESTIONS ===');
+    console.log(JSON.stringify(questions, null, 2));
+    console.log('=== END QUESTIONS ===');
+
     return NextResponse.json(questions);
   } catch (error) {
     console.error('Error fetching questions:', error);

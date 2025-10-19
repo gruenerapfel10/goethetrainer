@@ -9,6 +9,9 @@ interface Question {
   id: string;
   prompt?: string;
   context?: string;
+  title?: string;
+  subtitle?: string;
+  theme?: string;
   options?: Array<{ id: string; text: string }>;
   correctAnswer?: string;
   correctOptionId?: string;
@@ -163,13 +166,52 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
             </>
           ) : (
             // Quelle (Source) View
-            <div className="space-y-6 max-w-3xl mx-auto">
+            <div className="space-y-6">
               {questions[0]?.context ? (
-                <div className="bg-card p-8 rounded-lg border border-border">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-                    {questions[0].context}
+                <>
+                  {/* Goethe Exam Header */}
+                  <GoetheHeader />
+
+                  {/* Header with title and time */}
+                  <div className="flex items-start mb-8">
+                    <h3 className="font-bold" style={{ fontSize: '18px' }}>Teil 1</h3>
+                    <span className="text-muted-foreground ml-20 font-normal" style={{ fontSize: '18px' }}>Vorgeschlagene Arbeitszeit: 10 Minuten</span>
+                  </div>
+
+                  {/* Instructions */}
+                  <p className="text-foreground mb-6 leading-relaxed font-normal" style={{ maxWidth: '40%', fontSize: '18px' }}>
+                    Sie lesen in einer Zeitung einen Artikel über ein Unternehmen in der Tourismusbranche. Wählen Sie für jede Lücke die richtige Lösung.
                   </p>
-                </div>
+
+                  {/* Content Box */}
+                  <div className="border border-border p-8 bg-background">
+                    {/* Theme - top left */}
+                    {questions[0]?.theme && (
+                      <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wide">
+                        {questions[0].theme}
+                      </p>
+                    )}
+
+                    {/* Title */}
+                    {questions[0]?.title && (
+                      <h4 className="text-lg font-bold mb-2 text-foreground" style={{ fontFamily: "'Scheltersche Grotesk', 'Arial', sans-serif" }}>
+                        {questions[0].title}
+                      </h4>
+                    )}
+
+                    {/* Subtitle */}
+                    {questions[0]?.subtitle && (
+                      <p className="text-base mb-6 text-foreground" style={{ fontFamily: "'Scheltersche Grotesk', 'Arial', sans-serif", fontSize: '14px' }}>
+                        {questions[0].subtitle}
+                      </p>
+                    )}
+
+                    {/* Main text */}
+                    <p className="leading-7 whitespace-pre-wrap text-foreground" style={{ fontFamily: "'Scheltersche Grotesk', 'Arial', sans-serif", fontSize: '18px', lineHeight: '1.6' }}>
+                      {questions[0].context}
+                    </p>
+                  </div>
+                </>
               ) : (
                 <p className="text-center text-muted-foreground py-12">
                   Keine Quelle verfügbar

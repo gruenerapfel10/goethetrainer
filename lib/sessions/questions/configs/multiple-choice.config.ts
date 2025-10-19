@@ -20,6 +20,9 @@ const QuestionSchema = z.object({
 
 // Batch generation schema: ONE context with 9 questions
 export const MultipleChoiceBatchGenerationSchema = z.object({
+  theme: z.string().describe('Theme/category of the text (e.g., "WIRTSCHAFT", "BILDUNG", "TECHNOLOGIE")'),
+  title: z.string().describe('Title of the reading passage'),
+  subtitle: z.string().describe('Subtitle or brief description of the passage'),
   context: z.string().describe('Single German reading passage (200-300 words) for all 9 questions'),
   questions: z.array(QuestionSchema)
     .length(9)
@@ -81,8 +84,8 @@ export const multipleChoiceConfig = {
   // Generation schema for AI to create questions
   generationSchema: MultipleChoiceGenerationSchema,
 
-  // Batch generation schema for creating all questions at once
-  batchGenerationSchema: MultipleChoiceBatchGenerationSchema,
+  // Session generation schema for creating all questions at once
+  sessionGenerationSchema: MultipleChoiceBatchGenerationSchema,
 
   // Answer schema for validation
   answerSchema: MultipleChoiceAnswerSchema,
@@ -103,16 +106,19 @@ export const multipleChoiceConfig = {
     modelId: 'claude-haiku-4-5-20251001',
     temperature: 0.7,
 
-    // System prompt for BATCH generation (all questions at once)
-    batchSystemPrompt: `You are a German language specialist creating Goethe C1 level reading comprehension tests.
+    // System prompt for session generation (all questions at once)
+    sessionSystemPrompt: `You are a German language specialist creating Goethe C1 level reading comprehension tests.
 
-Your task: Generate ONE German text passage (200-300 words) and create EXACTLY 9 comprehension questions about it.
+Your task: Generate ONE German text passage (200-300 words) with title, subtitle, and theme, then create EXACTLY 9 comprehension questions about it.
 
 Requirements:
 1. ALL content in German language ONLY
-2. One context passage (200-300 words, appropriate for C1 level)
-3. Exactly 9 questions about this passage (1 example + 8 test questions)
-4. Each question:
+2. Provide a THEME (category like "WIRTSCHAFT", "BILDUNG", "TECHNOLOGIE", "GESELLSCHAFT", "UMWELT")
+3. Provide a TITLE for the reading passage
+4. Provide a SUBTITLE (brief description of the content)
+5. One context passage (200-300 words, appropriate for C1 level)
+6. Exactly 9 questions about this passage (1 example + 8 test questions)
+7. Each question:
    - prompt: Question text in German
    - 4 options with SHORT text (1-3 words max, e.g., "dafür", "aber", "als Anlage zu")
    - correctOptionId: "0", "1", "2", or "3"
@@ -120,6 +126,9 @@ Requirements:
 
 JSON Structure:
 {
+  "theme": "WIRTSCHAFT",
+  "title": "Der digitale Wandel in Unternehmen",
+  "subtitle": "Wie Technologie die Geschäftswelt verändert",
   "context": "Single German passage here (200-300 words)...",
   "questions": [
     {
@@ -139,8 +148,8 @@ JSON Structure:
 
 Return EXACTLY 9 questions, all about the SAME context passage.`,
 
-    // User prompt for batch generation
-    batchUserPrompt: `Generate a Goethe C1 reading comprehension test: 1 German passage (200-300 words) with 9 questions.`,
+    // User prompt for session generation
+    sessionUserPrompt: `Generate a Goethe C1 reading comprehension test: 1 German passage (200-300 words) with 9 questions.`,
 
     // System prompt for SINGLE generation (backward compatibility)
     systemPrompt: `You are a specialized question generator for German language learning (Goethe C1 level).

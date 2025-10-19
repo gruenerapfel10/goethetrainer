@@ -1,9 +1,8 @@
 import { generateUUID } from '@/lib/utils';
-import { 
+import {
   SessionTypeEnum,
   getSessionConfig,
   initializeSessionData,
-  validateSessionData,
   calculateSessionMetrics
 } from './session-registry';
 import './configs'; // Import to register all configs
@@ -134,12 +133,6 @@ export class SessionManager {
       ...questionsData,
       ...updates
     };
-
-    // Validate the updated data
-    const validation = validateSessionData(type, updatedData);
-    if (!validation.valid) {
-      throw new Error(`Validation failed: ${validation.errors?.join(', ')}`);
-    }
 
     // Update session
     this.session.data = updatedData;

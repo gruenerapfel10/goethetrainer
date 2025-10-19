@@ -12,7 +12,7 @@ interface QuestionConfig {
   name: QuestionTypeName;
   displayName: string;
   generationSchema: z.ZodSchema;
-  batchGenerationSchema?: z.ZodSchema;
+  sessionGenerationSchema?: z.ZodSchema;
   supportedSessions?: SessionTypeEnum[];
   aiGeneration: {
     modelId: string;
@@ -20,8 +20,8 @@ interface QuestionConfig {
     maxTokens?: number;
     systemPrompt: string;
     userPrompt: string;
-    batchSystemPrompt?: string;
-    batchUserPrompt?: string;
+    sessionSystemPrompt?: string;
+    sessionUserPrompt?: string;
   };
   defaultPoints: number;
   defaultTimeLimit: number;
@@ -115,16 +115,13 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
 }
 
 /**
- * Generate multiple questions for a session
+ * Generate questions for a session with shared context
  */
-/**
- * Generate all questions at once using batch generation
- */
-export async function generateQuestionsBatch(
+export async function generateSessionQuestions(
   _sessionType: SessionTypeEnum,
   _difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty
 ): Promise<any> {
-  // For now, only support multiple choice batch generation
+  // For now, only support multiple choice session generation
   const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
   const config = QUESTION_CONFIGS[questionType];
 
@@ -134,9 +131,9 @@ export async function generateQuestionsBatch(
 
   const { aiGeneration } = config;
 
-  // Check if batch generation is supported
-  if (!aiGeneration.batchSystemPrompt || !config.batchGenerationSchema) {
-    throw new Error(`Batch generation not supported for question type: ${questionType}`);
+  // Check if session generation is supported
+  if (!aiGeneration.sessionSystemPrompt || !config.sessionGenerationSchema) {
+    throw new Error(`Session generation not supported for question type: ${questionType}`);
   }
 
   // Initialize the model
@@ -146,9 +143,9 @@ export async function generateQuestionsBatch(
     // Generate all questions at once
     const generateParams: any = {
       model,
-      schema: config.batchGenerationSchema,
-      system: aiGeneration.batchSystemPrompt,
-      prompt: aiGeneration.batchUserPrompt,
+      schema: config.sessionGenerationSchema,
+      system: aiGeneration.sessionSystemPrompt,
+      prompt: aiGeneration.sessionUserPrompt,
       temperature: aiGeneration.temperature,
       mode: 'tool',
     };
@@ -161,9 +158,9 @@ export async function generateQuestionsBatch(
 
     return result.object;
   } catch (error) {
-    console.error('Error generating batch questions with AI:', error);
+    console.error('Error generating session questions with AI:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to generate batch questions: ${errorMessage}`);
+    throw new Error(`Failed to generate session questions: ${errorMessage}`);
   }
 }
 
@@ -173,19 +170,22 @@ export async function generateQuestionsForSession(
   count: number = 1,
   questionTypes?: QuestionTypeName[]
 ): Promise<any[]> {
-  // For reading session with 9 questions, use batch generation (1 context + 9 questions)
+  // For reading session with 9 questions, use session generation (1 context + 9 questions)
   const isReadingSession = count === 9 && sessionType === SessionTypeEnum.READING;
 
   if (isReadingSession) {
-    console.log('Generating 9 questions from 1 context using batch generation...');
+    console.log('Generating 9 questions from 1 context...');
     try {
-      const batchResult = await generateQuestionsBatch(sessionType, difficulty);
-      const { context, questions } = batchResult;
+      const result = await generateSessionQuestions(sessionType, difficulty);
+      const { context, questions, title, subtitle, theme } = result;
 
-      // Transform batch result into array of questions with shared context
+      // Transform result into array of questions with shared context
       const questionsWithContext = questions.map((q: any, index: number) => ({
         ...q,
         context,
+        title,
+        subtitle,
+        theme,
         isExample: index === 0, // First question is example
         exampleAnswer: index === 0 ? q.correctOptionId : undefined,
         difficulty,
@@ -195,7 +195,7 @@ export async function generateQuestionsForSession(
 
       return questionsWithContext;
     } catch (error) {
-      console.error('Batch generation failed:', error);
+      console.error('Session generation failed:', error);
       throw error; // Don't fall back for reading sessions, fail fast
     }
   }
@@ -257,23 +257,3 @@ export function getAvailableQuestionTypes(sessionType: SessionTypeEnum): Questio
     .map(([type]) => type as QuestionTypeName);
 }
 
-/**
- * Validate a generated question against its schema
- */
-export function validateGeneratedQuestion(
-  questionType: QuestionTypeName,
-  questionData: unknown
-): boolean {
-  const config = QUESTION_CONFIGS[questionType];
-  if (!config) {
-    return false;
-  }
-
-  try {
-    config.generationSchema.parse(questionData);
-    return true;
-  } catch (error) {
-    console.error(`Validation failed for ${questionType}:`, error);
-    return false;
-  }
-}

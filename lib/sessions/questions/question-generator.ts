@@ -1,5 +1,5 @@
 import { generateUUID } from '@/lib/utils';
-import { QuestionTypeName, getQuestionMetadata, validateQuestionGeneration } from './question-registry';
+import { QuestionTypeName, getQuestionMetadata } from './question-registry';
 import { AnswerType, QuestionType, QuestionDifficulty } from './question-types';
 import type { Question } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
@@ -63,14 +63,6 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
       }
     }
 
-    // Validate against schema
-    try {
-      if (questionData.prompt) {
-        validateQuestionGeneration(questionTypeName, questionData);
-      }
-    } catch (error) {
-      console.warn(`Validation failed for ${questionTypeName}:`, error);
-    }
 
     // Create the Question object with all necessary data
     const question: Question = {
@@ -215,15 +207,15 @@ class QuestionGeneratorRegistry {
     count: number = 1,
     generatorName: string = 'ai'
   ): Promise<Question[]> {
-    // If using AI and count is 9 for reading session, use batch generation
+    // If using AI and count is 9 for reading session, use session generation
     if (generatorName === 'ai' && count === 9 && sessionType === SessionTypeEnum.READING) {
       try {
-        const batchQuestions = await generateQuestionsForSession(sessionType, difficulty, count);
+        const sessionQuestions = await generateQuestionsForSession(sessionType, difficulty, count);
 
-        // Convert batch questions to Question objects
+        // Convert session questions to Question objects
         const questions: Question[] = [];
-        for (let i = 0; i < batchQuestions.length; i++) {
-          const questionData = batchQuestions[i];
+        for (let i = 0; i < sessionQuestions.length; i++) {
+          const questionData = sessionQuestions[i];
           const metadata = getQuestionMetadata(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE);
 
           const question: Question = {
@@ -234,6 +226,9 @@ class QuestionGeneratorRegistry {
             answerType: this.mapToAnswerType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
             prompt: questionData.prompt,
             context: questionData.context,
+            title: questionData.title,
+            subtitle: questionData.subtitle,
+            theme: questionData.theme,
             options: questionData.options,
             correctAnswer: questionData.correctOptionId,
             correctOptionId: questionData.correctOptionId,
@@ -255,7 +250,7 @@ class QuestionGeneratorRegistry {
 
         return questions;
       } catch (error) {
-        console.error('Batch generation failed, falling back to individual generation:', error);
+        console.error('Session generation failed, falling back to individual generation:', error);
         // Fall through to individual generation
       }
     }
