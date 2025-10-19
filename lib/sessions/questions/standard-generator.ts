@@ -207,8 +207,9 @@ export async function generateQuestionsForSession(
 
     // Mark first question as example if this is a reading session with 9 questions
     if (isReadingSession && results.length > 0) {
-      results[0].isExample = true;
-      results[0].exampleAnswer = results[0].correctOptionId;
+      const firstQuestion = results[0] as Record<string, any>;
+      firstQuestion.isExample = true;
+      firstQuestion.exampleAnswer = firstQuestion.correctOptionId;
     }
 
     return results;
@@ -223,7 +224,7 @@ export async function generateQuestionsForSession(
           sessionType,
           difficulty,
           topicIndex: i,
-        });
+        }) as Record<string, any>;
 
         // Mark first question as example if this is a reading session with 9 questions
         if (isReadingSession && i === 0) {
