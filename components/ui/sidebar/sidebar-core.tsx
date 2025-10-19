@@ -109,10 +109,16 @@ export const Sidebar = React.forwardRef<
       if (typeof window !== 'undefined') {
         const cookieName = side === "left" ? "left_sidebar_width" : "right_sidebar_width"
         const saved = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`))
-        if (saved) return parseInt(saved[1])
+        // For right sidebar, if cookie exists but is too small, use default
+        if (saved) {
+          const width = parseInt(saved[1])
+          if (side === "left") return width
+          // For right sidebar, ensure minimum width
+          return width < 400 ? 600 : width
+        }
       }
       // Default widths
-      return side === "left" ? 160 : 480
+      return side === "left" ? 160 : 600
     })
 
     const [isDragging, setIsDragging] = React.useState(false)
@@ -172,6 +178,7 @@ export const Sidebar = React.forwardRef<
           "flex h-full flex-col bg-sidebar text-sidebar-foreground overflow-y-auto",
           (!resizable || !isDragging) && SIDEBAR_TRANSITION, // Add transition when not dragging
           resizable && "relative",
+          "group", // Add group class for child selectors
           className
         )}
         style={{

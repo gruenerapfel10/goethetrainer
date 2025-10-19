@@ -1,8 +1,6 @@
 'use client';
 
-import type { User } from 'next-auth';
 import Link from 'next/link';
-import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { BarChart3, BookOpen, Headphones, PenTool, Mic } from 'lucide-react';
 
@@ -13,15 +11,15 @@ const SKILL_ITEMS = [
   { label: 'Speaking', href: '/speaking', icon: Mic },
 ];
 
-export function AppSidebar({ user }: { user: User | undefined }) {
+export function AppSidebar() {
   return (
     <Sidebar side="left" collapsible="icon" resizable={false}>
-      <SidebarContent className="pt-4 pr-2">
+      <SidebarContent className="pt-4 pr-2 group-data-[collapsible=icon]:p-2">
         <SidebarGroup>
-          <SidebarMenu className="gap-1">
+          <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-0">
             <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <Link href="/dashboard" className="flex items-center gap-2">
+              <SidebarMenuButton asChild tooltip="Dashboard">
+                <Link href="/dashboard">
                   <BarChart3 className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Link>
@@ -31,11 +29,11 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Skills</SidebarGroupLabel>
-          <SidebarMenu className="gap-1">
+          <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-0">
             {SKILL_ITEMS.map(({ label, href, icon: Icon }) => (
               <SidebarMenuItem key={href}>
-                <SidebarMenuButton asChild>
-                  <Link href={href} className="flex items-center gap-2">
+                <SidebarMenuButton asChild tooltip={label}>
+                  <Link href={href}>
                     <Icon className="h-4 w-4" />
                     <span>{label}</span>
                   </Link>
@@ -45,8 +43,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-2 mb-2">
-        {user && <SidebarUserNav user={user} />}
+      <SidebarFooter className="p-2 mb-2 group-data-[collapsible=icon]:p-0">
+        {/* Footer content can go here if needed */}
       </SidebarFooter>
     </Sidebar>
   );
