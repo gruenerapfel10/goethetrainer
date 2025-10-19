@@ -96,45 +96,49 @@ export const multipleChoiceConfig = {
     // System prompt for BATCH generation (all questions at once)
     batchSystemPrompt: `You are a specialized question generator for German language learning (Goethe C1 level).
 
-Your task is to generate a COMPLETE reading comprehension test with EXACTLY 9 questions.
+⚠️ RESPONSE MUST HAVE EXACTLY 2 FIELDS AT TOP LEVEL:
+1. "exampleQuestion" - A SINGLE question object
+2. "actualQuestions" - An ARRAY containing EXACTLY 8 question objects
+
+Your task is to generate a COMPLETE reading comprehension test with EXACTLY 9 questions total.
 
 🔴 CRITICAL REQUIREMENTS:
 1. ALL content MUST be in German language ONLY
 2. Generate EXACTLY 9 questions total (THIS IS MANDATORY):
-   - 1 example question (Beispiel)
-   - EXACTLY 8 actual test questions (NOT fewer, NOT more - EXACTLY 8)
+   - 1 example question → goes in "exampleQuestion" field
+   - EXACTLY 8 actual test questions → go in "actualQuestions" array (NOT fewer, NOT more - EXACTLY 8)
 3. Each question MUST have EXACTLY 4 answer options (IDs: "0", "1", "2", "3")
 4. Answer options MUST be SHORT (1-3 words maximum):
    - Good: "dafür", "aber", "als Anlage zu", "in Einklang mit"
    - Bad: Long sentences or explanations
 5. Only ONE correct answer per question
 6. Each question needs a unique German passage (200-300 words)
+7. Each question MUST have: prompt, context, options array, correctOptionId, explanation
 
-🔴 YOU MUST INCLUDE BOTH:
-- exampleQuestion: 1 question (easier, for demonstration)
-- actualQuestions: ARRAY of EXACTLY 8 questions (intermediate-hard difficulty)
-
-DO NOT STOP after generating only the example question!
-YOU MUST GENERATE ALL 8 ACTUAL QUESTIONS IN THE actualQuestions ARRAY!
-
-Format your response as valid JSON:
+🔴 STRUCTURE MUST BE:
 {
-  "exampleQuestion": { unique question with German text and 4 short options },
+  "exampleQuestion": {
+    "prompt": "...",
+    "context": "...",
+    "options": [{"id": "0", "text": "..."}, {"id": "1", "text": "..."}, {"id": "2", "text": "..."}, {"id": "3", "text": "..."}],
+    "correctOptionId": "0",
+    "explanation": "..."
+  },
   "actualQuestions": [
-    { question 1 },
-    { question 2 },
-    { question 3 },
-    { question 4 },
-    { question 5 },
-    { question 6 },
-    { question 7 },
-    { question 8 }
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion },
+    { same structure as exampleQuestion }
   ]
 }
 
-Topics for variety: Technology, Sustainability, Culture, Business, Education, Health, Travel, Art, Science, Social issues
+⚠️ IF YOU DO NOT INCLUDE BOTH "exampleQuestion" AND "actualQuestions" WITH EXACTLY 8 ITEMS, YOUR RESPONSE WILL BE REJECTED!
 
-REPEAT: You MUST generate all 8 actual questions in the actualQuestions array. Do not stop early!`,
+Topics for variety: Technology, Sustainability, Culture, Business, Education, Health, Travel, Art, Science, Social issues`,
 
     // User prompt for batch generation
     batchUserPrompt: `Generate a complete Goethe C1 reading comprehension test with 1 example question and 8 actual questions.`,

@@ -150,6 +150,7 @@ export async function generateQuestionsBatch(
       system: aiGeneration.batchSystemPrompt,
       prompt: aiGeneration.batchUserPrompt,
       temperature: aiGeneration.temperature,
+      mode: 'tool',
     };
 
     if (aiGeneration.maxTokens) {
