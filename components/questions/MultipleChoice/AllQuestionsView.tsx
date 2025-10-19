@@ -77,16 +77,16 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
         <div className="max-w-4xl space-y-8">
           {questions.map((question, qIndex) => (
             <div key={`q-${qIndex}-${question.id}`}>
-              {/* Example label */}
-              {question.isExample && (
-                <div className="font-bold mb-2 text-sm">Beispiel:</div>
-              )}
-
               {/* Question row with number and options */}
               <div className="flex gap-3 items-start">
-                {/* Question number */}
-                <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
-                  {qIndex}
+                {/* Question number with example label above */}
+                <div className="flex flex-col items-center flex-shrink-0 min-w-[30px]">
+                  {question.isExample && (
+                    <div className="font-bold text-xs text-center mb-1">Beispiel:</div>
+                  )}
+                  <div className="font-bold text-sm">
+                    {qIndex}
+                  </div>
                 </div>
 
                 {/* Options in a single horizontal row */}
