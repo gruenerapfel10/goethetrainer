@@ -15,7 +15,7 @@ const SKILL_ITEMS = [
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   return (
-    <Sidebar side="left" collapsible="icon" resizable={true}>
+    <Sidebar side="left" collapsible="icon" resizable={false}>
       <SidebarContent className="pt-4 pr-2">
         <SidebarGroup>
           <SidebarMenu className="gap-1">
