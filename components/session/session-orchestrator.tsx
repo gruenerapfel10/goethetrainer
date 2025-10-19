@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
@@ -46,6 +47,7 @@ export function SessionOrchestrator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeOnQuestion, setTimeOnQuestion] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showA4Format, setShowA4Format] = useState(true);
 
   // Reset state when question changes
   useEffect(() => {
@@ -110,6 +112,7 @@ export function SessionOrchestrator() {
           <AllQuestionsView
             key="all-questions-view"
             questions={allQuestions}
+            showA4Format={showA4Format}
             onSubmit={(answers) => {
               if (isNavigating) return;
 
@@ -191,6 +194,12 @@ export function SessionOrchestrator() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuCheckboxItem
+              checked={showA4Format}
+              onCheckedChange={setShowA4Format}
+            >
+              A4 Format
+            </DropdownMenuCheckboxItem>
             <DropdownMenuItem onClick={handleEndSession}>
               End Session
             </DropdownMenuItem>

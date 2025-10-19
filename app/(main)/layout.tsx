@@ -22,8 +22,8 @@ export default async function MainLayout({
           <AppNavbar />
           <div className="flex-1 min-h-0 bg-sidebar flex">
             <AppSidebar />
-            <SidebarInset className="!bg-sidebar flex flex-col flex-1 min-h-0 p-2">
-              <div className="flex-1 bg-background border border-border dark:border-0 rounded-lg p-4 min-h-0 overflow-auto">
+            <SidebarInset className="!bg-sidebar flex flex-col flex-1 min-h-0 p-3">
+              <div className="flex-1 bg-background border border-border dark:border-0 rounded-lg min-h-0 overflow-auto">
                 {children}
               </div>
             </SidebarInset>
