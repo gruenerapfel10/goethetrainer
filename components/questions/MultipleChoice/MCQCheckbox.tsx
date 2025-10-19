@@ -47,10 +47,14 @@ export function MCQCheckbox({
       )}
       type="button"
     >
-      {showFeedback && checked && !isCorrect ? (
+      {checked && !showFeedback ? (
+        <span className="text-sm">✕</span>
+      ) : showFeedback && checked && !isCorrect ? (
         <span className="text-sm">✗</span>
       ) : showFeedback && isCorrect ? (
         <span className="text-sm">✓</span>
+      ) : isExample && isCorrect && !showFeedback ? (
+        <span className="text-sm">✕</span>
       ) : (
         letter.toLowerCase()
       )}

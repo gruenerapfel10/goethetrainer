@@ -112,12 +112,11 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
       </div>
 
       <div
-        className="flex-1 flex items-center justify-center"
-        style={showA4Format ? { backgroundColor: '#e5e5e5' } : {}}
+        className="flex-1 flex items-center justify-center bg-background dark:bg-sidebar"
       >
         <div
-          className="bg-white w-full h-full flex flex-col"
-          style={showA4Format ? { width: '210mm', height: '297mm' } : { width: '100%', height: '100%' }}
+          className="w-full h-full flex flex-col dark:bg-background"
+          style={showA4Format ? { width: '210mm', height: '297mm', backgroundColor: 'hsl(var(--sidebar-background))' } : { width: '100%', height: '100%' }}
         >
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-12 py-6 overflow-x-visible pt-8 flex flex-col">
@@ -206,7 +205,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
                     </p>
 
                     {/* Content Box */}
-                    <div className="border border-foreground/40 p-8 bg-background">
+                    <div className="border border-foreground/40 p-8">
                       {/* Theme - top left */}
                       {questions[0]?.theme && (
                         <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wide">
@@ -244,7 +243,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
           </div>
 
           {/* Footer - Part of content */}
-          <div className="bg-background p-6 flex justify-between items-center mt-auto">
+          <div className="text-primary-foreground p-6 flex justify-between items-center mt-auto">
             {/* Goethe Logo */}
             <div className="flex-shrink-0">
               <img
@@ -258,7 +257,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
             <button
               onClick={handleSubmit}
               disabled={isSubmitted || !allQuestionsAnswered}
-              className="px-8 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
+              className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
             >
               {isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
             </button>
@@ -266,8 +265,8 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true }: A
 
           {/* Results summary when submitted */}
           {isSubmitted && (
-            <div className="bg-accent p-6">
-              <p className="font-medium text-center text-foreground text-sm">
+            <div className="bg-primary text-primary-foreground p-6">
+              <p className="font-medium text-center text-sm">
                 Test abgeschlossen! Ergebnis: {questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length} von {questions.filter(q => !q.isExample).length} richtig
               </p>
             </div>
