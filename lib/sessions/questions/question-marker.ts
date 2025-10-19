@@ -28,7 +28,7 @@ class AutomaticMarker implements MarkingAlgorithm {
     let feedback = '';
 
     switch (question.answerType) {
-      case AnswerType.MULTIPLE_CHOICE:
+      case AnswerType.GAP_TEXT_MULTIPLE_CHOICE:
         isCorrect = this.markMultipleChoice(question, answer.answer as string);
         score = isCorrect ? question.points : 0;
         feedback = isCorrect 

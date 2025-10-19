@@ -3,7 +3,7 @@
  * Preserved from the original question-generator.ts implementation
  */
 
-export const MOCK_MULTIPLE_CHOICE_QUESTIONS = [
+export const MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS = [
   {
     prompt: `Worauf hat sich das Unternehmen StadtTours spezialisiert?`,
     context: `Der Name ist Programm – das Unternehmen hat sich auf Reisen spezialisiert, für die man nicht lange in die Ferne schweifen muss. 20 Teams in ganz Deutschland zeigen ausgewählte Städte aus ungewöhnlichen, spannenden Perspektiven. Die Reisenden werden eingeladen, die besuchte Stadt und ihre Umgebung zu „entziffern", und kommen darüber ins Gespräch.`,

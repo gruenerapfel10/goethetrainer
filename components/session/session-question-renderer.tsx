@@ -48,7 +48,7 @@ export function SessionQuestionRenderer({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>Questions generated: {allQuestions.length}</p>
               <p>Supported types: {[
-                QuestionTypeName.MULTIPLE_CHOICE,
+                QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
               ].join(', ')}</p>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function SessionQuestionRenderer({
 
   switch (registryType) {
     // MultipleChoice component handles multiple choice questions
-    case QuestionTypeName.MULTIPLE_CHOICE:
+    case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
       return <MultipleChoice {...questionProps} />;
 
     case QuestionTypeName.TRUE_FALSE:

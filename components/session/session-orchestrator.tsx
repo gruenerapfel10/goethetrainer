@@ -105,7 +105,7 @@ export function SessionOrchestrator() {
     // For reading sessions with multiple choice, show all questions at once
     if (!isNavigating && sessionType === SessionTypeEnum.READING && activeSession?.data?.allQuestions) {
       const allQuestions = activeSession.data.allQuestions;
-      if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.MULTIPLE_CHOICE) {
+      if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
         return (
           <AllQuestionsView
             key="all-questions-view"
@@ -155,7 +155,7 @@ export function SessionOrchestrator() {
 
     switch (registryType) {
       // Unified MultipleChoice component handles all multiple choice variants
-      case QuestionTypeName.MULTIPLE_CHOICE:
+      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
         return <MultipleChoice {...questionProps} />;
 
       case QuestionTypeName.TRUE_FALSE:

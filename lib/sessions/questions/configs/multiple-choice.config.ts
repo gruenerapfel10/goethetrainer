@@ -61,7 +61,7 @@ export const MultipleChoiceMarkingSchema = z.object({
 
 export const multipleChoiceConfig = {
   // Question type identifier
-  name: QuestionTypeName.MULTIPLE_CHOICE,
+  name: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
 
   // Metadata
   displayName: 'Multiple Choice',

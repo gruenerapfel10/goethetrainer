@@ -33,7 +33,7 @@ export enum QuestionDifficulty {
 }
 
 export enum AnswerType {
-  MULTIPLE_CHOICE = 'multiple_choice',
+  GAP_TEXT_MULTIPLE_CHOICE = 'multiple_choice',
   SHORT_ANSWER = 'short_answer',
   LONG_ANSWER = 'long_answer',
   AUDIO_RECORDING = 'audio_recording',
@@ -77,7 +77,7 @@ export interface Question {
     id: string;
     options?: string[];
     correctAnswer?: string;
-  }>; // For GAP_TEXT_MULTIPLE_CHOICE and GAP_TEXT_MATCHING
+  }>; // For GAP_TEXT_GAP_TEXT_MULTIPLE_CHOICE and GAP_TEXT_MATCHING
   
   sentences?: Array<{
     id: string;

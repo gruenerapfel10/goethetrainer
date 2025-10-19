@@ -30,7 +30,7 @@ interface QuestionConfig {
 
 // Registry of question configs
 const QUESTION_CONFIGS: Record<string, QuestionConfig> = {
-  [QuestionTypeName.MULTIPLE_CHOICE]: multipleChoiceConfig as QuestionConfig,
+  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: multipleChoiceConfig as QuestionConfig,
   // Future configs can be added here:
   // [QuestionTypeName.TRUE_FALSE]: trueFalseConfig,
   // [QuestionTypeName.SHORT_ANSWER]: shortAnswerConfig,
@@ -125,7 +125,7 @@ export async function generateQuestionsBatch(
   _difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty
 ): Promise<any> {
   // For now, only support multiple choice batch generation
-  const questionType = QuestionTypeName.MULTIPLE_CHOICE;
+  const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
   const config = QUESTION_CONFIGS[questionType];
 
   if (!config) {

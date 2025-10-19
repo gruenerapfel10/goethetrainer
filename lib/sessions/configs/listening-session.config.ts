@@ -148,7 +148,7 @@ export const listeningSessionConfig: SessionConfig = {
   
   // Supported question types for listening sessions
   supportedQuestions: [
-    QuestionTypeName.MULTIPLE_CHOICE,
+    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
     QuestionTypeName.TRUE_FALSE,
     QuestionTypeName.AUDIO_COMPREHENSION,
     QuestionTypeName.DICTATION,

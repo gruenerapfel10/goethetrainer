@@ -3,8 +3,8 @@
  */
 
 export enum QuestionTypeName {
-  // Core question types
-  MULTIPLE_CHOICE = 'multiple_choice',
+  // Reading question types
+  GAP_TEXT_MULTIPLE_CHOICE = 'gap_text_multiple_choice',
 
   // Future question types (to be implemented)
   TRUE_FALSE = 'true_false',

@@ -125,7 +125,7 @@ export const readingSessionConfig: SessionConfig = {
   
   // Supported question types for reading sessions (Goethe C1 compliant)
   supportedQuestions: [
-    QuestionTypeName.MULTIPLE_CHOICE
+    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE
   ],
   
   features: {

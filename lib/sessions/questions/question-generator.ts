@@ -4,7 +4,7 @@ import { AnswerType, QuestionType, QuestionDifficulty } from './question-types';
 import type { Question } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
 import { generateQuestionWithAI, generateQuestionsForSession } from './standard-generator';
-import { MOCK_MULTIPLE_CHOICE_QUESTIONS } from './mockquestions';
+import { MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS } from './mockquestions';
 
 /**
  * Base algorithm for question generation
@@ -41,7 +41,7 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
 
     let questionData: any = {};
 
-    if (questionTypeName === QuestionTypeName.MULTIPLE_CHOICE) {
+    if (questionTypeName === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
       if (this.useAI) {
         try {
           // Generate question using AI
@@ -97,7 +97,7 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
     };
 
     // Add type-specific fields based on question type
-    if (questionTypeName === QuestionTypeName.MULTIPLE_CHOICE && questionData.options) {
+    if (questionTypeName === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE && questionData.options) {
       question.options = questionData.options;
       question.correctAnswer = questionData.correctOptionId;
       question.correctOptionId = questionData.correctOptionId;
@@ -108,8 +108,8 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
   }
 
   private getMockQuestion(index: number, difficulty: QuestionDifficulty, metadata: any): any {
-    const questionIndex = index % MOCK_MULTIPLE_CHOICE_QUESTIONS.length;
-    const selectedQuestion = MOCK_MULTIPLE_CHOICE_QUESTIONS[questionIndex];
+    const questionIndex = index % MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS.length;
+    const selectedQuestion = MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS[questionIndex];
 
     return {
       prompt: selectedQuestion.prompt,
@@ -127,7 +127,7 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
   private mapToLegacyType(questionTypeName: QuestionTypeName, sessionType: SessionTypeEnum): QuestionType {
     // Map new registry types to legacy QuestionType enum
     switch (questionTypeName) {
-      case QuestionTypeName.MULTIPLE_CHOICE:
+      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
         return sessionType === SessionTypeEnum.READING
           ? QuestionType.READING_COMPREHENSION
           : QuestionType.LISTENING_COMPREHENSION;
@@ -157,13 +157,13 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
       case 'selection':
         return questionTypeName === QuestionTypeName.TRUE_FALSE
           ? AnswerType.TRUE_FALSE
-          : AnswerType.MULTIPLE_CHOICE;
+          : AnswerType.GAP_TEXT_MULTIPLE_CHOICE;
       case 'written':
         return questionTypeName === QuestionTypeName.ESSAY
           ? AnswerType.LONG_ANSWER
           : AnswerType.SHORT_ANSWER;
       case 'audio':
-        return AnswerType.MULTIPLE_CHOICE; // Most audio questions use multiple choice
+        return AnswerType.GAP_TEXT_MULTIPLE_CHOICE; // Most audio questions use multiple choice
       case 'spoken':
         return AnswerType.AUDIO_RECORDING;
       default:
@@ -224,14 +224,14 @@ class QuestionGeneratorRegistry {
         const questions: Question[] = [];
         for (let i = 0; i < batchQuestions.length; i++) {
           const questionData = batchQuestions[i];
-          const metadata = getQuestionMetadata(QuestionTypeName.MULTIPLE_CHOICE);
+          const metadata = getQuestionMetadata(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE);
 
           const question: Question = {
             id: generateUUID(),
-            type: this.mapToLegacyType(QuestionTypeName.MULTIPLE_CHOICE, sessionType),
+            type: this.mapToLegacyType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE, sessionType),
             sessionType,
             difficulty,
-            answerType: this.mapToAnswerType(QuestionTypeName.MULTIPLE_CHOICE),
+            answerType: this.mapToAnswerType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
             prompt: questionData.prompt,
             context: questionData.context,
             options: questionData.options,
@@ -247,7 +247,7 @@ class QuestionGeneratorRegistry {
               acceptPartialCredit: false,
               keywords: [],
             },
-            registryType: QuestionTypeName.MULTIPLE_CHOICE,
+            registryType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
           };
 
           questions.push(question);
@@ -275,8 +275,8 @@ class QuestionGeneratorRegistry {
     // Generate questions in parallel for better performance
     const promises: Promise<Question>[] = [];
     for (let i = 1; i <= count; i++) {
-      // For now, only use MULTIPLE_CHOICE since that's what we've configured
-      const questionType = QuestionTypeName.MULTIPLE_CHOICE;
+      // For now, only use GAP_TEXT_MULTIPLE_CHOICE since that's what we've configured
+      const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
       promises.push(generator.generate(questionType, sessionType, difficulty, i));
     }
 
@@ -288,7 +288,7 @@ class QuestionGeneratorRegistry {
       // Try sequential generation as fallback
       for (let i = 1; i <= count; i++) {
         try {
-          const questionType = QuestionTypeName.MULTIPLE_CHOICE;
+          const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
           const question = await generator.generate(questionType, sessionType, difficulty, i);
           questions.push(question);
         } catch (err) {
@@ -302,7 +302,7 @@ class QuestionGeneratorRegistry {
   private mapToLegacyType(questionTypeName: QuestionTypeName, sessionType: SessionTypeEnum): QuestionType {
     // Map new registry types to legacy QuestionType enum
     switch (questionTypeName) {
-      case QuestionTypeName.MULTIPLE_CHOICE:
+      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
         return sessionType === SessionTypeEnum.READING
           ? QuestionType.READING_COMPREHENSION
           : QuestionType.LISTENING_COMPREHENSION;
@@ -332,13 +332,13 @@ class QuestionGeneratorRegistry {
       case 'selection':
         return questionTypeName === QuestionTypeName.TRUE_FALSE
           ? AnswerType.TRUE_FALSE
-          : AnswerType.MULTIPLE_CHOICE;
+          : AnswerType.GAP_TEXT_MULTIPLE_CHOICE;
       case 'written':
         return questionTypeName === QuestionTypeName.ESSAY
           ? AnswerType.LONG_ANSWER
           : AnswerType.SHORT_ANSWER;
       case 'audio':
-        return AnswerType.MULTIPLE_CHOICE; // Most audio questions use multiple choice
+        return AnswerType.GAP_TEXT_MULTIPLE_CHOICE; // Most audio questions use multiple choice
       case 'spoken':
         return AnswerType.AUDIO_RECORDING;
       default:

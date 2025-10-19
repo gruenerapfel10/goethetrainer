@@ -48,7 +48,7 @@ import {
 // Complete registry of all question types
 export const QUESTION_METADATA: Record<QuestionTypeName, QuestionMetadata> = {
   // Use modular config for multiple choice
-  [QuestionTypeName.MULTIPLE_CHOICE]: {
+  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: {
     name: multipleChoiceConfig.name,
     displayName: multipleChoiceConfig.displayName,
     description: multipleChoiceConfig.description,
