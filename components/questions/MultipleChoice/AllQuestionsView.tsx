@@ -68,29 +68,24 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
   return (
     <div className="w-full h-full flex flex-col bg-white">
       {/* Header */}
-      <div className="p-6 border-b">
-        <h2 className="text-2xl font-bold">Teil 1</h2>
+      <div className="p-6">
+        <h2 className="text-base font-bold">Teil 1</h2>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-4xl space-y-8">
+      <div className="flex-1 overflow-y-auto p-6 overflow-x-visible pt-8">
+        <div className="w-full space-y-20 overflow-visible">
           {questions.map((question, qIndex) => (
-            <div key={`q-${qIndex}-${question.id}`}>
+            <div key={`q-${qIndex}-${question.id}`} className="overflow-visible">
               {/* Question row with number and options */}
-              <div className="flex gap-3 items-start">
-                {/* Question number with example label above */}
-                <div className="flex flex-col items-center flex-shrink-0 min-w-[30px]">
-                  {question.isExample && (
-                    <div className="font-bold text-xs text-center mb-1">Beispiel:</div>
-                  )}
-                  <div className="font-bold text-sm">
-                    {qIndex}
-                  </div>
+              <div className="flex gap-3 items-start overflow-visible">
+                {/* Question number */}
+                <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
+                  {qIndex}
                 </div>
 
                 {/* Options in a single horizontal row */}
-                <div className="flex gap-12 flex-wrap">
+                <div className="flex gap-6 flex-nowrap flex-1">
                   {question.options?.map((option, index) => {
                     const optionLetter = String.fromCharCode(97 + index);
                     const isSelected = selectedAnswers[question.id] === option.id ||
@@ -98,15 +93,20 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                     const isCorrect = question.correctOptionId === option.id;
                     const showCorrect = isSubmitted && isCorrect;
                     const showIncorrect = isSubmitted && isSelected && !isCorrect;
+                    const isFirstOption = index === 0;
 
                     return (
-                      <div
-                        key={option.id}
-                        className={cn(
-                          "flex items-center gap-2 transition-colors",
-                          isSubmitted && !isSelected && !showIncorrect && "text-gray-700"
+                      <div key={option.id} className="flex-1 relative">
+                        {/* Example label above first option */}
+                        {isFirstOption && question.isExample && (
+                          <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
                         )}
-                      >
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 transition-colors",
+                            isSubmitted && !isSelected && !showIncorrect && "text-gray-700"
+                          )}
+                        >
                         <MCQCheckbox
                           letter={optionLetter}
                           checked={isSelected}
@@ -119,6 +119,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                         <span className="text-sm">
                           {option.text}
                         </span>
+                        </div>
                       </div>
                     );
                   })}
@@ -130,7 +131,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
       </div>
 
       {/* Footer */}
-      <div className="border-t bg-white p-6 flex justify-end">
+      <div className="bg-white p-6 flex justify-end">
         <button
           onClick={handleSubmit}
           disabled={isSubmitted || !allQuestionsAnswered}
@@ -142,7 +143,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
 
       {/* Results summary when submitted */}
       {isSubmitted && (
-        <div className="p-6 bg-blue-50 border-t">
+        <div className="p-6 bg-blue-50">
           <p className="font-medium text-center">
             Test abgeschlossen! Ergebnis: {questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length} von {questions.filter(q => !q.isExample).length} richtig
           </p>
