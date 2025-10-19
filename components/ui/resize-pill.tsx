@@ -91,7 +91,7 @@ export const ResizePill = ({
         className={cn(
           "absolute top-1/2 -translate-y-1/2 h-20 w-2 rounded-full cursor-col-resize z-50",
           "bg-primary/30 hover:bg-primary/60 transition-all",
-          side === "left" ? "-right-1" : "-left-1",
+          side === "left" ? "-right-2" : "-left-2",
           isDragging && "bg-primary scale-y-125"
         )}
       />
