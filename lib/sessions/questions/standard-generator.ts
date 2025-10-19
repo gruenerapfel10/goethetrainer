@@ -3,6 +3,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { QuestionTypeName } from './question-enums';
 import { multipleChoiceConfig } from './configs/multiple-choice.config';
+import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 import type { QuestionDifficulty } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
 import { generateSourceWithGaps } from './source-generator';
@@ -32,6 +33,7 @@ interface QuestionConfig {
 // Registry of question configs
 const QUESTION_CONFIGS: Record<string, QuestionConfig> = {
   [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: multipleChoiceConfig as QuestionConfig,
+  [QuestionTypeName.MULTIPLE_CHOICE]: multipleChoiceStandardConfig as QuestionConfig,
   // Future configs can be added here:
   // [QuestionTypeName.TRUE_FALSE]: trueFalseConfig,
   // [QuestionTypeName.SHORT_ANSWER]: shortAnswerConfig,

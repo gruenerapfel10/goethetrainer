@@ -5,6 +5,7 @@
 export enum QuestionTypeName {
   // Reading question types
   GAP_TEXT_MULTIPLE_CHOICE = 'gap_text_multiple_choice',
+  MULTIPLE_CHOICE = 'multiple_choice',
 
   // Future question types (to be implemented)
   TRUE_FALSE = 'true_false',

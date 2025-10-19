@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { SessionTypeEnum } from '../session-registry';
 import { QuestionTypeName, MarkingMethod } from './question-enums';
 import { multipleChoiceConfig } from './configs/multiple-choice.config';
+import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 
 // Re-export enums for backward compatibility
 export { QuestionTypeName, MarkingMethod } from './question-enums';
@@ -45,6 +46,12 @@ import {
   MultipleChoiceMarkingSchema
 } from './configs/multiple-choice.config';
 
+import {
+  MultipleChoiceStandardGenerationSchema,
+  MultipleChoiceStandardAnswerSchema,
+  MultipleChoiceStandardMarkingSchema
+} from './configs/multiple-choice-standard.config';
+
 // Complete registry of all question types
 export const QUESTION_METADATA: Record<QuestionTypeName, QuestionMetadata> = {
   // Use modular config for multiple choice
@@ -66,7 +73,26 @@ export const QUESTION_METADATA: Record<QuestionTypeName, QuestionMetadata> = {
     requiresAudioRecorder: multipleChoiceConfig.requiresAudioRecorder,
     requiresTimer: multipleChoiceConfig.requiresTimer,
   },
-  
+
+  [QuestionTypeName.MULTIPLE_CHOICE]: {
+    name: multipleChoiceStandardConfig.name,
+    displayName: multipleChoiceStandardConfig.displayName,
+    description: multipleChoiceStandardConfig.description,
+    category: multipleChoiceStandardConfig.category,
+    supportedSessions: multipleChoiceStandardConfig.supportedSessions,
+    markingMethod: multipleChoiceStandardConfig.markingMethod,
+    markingSchema: multipleChoiceStandardConfig.markingSchema,
+    generationSchema: multipleChoiceStandardConfig.generationSchema,
+    answerSchema: multipleChoiceStandardConfig.answerSchema,
+    supportsHints: multipleChoiceStandardConfig.supportsHints,
+    supportsPartialCredit: multipleChoiceStandardConfig.supportsPartialCredit,
+    defaultPoints: multipleChoiceStandardConfig.defaultPoints,
+    defaultTimeLimit: multipleChoiceStandardConfig.defaultTimeLimit,
+    requiresRichTextEditor: multipleChoiceStandardConfig.requiresRichTextEditor,
+    requiresAudioRecorder: multipleChoiceStandardConfig.requiresAudioRecorder,
+    requiresTimer: multipleChoiceStandardConfig.requiresTimer,
+  },
+
   [QuestionTypeName.TRUE_FALSE]: {
     name: QuestionTypeName.TRUE_FALSE,
     displayName: 'True or False',
