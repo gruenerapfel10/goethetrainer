@@ -345,17 +345,122 @@ class QuestionGeneratorRegistry {
 // Singleton instance
 const questionGeneratorRegistry = new QuestionGeneratorRegistry();
 
+export type QuestionLayout = 'standard' | 'random';
+
+export interface GenerateQuestionsOptions {
+  sessionType: SessionTypeEnum;
+  difficulty?: QuestionDifficulty;
+  count?: number;
+  useAI?: boolean;
+  layout?: QuestionLayout;
+}
+
 /**
- * Generate questions for a session
+ * Generate questions for a session with layout support
  */
 export async function generateQuestions(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   count: number = 1,
-  useAI: boolean = true
+  useAI: boolean = true,
+  layout: QuestionLayout = 'random'
 ): Promise<Question[]> {
   const generatorName = useAI ? 'ai' : 'mock';
+
+  // Standard layout: Generate specific question types for each Teil
+  if (layout === 'standard' && sessionType === SessionTypeEnum.READING) {
+    return await generateStandardLayout(sessionType, difficulty, generatorName);
+  }
+
+  // Random layout: Use default behavior
   return questionGeneratorRegistry.generateQuestions(sessionType, difficulty, count, generatorName);
+}
+
+/**
+ * Generate standard exam layout
+ * Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 gap-fill questions)
+ * Teil 2: MULTIPLE_CHOICE (standard comprehension questions)
+ */
+async function generateStandardLayout(
+  sessionType: SessionTypeEnum,
+  difficulty: QuestionDifficulty,
+  generatorName: string
+): Promise<Question[]> {
+  const allQuestions: Question[] = [];
+
+  // Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 questions)
+  console.log('🔵 Generating Teil 1: GAP_TEXT_MULTIPLE_CHOICE...');
+  try {
+    const teil1Questions = await generateQuestionsForSession(sessionType, difficulty, 9);
+    const convertedTeil1 = teil1Questions.map((q, i) => ({
+      ...q,
+      id: generateUUID(),
+      type: QuestionType.READING_COMPREHENSION,
+      sessionType,
+      difficulty,
+      answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
+      registryType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
+      teil: 1,
+    }));
+    allQuestions.push(...convertedTeil1);
+    console.log(`✅ Generated ${teil1Questions.length} GAP_TEXT questions for Teil 1`);
+  } catch (error) {
+    console.error('❌ Failed to generate Teil 1:', error);
+    throw error;
+  }
+
+  // Teil 2: MULTIPLE_CHOICE (5 standard questions)
+  console.log('🔵 Generating Teil 2: MULTIPLE_CHOICE...');
+  try {
+    const teil2Count = 5;
+    const teil2Questions: Question[] = [];
+
+    // Generate MULTIPLE_CHOICE questions
+    for (let i = 0; i < teil2Count; i++) {
+      const questionData = await generateQuestionWithAI({
+        questionType: QuestionTypeName.MULTIPLE_CHOICE,
+        sessionType,
+        difficulty,
+        topicIndex: i,
+      });
+
+      const metadata = getQuestionMetadata(QuestionTypeName.MULTIPLE_CHOICE);
+      const question: Question = {
+        id: generateUUID(),
+        type: QuestionType.READING_COMPREHENSION,
+        sessionType,
+        difficulty,
+        answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
+        prompt: questionData.prompt,
+        context: questionData.context,
+        options: questionData.options,
+        correctAnswer: questionData.correctOptionId,
+        correctOptionId: questionData.correctOptionId,
+        points: questionData.points || metadata.defaultPoints || 10,
+        timeLimit: questionData.timeLimit || metadata.defaultTimeLimit || 60,
+        explanation: questionData.explanation,
+        isExample: false,
+        scoringCriteria: {
+          requireExactMatch: true,
+          acceptPartialCredit: false,
+          keywords: [],
+        },
+        registryType: QuestionTypeName.MULTIPLE_CHOICE,
+        teil: 2,
+      };
+
+      teil2Questions.push(question);
+    }
+
+    allQuestions.push(...teil2Questions);
+    console.log(`✅ Generated ${teil2Questions.length} MULTIPLE_CHOICE questions for Teil 2`);
+  } catch (error) {
+    console.error('❌ Failed to generate Teil 2:', error);
+    throw error;
+  }
+
+  console.log(`✅ Total questions generated: ${allQuestions.length}`);
+  return allQuestions;
 }
 
 /**

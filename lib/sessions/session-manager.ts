@@ -65,8 +65,9 @@ export class SessionManager {
     // Generate questions for the session
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
     const questionCount = metadata?.questionCount || (config.defaults?.questionCount as number) || 1;
+    const layout = (metadata?.layout as 'standard' | 'random') || 'standard'; // Default to standard exam layout
 
-    this.questions = await generateQuestions(type, difficulty, questionCount);
+    this.questions = await generateQuestions(type, difficulty, questionCount, true, layout);
     
     this.currentQuestionIndex = 0;
     this.userAnswers = [];
