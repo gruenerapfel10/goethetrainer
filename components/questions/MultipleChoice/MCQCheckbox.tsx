@@ -29,7 +29,7 @@ export function MCQCheckbox({
       onClick={onChange}
       disabled={disabled || isExample}
       className={cn(
-        'w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0',
+        'w-6 h-6 border flex items-center justify-center flex-shrink-0',
         'font-bold text-xs font-mono transition-all',
         'cursor-pointer',
         // Default state - no visible border
@@ -52,7 +52,7 @@ export function MCQCheckbox({
       ) : showFeedback && isCorrect ? (
         <span className="text-sm">✓</span>
       ) : (
-        letter.toUpperCase()
+        letter.toLowerCase()
       )}
     </button>
   );
