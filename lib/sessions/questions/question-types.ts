@@ -46,7 +46,6 @@ export interface QuestionOption {
   id: string;
   text: string;
   isCorrect?: boolean;
-  label?: string; // For MULTIPLE_CHOICE_3 (e.g., 'a)', 'b)', 'c)')
 }
 
 export interface Question {
@@ -64,7 +63,15 @@ export interface Question {
   context?: string; // For reading/listening passages
   options?: QuestionOption[]; // For multiple choice
   correctAnswer?: string | string[]; // For validation
-  
+  correctOptionId?: string; // Alternative to correctAnswer for multiple choice
+
+  // Goethe C1 Reading specific fields
+  title?: string; // Article title (e.g., "JUNGE UNTERNEHMEN DER TOURISMUSBRANCHE")
+  subtitle?: string; // Article subtitle (e.g., "StadtTours")
+  heading?: string; // Article heading/introduction
+  instructions?: string; // Task instructions
+  workingTime?: string; // Suggested working time (e.g., "10 Minuten")
+
   // Goethe C1 specific fields
   gaps?: Array<{
     id: string;
@@ -89,13 +96,16 @@ export interface Question {
   }>; // For STATEMENT_MATCHING
   
   correctMatches?: Record<string, string>; // For GAP_TEXT_MATCHING and STATEMENT_MATCHING
-  label?: string; // For MULTIPLE_CHOICE_3 options
   
   // Metadata
   points: number;
   timeLimit?: number; // in seconds
   hints?: string[];
   explanation?: string;
+
+  // Example question flag
+  isExample?: boolean; // If true, this is a pre-filled example question
+  exampleAnswer?: string; // Pre-filled answer for example questions
   
   // Scoring
   scoringCriteria?: {

@@ -125,10 +125,7 @@ export const readingSessionConfig: SessionConfig = {
   
   // Supported question types for reading sessions (Goethe C1 compliant)
   supportedQuestions: [
-    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-    QuestionTypeName.MULTIPLE_CHOICE_3,
-    QuestionTypeName.GAP_TEXT_MATCHING,
-    QuestionTypeName.STATEMENT_MATCHING,
+    QuestionTypeName.MULTIPLE_CHOICE
   ],
   
   features: {
@@ -141,6 +138,7 @@ export const readingSessionConfig: SessionConfig = {
   
   defaults: {
     targetDuration: 1800, // 30 minutes
+    questionCount: 9, // Generate 9 questions by default (0-8 indexing)
     targetMetrics: {
       wordsRead: 500,
       readingSpeed: 200,

@@ -1,40 +1,10 @@
 import { z } from 'zod';
 import { SessionTypeEnum } from '../session-registry';
+import { QuestionTypeName, MarkingMethod } from './question-enums';
+import { multipleChoiceConfig } from './configs/multiple-choice.config';
 
-export enum QuestionTypeName {
-  // Reading question types (Goethe C1 compliant)
-  GAP_TEXT_MULTIPLE_CHOICE = 'gap_text_multiple_choice', // Lückentext mit Multiple-Choice
-  MULTIPLE_CHOICE_3 = 'multiple_choice_3', // Multiple-Choice (3-gliedrig)
-  GAP_TEXT_MATCHING = 'gap_text_matching', // Lückentext mit Zuordnung
-  STATEMENT_MATCHING = 'statement_matching', // Zuordnung von Aussagen
-  
-  // Legacy question types (kept for backward compatibility)
-  MULTIPLE_CHOICE = 'multiple_choice',
-  TRUE_FALSE = 'true_false',
-  SHORT_ANSWER = 'short_answer',
-  FILL_IN_BLANK = 'fill_in_blank',
-  
-  // Writing question types
-  ESSAY = 'essay',
-  TRANSLATION = 'translation',
-  SENTENCE_CORRECTION = 'sentence_correction',
-  
-  // Listening question types
-  AUDIO_COMPREHENSION = 'audio_comprehension',
-  DICTATION = 'dictation',
-  
-  // Speaking question types
-  PRONUNCIATION = 'pronunciation',
-  CONVERSATION = 'conversation',
-  ORAL_PRESENTATION = 'oral_presentation',
-}
-
-// Marking method for questions
-export enum MarkingMethod {
-  MANUAL = 'manual', // Teacher/human marks manually
-  AUTOMATIC = 'automatic', // System marks automatically (e.g., multiple choice)
-  AI_ASSISTED = 'ai_assisted', // AI marks with criteria
-}
+// Re-export enums for backward compatibility
+export { QuestionTypeName, MarkingMethod } from './question-enums';
 
 // Base metadata for all question types
 export interface QuestionMetadata {
@@ -68,203 +38,33 @@ export interface QuestionMetadata {
   defaultTimeLimit?: number; // in seconds
 }
 
-// Schema for multiple choice options
-const MultipleChoiceOptionSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  isCorrect: z.boolean().optional(),
-});
-
-// Generation schema for multiple choice questions
-const MultipleChoiceGenerationSchema = z.object({
-  prompt: z.string().describe('The question prompt text'),
-  context: z.string().optional().describe('Additional context or passage for the question'),
-  options: z.array(MultipleChoiceOptionSchema).min(2).max(6).describe('Answer options'),
-  correctOptionId: z.string().describe('ID of the correct option'),
-  explanation: z.string().describe('Explanation of why the answer is correct'),
-  hints: z.array(z.string()).optional().describe('Progressive hints for the question'),
-  difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-  points: z.number().default(10),
-  timeLimit: z.number().optional().describe('Time limit in seconds'),
-});
-
-// Answer schema for multiple choice
-const MultipleChoiceAnswerSchema = z.object({
-  selectedOptionId: z.string(),
-  timeSpent: z.number().optional(),
-  hintsUsed: z.number().default(0),
-});
-
-// Marking schema for multiple choice (automatic)
-const MultipleChoiceMarkingSchema = z.object({
-  selectedOptionId: z.string(),
-  correctOptionId: z.string(),
-  points: z.number(),
-});
+// Import schemas from config
+import {
+  MultipleChoiceGenerationSchema,
+  MultipleChoiceAnswerSchema,
+  MultipleChoiceMarkingSchema
+} from './configs/multiple-choice.config';
 
 // Complete registry of all question types
 export const QUESTION_METADATA: Record<QuestionTypeName, QuestionMetadata> = {
-  // Goethe C1 Reading Question Types
-  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: {
-    name: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-    displayName: 'Gap Text with Multiple Choice',
-    description: 'Fill gaps in text by selecting from 4 options',
-    category: 'selection',
-    supportedSessions: [SessionTypeEnum.READING],
-    markingMethod: MarkingMethod.AUTOMATIC,
-    markingSchema: z.object({
-      selectedOptions: z.array(z.string()),
-      correctOptions: z.array(z.string()),
-      points: z.number(),
-    }),
-    generationSchema: z.object({
-      text: z.string().describe('Text with [GAP_1], [GAP_2] markers'),
-      gaps: z.array(z.object({
-        id: z.string(),
-        options: z.array(z.object({
-          id: z.string(),
-          text: z.string(),
-        })).length(4),
-        correctOptionId: z.string(),
-      })),
-      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-      points: z.number().default(8),
-    }),
-    answerSchema: z.object({
-      selectedOptions: z.record(z.string(), z.string()),
-      timeSpent: z.number().optional(),
-    }),
-    supportsHints: false,
-    supportsPartialCredit: true,
-    defaultPoints: 8,
-    defaultTimeLimit: 600,
-  },
-
-  [QuestionTypeName.MULTIPLE_CHOICE_3]: {
-    name: QuestionTypeName.MULTIPLE_CHOICE_3,
-    displayName: 'Multiple Choice (3 Options)',
-    description: 'Select the correct answer from 3 options',
-    category: 'selection',
-    supportedSessions: [SessionTypeEnum.READING],
-    markingMethod: MarkingMethod.AUTOMATIC,
-    markingSchema: z.object({
-      selectedOptionId: z.string(),
-      correctOptionId: z.string(),
-      points: z.number(),
-    }),
-    generationSchema: z.object({
-      prompt: z.string().describe('The question prompt text'),
-      context: z.string().describe('Reading passage or context'),
-      options: z.array(z.object({
-        id: z.string(),
-        text: z.string(),
-        isCorrect: z.boolean().optional(),
-      })).length(3),
-      correctOptionId: z.string(),
-      explanation: z.string(),
-      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-      points: z.number().default(7),
-    }),
-    answerSchema: z.object({
-      selectedOptionId: z.string(),
-      timeSpent: z.number().optional(),
-    }),
-    supportsHints: false,
-    supportsPartialCredit: false,
-    defaultPoints: 7,
-    defaultTimeLimit: 300,
-  },
-
-  [QuestionTypeName.GAP_TEXT_MATCHING]: {
-    name: QuestionTypeName.GAP_TEXT_MATCHING,
-    displayName: 'Gap Text with Sentence Matching',
-    description: 'Match sentences to gaps in the text',
-    category: 'selection',
-    supportedSessions: [SessionTypeEnum.READING],
-    markingMethod: MarkingMethod.AUTOMATIC,
-    markingSchema: z.object({
-      matches: z.record(z.string(), z.string()),
-      correctMatches: z.record(z.string(), z.string()),
-      points: z.number(),
-    }),
-    generationSchema: z.object({
-      text: z.string().describe('Text with numbered gaps'),
-      sentences: z.array(z.object({
-        id: z.string(),
-        text: z.string(),
-        correctGapId: z.string().optional(),
-      })).min(8).max(10),
-      gaps: z.array(z.object({
-        id: z.string(),
-        correctSentenceId: z.string(),
-      })),
-      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-      points: z.number().default(8),
-    }),
-    answerSchema: z.object({
-      matches: z.record(z.string(), z.string()),
-      timeSpent: z.number().optional(),
-    }),
-    supportsHints: false,
-    supportsPartialCredit: true,
-    defaultPoints: 8,
-    defaultTimeLimit: 900,
-  },
-
-  [QuestionTypeName.STATEMENT_MATCHING]: {
-    name: QuestionTypeName.STATEMENT_MATCHING,
-    displayName: 'Statement Matching',
-    description: 'Match statements to different texts or authors',
-    category: 'selection',
-    supportedSessions: [SessionTypeEnum.READING],
-    markingMethod: MarkingMethod.AUTOMATIC,
-    markingSchema: z.object({
-      matches: z.record(z.string(), z.string()),
-      correctMatches: z.record(z.string(), z.string()),
-      points: z.number(),
-    }),
-    generationSchema: z.object({
-      texts: z.array(z.object({
-        id: z.string(),
-        title: z.string(),
-        content: z.string(),
-      })).min(2).max(4),
-      statements: z.array(z.object({
-        id: z.string(),
-        text: z.string(),
-        correctTextId: z.string().nullable(),
-      })).min(5).max(10),
-      difficulty: z.enum(['beginner', 'intermediate', 'advanced']),
-      points: z.number().default(7),
-    }),
-    answerSchema: z.object({
-      matches: z.record(z.string(), z.string().nullable()),
-      timeSpent: z.number().optional(),
-    }),
-    supportsHints: false,
-    supportsPartialCredit: true,
-    defaultPoints: 7,
-    defaultTimeLimit: 750,
-  },
-
-  // Legacy question types (kept for backward compatibility)
+  // Use modular config for multiple choice
   [QuestionTypeName.MULTIPLE_CHOICE]: {
-    name: QuestionTypeName.MULTIPLE_CHOICE,
-    displayName: 'Multiple Choice',
-    description: 'Select the correct answer from given options',
-    category: 'selection',
-    supportedSessions: [
-      SessionTypeEnum.READING,
-      SessionTypeEnum.LISTENING,
-    ],
-    markingMethod: MarkingMethod.AUTOMATIC,
-    markingSchema: MultipleChoiceMarkingSchema,
-    generationSchema: MultipleChoiceGenerationSchema,
-    answerSchema: MultipleChoiceAnswerSchema,
-    supportsHints: true,
-    supportsPartialCredit: false,
-    defaultPoints: 10,
-    defaultTimeLimit: 60,
+    name: multipleChoiceConfig.name,
+    displayName: multipleChoiceConfig.displayName,
+    description: multipleChoiceConfig.description,
+    category: multipleChoiceConfig.category,
+    supportedSessions: multipleChoiceConfig.supportedSessions,
+    markingMethod: multipleChoiceConfig.markingMethod,
+    markingSchema: multipleChoiceConfig.markingSchema,
+    generationSchema: multipleChoiceConfig.generationSchema,
+    answerSchema: multipleChoiceConfig.answerSchema,
+    supportsHints: multipleChoiceConfig.supportsHints,
+    supportsPartialCredit: multipleChoiceConfig.supportsPartialCredit,
+    defaultPoints: multipleChoiceConfig.defaultPoints,
+    defaultTimeLimit: multipleChoiceConfig.defaultTimeLimit,
+    requiresRichTextEditor: multipleChoiceConfig.requiresRichTextEditor,
+    requiresAudioRecorder: multipleChoiceConfig.requiresAudioRecorder,
+    requiresTimer: multipleChoiceConfig.requiresTimer,
   },
   
   [QuestionTypeName.TRUE_FALSE]: {
@@ -673,10 +473,21 @@ export function getQuestionMetadata(type: QuestionTypeName): QuestionMetadata {
 }
 
 export function getQuestionsForSession(sessionType: SessionTypeEnum): QuestionTypeName[] {
-  return Object.values(QuestionTypeName).filter(questionType => {
-    const metadata = QUESTION_METADATA[questionType];
-    return metadata?.supportedSessions?.includes(sessionType) || false;
-  });
+  // Import here to avoid circular dependency
+  const { getSessionConfig } = require('../session-registry');
+
+  try {
+    // Get the session config which defines the EXACT supported questions for this session type
+    const config = getSessionConfig(sessionType);
+    return config.supportedQuestions || [];
+  } catch (error) {
+    // Fallback to metadata-based filtering if config not found
+    console.warn(`Could not load config for session type ${sessionType}, falling back to metadata`, error);
+    return Object.values(QuestionTypeName).filter(questionType => {
+      const metadata = QUESTION_METADATA[questionType];
+      return metadata?.supportedSessions?.includes(sessionType) || false;
+    });
+  }
 }
 
 export function requiresManualMarking(type: QuestionTypeName): boolean {

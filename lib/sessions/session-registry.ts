@@ -59,6 +59,7 @@ export interface SessionConfig {
   defaults: {
     targetDuration?: number; // in seconds
     targetMetrics?: Record<string, number>;
+    questionCount?: number;
   };
   
   // Validation rules

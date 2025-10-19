@@ -7,10 +7,6 @@ import { AlertCircle } from 'lucide-react';
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
-import { GapTextMultipleChoice } from '@/components/questions/GapTextMultipleChoice/GapTextMultipleChoice';
-import { MultipleChoice3 } from '@/components/questions/MultipleChoice3/MultipleChoice3';
-import { GapTextMatching } from '@/components/questions/GapTextMatching/GapTextMatching';
-import { StatementMatching } from '@/components/questions/StatementMatching/StatementMatching';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import type { Question } from '@/lib/sessions/types';
@@ -52,10 +48,7 @@ export function SessionQuestionRenderer({
             <div className="text-sm text-muted-foreground space-y-1">
               <p>Questions generated: {allQuestions.length}</p>
               <p>Supported types: {[
-                QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-                QuestionTypeName.MULTIPLE_CHOICE_3,
-                QuestionTypeName.GAP_TEXT_MATCHING,
-                QuestionTypeName.STATEMENT_MATCHING,
+                QuestionTypeName.MULTIPLE_CHOICE,
               ].join(', ')}</p>
             </div>
           </div>
@@ -79,18 +72,7 @@ export function SessionQuestionRenderer({
   const registryType = currentQuestion.registryType as QuestionTypeName;
 
   switch (registryType) {
-    case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
-      return <GapTextMultipleChoice {...questionProps} />;
-
-    case QuestionTypeName.MULTIPLE_CHOICE_3:
-      return <MultipleChoice3 {...questionProps} />;
-
-    case QuestionTypeName.GAP_TEXT_MATCHING:
-      return <GapTextMatching {...questionProps} />;
-
-    case QuestionTypeName.STATEMENT_MATCHING:
-      return <StatementMatching {...questionProps} />;
-
+    // MultipleChoice component handles multiple choice questions
     case QuestionTypeName.MULTIPLE_CHOICE:
       return <MultipleChoice {...questionProps} />;
 

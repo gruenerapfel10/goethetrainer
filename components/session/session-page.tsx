@@ -106,9 +106,9 @@ function SessionContent() {
             <p className="text-gray-600 mt-2">{metadata.description}</p>
           </div>
         </div>
-        <StartSessionButton 
+        <StartSessionButton
           type={sessionType}
-          metadata={{ page: sessionType }}
+          metadata={{ page: sessionType, questionCount: defaults.questionCount }}
           onSessionStart={(sessionId) => {
             console.log(`${sessionType} session started:`, sessionId);
             setSessionTime(0);

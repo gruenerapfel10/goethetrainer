@@ -62,12 +62,12 @@ export class SessionManager {
   ): Promise<Session> {
     const config = getSessionConfig(type);
     const initialData = initializeSessionData(type);
-    
+
     // Generate questions for the session
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
-    const questionCount = metadata?.questionCount || 10;
-    
-    this.questions = generateQuestions(type, difficulty, questionCount);
+    const questionCount = metadata?.questionCount || (config.defaults?.questionCount as number) || 1;
+
+    this.questions = await generateQuestions(type, difficulty, questionCount);
     
     this.currentQuestionIndex = 0;
     this.userAnswers = [];

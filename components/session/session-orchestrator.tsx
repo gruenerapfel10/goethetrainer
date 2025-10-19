@@ -16,13 +16,11 @@ import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 
 // Import question components
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
+import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
-import { GapTextMultipleChoice } from '@/components/questions/GapTextMultipleChoice/GapTextMultipleChoice';
-import { MultipleChoice3 } from '@/components/questions/MultipleChoice3/MultipleChoice3';
-import { GapTextMatching } from '@/components/questions/GapTextMatching/GapTextMatching';
-import { StatementMatching } from '@/components/questions/StatementMatching/StatementMatching';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 
 export function SessionOrchestrator() {
   const params = useParams();
@@ -40,7 +38,6 @@ export function SessionOrchestrator() {
     nextQuestion,
     previousQuestion,
     endSession,
-    getSupportedQuestionTypes,
   } = useLearningSession();
 
   // Local state
@@ -48,6 +45,7 @@ export function SessionOrchestrator() {
   const [questionResult, setQuestionResult] = useState<QuestionResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timeOnQuestion, setTimeOnQuestion] = useState(0);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   // Reset state when question changes
   useEffect(() => {
@@ -71,8 +69,9 @@ export function SessionOrchestrator() {
   const handleNextQuestion = () => {
     if (!currentQuestion) return;
 
-    const next = nextQuestion();
-    if (!next && questionProgress.current === questionProgress.total) {
+    nextQuestion();
+    // Check if we've reached the last question
+    if (questionProgress.current === questionProgress.total) {
       // Session completed, navigate back
       router.push(`/${sessionType}`);
     }
@@ -103,6 +102,35 @@ export function SessionOrchestrator() {
 
   // Render question based on type
   const renderQuestion = () => {
+    // For reading sessions with multiple choice, show all questions at once
+    if (!isNavigating && sessionType === SessionTypeEnum.READING && activeSession?.data?.allQuestions) {
+      const allQuestions = activeSession.data.allQuestions;
+      if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.MULTIPLE_CHOICE) {
+        return (
+          <AllQuestionsView
+            key="all-questions-view"
+            questions={allQuestions}
+            onSubmit={(answers) => {
+              if (isNavigating) return;
+
+              // Handle batch submission of all answers
+              console.log('All answers submitted:', answers);
+              setIsNavigating(true);
+
+              // End the session after submission
+              endSession('completed');
+
+              // Navigate with a slight delay to allow React to complete rendering
+              setTimeout(() => {
+                router.push(`/${sessionType}`);
+              }, 100);
+            }}
+          />
+        );
+      }
+    }
+
+    // Single question display for other cases
     if (!currentQuestion) {
       return (
         <div className="text-center p-8">
@@ -126,20 +154,7 @@ export function SessionOrchestrator() {
     const registryType = currentQuestion.registryType as QuestionTypeName;
 
     switch (registryType) {
-      // Goethe C1 Reading Question Types
-      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
-        return <GapTextMultipleChoice {...questionProps} />;
-
-      case QuestionTypeName.MULTIPLE_CHOICE_3:
-        return <MultipleChoice3 {...questionProps} />;
-
-      case QuestionTypeName.GAP_TEXT_MATCHING:
-        return <GapTextMatching {...questionProps} />;
-
-      case QuestionTypeName.STATEMENT_MATCHING:
-        return <StatementMatching {...questionProps} />;
-
-      // Legacy question types (kept for backward compatibility)
+      // Unified MultipleChoice component handles all multiple choice variants
       case QuestionTypeName.MULTIPLE_CHOICE:
         return <MultipleChoice {...questionProps} />;
 
