@@ -96,46 +96,46 @@ export const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile, width: contextWidth, setWidth: contextSetWidth, isResizing: contextIsResizing } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
     
-    // For right sidebar or when not using context, manage local state
-    const [localWidth, setLocalWidth] = React.useState(() => {
-      if (side === "right" && typeof window !== 'undefined') {
-        const saved = document.cookie.match(/right_sidebar_width=([^;]+)/)
-        return saved ? parseInt(saved[1]) : 480
+    // Manage width independently for each sidebar
+    const [sidebarWidth, setSidebarWidth] = React.useState(() => {
+      if (typeof window !== 'undefined') {
+        const cookieName = side === "left" ? "left_sidebar_width" : "right_sidebar_width"
+        const saved = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`))
+        if (saved) return parseInt(saved[1])
       }
-      return 256
+      return side === "left" ? 256 : 480
     })
-    const [localIsResizing, setLocalIsResizing] = React.useState(false)
-    
-    // Use context for left sidebar, local state for right
-    const width = side === "left" ? contextWidth : localWidth
-    const setWidth = React.useCallback((newWidth: number) => {
-      if (side === "left") {
-        contextSetWidth(newWidth)
-      } else {
-        setLocalWidth(newWidth)
-        document.cookie = `right_sidebar_width=${newWidth}; path=/; max-age=${60 * 60 * 24 * 7}`
-      }
-    }, [side, contextSetWidth])
-    const isResizing = side === "left" ? contextIsResizing : localIsResizing
 
+    const handleWidthChange = React.useCallback((newWidth: number) => {
+      setSidebarWidth(newWidth)
+      const cookieName = side === "left" ? "left_sidebar_width" : "right_sidebar_width"
+      document.cookie = `${cookieName}=${newWidth}; path=/; max-age=${60 * 60 * 24 * 7}`
+    }, [side])
+
+    // For non-collapsible sidebars (like the right sidebar)
     if (collapsible === "none") {
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
+            "flex h-full flex-col bg-sidebar text-sidebar-foreground",
             resizable && "relative",
             className
           )}
+          style={{ 
+            width: resizable ? `${sidebarWidth}px` : 'auto',
+            minWidth: resizable ? '200px' : undefined,
+            maxWidth: resizable ? '600px' : undefined
+          }}
           ref={ref}
           {...props}
         >
           {resizable && (
             <ResizePill 
-              side={side} 
-              currentWidth={width}
-              onResize={setWidth}
+              side={side}
+              defaultWidth={sidebarWidth}
+              onWidthChange={handleWidthChange}
               minWidth={200}
               maxWidth={side === "left" ? 400 : 600}
             />
@@ -145,6 +145,7 @@ export const Sidebar = React.forwardRef<
       )
     }
 
+    // Mobile view
     if (isMobile) {
       return (
         <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
@@ -169,18 +170,20 @@ export const Sidebar = React.forwardRef<
       )
     }
 
+    // Desktop collapsible sidebar (left sidebar)
     return (
       <aside
         ref={ref}
         className={cn(
           SIDEBAR_BASE_CLASSES, 
-          !isResizing && SIDEBAR_TRANSITION, 
-          state === "collapsed" ? "w-[--sidebar-width-icon]" : "w-[--sidebar-width]", 
+          SIDEBAR_TRANSITION,
           resizable && "relative",
-          isResizing && "transition-none"
+          className
         )}
         style={{
-          width: state === "collapsed" ? undefined : `${width}px`,
+          width: resizable 
+            ? (state === "collapsed" ? "3rem" : `${sidebarWidth}px`)
+            : (state === "collapsed" ? "var(--sidebar-width-icon)" : "var(--sidebar-width)")
         }}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
@@ -188,7 +191,15 @@ export const Sidebar = React.forwardRef<
         data-side={side}
         data-resizable={resizable}
       >
-        {resizable && <ResizePill side={side} />}
+        {resizable && state !== "collapsed" && (
+          <ResizePill 
+            side={side}
+            defaultWidth={sidebarWidth}
+            onWidthChange={handleWidthChange}
+            minWidth={200}
+            maxWidth={side === "left" ? 400 : 600}
+          />
+        )}
         {children}
       </aside>
     )
