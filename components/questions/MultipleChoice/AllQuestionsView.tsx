@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
+import { GoetheHeader } from './GoetheHeader';
 
 interface Question {
   id: string;
@@ -66,17 +67,19 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
     .every(q => selectedAnswers[q.id]);
 
   return (
-    <div className="w-full h-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="p-6">
-        <h2 className="text-base font-bold">Teil 1</h2>
-      </div>
-
+    <div className="w-full h-full flex flex-col bg-background">
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6 overflow-x-visible pt-8">
-        <div className="w-full space-y-20 overflow-visible">
+      <div className="flex-1 overflow-y-auto px-12 py-6 overflow-x-visible pt-8">
+        <div className="w-full overflow-visible">
+          {/* Goethe Exam Header */}
+          <GoetheHeader />
+
+          {/* Header */}
+          <div className="mb-10">
+            <h2 className="text-base font-bold">Teil 1</h2>
+          </div>
           {questions.map((question, qIndex) => (
-            <div key={`q-${qIndex}-${question.id}`} className="overflow-visible">
+            <div key={`q-${qIndex}-${question.id}`} className="overflow-visible mb-12">
               {/* Question row with number and options */}
               <div className="flex gap-3 items-start overflow-visible">
                 {/* Question number */}
@@ -104,7 +107,7 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                         <div
                           className={cn(
                             "flex items-center gap-2 transition-colors",
-                            isSubmitted && !isSelected && !showIncorrect && "text-gray-700"
+                            isSubmitted && !isSelected && !showIncorrect && "text-muted-foreground"
                           )}
                         >
                         <MCQCheckbox
@@ -130,12 +133,22 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-white p-6 flex justify-end">
+      {/* Footer - Outside scrollable area, stays at bottom */}
+      <div className="bg-background p-6 flex justify-between items-center">
+        {/* Goethe Logo */}
+        <div className="flex-shrink-0">
+          <img
+            src="/goethe-logo.png"
+            alt="Goethe-Institut"
+            className="h-12 w-auto dark:invert"
+          />
+        </div>
+
+        {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={isSubmitted || !allQuestionsAnswered}
-          className="px-8 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium"
+          className="px-8 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
         >
           {isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
         </button>
@@ -143,8 +156,8 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
 
       {/* Results summary when submitted */}
       {isSubmitted && (
-        <div className="p-6 bg-blue-50">
-          <p className="font-medium text-center">
+        <div className="bg-accent p-6">
+          <p className="font-medium text-center text-foreground">
             Test abgeschlossen! Ergebnis: {questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length} von {questions.filter(q => !q.isExample).length} richtig
           </p>
         </div>

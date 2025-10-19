@@ -33,15 +33,15 @@ export function MCQCheckbox({
         'font-bold text-xs font-mono transition-all',
         'cursor-pointer',
         // Default state - no visible border
-        !checked && !showFeedback && 'border-gray-300 bg-white hover:bg-gray-50',
+        !checked && !showFeedback && 'border-input bg-background hover:bg-muted',
         // Selected state
-        !showFeedback && checked && !isExample && 'border-blue-600 bg-white text-blue-600 hover:bg-blue-50',
+        !showFeedback && checked && !isExample && 'border-primary bg-background text-primary hover:bg-primary/10',
         // Example state (always unchecked but greyed out)
-        isExample && !showFeedback && 'border-gray-300 bg-gray-50 text-gray-500 cursor-default',
+        isExample && !showFeedback && 'border-input bg-muted text-muted-foreground cursor-default',
         // Correct answer
-        showCorrect && 'border-green-600 bg-green-600 text-white',
+        showCorrect && 'border-success bg-success text-success-foreground',
         // Incorrect answer
-        showIncorrect && 'border-red-600 bg-red-600 text-white',
+        showIncorrect && 'border-destructive bg-destructive text-destructive-foreground',
         // Disabled state
         disabled && !isExample && 'cursor-not-allowed opacity-60'
       )}
