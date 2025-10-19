@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { MCQCheckbox } from './MCQCheckbox';
 
 interface Question {
   id: string;
@@ -99,31 +100,26 @@ export function AllQuestionsView({ questions, onSubmit }: AllQuestionsViewProps)
                     const showIncorrect = isSubmitted && isSelected && !isCorrect;
 
                     return (
-                      <label
+                      <div
                         key={option.id}
                         className={cn(
-                          "flex items-center gap-2 cursor-pointer transition-colors",
-                          !isSubmitted && isSelected && !question.isExample && "text-blue-600 font-bold",
-                          showCorrect && "text-green-600 font-bold",
-                          showIncorrect && "text-red-600",
-                          question.isExample && "cursor-default",
+                          "flex items-center gap-2 transition-colors",
                           isSubmitted && !isSelected && !showIncorrect && "text-gray-700"
                         )}
                       >
-                        <input
-                          type="radio"
-                          name={`question-${question.id}`}
+                        <MCQCheckbox
+                          letter={optionLetter}
                           checked={isSelected}
                           onChange={() => handleSelectOption(question.id, option.id, question.isExample || false)}
                           disabled={isSubmitted || question.isExample}
-                          className="cursor-pointer"
+                          isExample={question.isExample || false}
+                          isCorrect={isCorrect}
+                          showFeedback={isSubmitted}
                         />
-                        <span className="text-sm min-w-max">
-                          {optionLetter}) {option.text}
+                        <span className="text-sm">
+                          {option.text}
                         </span>
-                        {showCorrect && <span className="font-bold">✓</span>}
-                        {showIncorrect && <span className="font-bold">✗</span>}
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
