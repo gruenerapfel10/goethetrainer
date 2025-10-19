@@ -173,13 +173,31 @@ export async function generateQuestionsForSession(
   count: number = 1,
   questionTypes?: QuestionTypeName[]
 ): Promise<any[]> {
-  // For reading session with 9 questions, first question is example
+  // For reading session with 9 questions, use batch generation (1 context + 9 questions)
   const isReadingSession = count === 9 && sessionType === SessionTypeEnum.READING;
 
-  // Note: Batch generation frequently fails with Haiku due to incomplete responses
-  // Using sequential generation which is more reliable and consistent
   if (isReadingSession) {
-    console.log('Generating 9 questions sequentially (1 example + 8 actual)');
+    console.log('Generating 9 questions from 1 context using batch generation...');
+    try {
+      const batchResult = await generateQuestionsBatch(sessionType, difficulty);
+      const { context, questions } = batchResult;
+
+      // Transform batch result into array of questions with shared context
+      const questionsWithContext = questions.map((q: any, index: number) => ({
+        ...q,
+        context,
+        isExample: index === 0, // First question is example
+        exampleAnswer: index === 0 ? q.correctOptionId : undefined,
+        difficulty,
+        points: 10,
+        timeLimit: 60,
+      }));
+
+      return questionsWithContext;
+    } catch (error) {
+      console.error('Batch generation failed:', error);
+      throw error; // Don't fall back for reading sessions, fail fast
+    }
   }
 
   // Original sequential generation logic
@@ -204,14 +222,6 @@ export async function generateQuestionsForSession(
 
   try {
     const results = await Promise.all(promises);
-
-    // Mark first question as example if this is a reading session with 9 questions
-    if (isReadingSession && results.length > 0) {
-      const firstQuestion = results[0] as Record<string, any>;
-      firstQuestion.isExample = true;
-      firstQuestion.exampleAnswer = firstQuestion.correctOptionId;
-    }
-
     return results;
   } catch (error) {
     console.error('Error generating questions:', error);
@@ -224,14 +234,7 @@ export async function generateQuestionsForSession(
           sessionType,
           difficulty,
           topicIndex: i,
-        }) as Record<string, any>;
-
-        // Mark first question as example if this is a reading session with 9 questions
-        if (isReadingSession && i === 0) {
-          question.isExample = true;
-          question.exampleAnswer = question.correctOptionId;
-        }
-
+        });
         questions.push(question);
       } catch (err) {
         console.error(`Failed to generate question ${i}:`, err);

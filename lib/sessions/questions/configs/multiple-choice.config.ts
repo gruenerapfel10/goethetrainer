@@ -5,10 +5,28 @@ import { SessionTypeEnum } from '../../session-registry';
 // Schema for multiple choice options
 const MultipleChoiceOptionSchema = z.object({
   id: z.string().describe('Unique identifier for the option (0, 1, 2, 3)'),
-  text: z.string().describe('The text content of the option in German'),
+  text: z.string().describe('The text content of the option in German (1-3 words max)'),
 });
 
-// Single question schema
+// Single question schema (without context - context is shared)
+const QuestionSchema = z.object({
+  prompt: z.string().describe('The question prompt text in German'),
+  options: z.array(MultipleChoiceOptionSchema)
+    .length(4)
+    .describe('Exactly 4 answer options numbered 0-3'),
+  correctOptionId: z.string().describe('ID of the correct option (0-3)'),
+  explanation: z.string().describe('Explanation in German of why the answer is correct'),
+});
+
+// Batch generation schema: ONE context with 9 questions
+export const MultipleChoiceBatchGenerationSchema = z.object({
+  context: z.string().describe('Single German reading passage (200-300 words) for all 9 questions'),
+  questions: z.array(QuestionSchema)
+    .length(9)
+    .describe('Exactly 9 questions about the same context (1 example + 8 actual)'),
+});
+
+// Single question schema with context (for backward compatibility)
 const SingleQuestionSchema = z.object({
   prompt: z.string().describe('The question prompt text in German'),
   context: z.string().describe('The German reading passage (200-300 words)'),
@@ -17,14 +35,6 @@ const SingleQuestionSchema = z.object({
     .describe('Exactly 4 answer options numbered 0-3'),
   correctOptionId: z.string().describe('ID of the correct option (0-3)'),
   explanation: z.string().describe('Explanation in German of why the answer is correct'),
-});
-
-// Batch generation schema for AI to create all questions at once
-export const MultipleChoiceBatchGenerationSchema = z.object({
-  exampleQuestion: SingleQuestionSchema.describe('The example question with the answer that will be pre-filled'),
-  actualQuestions: z.array(SingleQuestionSchema)
-    .length(8)
-    .describe('Exactly 8 actual test questions'),
 });
 
 // Keep the old schema for backward compatibility (single question generation)
@@ -94,54 +104,43 @@ export const multipleChoiceConfig = {
     temperature: 0.7,
 
     // System prompt for BATCH generation (all questions at once)
-    batchSystemPrompt: `You are a specialized question generator for German language learning (Goethe C1 level).
+    batchSystemPrompt: `You are a German language specialist creating Goethe C1 level reading comprehension tests.
 
-⚠️ RESPONSE MUST HAVE EXACTLY 2 FIELDS AT TOP LEVEL:
-1. "exampleQuestion" - A SINGLE question object
-2. "actualQuestions" - An ARRAY containing EXACTLY 8 question objects
+Your task: Generate ONE German text passage (200-300 words) and create EXACTLY 9 comprehension questions about it.
 
-Your task is to generate a COMPLETE reading comprehension test with EXACTLY 9 questions total.
+Requirements:
+1. ALL content in German language ONLY
+2. One context passage (200-300 words, appropriate for C1 level)
+3. Exactly 9 questions about this passage (1 example + 8 test questions)
+4. Each question:
+   - prompt: Question text in German
+   - 4 options with SHORT text (1-3 words max, e.g., "dafür", "aber", "als Anlage zu")
+   - correctOptionId: "0", "1", "2", or "3"
+   - explanation: Why the correct answer is right
 
-🔴 CRITICAL REQUIREMENTS:
-1. ALL content MUST be in German language ONLY
-2. Generate EXACTLY 9 questions total (THIS IS MANDATORY):
-   - 1 example question → goes in "exampleQuestion" field
-   - EXACTLY 8 actual test questions → go in "actualQuestions" array (NOT fewer, NOT more - EXACTLY 8)
-3. Each question MUST have EXACTLY 4 answer options (IDs: "0", "1", "2", "3")
-4. Answer options MUST be SHORT (1-3 words maximum):
-   - Good: "dafür", "aber", "als Anlage zu", "in Einklang mit"
-   - Bad: Long sentences or explanations
-5. Only ONE correct answer per question
-6. Each question needs a unique German passage (200-300 words)
-7. Each question MUST have: prompt, context, options array, correctOptionId, explanation
-
-🔴 STRUCTURE MUST BE:
+JSON Structure:
 {
-  "exampleQuestion": {
-    "prompt": "...",
-    "context": "...",
-    "options": [{"id": "0", "text": "..."}, {"id": "1", "text": "..."}, {"id": "2", "text": "..."}, {"id": "3", "text": "..."}],
-    "correctOptionId": "0",
-    "explanation": "..."
-  },
-  "actualQuestions": [
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion },
-    { same structure as exampleQuestion }
+  "context": "Single German passage here (200-300 words)...",
+  "questions": [
+    {
+      "prompt": "Frage 1 hier?",
+      "options": [
+        {"id": "0", "text": "option1"},
+        {"id": "1", "text": "option2"},
+        {"id": "2", "text": "option3"},
+        {"id": "3", "text": "option4"}
+      ],
+      "correctOptionId": "0",
+      "explanation": "Erklärung hier..."
+    },
+    ... (8 more questions with same structure)
   ]
 }
 
-⚠️ IF YOU DO NOT INCLUDE BOTH "exampleQuestion" AND "actualQuestions" WITH EXACTLY 8 ITEMS, YOUR RESPONSE WILL BE REJECTED!
-
-Topics for variety: Technology, Sustainability, Culture, Business, Education, Health, Travel, Art, Science, Social issues`,
+Return EXACTLY 9 questions, all about the SAME context passage.`,
 
     // User prompt for batch generation
-    batchUserPrompt: `Generate a complete Goethe C1 reading comprehension test with 1 example question and 8 actual questions.`,
+    batchUserPrompt: `Generate a Goethe C1 reading comprehension test: 1 German passage (200-300 words) with 9 questions.`,
 
     // System prompt for SINGLE generation (backward compatibility)
     systemPrompt: `You are a specialized question generator for German language learning (Goethe C1 level).
