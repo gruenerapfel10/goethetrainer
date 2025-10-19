@@ -29,15 +29,15 @@ export function MCQCheckbox({
       onClick={onChange}
       disabled={disabled || isExample}
       className={cn(
-        'w-10 h-10 rounded-md border-2 flex items-center justify-center flex-shrink-0',
-        'font-bold text-sm font-mono transition-all',
+        'w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0',
+        'font-bold text-xs font-mono transition-all',
         'cursor-pointer',
-        // Default state
-        !checked && !showFeedback && 'border-gray-400 bg-white hover:border-gray-600',
+        // Default state - no visible border
+        !checked && !showFeedback && 'border-gray-300 bg-white',
         // Selected state
-        !showFeedback && checked && !isExample && 'border-blue-600 bg-blue-600 text-white',
+        !showFeedback && checked && !isExample && 'border-blue-600 bg-white text-blue-600',
         // Example state (always unchecked but greyed out)
-        isExample && !showFeedback && 'border-gray-300 bg-gray-100 text-gray-500 cursor-default',
+        isExample && !showFeedback && 'border-gray-300 bg-gray-50 text-gray-500 cursor-default',
         // Correct answer
         showCorrect && 'border-green-600 bg-green-600 text-white',
         // Incorrect answer
@@ -48,9 +48,9 @@ export function MCQCheckbox({
       type="button"
     >
       {showFeedback && checked && !isCorrect ? (
-        <span className="text-lg">✗</span>
+        <span className="text-sm">✗</span>
       ) : showFeedback && isCorrect ? (
-        <span className="text-lg">✓</span>
+        <span className="text-sm">✓</span>
       ) : (
         letter.toUpperCase()
       )}
