@@ -153,6 +153,11 @@ export function SessionOrchestrator() {
 
     const registryType = currentQuestion.registryType as QuestionTypeName;
 
+    // DEBUG: Log the registryType value
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Rendering question with registryType:', registryType, 'Expected:', QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE);
+    }
+
     switch (registryType) {
       // Unified MultipleChoice component handles all multiple choice variants
       case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
