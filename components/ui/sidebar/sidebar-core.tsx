@@ -163,8 +163,14 @@ export const Sidebar = React.forwardRef<
       return (
         <aside
           ref={ref}
-          className={cn("w-0 overflow-hidden", className)}
+          className={cn(
+            "w-0 overflow-hidden",
+            SIDEBAR_TRANSITION, // Add transition for smooth close animation
+            "group",
+            className
+          )}
           data-state="collapsed"
+          data-collapsible={collapsible}
           data-side={side}
           {...props}
         />
