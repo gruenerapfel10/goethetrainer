@@ -96,7 +96,29 @@ export const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile, width, isResizing } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, width: contextWidth, setWidth: contextSetWidth, isResizing: contextIsResizing } = useSidebar()
+    
+    // For right sidebar or when not using context, manage local state
+    const [localWidth, setLocalWidth] = React.useState(() => {
+      if (side === "right" && typeof window !== 'undefined') {
+        const saved = document.cookie.match(/right_sidebar_width=([^;]+)/)
+        return saved ? parseInt(saved[1]) : 480
+      }
+      return 256
+    })
+    const [localIsResizing, setLocalIsResizing] = React.useState(false)
+    
+    // Use context for left sidebar, local state for right
+    const width = side === "left" ? contextWidth : localWidth
+    const setWidth = React.useCallback((newWidth: number) => {
+      if (side === "left") {
+        contextSetWidth(newWidth)
+      } else {
+        setLocalWidth(newWidth)
+        document.cookie = `right_sidebar_width=${newWidth}; path=/; max-age=${60 * 60 * 24 * 7}`
+      }
+    }, [side, contextSetWidth])
+    const isResizing = side === "left" ? contextIsResizing : localIsResizing
 
     if (collapsible === "none") {
       return (
@@ -109,7 +131,15 @@ export const Sidebar = React.forwardRef<
           ref={ref}
           {...props}
         >
-          {resizable && <ResizePill side={side} />}
+          {resizable && (
+            <ResizePill 
+              side={side} 
+              currentWidth={width}
+              onResize={setWidth}
+              minWidth={200}
+              maxWidth={side === "left" ? 400 : 600}
+            />
+          )}
           {children}
         </div>
       )
@@ -150,7 +180,7 @@ export const Sidebar = React.forwardRef<
           isResizing && "transition-none"
         )}
         style={{
-          width: state === "collapsed" ? undefined : width,
+          width: state === "collapsed" ? undefined : `${width}px`,
         }}
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}

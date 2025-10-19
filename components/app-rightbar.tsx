@@ -53,8 +53,7 @@ export function AppRightbar() {
       resizable={true}
       collapsible="none"
       className={cn(
-        "flex-shrink-0",
-        "w-[30rem]"
+        "flex-shrink-0"
       )}
     >
       <div className="p-0 flex flex-col h-full overflow-hidden">
