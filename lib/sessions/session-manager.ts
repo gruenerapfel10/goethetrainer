@@ -236,16 +236,6 @@ export class SessionManager {
     return this.sessionId;
   }
 
-  getDuration(): number {
-    if (!this.statisticsManager) return 0;
-    return this.statisticsManager.getDuration();
-  }
-
-  getCurrentMetrics(): Record<string, number> | null {
-    if (!this.session || !this.statisticsManager) return null;
-    return this.statisticsManager.getMetrics();
-  }
-
   getQuestionManager(): QuestionManager {
     return this.questionManager;
   }
