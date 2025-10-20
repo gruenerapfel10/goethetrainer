@@ -111,6 +111,16 @@ export function getSessionDefaults(type: SessionTypeEnum | SessionType) {
   return getSessionConfig(type).defaults;
 }
 
+export function getSupportedQuestionTypes(type: SessionTypeEnum | SessionType) {
+  const config = getSessionConfig(type);
+  return config.supportedQuestions || [];
+}
+
+export function getSessionLayout(type: SessionTypeEnum | SessionType) {
+  const config = getSessionConfig(type);
+  return config.fixedLayout || [];
+}
+
 export function validateSessionData(
   type: SessionTypeEnum | SessionType,
   data: Record<string, any>
@@ -173,6 +183,17 @@ export function initializeSessionData(type: SessionTypeEnum | SessionType): Reco
       }
     }
   });
+
+  // Ensure core collections exist for session flow
+  if (!Array.isArray(data.questions)) {
+    data.questions = [];
+  }
+  if (!Array.isArray(data.answers)) {
+    data.answers = [];
+  }
+  if (!Array.isArray(data.results)) {
+    data.results = [];
+  }
   
   return data;
 }

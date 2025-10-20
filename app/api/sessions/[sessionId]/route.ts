@@ -3,8 +3,8 @@ import { auth } from '@/app/(auth)/auth';
 import { getSessionById } from '@/lib/sessions/queries';
 
 export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
+  _request: Request,
+  { params }: { params: { sessionId: string } }
 ) {
   try {
     const authSession = await auth();
@@ -12,13 +12,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = await params;
+    const { sessionId } = params;
     const session = await getSessionById(sessionId);
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
-    
+
     if (session.userId !== authSession.user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }

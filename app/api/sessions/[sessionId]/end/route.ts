@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { getSessionManager } from '@/lib/sessions/session-manager';
+import type { SessionStatus } from '@/lib/sessions/types';
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
+  { params }: { params: { sessionId: string } }
 ) {
   try {
-    const session = await auth();
-    
-    if (!session?.user?.email) {
+    const authSession = await auth();
+
+    if (!authSession?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = await params;
-    const { status = 'completed' } = await request.json();
-    
-    const manager = await getSessionManager(session.user.email, sessionId);
-    const endedSession = await manager.endSession(status);
+    const { sessionId } = params;
+    const body = (await request.json().catch(() => ({}))) as {
+      status?: SessionStatus;
+    };
+
+    const manager = await getSessionManager(authSession.user.email, sessionId);
+    const endedSession = await manager.endSession(body.status ?? 'completed');
 
     return NextResponse.json(endedSession);
   } catch (error) {

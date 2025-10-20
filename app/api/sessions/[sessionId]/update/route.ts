@@ -5,20 +5,20 @@ import type { UpdateSessionInput } from '@/lib/sessions/types';
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
+  { params }: { params: { sessionId: string } }
 ) {
   try {
-    const session = await auth();
-    
-    if (!session?.user?.email) {
+    const authSession = await auth();
+
+    if (!authSession?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = await params;
-    const input: Partial<UpdateSessionInput> = await request.json();
-    
-    const manager = await getSessionManager(session.user.email, sessionId);
-    const updatedSession = await manager.updateSessionData(input.data || {});
+    const { sessionId } = params;
+    const input = (await request.json().catch(() => ({}))) as UpdateSessionInput;
+
+    const manager = await getSessionManager(authSession.user.email, sessionId);
+    const updatedSession = await manager.updateSession(input);
 
     return NextResponse.json(updatedSession);
   } catch (error) {

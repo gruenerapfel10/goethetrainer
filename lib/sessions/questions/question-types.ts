@@ -114,6 +114,13 @@ export interface Question {
     keywords?: string[]; // For AI marking
     rubric?: Record<string, number>; // Scoring rubric
   };
+
+  // Session orchestration metadata
+  teil?: number;
+  order?: number;
+  answered?: boolean;
+  answer?: string | string[] | boolean;
+  lastSubmittedAt?: string;
 }
 
 export interface UserAnswer {

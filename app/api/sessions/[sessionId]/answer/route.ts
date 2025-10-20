@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionById, saveSession } from '@/lib/sessions/queries';
-import { QuestionManager } from '@/lib/sessions/question-manager';
+import { getSessionManager } from '@/lib/sessions/session-manager';
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
+  { params }: { params: { sessionId: string } }
 ) {
   try {
     const authSession = await auth();
@@ -13,41 +12,24 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = await params;
-    const { questionId, answer, timeSpent, hintsUsed } = await request.json();
-
-    // Get the session
-    const session = await getSessionById(sessionId);
-    if (!session) {
-      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    const { questionId, answer, timeSpent = 0, hintsUsed = 0 } = await request.json();
+    if (!questionId) {
+      return NextResponse.json(
+        { error: 'questionId is required' },
+        { status: 400 }
+      );
     }
 
-    // Create question manager and submit answer
-    const questionManager = new QuestionManager(session.data?.questions || []);
-    const result = await questionManager.submitAnswer(questionId, answer, timeSpent, hintsUsed);
+    const { sessionId } = params;
+    const manager = await getSessionManager(authSession.user.email, sessionId);
 
-    // Update session data with current stats
-    const userAnswers = questionManager.getUserAnswers();
-    const questionResults = questionManager.getQuestionResults();
-    const scoreStats = questionManager.getScoreStats();
+    const result = await manager.submitAnswer(
+      questionId,
+      answer,
+      timeSpent,
+      hintsUsed
+    );
 
-    session.data = {
-      ...session.data,
-      questionsAnswered: userAnswers.length,
-      currentScore: scoreStats.currentScore,
-      maxPossibleScore: scoreStats.maxPossibleScore,
-      lastAnsweredQuestion: questionId,
-      answers: userAnswers,
-      results: questionResults.map(r => ({
-        questionId: r.questionId,
-        score: r.score,
-        maxScore: r.maxScore,
-        isCorrect: r.isCorrect,
-        feedback: r.feedback
-      }))
-    };
-
-    await saveSession(session);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error submitting answer:', error);

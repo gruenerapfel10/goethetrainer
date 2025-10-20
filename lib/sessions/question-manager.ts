@@ -1,31 +1,62 @@
 import type { Question, UserAnswer, QuestionResult } from './questions/question-types';
 import { markQuestions } from './questions/question-marker';
 
+export interface QuestionManagerState {
+  questions: Question[];
+  answers: UserAnswer[];
+  results: QuestionResult[];
+}
+
 /**
  * QuestionManager - Handles all question-related operations
  * Manages answering, marking, results, and question flow
  */
 export class QuestionManager {
   private questions: Question[];
-  private userAnswers: UserAnswer[] = [];
-  private questionResults: QuestionResult[] = [];
+  private userAnswers: UserAnswer[];
+  private questionResults: QuestionResult[];
 
-  constructor(questions: Question[] = []) {
-    this.questions = questions;
+  constructor(
+    questions: Question[] = [],
+    answers: UserAnswer[] = [],
+    results: QuestionResult[] = []
+  ) {
+    this.questions = [...questions];
+    this.userAnswers = [...answers];
+    this.questionResults = [...results];
   }
 
   /**
    * Update the question set (useful when questions are loaded/updated)
    */
   setQuestions(questions: Question[]): void {
-    this.questions = questions;
+    this.questions = [...questions];
+  }
+
+  /**
+   * Hydrate manager with persisted answers/results
+   */
+  hydrate(answers: UserAnswer[] = [], results: QuestionResult[] = []): void {
+    this.userAnswers = [...answers];
+    this.questionResults = [...results];
+  }
+
+  /**
+   * Snapshot current state for persistence
+   */
+  getState(): QuestionManagerState {
+    return {
+      questions: [...this.questions],
+      answers: [...this.userAnswers],
+      results: [...this.questionResults],
+    };
   }
 
   /**
    * Get all questions
    */
   getAllQuestions(): Question[] {
-    return this.questions;
+    return [...this.questions];
   }
 
   /**
@@ -49,44 +80,61 @@ export class QuestionManager {
       throw new Error(`Question with ID ${questionId} not found`);
     }
 
-    // Create user answer
+    const previousAnswer = this.userAnswers.find(a => a.questionId === questionId);
+    const attempts = previousAnswer ? previousAnswer.attempts + 1 : 1;
+
     const userAnswer: UserAnswer = {
       questionId,
       answer,
       timeSpent,
-      attempts: 1,
+      attempts,
       hintsUsed,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    // Check if already answered and update attempts count
-    const existingIndex = this.userAnswers.findIndex(a => a.questionId === questionId);
-    if (existingIndex >= 0) {
-      userAnswer.attempts = this.userAnswers[existingIndex].attempts + 1;
-      this.userAnswers[existingIndex] = userAnswer;
+    if (previousAnswer) {
+      this.userAnswers = this.userAnswers.map(a =>
+        a.questionId === questionId ? userAnswer : a
+      );
     } else {
-      this.userAnswers.push(userAnswer);
+      this.userAnswers = [...this.userAnswers, userAnswer];
     }
 
-    // Mark the answer
     const [result] = await markQuestions([question], [userAnswer]);
-
-    // Update or add result
-    const resultIndex = this.questionResults.findIndex(r => r.questionId === questionId);
-    if (resultIndex >= 0) {
-      this.questionResults[resultIndex] = result;
-    } else {
-      this.questionResults.push(result);
-    }
+    this.upsertResult(result);
 
     return result;
+  }
+
+  /**
+   * Batch submit multiple answers (e.g., Teil submission)
+   */
+  async submitAnswersBulk(
+    answers: Array<{
+      questionId: string;
+      answer: string | string[] | boolean;
+      timeSpent?: number;
+      hintsUsed?: number;
+    }>
+  ): Promise<QuestionResult[]> {
+    const results: QuestionResult[] = [];
+    for (const entry of answers) {
+      const result = await this.submitAnswer(
+        entry.questionId,
+        entry.answer,
+        entry.timeSpent ?? 0,
+        entry.hintsUsed ?? 0
+      );
+      results.push(result);
+    }
+    return results;
   }
 
   /**
    * Get all user answers submitted so far
    */
   getUserAnswers(): UserAnswer[] {
-    return this.userAnswers;
+    return [...this.userAnswers];
   }
 
   /**
@@ -100,7 +148,7 @@ export class QuestionManager {
    * Get all question results
    */
   getQuestionResults(): QuestionResult[] {
-    return this.questionResults;
+    return [...this.questionResults];
   }
 
   /**
@@ -124,11 +172,10 @@ export class QuestionManager {
         totalScore: 0,
         maxScore: 0,
         percentage: 0,
-        results: []
+        results: [],
       };
     }
 
-    // Mark all questions (answered and unanswered)
     const allResults = await markQuestions(this.questions, this.userAnswers);
     this.questionResults = allResults;
 
@@ -140,7 +187,7 @@ export class QuestionManager {
       totalScore,
       maxScore,
       percentage,
-      results: allResults
+      results: allResults,
     };
   }
 
@@ -168,7 +215,7 @@ export class QuestionManager {
       unanswered,
       correct,
       incorrect,
-      percentage
+      percentage,
     };
   }
 
@@ -187,7 +234,7 @@ export class QuestionManager {
     return {
       currentScore,
       maxPossibleScore,
-      percentage
+      percentage,
     };
   }
 
@@ -197,6 +244,17 @@ export class QuestionManager {
   reset(): void {
     this.userAnswers = [];
     this.questionResults = [];
+  }
+
+  private upsertResult(result: QuestionResult): void {
+    const existingIndex = this.questionResults.findIndex(
+      r => r.questionId === result.questionId
+    );
+    if (existingIndex >= 0) {
+      this.questionResults[existingIndex] = result;
+    } else {
+      this.questionResults = [...this.questionResults, result];
+    }
   }
 
   /**

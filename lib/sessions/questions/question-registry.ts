@@ -6,30 +6,57 @@ import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard
 // Re-export enums for backward compatibility
 export { QuestionTypeName, MarkingMethod } from './question-enums';
 
-// Base metadata for all question types
 export interface QuestionMetadata {
   name: QuestionTypeName;
   displayName: string;
   description: string;
-
-  // Marking configuration
+  category: string;
   markingMethod: MarkingMethod;
-  markingSchema?: z.ZodSchema; // Schema for AI marking (null = manual)
-
-  // Generation schema for AI to create questions
-  generationSchema: z.ZodSchema;
-
-  // UI preferences
+  generationSchema: z.ZodTypeAny;
+  sessionGenerationSchema?: z.ZodTypeAny;
+  markingSchema?: z.ZodTypeAny;
+  answerSchema?: z.ZodTypeAny;
+  supportedSessions?: ReadonlyArray<string>;
+  defaultPoints: number;
+  defaultTimeLimit?: number;
   requiresRichTextEditor?: boolean;
   requiresAudioRecorder?: boolean;
   requiresTimer?: boolean;
-
-  // Scoring configuration
-  defaultTimeLimit?: number; // in seconds
+  supportsHints?: boolean;
+  supportsPartialCredit?: boolean;
+  aiGeneration?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
-// Registry of implemented question types (only includes types with full implementations)
-export const QUESTION_METADATA: Partial<Record<QuestionTypeName, QuestionMetadata>> = {
-  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: multipleChoiceConfig as QuestionMetadata,
-  [QuestionTypeName.MULTIPLE_CHOICE]: multipleChoiceStandardConfig as QuestionMetadata,
-};
+type QuestionDefinition = QuestionMetadata;
+
+const registry = new Map<QuestionTypeName, QuestionDefinition>();
+
+function registerQuestion(metadata: QuestionDefinition): void {
+  registry.set(metadata.name, metadata);
+}
+
+// Register built-in question types
+[multipleChoiceConfig, multipleChoiceStandardConfig].forEach(config => {
+  registerQuestion(config as QuestionDefinition);
+});
+
+export function getQuestionMetadata(type: QuestionTypeName): QuestionMetadata {
+  const metadata = registry.get(type);
+  if (!metadata) {
+    throw new Error(`Question type "${type}" is not registered`);
+  }
+  return metadata;
+}
+
+export function isQuestionTypeRegistered(type: QuestionTypeName): boolean {
+  return registry.has(type);
+}
+
+export function listRegisteredQuestionTypes(): QuestionTypeName[] {
+  return Array.from(registry.keys());
+}
+
+export function getQuestionRegistry(): Map<QuestionTypeName, QuestionDefinition> {
+  return registry;
+}

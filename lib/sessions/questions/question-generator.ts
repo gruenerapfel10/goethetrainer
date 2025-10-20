@@ -2,7 +2,7 @@ import { generateUUID } from '@/lib/utils';
 import { QuestionTypeName, getQuestionMetadata } from './question-registry';
 import { AnswerType, QuestionType, QuestionDifficulty } from './question-types';
 import type { Question } from './question-types';
-import { SessionTypeEnum } from '../session-registry';
+import { SessionTypeEnum, getSupportedQuestionTypes } from '../session-registry';
 import { generateQuestionWithAI, generateSessionQuestion } from './standard-generator';
 import { MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS } from './mockquestions';
 
@@ -601,7 +601,5 @@ export async function generateMockQuestions(
  * Get supported question types for a session
  */
 function getQuestionsForSession(sessionType: SessionTypeEnum): QuestionTypeName[] {
-  const { getSessionConfig } = require('../session-registry');
-  const config = getSessionConfig(sessionType);
-  return config.supportedQuestions || [];
+  return getSupportedQuestionTypes(sessionType);
 }

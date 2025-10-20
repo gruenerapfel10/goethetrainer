@@ -68,7 +68,7 @@ export function SessionOrchestrator() {
 
     setIsSubmitting(true);
     try {
-      const result = await submitAnswer(userAnswer, timeOnQuestion);
+      const result = await submitAnswer(currentQuestion.id, userAnswer, timeOnQuestion);
       setQuestionResult(result);
     } finally {
       setIsSubmitting(false);

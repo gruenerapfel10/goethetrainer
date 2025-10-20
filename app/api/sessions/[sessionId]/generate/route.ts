@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { getSessionManager } from '@/lib/sessions/session-manager';
 
-export async function GET(
+export async function POST(
   _request: Request,
   { params }: { params: { sessionId: string } }
 ) {
@@ -14,13 +14,13 @@ export async function GET(
 
     const { sessionId } = params;
     const manager = await getSessionManager(authSession.user.email, sessionId);
-    const questions = await manager.getAllQuestions();
+    const questions = await manager.generateQuestions();
 
-    return NextResponse.json(questions);
+    return NextResponse.json({ questions });
   } catch (error) {
-    console.error('Error fetching questions:', error);
+    console.error('Error generating questions:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch questions' },
+      { error: 'Failed to generate questions' },
       { status: 500 }
     );
   }

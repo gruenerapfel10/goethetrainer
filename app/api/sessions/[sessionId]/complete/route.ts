@@ -3,8 +3,8 @@ import { auth } from '@/app/(auth)/auth';
 import { getSessionManager } from '@/lib/sessions/session-manager';
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ sessionId: string }> }
+  _request: Request,
+  { params }: { params: { sessionId: string } }
 ) {
   try {
     const authSession = await auth();
@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = await params;
+    const { sessionId } = params;
     const manager = await getSessionManager(authSession.user.email, sessionId);
     const results = await manager.completeQuestionFlow();
 
