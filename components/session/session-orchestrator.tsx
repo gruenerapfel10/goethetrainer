@@ -120,18 +120,21 @@ export function SessionOrchestrator() {
 
         // Show Teil 1 (GAP_TEXT_MULTIPLE_CHOICE)
         if (currentTeil === 1 && teil1Questions.length > 0) {
+          const hasMoreTeils = teil2Questions.length > 0;
           return (
             <AllQuestionsView
               key="teil-1-view"
               questions={teil1Questions}
               showA4Format={showA4Format}
               sessionId={sessionId}
+              showResultsImmediately={false} // Don't show results yet, move to Teil 2
+              isLastTeil={!hasMoreTeils} // False if there are more Teils
               onSubmit={(answers) => {
                 if (isNavigating) return;
                 console.log('Teil 1 answers submitted:', answers);
 
                 // Move to Teil 2 if available
-                if (teil2Questions.length > 0) {
+                if (hasMoreTeils) {
                   setCurrentTeil(2);
                 } else {
                   // End session if no Teil 2

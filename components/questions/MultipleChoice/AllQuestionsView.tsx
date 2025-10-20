@@ -27,9 +27,18 @@ interface AllQuestionsViewProps {
   onSubmit: (answers: Record<string, string>) => void;
   showA4Format?: boolean;
   sessionId?: string; // Optional: if provided, will use marking API
+  showResultsImmediately?: boolean; // If false, just call onSubmit without showing results
+  isLastTeil?: boolean; // If true, shows "Test abgeben" button, otherwise shows "Weiter"
 }
 
-export function AllQuestionsView({ questions, onSubmit, showA4Format = true, sessionId }: AllQuestionsViewProps) {
+export function AllQuestionsView({
+  questions,
+  onSubmit,
+  showA4Format = true,
+  sessionId,
+  showResultsImmediately = true,
+  isLastTeil = true
+}: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isMarking, setIsMarking] = useState(false);
@@ -97,6 +106,13 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
 
     setIsSubmitted(true);
     console.log('✅ Set isSubmitted to true');
+
+    // If showResultsImmediately is false, just call onSubmit (for Teil-based sessions)
+    if (!showResultsImmediately) {
+      console.log('✅ showResultsImmediately is false, calling onSubmit');
+      onSubmit(selectedAnswers);
+      return;
+    }
 
     // If sessionId is provided, use the marking API
     if (sessionId) {
@@ -357,7 +373,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
               />
             </div>
 
-            {/* Submit Button */}
+            {/* Submit/Next Button */}
             <button
               onClick={() => {
                 console.log('🟡 Button clicked!');
@@ -366,7 +382,7 @@ export function AllQuestionsView({ questions, onSubmit, showA4Format = true, ses
               disabled={isSubmitted || !allQuestionsAnswered || isMarking}
               className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
             >
-              {isMarking ? 'Wird bewertet...' : isSubmitted ? 'Test abgeschlossen' : 'Test abgeben'}
+              {isMarking ? 'Wird bewertet...' : isSubmitted ? (isLastTeil ? 'Test abgeschlossen' : 'Weiter...') : (isLastTeil ? 'Test abgeben' : 'Weiter')}
             </button>
           </div>
 
