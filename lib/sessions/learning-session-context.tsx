@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { SessionTypeEnum } from './session-registry';
+import { useSessionStream } from '@/lib/hooks/useSessionStream';
 import type {
   Session,
   SessionStats,
@@ -110,6 +111,38 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     }
   }, [authSession?.user?.email]);
 
+  // Stream questions when session starts
+  useSessionStream({
+    sessionId: activeSession?.id || '',
+    onQuestionsUpdate: (newQuestions) => {
+      setSessionQuestions(prev => {
+        const questionIds = new Set(prev.map(q => q.id));
+        const filteredNew = newQuestions.filter(q => !questionIds.has(q.id));
+        if (filteredNew.length === 0) return prev;
+
+        const converted: SessionQuestion[] = filteredNew.map(q => ({
+          ...q,
+          status: QuestionStatus.LOADED,
+          answered: false
+        }));
+
+        const updated = [...prev, ...converted];
+        if (updated.length > 0 && !currentQuestion) {
+          setCurrentQuestion(updated[0]);
+          updateProgress(0, updated.length, 0);
+        }
+        return updated;
+      });
+    },
+    onComplete: () => {
+      console.log('All questions generated');
+    },
+    onError: (err) => {
+      console.error('Stream error:', err);
+      setError('Failed to stream questions');
+    }
+  });
+
   const checkActiveSession = async () => {
     if (!authSession?.user?.email) return;
 
@@ -188,34 +221,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
       const session = await response.json();
       setActiveSession(session);
+      setCurrentQuestionIndex(0);
+      setQuestionResults([]);
+      setSessionQuestions([]);
 
-      // Load questions
-      const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
-      if (questionsRes.ok) {
-        const questions: Question[] = await questionsRes.json();
-        // Convert to SessionQuestion format
-        const sessionQs: SessionQuestion[] = questions.map(q => ({
-          ...q,
-          status: QuestionStatus.LOADED,
-          answered: false
-        }));
-        setSessionQuestions(sessionQs);
-        setCurrentQuestionIndex(0);
-        setQuestionResults([]);
-
-        if (sessionQs.length > 0) {
-          setCurrentQuestion(sessionQs[0]);
-          updateProgress(0, sessionQs.length, 0);
-        }
-
-        console.log('Session started:', {
-          sessionId: session.id,
-          type,
-          totalQuestions: sessionQs.length,
-          teils: [...new Set(sessionQs.map(q => (q as any).teil || 1))]
-        });
-      }
-      
       return session;
     } catch (err) {
       console.error('Failed to start session:', err);
