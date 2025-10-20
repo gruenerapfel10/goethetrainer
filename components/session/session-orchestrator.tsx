@@ -47,6 +47,17 @@ export function SessionOrchestrator() {
     submitTeilAnswers,
   } = useLearningSession();
 
+  // Debug logs
+  useEffect(() => {
+    console.log(`\n🎪 SessionOrchestrator mounted or updated:`);
+    console.log(`   sessionId from URL: ${sessionId}`);
+    console.log(`   activeSession?.id: ${activeSession?.id}`);
+    console.log(`   isLoading: ${isLoading}`);
+    console.log(`   error: ${error}`);
+    console.log(`   sessionQuestions.length: ${sessionQuestions.length}`);
+    console.log(`   Check: !activeSession=${!activeSession}, id mismatch=${activeSession?.id !== sessionId}, isLoading=${isLoading}`);
+  }, [sessionId, activeSession?.id, isLoading, error, sessionQuestions.length]);
+
   // Local state
   const [userAnswer, setUserAnswer] = useState<string | string[] | boolean | null>(null);
   const [questionResult, setQuestionResult] = useState<QuestionResult | null>(null);
