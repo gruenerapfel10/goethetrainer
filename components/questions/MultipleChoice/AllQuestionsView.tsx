@@ -6,8 +6,6 @@ import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 import { SessionResultsView } from '../SessionResultsView';
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
-import { Timeline } from '@/components/ui/timeline';
-import { TimelineStep } from '@/components/timeline/components/timeline-step';
 
 interface Question {
   id: string;
@@ -241,40 +239,58 @@ export function AllQuestionsView({
         </button>
       </div>
 
-      {/* Teil Navigation - Vertical Timeline on left edge */}
+      {/* Teil Navigation - Vertical on left edge */}
       {totalTeils > 1 && (
-        <div className="fixed left-6 top-1/2 -translate-y-1/2 z-20">
-          <Timeline>
-            {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
-              const isGenerated = generatedTeils.has(teilNum);
-              const isCurrentTeil = teilNum === teilNumber;
+        <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
+          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum, index, array) => {
+            const isGenerated = generatedTeils.has(teilNum);
+            const isCurrentTeil = teilNum === teilNumber;
+            const isLast = index === array.length - 1;
 
-              return (
-                <TimelineStep
-                  key={`teil-${teilNum}`}
-                  id={`teil-${teilNum}`}
-                  title={`Teil ${teilNum}`}
-                  status={isCurrentTeil ? 'running' : isGenerated ? 'completed' : 'pending'}
-                  iconParams={{
-                    src: null,
-                    alt: `Teil ${teilNum}`,
-                    width: 6,
-                    height: 6,
-                    className: cn(
-                      'w-6 h-6',
-                      isCurrentTeil && 'ring-2 ring-sidebar-accent'
-                    )
-                  }}
-                  onClick={() => {
-                    if (isGenerated) {
-                      onTeilNavigate?.(teilNum);
-                    }
-                  }}
-                  small
-                />
-              );
-            })}
-          </Timeline>
+            return (
+              <div key={`teil-${teilNum}`} className="relative flex items-center gap-3">
+                {/* Connecting line */}
+                {!isLast && (
+                  <div className="absolute left-3 top-6 w-0.5 h-10 bg-border" />
+                )}
+
+                {/* Dot indicator */}
+                <button
+                  onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
+                  disabled={!isGenerated}
+                  className={cn(
+                    "relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
+                    isCurrentTeil
+                      ? "bg-sidebar-accent border-sidebar-accent animate-pulse"
+                      : isGenerated
+                      ? "bg-primary border-primary hover:scale-110 cursor-pointer"
+                      : "bg-muted border-border cursor-not-allowed opacity-40"
+                  )}
+                >
+                  {isGenerated && (
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      isCurrentTeil ? "bg-white" : "bg-primary-foreground"
+                    )} />
+                  )}
+                </button>
+
+                {/* Label */}
+                <span className={cn(
+                  "text-sm font-medium transition-colors",
+                  isCurrentTeil
+                    ? "text-foreground"
+                    : isGenerated
+                    ? "text-muted-foreground hover:text-foreground cursor-pointer"
+                    : "text-muted-foreground/40"
+                )}
+                onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
+                >
+                  Teil {teilNum}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
 
