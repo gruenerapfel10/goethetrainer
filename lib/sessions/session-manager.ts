@@ -139,32 +139,6 @@ export class SessionManager {
     return session;
   }
 
-  async pauseSession(): Promise<Session> {
-    if (!this.session || this.session.status !== 'active') {
-      throw new Error('No active session to pause');
-    }
-
-    this.session.status = 'paused';
-
-    const { updateSession } = await import('./queries');
-    await updateSession(this.session);
-
-    return this.session;
-  }
-
-  async resumeSession(): Promise<Session> {
-    if (!this.session || this.session.status !== 'paused') {
-      throw new Error('No paused session to resume');
-    }
-
-    this.session.status = 'active';
-
-    const { updateSession } = await import('./queries');
-    await updateSession(this.session);
-
-    return this.session;
-  }
-
   async endSession(status: 'completed' | 'abandoned' = 'completed'): Promise<Session> {
     if (!this.session) {
       throw new Error('No active session to end');

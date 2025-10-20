@@ -44,8 +44,6 @@ interface LearningSessionContextType {
   
   // Session actions
   startSession: (type: SessionTypeEnum, metadata?: Record<string, any>) => Promise<Session | null>;
-  pauseSession: () => Promise<void>;
-  resumeSession: () => Promise<void>;
   endSession: (status?: 'completed' | 'abandoned') => Promise<void>;
   
   // Question actions
@@ -209,46 +207,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       setIsLoading(false);
     }
   }, [authSession?.user?.email, activeSession]);
-
-  const pauseSession = useCallback(async () => {
-    if (!activeSession || activeSession.status !== 'active') return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/sessions/${activeSession.id}/pause`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        const updated = await response.json();
-        setActiveSession(updated);
-      }
-    } catch (err) {
-      setError('Failed to pause session');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeSession]);
-
-  const resumeSession = useCallback(async () => {
-    if (!activeSession || activeSession.status !== 'paused') return;
-
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/sessions/${activeSession.id}/resume`, {
-        method: 'POST'
-      });
-      
-      if (response.ok) {
-        const updated = await response.json();
-        setActiveSession(updated);
-      }
-    } catch (err) {
-      setError('Failed to resume session');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeSession]);
 
   const endSession = useCallback(async (status: 'completed' | 'abandoned' = 'completed') => {
     if (!activeSession) return;
@@ -437,8 +395,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         error,
         stats,
         startSession,
-        pauseSession,
-        resumeSession,
         endSession,
         submitAnswer,
         nextQuestion,

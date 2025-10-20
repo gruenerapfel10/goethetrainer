@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Square, Loader2 } from 'lucide-react';
+import { Play, Square, Loader2 } from 'lucide-react';
 import { useLearningSession } from '@/lib/sessions/learning-session-context';
 import type { SessionType } from '@/lib/sessions/types';
 import { cn } from '@/lib/utils';
@@ -29,15 +29,12 @@ export function StartSessionButton({
     isLoading,
     sessionQuestions,
     startSession,
-    pauseSession,
-    resumeSession,
     endSession
   } = useLearningSession();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [hasNavigated, setHasNavigated] = useState(false);
 
   const isActiveForType = activeSession && activeSession.type === type;
-  const isPaused = isActiveForType && activeSession.status === 'paused';
 
   // Navigate as soon as session is created
   useEffect(() => {
@@ -53,14 +50,6 @@ export function StartSessionButton({
   const handleStart = async () => {
     setHasNavigated(false);
     await startSession(type, metadata);
-  };
-
-  const handlePause = async () => {
-    if (isPaused) {
-      await resumeSession();
-    } else {
-      await pauseSession();
-    }
   };
 
   const handleEnd = async () => {
@@ -108,33 +97,14 @@ export function StartSessionButton({
   // Active session for this type
   if (isActiveForType) {
     return (
-      <div className="flex gap-2">
-        <Button
-          variant={isPaused ? "default" : "secondary"}
-          onClick={handlePause}
-          className={cn("gap-2", className)}
-        >
-          {isPaused ? (
-            <>
-              <Play className="h-4 w-4" />
-              Resume
-            </>
-          ) : (
-            <>
-              <Pause className="h-4 w-4" />
-              Pause
-            </>
-          )}
-        </Button>
-        <Button
-          variant={showEndConfirm ? "destructive" : "outline"}
-          onClick={handleEnd}
-          className={cn("gap-2", className)}
-        >
-          <Square className="h-4 w-4" />
-          {showEndConfirm ? "Confirm End" : "End Session"}
-        </Button>
-      </div>
+      <Button
+        variant={showEndConfirm ? "destructive" : "outline"}
+        onClick={handleEnd}
+        className={cn("gap-2", className)}
+      >
+        <Square className="h-4 w-4" />
+        {showEndConfirm ? "Confirm End" : "End Session"}
+      </Button>
     );
   }
 
