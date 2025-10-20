@@ -109,6 +109,28 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   }, [authSession?.user?.email]);
 
 
+  const loadSessionQuestions = useCallback(async (sessionId: string) => {
+    try {
+      const questionsRes = await fetch(`/api/sessions/${sessionId}/questions`);
+      if (questionsRes.ok) {
+        const questions: Question[] = await questionsRes.json();
+        // Convert to SessionQuestion format
+        const sessionQs: SessionQuestion[] = questions.map(q => ({
+          ...q,
+          status: QuestionStatus.LOADED,
+          answered: false
+        }));
+        setSessionQuestions(sessionQs);
+        if (sessionQs.length > 0) {
+          setCurrentQuestion(sessionQs[0]);
+          updateProgress(0, sessionQs.length, 0);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading session questions:', err);
+    }
+  }, []);
+
   const checkActiveSession = async () => {
     if (!authSession?.user?.email) return;
 
@@ -119,23 +141,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         if (sessions.length > 0) {
           const session = sessions[0];
           setActiveSession(session);
-
-          // Load questions for the session
-          const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
-          if (questionsRes.ok) {
-            const questions: Question[] = await questionsRes.json();
-            // Convert to SessionQuestion format
-            const sessionQs: SessionQuestion[] = questions.map(q => ({
-              ...q,
-              status: QuestionStatus.LOADED,
-              answered: false
-            }));
-            setSessionQuestions(sessionQs);
-            if (sessionQs.length > 0) {
-              setCurrentQuestion(sessionQs[0]);
-              updateProgress(0, sessionQs.length, 0);
-            }
-          }
+          // Load questions in the background
+          loadSessionQuestions(session.id);
         }
       }
     } catch (err) {
@@ -158,7 +165,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   }, [authSession?.user?.email]);
 
   const startSession = useCallback(async (
-    type: SessionTypeEnum, 
+    type: SessionTypeEnum,
     metadata?: Record<string, any>
   ): Promise<Session | null> => {
     console.log(`\n▶️ startSession: Starting session of type ${type}`);
@@ -198,6 +205,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       setQuestionResults([]);
       setSessionQuestions([]);
 
+      // Load questions in the background (don't wait for them)
+      loadSessionQuestions(session.id);
+
       return session;
     } catch (err) {
       console.error('Failed to start session:', err);
@@ -206,7 +216,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     } finally {
       setIsLoading(false);
     }
-  }, [authSession?.user?.email, activeSession]);
+  }, [authSession?.user?.email, activeSession, loadSessionQuestions]);
 
   const endSession = useCallback(async (status: 'completed' | 'abandoned' = 'completed') => {
     if (!activeSession) return;
