@@ -197,6 +197,15 @@ export function AllQuestionsView({
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice';
 
+  // Debug logging for Teil navigation
+  console.log('🔍 Teil Navigation Debug:', {
+    totalTeils,
+    generatedTeils: Array.from(generatedTeils),
+    teilNumber,
+    shouldShowNav: totalTeils > 1,
+    hasOnTeilNavigate: !!onTeilNavigate
+  });
+
   // Show results view if results are available
   if (results) {
     console.log('✅ Rendering SessionResultsView with results:', results);
