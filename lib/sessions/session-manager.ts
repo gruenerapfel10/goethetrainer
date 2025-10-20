@@ -9,8 +9,6 @@ import type { Session, SessionStatus } from './types';
 import { generateSessionQuestion } from './questions/standard-generator';
 import type { Question, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
-import { QuestionManager } from './question-manager';
-import { StatisticsManager } from './statistics-manager';
 
 /**
  * Generic question generation for fixed layouts
@@ -65,21 +63,18 @@ async function generateLayoutQuestions(
   return questions;
 }
 
+/**
+ * SessionManager - Handles ONLY session lifecycle operations
+ * Does NOT handle questions, statistics, duration, or progress
+ */
 export class SessionManager {
   private sessionId: string;
   private userId: string;
   private session: Session | null = null;
 
-  // Question flow management
-  private questions: Question[] = [];
-  private currentQuestionIndex: number = 0;
-  private questionManager: QuestionManager;
-  private statisticsManager: StatisticsManager | null = null;
-
   constructor(userId: string, sessionId?: string) {
     this.userId = userId;
     this.sessionId = sessionId || generateUUID();
-    this.questionManager = new QuestionManager();
   }
 
   async initialize(sessionId?: string): Promise<void> {
@@ -90,9 +85,6 @@ export class SessionManager {
       if (!this.session) {
         throw new Error(`Session ${sessionId} not found`);
       }
-      
-      // Load from session (single source of truth)
-      this.questions = this.session.data?.questions || [];
     }
   }
 
@@ -102,13 +94,7 @@ export class SessionManager {
   ): Promise<Session> {
     const config = getSessionConfig(type);
     const initialData = initializeSessionData(type);
-
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
-    this.questions = [];
-
-    // Initialize statistics manager
-    this.statisticsManager = new StatisticsManager(type);
-    this.statisticsManager.startTiming();
 
     const session: Session = {
       id: this.sessionId,
@@ -119,7 +105,7 @@ export class SessionManager {
       duration: 0,
       data: {
         ...initialData,
-        questions: this.questions,
+        questions: [],
       },
       metadata: {
         ...metadata,
@@ -139,15 +125,12 @@ export class SessionManager {
     // Generate questions based on fixed layout if configured
     if (config.fixedLayout && config.fixedLayout.length > 0) {
       try {
-        // Generate all questions for the layout
-        const allLayoutQuestions = await generateLayoutQuestions(
+        await generateLayoutQuestions(
           config.fixedLayout,
           type,
           difficulty,
           this.sessionId
         );
-        this.questions = allLayoutQuestions;
-        this.questionManager.setQuestions(allLayoutQuestions);
       } catch (error) {
         console.error('Failed to generate questions:', error);
       }
@@ -156,37 +139,25 @@ export class SessionManager {
     return session;
   }
 
-  async updateSessionData(updates: Record<string, any>): Promise<Session> {
-    if (!this.session || !this.statisticsManager) {
-      throw new Error('No active session to update');
+  async pauseSession(): Promise<Session> {
+    if (!this.session || this.session.status !== 'active') {
+      throw new Error('No active session to pause');
     }
 
-    // Update statistics manager with new data
-    this.statisticsManager.updateSessionData(updates);
+    this.session.status = 'paused';
 
-    // Always keep questions synced
-    const questionsData = {
-      allQuestions: this.questions,
-      currentQuestionIndex: this.currentQuestionIndex,
-    };
+    const { updateSession } = await import('./queries');
+    await updateSession(this.session);
 
-    // Merge updates with existing data
-    const updatedData = {
-      ...this.session.data,
-      ...questionsData,
-      ...updates
-    };
+    return this.session;
+  }
 
-    // Update session
-    this.session.data = updatedData;
-    this.session.duration = this.statisticsManager.getDuration();
+  async resumeSession(): Promise<Session> {
+    if (!this.session || this.session.status !== 'paused') {
+      throw new Error('No paused session to resume');
+    }
 
-    // Calculate and store metrics through statistics manager
-    const metrics = this.statisticsManager.getMetrics();
-    this.session.metadata = {
-      ...this.session.metadata,
-      metrics
-    };
+    this.session.status = 'active';
 
     const { updateSession } = await import('./queries');
     await updateSession(this.session);
@@ -195,32 +166,12 @@ export class SessionManager {
   }
 
   async endSession(status: 'completed' | 'abandoned' = 'completed'): Promise<Session> {
-    if (!this.session || !this.statisticsManager) {
+    if (!this.session) {
       throw new Error('No active session to end');
     }
 
-    // End timing through statistics manager
-    this.statisticsManager.endTiming();
-
     this.session.status = status;
     this.session.endedAt = new Date();
-    this.session.duration = this.statisticsManager.getDuration();
-
-    // Calculate final metrics through statistics manager
-    const metrics = this.statisticsManager.getMetrics();
-    this.session.metadata = {
-      ...this.session.metadata,
-      metrics,
-      finalMetrics: metrics
-    };
-
-    // Check if targets were met using statistics manager
-    const type = this.session.type as SessionTypeEnum;
-    const config = getSessionConfig(type);
-    if (config.defaults.targetMetrics) {
-      const targetsAchieved = this.statisticsManager.checkTargetsMet(config.defaults.targetMetrics);
-      this.session.metadata.targetsAchieved = targetsAchieved;
-    }
 
     const { updateSession } = await import('./queries');
     await updateSession(this.session);
@@ -236,95 +187,6 @@ export class SessionManager {
     return this.sessionId;
   }
 
-  // Question flow methods
-  getCurrentQuestion(): Question | null {
-    if (!this.questions.length || this.currentQuestionIndex >= this.questions.length) {
-      return null;
-    }
-    return this.questions[this.currentQuestionIndex];
-  }
-
-  getNextQuestion(): Question | null {
-    if (this.currentQuestionIndex < this.questions.length - 1) {
-      this.currentQuestionIndex++;
-      if (this.session) {
-        this.session.data.currentQuestionIndex = this.currentQuestionIndex;
-      }
-      return this.questions[this.currentQuestionIndex];
-    }
-    return null;
-  }
-
-  getPreviousQuestion(): Question | null {
-    if (this.currentQuestionIndex > 0) {
-      this.currentQuestionIndex--;
-      if (this.session) {
-        this.session.data.currentQuestionIndex = this.currentQuestionIndex;
-      }
-      return this.questions[this.currentQuestionIndex];
-    }
-    return null;
-  }
-
-  async completeQuestionFlow(): Promise<{
-    totalScore: number;
-    maxScore: number;
-    percentage: number;
-    results: any[];
-  }> {
-    if (!this.session) {
-      throw new Error('No active session');
-    }
-
-    // Complete all questions through question manager
-    const completion = await this.questionManager.completeAllQuestions();
-    const allResults = this.questionManager.getQuestionResults();
-
-    // Update session with final results
-    await this.updateSessionData({
-      questionsCompleted: true,
-      finalScore: completion.totalScore,
-      finalMaxScore: completion.maxScore,
-      scorePercentage: completion.percentage,
-      allResults: allResults.map(r => ({
-        questionId: r.questionId,
-        score: r.score,
-        maxScore: r.maxScore,
-        isCorrect: r.isCorrect,
-        feedback: r.feedback,
-        markedBy: r.markedBy
-      }))
-    });
-
-    return completion;
-  }
-
-  getQuestionProgress(): {
-    current: number;
-    total: number;
-    answered: number;
-    unanswered: number;
-    percentage: number;
-  } {
-    const stats = this.questionManager.getQuestionStats();
-
-    return {
-      current: this.currentQuestionIndex + 1,
-      total: stats.total,
-      answered: stats.answered,
-      unanswered: stats.unanswered,
-      percentage: stats.percentage
-    };
-  }
-
-  getAllQuestions(): Question[] {
-    return this.questions;
-  }
-
-  getQuestionResults(): any[] {
-    return this.questionManager.getQuestionResults();
-  }
-  
   getSupportedQuestionTypes(): QuestionTypeName[] {
     if (!this.session) return [];
     return getQuestionsForSession(this.session.type as SessionTypeEnum);
@@ -349,7 +211,7 @@ export class SessionManager {
 
 // Helper function to get or create session manager
 export async function getSessionManager(
-  userId: string, 
+  userId: string,
   sessionId?: string
 ): Promise<SessionManager> {
   const manager = new SessionManager(userId, sessionId);
