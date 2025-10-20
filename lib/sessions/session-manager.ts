@@ -25,15 +25,21 @@ async function generateLayoutQuestions(
   const { getSessionById, saveSession } = await import('./queries');
   const questions: Question[] = [];
 
+  console.log(`\n🔧 generateLayoutQuestions: Starting with layout [${layout.join(', ')}] for session ${sessionId}`);
+
   for (let i = 0; i < layout.length; i++) {
     const questionType = layout[i];
     const teilNumber = startingTeil + i;
+
+    console.log(`\n📝 generateLayoutQuestions: Generating Teil ${teilNumber} (${questionType})`);
 
     const layoutQuestions = await generateSessionQuestion(
       sessionType,
       difficulty,
       questionType
     );
+
+    console.log(`✅ generateLayoutQuestions: Generated ${layoutQuestions.length} questions for Teil ${teilNumber}`);
 
     const converted = layoutQuestions.map((q: any) => ({
       ...q,
@@ -46,11 +52,16 @@ async function generateLayoutQuestions(
     // Update session after each Teil
     const session = await getSessionById(sessionId);
     if (session) {
-      session.data.questions = [...(session.data.questions || []), ...converted];
+      const updatedQuestions = [...(session.data.questions || []), ...converted];
+      session.data.questions = updatedQuestions;
       await saveSession(session);
+      console.log(`💾 generateLayoutQuestions: Saved Teil ${teilNumber} to Firebase - Total questions: ${updatedQuestions.length}`);
+    } else {
+      console.error(`❌ generateLayoutQuestions: Session not found for ${sessionId}`);
     }
   }
 
+  console.log(`\n🎉 generateLayoutQuestions: COMPLETED - Generated ${questions.length} total questions`);
   return questions;
 }
 

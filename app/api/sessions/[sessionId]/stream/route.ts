@@ -15,10 +15,13 @@ export async function GET(
     }
 
     const { sessionId } = await params;
+    console.log(`\n🔵 SSE STREAM OPENED for session ${sessionId}`);
+
     const manager = await getSessionManager(authSession.user.email, sessionId);
     const session = manager.getSession();
 
     if (!session) {
+      console.log(`❌ Session not found: ${sessionId}`);
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
@@ -31,6 +34,8 @@ export async function GET(
       }, 0);
     }
 
+    console.log(`📊 Session type: ${session.type}, Expected questions: ${expectedCount}`);
+
     // Set up SSE response
     const encoder = new TextEncoder();
     let currentCount = 0;
@@ -38,6 +43,8 @@ export async function GET(
 
     const stream = new ReadableStream({
       async start(controller) {
+        console.log(`⏱️  Starting poll interval for ${sessionId}`);
+
         const checkInterval = setInterval(async () => {
           // Reload session to check for new questions
           const updatedManager = await getSessionManager(authSession.user.email, sessionId);
@@ -48,6 +55,7 @@ export async function GET(
           // Send new questions since last check
           if (currentCount > lastSentCount) {
             const newQuestions = questions.slice(lastSentCount);
+            console.log(`📤 SSE SENDING ${newQuestions.length} new questions (total: ${currentCount}/${expectedCount})`);
             controller.enqueue(
               encoder.encode(`data: ${JSON.stringify({ questions: newQuestions, total: currentCount })}\n\n`)
             );
@@ -56,6 +64,7 @@ export async function GET(
 
           // Close when all questions generated
           if (expectedCount > 0 && currentCount >= expectedCount) {
+            console.log(`✅ SSE CLOSING - All ${currentCount} questions sent`);
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true })}\n\n`));
             clearInterval(checkInterval);
             controller.close();

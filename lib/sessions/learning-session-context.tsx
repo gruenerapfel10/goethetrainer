@@ -115,10 +115,14 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   useSessionStream({
     sessionId: activeSession?.id || '',
     onQuestionsUpdate: (newQuestions) => {
+      console.log(`🎯 LearningSessionContext: Received ${newQuestions.length} new questions from SSE`);
       setSessionQuestions(prev => {
         const questionIds = new Set(prev.map(q => q.id));
         const filteredNew = newQuestions.filter(q => !questionIds.has(q.id));
-        if (filteredNew.length === 0) return prev;
+        if (filteredNew.length === 0) {
+          console.log('⚠️ LearningSessionContext: All questions already in state, skipping');
+          return prev;
+        }
 
         const converted: SessionQuestion[] = filteredNew.map(q => ({
           ...q,
@@ -127,7 +131,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         }));
 
         const updated = [...prev, ...converted];
+        console.log(`📊 LearningSessionContext: Updated sessionQuestions to ${updated.length} total`);
+
         if (updated.length > 0 && !currentQuestion) {
+          console.log(`🚀 LearningSessionContext: Setting first question (ID: ${updated[0].id})`);
           setCurrentQuestion(updated[0]);
           updateProgress(0, updated.length, 0);
         }
@@ -135,10 +142,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       });
     },
     onComplete: () => {
-      console.log('All questions generated');
+      console.log('✅ LearningSessionContext: All questions generated and stream completed');
     },
     onError: (err) => {
-      console.error('Stream error:', err);
+      console.error('❌ LearningSessionContext: Stream error:', err);
       setError('Failed to stream questions');
     }
   });
@@ -195,13 +202,17 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     type: SessionTypeEnum, 
     metadata?: Record<string, any>
   ): Promise<Session | null> => {
+    console.log(`\n▶️ startSession: Starting session of type ${type}`);
+
     if (!authSession?.user?.email) {
+      console.log('❌ startSession: User not authenticated');
       setError('You must be logged in to start a session');
       return null;
     }
 
     // End any existing active session
     if (activeSession) {
+      console.log(`⚠️ startSession: Ending existing session ${activeSession.id}`);
       await endSession('abandoned');
     }
 
@@ -209,6 +220,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     setError(null);
 
     try {
+      console.log(`📤 startSession: Calling /api/sessions/start`);
       const response = await fetch('/api/sessions/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -220,6 +232,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       }
 
       const session = await response.json();
+      console.log(`✅ startSession: Session created with ID ${session.id}`);
+      console.log(`🔌 startSession: SSE hook will connect to stream for ${session.id}`);
+
       setActiveSession(session);
       setCurrentQuestionIndex(0);
       setQuestionResults([]);
