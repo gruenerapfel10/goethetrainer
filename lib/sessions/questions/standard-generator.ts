@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { QuestionTypeName } from './question-enums';
-import { multipleChoiceConfig } from './configs/multiple-choice.config';
+import { multipleChoiceConfig } from './configs/gap-text-multiple-choice.config';
 import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 import type { QuestionDifficulty } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
