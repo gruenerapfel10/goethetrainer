@@ -184,6 +184,9 @@ export function AllQuestionsView({
   // Detect which Teil this is from the questions
   const teilNumber = (questions[0] as any)?.teil || 1;
 
+  // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
+  const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice';
+
   // Show results view if results are available
   if (results) {
     console.log('✅ Rendering SessionResultsView with results:', results);
@@ -255,8 +258,11 @@ export function AllQuestionsView({
                         {qIndex}
                       </div>
 
-                      {/* Options in a single horizontal row */}
-                      <div className="flex gap-6 flex-nowrap flex-1">
+                      {/* Options - horizontal for GAP_TEXT, vertical for MULTIPLE_CHOICE */}
+                      <div className={cn(
+                        "flex flex-1",
+                        isMultipleChoice ? "flex-col gap-3" : "gap-6 flex-nowrap"
+                      )}>
                         {question.options?.map((option, index) => {
                           const optionLetter = String.fromCharCode(97 + index);
                           const isSelected = selectedAnswers[question.id] === option.id ||
@@ -266,7 +272,10 @@ export function AllQuestionsView({
                           const isFirstOption = index === 0;
 
                           return (
-                            <div key={option.id} className="flex-1 min-w-0 relative">
+                            <div key={option.id} className={cn(
+                              "relative",
+                              isMultipleChoice ? "w-full" : "flex-1 min-w-0"
+                            )}>
                               {/* Example label above first option */}
                               {isFirstOption && question.isExample && (
                                 <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
