@@ -2,8 +2,7 @@ import { generateUUID } from '@/lib/utils';
 import {
   SessionTypeEnum,
   getSessionConfig,
-  initializeSessionData,
-  calculateSessionMetrics
+  initializeSessionData
 } from './session-registry';
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
@@ -11,6 +10,7 @@ import { generateSessionQuestion } from './questions/standard-generator';
 import type { Question, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
 import { QuestionManager } from './question-manager';
+import { StatisticsManager } from './statistics-manager';
 
 /**
  * Generic question generation for fixed layouts
@@ -69,12 +69,12 @@ export class SessionManager {
   private sessionId: string;
   private userId: string;
   private session: Session | null = null;
-  private startTime: Date | null = null;
 
   // Question flow management
   private questions: Question[] = [];
   private currentQuestionIndex: number = 0;
   private questionManager: QuestionManager;
+  private statisticsManager: StatisticsManager | null = null;
 
   constructor(userId: string, sessionId?: string) {
     this.userId = userId;
@@ -105,7 +105,11 @@ export class SessionManager {
 
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
     this.questions = [];
-    
+
+    // Initialize statistics manager
+    this.statisticsManager = new StatisticsManager(type);
+    this.statisticsManager.startTiming();
+
     const session: Session = {
       id: this.sessionId,
       userId: this.userId,
@@ -131,7 +135,6 @@ export class SessionManager {
     await saveSession(session);
 
     this.session = session;
-    this.startTime = new Date();
 
     // Generate questions based on fixed layout if configured
     if (config.fixedLayout && config.fixedLayout.length > 0) {
@@ -154,18 +157,19 @@ export class SessionManager {
   }
 
   async updateSessionData(updates: Record<string, any>): Promise<Session> {
-    if (!this.session) {
+    if (!this.session || !this.statisticsManager) {
       throw new Error('No active session to update');
     }
 
-    const type = this.session.type as SessionTypeEnum;
-    
+    // Update statistics manager with new data
+    this.statisticsManager.updateSessionData(updates);
+
     // Always keep questions synced
     const questionsData = {
       allQuestions: this.questions,
       currentQuestionIndex: this.currentQuestionIndex,
     };
-    
+
     // Merge updates with existing data
     const updatedData = {
       ...this.session.data,
@@ -175,10 +179,10 @@ export class SessionManager {
 
     // Update session
     this.session.data = updatedData;
-    this.session.duration = this.calculateDuration();
+    this.session.duration = this.statisticsManager.getDuration();
 
-    // Calculate and store metrics
-    const metrics = calculateSessionMetrics(type, updatedData, this.session.duration);
+    // Calculate and store metrics through statistics manager
+    const metrics = this.statisticsManager.getMetrics();
     this.session.metadata = {
       ...this.session.metadata,
       metrics
@@ -186,50 +190,42 @@ export class SessionManager {
 
     const { updateSession } = await import('./queries');
     await updateSession(this.session);
-    
+
     return this.session;
   }
 
   async endSession(status: 'completed' | 'abandoned' = 'completed'): Promise<Session> {
-    if (!this.session) {
+    if (!this.session || !this.statisticsManager) {
       throw new Error('No active session to end');
     }
 
+    // End timing through statistics manager
+    this.statisticsManager.endTiming();
+
     this.session.status = status;
     this.session.endedAt = new Date();
-    this.session.duration = this.calculateDuration();
+    this.session.duration = this.statisticsManager.getDuration();
 
-    // Calculate final metrics
-    const type = this.session.type as SessionTypeEnum;
-    const metrics = calculateSessionMetrics(type, this.session.data, this.session.duration);
+    // Calculate final metrics through statistics manager
+    const metrics = this.statisticsManager.getMetrics();
     this.session.metadata = {
       ...this.session.metadata,
       metrics,
       finalMetrics: metrics
     };
 
-    // Check if targets were met
+    // Check if targets were met using statistics manager
+    const type = this.session.type as SessionTypeEnum;
     const config = getSessionConfig(type);
     if (config.defaults.targetMetrics) {
-      const targetsAchieved: Record<string, boolean> = {};
-      Object.entries(config.defaults.targetMetrics).forEach(([key, target]) => {
-        const actual = this.session!.data[key] || metrics[key] || 0;
-        targetsAchieved[key] = actual >= target;
-      });
+      const targetsAchieved = this.statisticsManager.checkTargetsMet(config.defaults.targetMetrics);
       this.session.metadata.targetsAchieved = targetsAchieved;
     }
 
     const { updateSession } = await import('./queries');
     await updateSession(this.session);
-    
+
     return this.session;
-  }
-
-  private calculateDuration(): number {
-    if (!this.startTime) return 0;
-
-    const totalTime = Date.now() - this.startTime.getTime();
-    return Math.round(totalTime / 1000);
   }
 
   getSession(): Session | null {
@@ -241,14 +237,13 @@ export class SessionManager {
   }
 
   getDuration(): number {
-    return this.calculateDuration();
+    if (!this.statisticsManager) return 0;
+    return this.statisticsManager.getDuration();
   }
 
   getCurrentMetrics(): Record<string, number> | null {
-    if (!this.session) return null;
-    
-    const type = this.session.type as SessionTypeEnum;
-    return calculateSessionMetrics(type, this.session.data, this.calculateDuration());
+    if (!this.session || !this.statisticsManager) return null;
+    return this.statisticsManager.getMetrics();
   }
 
   // Question flow methods
