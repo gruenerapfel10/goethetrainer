@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
+import { QuestionTimeline } from './QuestionTimeline';
 import { SessionResultsView } from '../SessionResultsView';
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
@@ -205,39 +206,13 @@ export function AllQuestionsView({
         </button>
       </div>
 
-      {/* Teil Navigation - Absolute positioned like Fragen/Quelle */}
-      {actualTotalTeils > 1 && (
-        <div className="absolute top-6 right-6 flex gap-0 z-10 border-b border-border">
-          {Array.from({ length: actualTotalTeils }, (_, i) => i + 1).map((teilNum) => {
-            // Check if at least one question in this Teil is loaded
-            const teilQuestions = questions.filter(q => (q.teil || 1) === teilNum);
-            const isLoaded = teilQuestions.some(q => q.status === QuestionStatus.LOADED);
-            const isGenerating = teilQuestions.some(q => q.status === QuestionStatus.GENERATING);
-            const isCurrentTeil = teilNum === teilNumber;
-
-            return (
-              <button
-                key={`teil-${teilNum}`}
-                onClick={() => isLoaded && onTeilNavigate?.(teilNum)}
-                disabled={!isLoaded}
-                className={cn(
-                  "px-4 py-2 font-medium transition-colors relative",
-                  isCurrentTeil
-                    ? "text-foreground border-b-2 border-primary -mb-px"
-                    : isLoaded
-                    ? "text-muted-foreground hover:text-foreground cursor-pointer"
-                    : "text-muted-foreground/40 cursor-not-allowed"
-                )}
-              >
-                Teil {teilNum}
-                {isGenerating && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Teil Navigation */}
+      <QuestionTimeline
+        questions={questions}
+        totalTeils={actualTotalTeils}
+        currentTeilNumber={teilNumber}
+        onTeilNavigate={onTeilNavigate}
+      />
 
       <div
         className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar"
