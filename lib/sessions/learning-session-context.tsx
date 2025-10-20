@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { SessionTypeEnum } from './session-registry';
-import { useSessionStream } from '@/lib/hooks/useSessionStream';
 import type {
   Session,
   SessionStats,
@@ -111,44 +110,78 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     }
   }, [authSession?.user?.email]);
 
-  // Stream questions when session starts
-  useSessionStream({
-    sessionId: activeSession?.id || '',
-    onQuestionsUpdate: (newQuestions) => {
-      console.log(`🎯 LearningSessionContext: Received ${newQuestions.length} new questions from SSE`);
-      setSessionQuestions(prev => {
-        const questionIds = new Set(prev.map(q => q.id));
-        const filteredNew = newQuestions.filter(q => !questionIds.has(q.id));
-        if (filteredNew.length === 0) {
-          console.log('⚠️ LearningSessionContext: All questions already in state, skipping');
-          return prev;
-        }
-
-        const converted: SessionQuestion[] = filteredNew.map(q => ({
-          ...q,
-          status: QuestionStatus.LOADED,
-          answered: false
-        }));
-
-        const updated = [...prev, ...converted];
-        console.log(`📊 LearningSessionContext: Updated sessionQuestions to ${updated.length} total`);
-
-        if (updated.length > 0 && !currentQuestion) {
-          console.log(`🚀 LearningSessionContext: Setting first question (ID: ${updated[0].id})`);
-          setCurrentQuestion(updated[0]);
-          updateProgress(0, updated.length, 0);
-        }
-        return updated;
-      });
-    },
-    onComplete: () => {
-      console.log('✅ LearningSessionContext: All questions generated and stream completed');
-    },
-    onError: (err) => {
-      console.error('❌ LearningSessionContext: Stream error:', err);
-      setError('Failed to stream questions');
+  // Stream questions when session starts - wrap in useEffect so it only fires when activeSession changes
+  useEffect(() => {
+    if (!activeSession?.id) {
+      console.log('⚠️ LearningSessionContext: No active session to stream');
+      return;
     }
-  });
+
+    console.log(`🎯 LearningSessionContext: Setting up SSE stream for session ${activeSession.id}`);
+
+    // Connect to SSE stream
+    const eventSource = new EventSource(`/api/sessions/${activeSession.id}/stream`);
+
+    eventSource.onopen = () => {
+      console.log(`✅ LearningSessionContext: SSE connection OPENED`);
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log(`📥 LearningSessionContext: RECEIVED SSE data:`, data);
+
+        if (data.done) {
+          console.log('✅ LearningSessionContext: Stream COMPLETED');
+          eventSource.close();
+          return;
+        }
+
+        if (data.questions && data.questions.length > 0) {
+          console.log(`🎯 LearningSessionContext: Processing ${data.questions.length} new questions`);
+          setSessionQuestions(prev => {
+            const questionIds = new Set(prev.map(q => q.id));
+            const filteredNew = data.questions.filter((q: any) => !questionIds.has(q.id));
+
+            if (filteredNew.length === 0) {
+              console.log('⚠️ LearningSessionContext: All questions already in state');
+              return prev;
+            }
+
+            const converted: SessionQuestion[] = filteredNew.map((q: any) => ({
+              ...q,
+              status: QuestionStatus.LOADED,
+              answered: false
+            }));
+
+            const updated = [...prev, ...converted];
+            console.log(`📊 LearningSessionContext: Updated sessionQuestions to ${updated.length} total`);
+
+            if (updated.length > 0 && !currentQuestion) {
+              console.log(`🚀 LearningSessionContext: Setting first question (ID: ${updated[0].id})`);
+              setCurrentQuestion(updated[0]);
+              updateProgress(0, updated.length, 0);
+            }
+            return updated;
+          });
+        }
+      } catch (err) {
+        console.error('❌ LearningSessionContext: Error parsing SSE message:', err);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('❌ LearningSessionContext: SSE connection error:', error);
+      eventSource.close();
+      setError('Failed to stream questions');
+    };
+
+    // Cleanup on unmount or when session changes
+    return () => {
+      console.log(`🔴 LearningSessionContext: Closing SSE connection for ${activeSession.id}`);
+      eventSource.close();
+    };
+  }, [activeSession?.id, currentQuestion]);
 
   const checkActiveSession = async () => {
     if (!authSession?.user?.email) return;
