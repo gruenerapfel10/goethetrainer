@@ -8,9 +8,9 @@ import {
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
 import { generateSessionQuestion } from './questions/standard-generator';
-import { markQuestions } from './questions/question-marker';
-import type { Question, UserAnswer, QuestionResult, QuestionDifficulty } from './questions/question-types';
+import type { Question, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
+import { QuestionManager } from './question-manager';
 
 /**
  * Generic question generation for fixed layouts
@@ -70,16 +70,16 @@ export class SessionManager {
   private userId: string;
   private session: Session | null = null;
   private startTime: Date | null = null;
-  
+
   // Question flow management
   private questions: Question[] = [];
   private currentQuestionIndex: number = 0;
-  private userAnswers: UserAnswer[] = [];
-  private questionResults: QuestionResult[] = [];
+  private questionManager: QuestionManager;
 
   constructor(userId: string, sessionId?: string) {
     this.userId = userId;
     this.sessionId = sessionId || generateUUID();
+    this.questionManager = new QuestionManager();
   }
 
   async initialize(sessionId?: string): Promise<void> {
@@ -144,6 +144,7 @@ export class SessionManager {
           this.sessionId
         );
         this.questions = allLayoutQuestions;
+        this.questionManager.setQuestions(allLayoutQuestions);
       } catch (error) {
         console.error('Failed to generate questions:', error);
       }
@@ -285,55 +286,31 @@ export class SessionManager {
     answer: string | string[] | boolean,
     timeSpent: number = 0,
     hintsUsed: number = 0
-  ): Promise<QuestionResult> {
+  ): Promise<any> {
     if (!this.session) {
       throw new Error('No active session');
     }
 
-    const question = this.questions.find(q => q.id === questionId);
-    if (!question) {
-      throw new Error('Question not found');
-    }
-
-    // Create user answer
-    const userAnswer: UserAnswer = {
+    // Submit answer through question manager
+    const result = await this.questionManager.submitAnswer(
       questionId,
       answer,
       timeSpent,
-      attempts: 1,
-      hintsUsed,
-      timestamp: new Date()
-    };
+      hintsUsed
+    );
 
-    // Check if already answered
-    const existingIndex = this.userAnswers.findIndex(a => a.questionId === questionId);
-    if (existingIndex >= 0) {
-      // Update attempts count
-      userAnswer.attempts = this.userAnswers[existingIndex].attempts + 1;
-      this.userAnswers[existingIndex] = userAnswer;
-    } else {
-      this.userAnswers.push(userAnswer);
-    }
+    // Update session data with current stats
+    const userAnswers = this.questionManager.getUserAnswers();
+    const questionResults = this.questionManager.getQuestionResults();
+    const scoreStats = this.questionManager.getScoreStats();
 
-    // Mark the answer
-    const [result] = await markQuestions([question], [userAnswer]);
-    
-    // Update or add result
-    const resultIndex = this.questionResults.findIndex(r => r.questionId === questionId);
-    if (resultIndex >= 0) {
-      this.questionResults[resultIndex] = result;
-    } else {
-      this.questionResults.push(result);
-    }
-
-    // Update session data
     await this.updateSessionData({
-      questionsAnswered: this.userAnswers.length,
-      currentScore: this.questionResults.reduce((sum, r) => sum + r.score, 0),
-      maxPossibleScore: this.questions.reduce((sum, q) => sum + q.points, 0),
+      questionsAnswered: userAnswers.length,
+      currentScore: scoreStats.currentScore,
+      maxPossibleScore: scoreStats.maxPossibleScore,
       lastAnsweredQuestion: questionId,
-      answers: this.userAnswers,
-      results: this.questionResults.map(r => ({
+      answers: userAnswers,
+      results: questionResults.map(r => ({
         questionId: r.questionId,
         score: r.score,
         maxScore: r.maxScore,
@@ -349,26 +326,22 @@ export class SessionManager {
     totalScore: number;
     maxScore: number;
     percentage: number;
-    results: QuestionResult[];
+    results: any[];
   }> {
     if (!this.session) {
       throw new Error('No active session');
     }
 
-    // Mark any unanswered questions as incorrect
-    const allResults = await markQuestions(this.questions, this.userAnswers);
-    this.questionResults = allResults;
-
-    const totalScore = allResults.reduce((sum, r) => sum + r.score, 0);
-    const maxScore = this.questions.reduce((sum, q) => sum + q.points, 0);
-    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+    // Complete all questions through question manager
+    const completion = await this.questionManager.completeAllQuestions();
+    const allResults = this.questionManager.getQuestionResults();
 
     // Update session with final results
     await this.updateSessionData({
       questionsCompleted: true,
-      finalScore: totalScore,
-      finalMaxScore: maxScore,
-      scorePercentage: percentage,
+      finalScore: completion.totalScore,
+      finalMaxScore: completion.maxScore,
+      scorePercentage: completion.percentage,
       allResults: allResults.map(r => ({
         questionId: r.questionId,
         score: r.score,
@@ -379,12 +352,7 @@ export class SessionManager {
       }))
     });
 
-    return {
-      totalScore,
-      maxScore,
-      percentage,
-      results: allResults
-    };
+    return completion;
   }
 
   getQuestionProgress(): {
@@ -394,15 +362,14 @@ export class SessionManager {
     unanswered: number;
     percentage: number;
   } {
-    const answered = this.userAnswers.length;
-    const total = this.questions.length;
-    
+    const stats = this.questionManager.getQuestionStats();
+
     return {
       current: this.currentQuestionIndex + 1,
-      total,
-      answered,
-      unanswered: total - answered,
-      percentage: total > 0 ? (answered / total) * 100 : 0
+      total: stats.total,
+      answered: stats.answered,
+      unanswered: stats.unanswered,
+      percentage: stats.percentage
     };
   }
 
@@ -410,8 +377,8 @@ export class SessionManager {
     return this.questions;
   }
 
-  getQuestionResults(): QuestionResult[] {
-    return this.questionResults;
+  getQuestionResults(): any[] {
+    return this.questionManager.getQuestionResults();
   }
   
   getSupportedQuestionTypes(): QuestionTypeName[] {
