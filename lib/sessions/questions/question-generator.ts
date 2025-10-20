@@ -402,9 +402,9 @@ export async function generateQuestions(
 }
 
 /**
- * Generate standard exam layout
+ * Generate standard exam layout - Teil 1 only (progressive generation)
  * Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 gap-fill questions)
- * Teil 2: MULTIPLE_CHOICE (standard comprehension questions)
+ * Teil 2 should be generated separately when needed
  */
 async function generateStandardLayout(
   sessionType: SessionTypeEnum,
@@ -434,7 +434,17 @@ async function generateStandardLayout(
     throw error;
   }
 
-  // Teil 2: MULTIPLE_CHOICE (7 comprehension questions with shared context)
+  console.log(`✅ Total questions generated for initial load: ${allQuestions.length}`);
+  return allQuestions;
+}
+
+/**
+ * Generate Teil 2 separately (called when user is ready to progress)
+ */
+export async function generateTeil2(
+  sessionType: SessionTypeEnum,
+  difficulty: QuestionDifficulty
+): Promise<Question[]> {
   console.log('🔵 Generating Teil 2: MULTIPLE_CHOICE...');
   try {
     const teil2Count = 7;
@@ -478,16 +488,15 @@ async function generateStandardLayout(
         };
       });
 
-      allQuestions.push(...teil2Questions);
       console.log(`✅ Generated ${teil2Questions.length} MULTIPLE_CHOICE questions for Teil 2`);
+      return teil2Questions;
     }
   } catch (error) {
     console.error('❌ Failed to generate Teil 2:', error);
     throw error;
   }
 
-  console.log(`✅ Total questions generated: ${allQuestions.length}`);
-  return allQuestions;
+  return [];
 }
 
 /**
