@@ -59,8 +59,6 @@ export class SessionManager {
   private userId: string;
   private session: Session | null = null;
   private startTime: Date | null = null;
-  private pausedDuration: number = 0;
-  private lastPauseTime: Date | null = null;
   
   // Question flow management
   private questions: Question[] = [];
@@ -180,38 +178,6 @@ export class SessionManager {
     return this.session;
   }
 
-  async pauseSession(): Promise<Session> {
-    if (!this.session || this.session.status !== 'active') {
-      throw new Error('No active session to pause');
-    }
-
-    this.session.status = 'paused';
-    this.lastPauseTime = new Date();
-    
-    const { updateSession } = await import('./queries');
-    await updateSession(this.session);
-    
-    return this.session;
-  }
-
-  async resumeSession(): Promise<Session> {
-    if (!this.session || this.session.status !== 'paused') {
-      throw new Error('No paused session to resume');
-    }
-
-    if (this.lastPauseTime) {
-      this.pausedDuration += Date.now() - this.lastPauseTime.getTime();
-      this.lastPauseTime = null;
-    }
-    
-    this.session.status = 'active';
-    
-    const { updateSession } = await import('./queries');
-    await updateSession(this.session);
-    
-    return this.session;
-  }
-
   async endSession(status: 'completed' | 'abandoned' = 'completed'): Promise<Session> {
     if (!this.session) {
       throw new Error('No active session to end');
@@ -249,17 +215,9 @@ export class SessionManager {
 
   private calculateDuration(): number {
     if (!this.startTime) return 0;
-    
+
     const totalTime = Date.now() - this.startTime.getTime();
-    const activeDuration = totalTime - this.pausedDuration;
-    
-    // Add current pause duration if currently paused
-    if (this.lastPauseTime) {
-      const currentPauseDuration = Date.now() - this.lastPauseTime.getTime();
-      return Math.round((activeDuration - currentPauseDuration) / 1000);
-    }
-    
-    return Math.round(activeDuration / 1000);
+    return Math.round(totalTime / 1000);
   }
 
   getSession(): Session | null {
