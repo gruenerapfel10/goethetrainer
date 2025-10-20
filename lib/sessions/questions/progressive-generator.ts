@@ -2,7 +2,7 @@
  * Progressive question generator - generates questions one by one and updates state
  */
 
-import { generateQuestionsForSession } from './standard-generator';
+import { generateSessionQuestion } from './standard-generator';
 import { QuestionTypeName } from './question-registry';
 import { SessionTypeEnum } from '../session-registry';
 import { QuestionDifficulty } from './question-types';
@@ -25,15 +25,13 @@ export async function generateProgressively(options: ProgressiveGeneratorOptions
   for (let teilIndex = 0; teilIndex < layout.length; teilIndex++) {
     const questionType = layout[teilIndex];
     const teilNumber = teilIndex + 1;
-    const questionCount = questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7;
 
     try {
       // Generate questions for this Teil
-      const questions = await generateQuestionsForSession(
+      const questions = await generateSessionQuestion(
         sessionType,
         difficulty,
-        questionCount,
-        [questionType]
+        questionType
       );
 
       // Emit each question as it's ready

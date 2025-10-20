@@ -7,47 +7,51 @@ import {
 } from './session-registry';
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
-import { generateQuestionsForSession } from './questions/standard-generator';
+import { generateSessionQuestion } from './questions/standard-generator';
 import { markQuestions } from './questions/question-marker';
 import type { Question, UserAnswer, QuestionResult, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
 
 /**
- * Generate remaining Teils in background
+ * Generic question generation for fixed layouts
  */
-async function generateRemainingTeils(
+async function generateLayoutQuestions(
   layout: QuestionTypeName[],
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
   sessionId: string,
-  onQuestionGenerated?: (question: Question) => void
+  startingTeil: number = 1
 ) {
   const { getSessionById, saveSession } = await import('./queries');
+  const questions: Question[] = [];
 
   for (let i = 0; i < layout.length; i++) {
     const questionType = layout[i];
-    const teilNumber = i + 2;
-    const questionCount = questionType === 'gap_text_multiple_choice' ? 9 : 7;
+    const teilNumber = startingTeil + i;
 
-    const questions = await generateQuestionsForSession(
+    const layoutQuestions = await generateSessionQuestion(
       sessionType,
       difficulty,
-      questionCount,
-      [questionType]
+      questionType
     );
 
-    const convertedQuestions = questions.map((q: any) => ({
+    const converted = layoutQuestions.map((q: any) => ({
       ...q,
       teil: teilNumber,
       registryType: questionType
     }));
 
+    questions.push(...converted);
+
+    // Update session after each Teil
     const session = await getSessionById(sessionId);
     if (session) {
-      session.data.questions = [...(session.data.questions || []), ...convertedQuestions];
+      session.data.questions = [...(session.data.questions || []), ...converted];
       await saveSession(session);
     }
   }
+
+  return questions;
 }
 
 export class SessionManager {
@@ -85,8 +89,7 @@ export class SessionManager {
 
   async createSession(
     type: SessionTypeEnum,
-    metadata?: Record<string, any>,
-    onQuestionGenerated?: (question: Question) => void
+    metadata?: Record<string, any>
   ): Promise<Session> {
     const config = getSessionConfig(type);
     const initialData = initializeSessionData(type);
@@ -121,45 +124,19 @@ export class SessionManager {
     this.session = session;
     this.startTime = new Date();
 
-    // Generate Teil 1 upfront, Teil 2+ in background
-    if (config.questionLayout && config.questionLayout.length > 0) {
-      // Wait for Teil 1 to complete
+    // Generate questions based on fixed layout if configured
+    if (config.fixedLayout && config.fixedLayout.length > 0) {
       try {
-        const teil1Type = config.questionLayout[0];
-        const teil1Count = teil1Type === 'gap_text_multiple_choice' ? 9 : 7;
-
-        const teil1Questions = await generateQuestionsForSession(
+        // Generate all questions for the layout
+        const allLayoutQuestions = await generateLayoutQuestions(
+          config.fixedLayout,
           type,
           difficulty,
-          teil1Count,
-          [teil1Type]
+          this.sessionId
         );
-
-        // Add Teil 1 questions to session
-        const convertedTeil1 = teil1Questions.map((q: any) => ({
-          ...q,
-          teil: 1,
-          registryType: teil1Type
-        }));
-
-        this.questions.push(...convertedTeil1);
-        session.data.questions = this.questions;
-
-        // Save updated session
-        await (await import('./queries')).saveSession(session);
-
-        // Generate remaining Teils in background (don't wait)
-        if (config.questionLayout.length > 1) {
-          generateRemainingTeils(
-            config.questionLayout.slice(1),
-            type,
-            difficulty,
-            this.sessionId,
-            onQuestionGenerated
-          ).catch(console.error);
-        }
+        this.questions = allLayoutQuestions;
       } catch (error) {
-        console.error('Failed to generate Teil 1:', error);
+        console.error('Failed to generate questions:', error);
       }
     }
 

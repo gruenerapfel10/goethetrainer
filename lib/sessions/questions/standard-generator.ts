@@ -117,99 +117,13 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
   }
 }
 
-/**
- * Generate questions for a session with shared context (Two-pass system)
- * Pass 1: Generate source with diverse theme
- * Pass 2: Identify 9 gaps and generate questions
- */
-export async function generateSessionQuestions(
-  _sessionType: SessionTypeEnum,
-  difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty
-): Promise<any> {
-  try {
-    // Use two-pass system: generate source with gaps
-    const sourceWithGaps = await generateSourceWithGaps(difficulty);
-
-    // Now generate 9 questions based on the gaps
-    const questionType = QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
-    const config = QUESTION_CONFIGS[questionType];
-
-    if (!config) {
-      throw new Error(`No configuration found for question type: ${questionType}`);
-    }
-
-    const { aiGeneration } = config;
-    const model = anthropic(aiGeneration.modelId);
-
-    // Generate 4 options for each gap
-    const questionPromises = sourceWithGaps.gaps.map(async (gap, index) => {
-      const gapPrompt = `Generate 4 multiple choice options for this gap fill exercise.
-
-Gap number: ${gap.gapNumber}
-Correct answer: "${gap.removedWord}"
-Context: ${sourceWithGaps.gappedContext}
-
-Create 4 plausible options where one is the correct answer "${gap.removedWord}".
-Options should be 1-3 words each.
-Return as JSON with id (0-3) and text for each option.`;
-
-      const optionsSchema = z.object({
-        options: z.array(
-          z.object({
-            id: z.string().describe('Option ID: 0, 1, 2, or 3'),
-            text: z.string().describe('Option text (1-3 words)'),
-          })
-        ).length(4).describe('Exactly 4 options'),
-        correctOptionId: z.string().describe('ID of correct option (0-3)'),
-      });
-
-      try {
-        const result = await generateObject({
-          model,
-          schema: optionsSchema,
-          system: 'You are a German language expert creating multiple choice options for gap fill exercises.',
-          prompt: gapPrompt,
-          temperature: 0.7,
-        });
-
-        return {
-          prompt: `Lücke ${gap.gapNumber}: Welches Wort passt hier?`,
-          options: result.object.options,
-          correctOptionId: result.object.correctOptionId,
-          explanation: `Das richtige Wort ist "${gap.removedWord}".`,
-        };
-      } catch (error) {
-        console.error(`Error generating options for gap ${gap.gapNumber}:`, error);
-        throw error;
-      }
-    });
-
-    const questions = await Promise.all(questionPromises);
-
-    return {
-      theme: sourceWithGaps.theme,
-      title: sourceWithGaps.title,
-      subtitle: sourceWithGaps.subtitle,
-      context: sourceWithGaps.gappedContext,
-      questions: questions.map((q, idx) => ({
-        ...q,
-        isExample: idx === 0, // First question is example
-        exampleAnswer: idx === 0 ? q.correctOptionId : undefined,
-      })),
-    };
-  } catch (error) {
-    console.error('Error generating session questions with AI:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to generate session questions: ${errorMessage}`);
-  }
-}
-
-export async function generateQuestionsForSession(
+export async function generateSessionQuestion(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty,
-  count: number = 1,
-  questionTypes?: QuestionTypeName[]
+  questionType: QuestionTypeName
 ): Promise<any[]> {
+  const questionTypes = [questionType];
+  const count = questionType === 'gap_text_multiple_choice' ? 9 : 7;
   // Check if we're generating MULTIPLE_CHOICE questions
   const isMultipleChoice = questionTypes?.includes(QuestionTypeName.MULTIPLE_CHOICE);
 
@@ -261,21 +175,69 @@ export async function generateQuestionsForSession(
   }
 
   // For reading session with 9 questions, use GAP_TEXT session generation (1 context + 9 questions)
-  const isGapTextSession = count === 9 && sessionType === SessionTypeEnum.READING;
+  const isGapTextSession = count === 9 && sessionType === SessionTypeEnum.READING && questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
 
   if (isGapTextSession) {
     console.log('Generating 9 GAP_TEXT questions from 1 context...');
     try {
-      const result = await generateSessionQuestions(sessionType, difficulty);
-      const { context, questions, title, subtitle, theme } = result;
+      // Use two-pass system: generate source with gaps
+      const sourceWithGaps = await generateSourceWithGaps(difficulty);
+
+      // Now generate 4 options for each gap
+      const config = QUESTION_CONFIGS[questionType];
+      if (!config) {
+        throw new Error(`No configuration found for question type: ${questionType}`);
+      }
+
+      const { aiGeneration } = config;
+      const model = anthropic(aiGeneration.modelId);
+
+      const questionPromises = sourceWithGaps.gaps.map(async (gap, index) => {
+        const gapPrompt = `Generate 4 multiple choice options for this gap fill exercise.
+
+Gap number: ${gap.gapNumber}
+Correct answer: "${gap.removedWord}"
+Context: ${sourceWithGaps.gappedContext}
+
+Create 4 plausible options where one is the correct answer "${gap.removedWord}".
+Options should be 1-3 words each.
+Return as JSON with id (0-3) and text for each option.`;
+
+        const optionsSchema = z.object({
+          options: z.array(
+            z.object({
+              id: z.string().describe('Option ID: 0, 1, 2, or 3'),
+              text: z.string().describe('Option text (1-3 words)'),
+            })
+          ).length(4).describe('Exactly 4 options'),
+          correctOptionId: z.string().describe('ID of correct option (0-3)'),
+        });
+
+        const result = await generateObject({
+          model,
+          schema: optionsSchema,
+          system: 'You are a German language expert creating multiple choice options for gap fill exercises.',
+          prompt: gapPrompt,
+          temperature: 0.7,
+        });
+
+        return {
+          prompt: `Lücke ${gap.gapNumber}: Welches Wort passt hier?`,
+          options: result.object.options,
+          correctOptionId: result.object.correctOptionId,
+          explanation: `Das richtige Wort ist "${gap.removedWord}".`,
+        };
+      });
+
+      const questions = await Promise.all(questionPromises);
 
       // Transform result into array of questions with shared context
       const questionsWithContext = questions.map((q: any, index: number) => ({
         ...q,
-        context,
-        title,
-        subtitle,
-        theme,
+        context: sourceWithGaps.gappedContext,
+        title: sourceWithGaps.title,
+        subtitle: sourceWithGaps.subtitle,
+        theme: sourceWithGaps.theme,
         isExample: index === 0, // First question is example
         exampleAnswer: index === 0 ? q.correctOptionId : undefined,
         difficulty,

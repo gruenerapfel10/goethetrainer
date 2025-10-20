@@ -275,8 +275,9 @@ export function AllQuestionsView({
                       )}>
                         {question.options?.map((option, index) => {
                           const optionLetter = String.fromCharCode(97 + index);
+                          const isExample = question.isExample === true;
                           const isSelected = selectedAnswers[question.id] === option.id ||
-                                             (question.isExample && question.exampleAnswer === option.id);
+                                             (isExample && question.exampleAnswer === option.id);
                           const isCorrect = question.correctOptionId === option.id;
                           const showIncorrect = isSubmitted && isSelected && !isCorrect;
                           const isFirstOption = index === 0;
@@ -287,23 +288,23 @@ export function AllQuestionsView({
                               isMultipleChoice ? "w-full" : "flex-1 min-w-0"
                             )}>
                               {/* Example label above first option */}
-                              {isFirstOption && question.isExample && (
+                              {isFirstOption && isExample && (
                                 <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
                               )}
                               <div
                                 className={cn(
                                   "flex items-center gap-2 transition-colors p-2 -m-2",
-                                  !isSubmitted && !question.isExample && "cursor-pointer",
+                                  !isSubmitted && !isExample && "cursor-pointer",
                                   isSubmitted && !isSelected && !showIncorrect && "text-muted-foreground"
                                 )}
-                                onClick={() => !isSubmitted && !question.isExample && handleSelectOption(question.id, option.id, !!question.isExample)}
+                                onClick={() => !isSubmitted && !isExample && handleSelectOption(question.id, option.id, isExample)}
                               >
                                 <MCQCheckbox
                                   letter={optionLetter}
                                   checked={isSelected}
-                                  onChange={() => handleSelectOption(question.id, option.id, !!question.isExample)}
-                                  disabled={isSubmitted || !!question.isExample}
-                                  isExample={!!question.isExample}
+                                  onChange={() => handleSelectOption(question.id, option.id, isExample)}
+                                  disabled={isSubmitted || isExample}
+                                  isExample={isExample}
                                   isCorrect={isCorrect}
                                   showFeedback={isSubmitted}
                                 />

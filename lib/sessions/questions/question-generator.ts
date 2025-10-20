@@ -3,7 +3,7 @@ import { QuestionTypeName, getQuestionMetadata } from './question-registry';
 import { AnswerType, QuestionType, QuestionDifficulty } from './question-types';
 import type { Question } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
-import { generateQuestionWithAI, generateQuestionsForSession } from './standard-generator';
+import { generateQuestionWithAI, generateSessionQuestion } from './standard-generator';
 import { MOCK_GAP_TEXT_MULTIPLE_CHOICE_QUESTIONS } from './mockquestions';
 
 /**
@@ -235,7 +235,7 @@ class QuestionGeneratorRegistry {
     // If using AI and count is 9 for reading session, use session generation
     if (generatorName === 'ai' && count === 9 && sessionType === SessionTypeEnum.READING) {
       try {
-        const sessionQuestions = await generateQuestionsForSession(sessionType, difficulty, count);
+        const sessionQuestions = await generateSessionQuestion(sessionType, difficulty, QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE);
 
         // Convert session questions to Question objects
         const questions: Question[] = [];
@@ -430,13 +430,10 @@ async function generateSingleTeil(
 ): Promise<Question[]> {
   console.log(`🔵 Generating Teil ${teilNumber}: ${questionType}...`);
 
-  const questionCount = questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7;
-
-  const teilData = await generateQuestionsForSession(
+  const teilData = await generateSessionQuestion(
     sessionType,
     difficulty,
-    questionCount,
-    [questionType]
+    questionType
   );
 
   if (teilData && teilData.length > 0) {
@@ -499,15 +496,11 @@ async function generateWithLayout(
     console.log(`🔵 Generating Teil ${teilNumber}: ${questionType}...`);
 
     try {
-      // Determine question count based on type
-      const questionCount = questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7;
-
       // Generate all questions for this Teil using session generator
-      const teilData = await generateQuestionsForSession(
+      const teilData = await generateSessionQuestion(
         sessionType,
         difficulty,
-        questionCount,
-        [questionType]
+        questionType
       );
 
       if (teilData && teilData.length > 0) {
