@@ -7,10 +7,48 @@ import {
 } from './session-registry';
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
-import { generateProgressively } from './questions/progressive-generator';
+import { generateQuestionsForSession } from './questions/standard-generator';
 import { markQuestions } from './questions/question-marker';
 import type { Question, UserAnswer, QuestionResult, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
+
+/**
+ * Generate remaining Teils in background
+ */
+async function generateRemainingTeils(
+  layout: QuestionTypeName[],
+  sessionType: SessionTypeEnum,
+  difficulty: QuestionDifficulty,
+  sessionId: string,
+  onQuestionGenerated?: (question: Question) => void
+) {
+  const { getSessionById, saveSession } = await import('./queries');
+
+  for (let i = 0; i < layout.length; i++) {
+    const questionType = layout[i];
+    const teilNumber = i + 2;
+    const questionCount = questionType === 'gap_text_multiple_choice' ? 9 : 7;
+
+    const questions = await generateQuestionsForSession(
+      sessionType,
+      difficulty,
+      questionCount,
+      [questionType]
+    );
+
+    const convertedQuestions = questions.map((q: any) => ({
+      ...q,
+      teil: teilNumber,
+      registryType: questionType
+    }));
+
+    const session = await getSessionById(sessionId);
+    if (session) {
+      session.data.allQuestions = [...(session.data.allQuestions || []), ...convertedQuestions];
+      await saveSession(session);
+    }
+  }
+}
 
 export class SessionManager {
   private sessionId: string;
@@ -108,21 +146,47 @@ export class SessionManager {
     this.session = session;
     this.startTime = new Date();
 
-    // Start progressive generation if layout is defined
-    if (config.questionLayout) {
-      generateProgressively({
-        layout: config.questionLayout,
-        sessionType: type,
-        difficulty,
-        onQuestionGenerated: (question) => {
-          this.questions.push(question);
-          // Update session data
-          if (this.session) {
-            this.session.data.allQuestions = this.questions;
-          }
-          onQuestionGenerated?.(question);
+    // Generate Teil 1 upfront, Teil 2+ in background
+    if (config.questionLayout && config.questionLayout.length > 0) {
+      // Wait for Teil 1 to complete
+      try {
+        const teil1Type = config.questionLayout[0];
+        const teil1Count = teil1Type === 'gap_text_multiple_choice' ? 9 : 7;
+
+        const teil1Questions = await generateQuestionsForSession(
+          type,
+          difficulty,
+          teil1Count,
+          [teil1Type]
+        );
+
+        // Add Teil 1 questions to session
+        const convertedTeil1 = teil1Questions.map((q: any) => ({
+          ...q,
+          teil: 1,
+          registryType: teil1Type
+        }));
+
+        this.questions.push(...convertedTeil1);
+        session.data.allQuestions = this.questions;
+        session.data.totalQuestions = this.questions.length;
+
+        // Save updated session
+        await (await import('./queries')).saveSession(session);
+
+        // Generate remaining Teils in background (don't wait)
+        if (config.questionLayout.length > 1) {
+          generateRemainingTeils(
+            config.questionLayout.slice(1),
+            type,
+            difficulty,
+            this.sessionId,
+            onQuestionGenerated
+          ).catch(console.error);
         }
-      }).catch(console.error);
+      } catch (error) {
+        console.error('Failed to generate Teil 1:', error);
+      }
     }
 
     return session;
