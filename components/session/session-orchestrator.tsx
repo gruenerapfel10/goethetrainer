@@ -51,6 +51,7 @@ export function SessionOrchestrator() {
   const [showA4Format, setShowA4Format] = useState(true);
   const [currentTeil, setCurrentTeil] = useState(1);
   const [accumulatedAnswers, setAccumulatedAnswers] = useState<Record<string, string>>({});
+  const [generatedTeils, setGeneratedTeils] = useState<Set<number>>(new Set([1])); // Track which Teils are generated
 
   // Reset state when question changes
   useEffect(() => {
@@ -122,6 +123,8 @@ export function SessionOrchestrator() {
         // Show Teil 1 (GAP_TEXT_MULTIPLE_CHOICE)
         if (currentTeil === 1 && teil1Questions.length > 0) {
           const hasMoreTeils = teil2Questions.length > 0;
+          const totalTeils = hasMoreTeils ? 2 : 1; // For now, hardcode to 2 Teils
+
           return (
             <AllQuestionsView
               key="teil-1-view"
@@ -130,6 +133,14 @@ export function SessionOrchestrator() {
               sessionId={sessionId}
               showResultsImmediately={false} // Don't show results yet, move to Teil 2
               isLastTeil={!hasMoreTeils} // False if there are more Teils
+              totalTeils={totalTeils}
+              generatedTeils={generatedTeils}
+              onTeilNavigate={(teilNum) => {
+                console.log('Navigating to Teil:', teilNum);
+                if (generatedTeils.has(teilNum)) {
+                  setCurrentTeil(teilNum);
+                }
+              }}
               onSubmit={(answers) => {
                 if (isNavigating) return;
                 console.log('Teil 1 answers submitted:', answers);
@@ -140,6 +151,12 @@ export function SessionOrchestrator() {
                 // Move to Teil 2 if available
                 if (hasMoreTeils) {
                   setCurrentTeil(2);
+                  // Start generating Teil 2 if not already generated
+                  if (!generatedTeils.has(2)) {
+                    // TODO: Trigger Teil 2 generation here
+                    // For now, mark it as generated immediately
+                    setGeneratedTeils(prev => new Set([...prev, 2]));
+                  }
                 } else {
                   // End session if no Teil 2
                   setIsNavigating(true);
@@ -155,6 +172,8 @@ export function SessionOrchestrator() {
 
         // Show Teil 2 (MULTIPLE_CHOICE) - same UI as Teil 1
         if (currentTeil === 2 && teil2Questions.length > 0) {
+          const totalTeils = 2; // For now, hardcode to 2 Teils
+
           return (
             <AllQuestionsView
               key="teil-2-view"
@@ -165,6 +184,14 @@ export function SessionOrchestrator() {
               isLastTeil={true} // Show "Test abgeben" button
               accumulatedAnswers={accumulatedAnswers} // Pass Teil 1 answers for combined marking
               showBackButton={true} // Show back button on Teil 2
+              totalTeils={totalTeils}
+              generatedTeils={generatedTeils}
+              onTeilNavigate={(teilNum) => {
+                console.log('Navigating to Teil:', teilNum);
+                if (generatedTeils.has(teilNum)) {
+                  setCurrentTeil(teilNum);
+                }
+              }}
               onBack={() => {
                 console.log('Going back to Teil 1');
                 setCurrentTeil(1);

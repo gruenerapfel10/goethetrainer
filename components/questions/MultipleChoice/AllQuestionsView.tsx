@@ -32,6 +32,9 @@ interface AllQuestionsViewProps {
   accumulatedAnswers?: Record<string, string>; // Answers from previous Teils
   onBack?: () => void; // Optional callback to go back to previous Teil
   showBackButton?: boolean; // If true, shows "Zurück" button
+  totalTeils?: number; // Total number of Teils in this session
+  generatedTeils?: Set<number>; // Which Teils have been generated
+  onTeilNavigate?: (teilNumber: number) => void; // Navigate to a specific Teil
 }
 
 export function AllQuestionsView({
@@ -43,7 +46,10 @@ export function AllQuestionsView({
   isLastTeil = true,
   accumulatedAnswers = {},
   onBack,
-  showBackButton = false
+  showBackButton = false,
+  totalTeils = 1,
+  generatedTeils = new Set([1]),
+  onTeilNavigate
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -233,6 +239,39 @@ export function AllQuestionsView({
         </button>
       </div>
 
+      {/* Teil Navigation - Below Quelle/Fragen */}
+      {totalTeils > 1 && (
+        <div className="absolute top-16 left-6 flex gap-0 z-10 border-b border-border">
+          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
+            const isGenerated = generatedTeils.has(teilNum);
+            const isCurrentTeil = teilNum === teilNumber;
+
+            return (
+              <button
+                key={teilNum}
+                onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
+                disabled={!isGenerated}
+                className={cn(
+                  "px-4 py-2 font-medium transition-colors relative",
+                  isCurrentTeil
+                    ? "text-foreground border-b-2 border-sidebar-accent -mb-px"
+                    : isGenerated
+                    ? "text-muted-foreground hover:text-foreground cursor-pointer"
+                    : "text-muted-foreground/40 cursor-not-allowed"
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  {isCurrentTeil && (
+                    <span className="w-2 h-2 rounded-full bg-sidebar-accent animate-pulse" />
+                  )}
+                  Teil {teilNum}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div
         className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar"
       >
@@ -415,7 +454,13 @@ export function AllQuestionsView({
                 console.log('🟡 Button clicked!');
                 handleSubmit();
               }}
-              disabled={isSubmitted || !allQuestionsAnswered || isMarking}
+              disabled={
+                isSubmitted ||
+                !allQuestionsAnswered ||
+                isMarking ||
+                // Disable if next Teil hasn't been generated yet
+                (!isLastTeil && !generatedTeils.has(teilNumber + 1))
+              }
               className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
             >
               {isMarking ? 'Wird bewertet...' : isSubmitted ? (isLastTeil ? 'Test abgeschlossen' : 'Weiter...') : (isLastTeil ? 'Test abgeben' : 'Weiter')}
