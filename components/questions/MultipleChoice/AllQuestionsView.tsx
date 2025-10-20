@@ -156,8 +156,11 @@ export function AllQuestionsView({
     .filter(q => !q.isExample)
     .every(q => selectedAnswers[q.id]);
 
-  // Detect which Teil this is from the questions
+  // Derive Teil information from actual questions
   const teilNumber = (questions[0] as any)?.teil || 1;
+  const teils = new Set(questions.map(q => (q as any).teil || 1));
+  const derivedTotalTeils = teils.size;
+  const actualTotalTeils = totalTeils || derivedTotalTeils;
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
@@ -203,9 +206,9 @@ export function AllQuestionsView({
       </div>
 
       {/* Teil Navigation - Absolute positioned like Fragen/Quelle */}
-      {totalTeils > 1 && (
+      {actualTotalTeils > 1 && (
         <div className="absolute top-6 right-6 flex gap-0 z-10 border-b border-border">
-          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
+          {Array.from({ length: actualTotalTeils }, (_, i) => i + 1).map((teilNum) => {
             // Check if at least one question in this Teil is loaded
             const teilQuestions = questions.filter(q => (q.teil || 1) === teilNum);
             const isLoaded = teilQuestions.some(q => q.status === QuestionStatus.LOADED);

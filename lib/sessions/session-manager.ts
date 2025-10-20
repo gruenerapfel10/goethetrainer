@@ -44,7 +44,7 @@ async function generateRemainingTeils(
 
     const session = await getSessionById(sessionId);
     if (session) {
-      session.data.allQuestions = [...(session.data.allQuestions || []), ...convertedQuestions];
+      session.data.questions = [...(session.data.questions || []), ...convertedQuestions];
       await saveSession(session);
     }
   }
@@ -78,18 +78,8 @@ export class SessionManager {
         throw new Error(`Session ${sessionId} not found`);
       }
       
-      // Restore questions from session data if available
-      if (this.session.data?.allQuestions) {
-        this.questions = this.session.data.allQuestions;
-        this.currentQuestionIndex = this.session.data.currentQuestionIndex || 0;
-        this.userAnswers = this.session.data.answers || [];
-        this.questionResults = this.session.data.results || [];
-      } else {
-        this.questions = [];
-        this.currentQuestionIndex = 0;
-        this.userAnswers = [];
-        this.questionResults = [];
-      }
+      // Load from session (single source of truth)
+      this.questions = this.session.data?.questions || [];
     }
   }
 
@@ -103,26 +93,17 @@ export class SessionManager {
 
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
     this.questions = [];
-    this.currentQuestionIndex = 0;
-    this.userAnswers = [];
-    this.questionResults = [];
     
     const session: Session = {
       id: this.sessionId,
       userId: this.userId,
-      type: type as any, // Cast to match existing type system
+      type: type as any,
       status: 'active' as SessionStatus,
       startedAt: new Date(),
       duration: 0,
       data: {
         ...initialData,
-        // Store question-related data
-        totalQuestions: this.questions.length,
-        questionsAnswered: 0,
-        currentQuestionIndex: 0,
-        allQuestions: this.questions, // Store the full questions array
-        answers: [],
-        results: [],
+        questions: this.questions,
       },
       metadata: {
         ...metadata,
@@ -130,13 +111,7 @@ export class SessionManager {
           displayName: config.metadata.displayName,
           icon: config.metadata.icon,
           color: config.metadata.color,
-        },
-        questions: this.questions.map(q => ({
-          id: q.id,
-          type: q.type,
-          difficulty: q.difficulty,
-          points: q.points
-        }))
+        }
       }
     } as Session;
 
@@ -168,8 +143,7 @@ export class SessionManager {
         }));
 
         this.questions.push(...convertedTeil1);
-        session.data.allQuestions = this.questions;
-        session.data.totalQuestions = this.questions.length;
+        session.data.questions = this.questions;
 
         // Save updated session
         await (await import('./queries')).saveSession(session);
