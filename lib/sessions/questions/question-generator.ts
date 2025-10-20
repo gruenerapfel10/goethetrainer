@@ -61,6 +61,23 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
         // Use mock data for debugging
         questionData = this.getMockQuestion(index - 1, difficulty, metadata);
       }
+    } else if (questionTypeName === QuestionTypeName.MULTIPLE_CHOICE) {
+      if (this.useAI) {
+        try {
+          // Generate question using AI
+          questionData = await generateQuestionWithAI({
+            questionType: questionTypeName,
+            sessionType,
+            difficulty,
+            topicIndex: index - 1,
+          });
+        } catch (error) {
+          console.error('AI generation failed for MULTIPLE_CHOICE:', error);
+          throw error;
+        }
+      } else {
+        throw new Error('Mock data not available for MULTIPLE_CHOICE type');
+      }
     }
 
 
@@ -94,6 +111,14 @@ class AIQuestionGenerator extends QuestionGeneratorAlgorithm {
       question.correctAnswer = questionData.correctOptionId;
       question.correctOptionId = questionData.correctOptionId;
       question.context = questionData.context;
+    } else if (questionTypeName === QuestionTypeName.MULTIPLE_CHOICE && questionData.options) {
+      question.options = questionData.options;
+      question.correctAnswer = questionData.correctOptionId;
+      question.correctOptionId = questionData.correctOptionId;
+      question.context = questionData.context;
+      question.title = questionData.title;
+      question.subtitle = questionData.subtitle;
+      question.theme = questionData.theme;
     }
 
     return question;
@@ -409,51 +434,22 @@ async function generateStandardLayout(
     throw error;
   }
 
-  // Teil 2: MULTIPLE_CHOICE (5 standard questions)
+  // Teil 2: MULTIPLE_CHOICE (1 comprehension question with its own source)
   console.log('🔵 Generating Teil 2: MULTIPLE_CHOICE...');
   try {
-    const teil2Count = 5;
-    const teil2Questions: Question[] = [];
+    const generator = questionGeneratorRegistry.getGenerator(generatorName);
+    const teil2Question = await generator.generate(
+      QuestionTypeName.MULTIPLE_CHOICE,
+      sessionType,
+      difficulty,
+      1 // Index 1 for Teil 2
+    );
 
-    // Generate MULTIPLE_CHOICE questions
-    for (let i = 0; i < teil2Count; i++) {
-      const questionData = await generateQuestionWithAI({
-        questionType: QuestionTypeName.MULTIPLE_CHOICE,
-        sessionType,
-        difficulty,
-        topicIndex: i,
-      });
+    // Mark as Teil 2
+    teil2Question.teil = 2;
 
-      const metadata = getQuestionMetadata(QuestionTypeName.MULTIPLE_CHOICE);
-      const question: Question = {
-        id: generateUUID(),
-        type: QuestionType.READING_COMPREHENSION,
-        sessionType,
-        difficulty,
-        answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
-        prompt: questionData.prompt,
-        context: questionData.context,
-        options: questionData.options,
-        correctAnswer: questionData.correctOptionId,
-        correctOptionId: questionData.correctOptionId,
-        points: questionData.points || metadata.defaultPoints || 10,
-        timeLimit: questionData.timeLimit || metadata.defaultTimeLimit || 60,
-        explanation: questionData.explanation,
-        isExample: false,
-        scoringCriteria: {
-          requireExactMatch: true,
-          acceptPartialCredit: false,
-          keywords: [],
-        },
-        registryType: QuestionTypeName.MULTIPLE_CHOICE,
-        teil: 2,
-      };
-
-      teil2Questions.push(question);
-    }
-
-    allQuestions.push(...teil2Questions);
-    console.log(`✅ Generated ${teil2Questions.length} MULTIPLE_CHOICE questions for Teil 2`);
+    allQuestions.push(teil2Question);
+    console.log(`✅ Generated MULTIPLE_CHOICE question for Teil 2`);
   } catch (error) {
     console.error('❌ Failed to generate Teil 2:', error);
     throw error;

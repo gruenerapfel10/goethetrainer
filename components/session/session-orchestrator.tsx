@@ -18,6 +18,7 @@ import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 // Import question components
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
+import { MultipleChoiceView } from '@/components/questions/MultipleChoice/MultipleChoiceView';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
@@ -48,6 +49,7 @@ export function SessionOrchestrator() {
   const [timeOnQuestion, setTimeOnQuestion] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
+  const [currentTeil, setCurrentTeil] = useState(1);
 
   // Reset state when question changes
   useEffect(() => {
@@ -104,33 +106,90 @@ export function SessionOrchestrator() {
 
   // Render question based on type
   const renderQuestion = () => {
-    // For reading sessions with multiple choice, show all questions at once
+    // Check if we have questions with Teil structure
     if (!isNavigating && sessionType === SessionTypeEnum.READING && activeSession?.data?.allQuestions) {
       const allQuestions = activeSession.data.allQuestions;
-      if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
-        return (
-          <AllQuestionsView
-            key="all-questions-view"
-            questions={allQuestions}
-            showA4Format={showA4Format}
-            sessionId={sessionId}
-            onSubmit={(answers) => {
-              if (isNavigating) return;
 
-              // Handle batch submission of all answers
-              console.log('All answers submitted:', answers);
-              setIsNavigating(true);
+      // Check if questions have teil property (standard layout)
+      const hasTeilStructure = allQuestions.some((q: any) => q.teil !== undefined);
 
-              // End the session after submission
-              endSession('completed');
+      if (hasTeilStructure) {
+        // Filter questions by Teil
+        const teil1Questions = allQuestions.filter((q: any) => q.teil === 1);
+        const teil2Questions = allQuestions.filter((q: any) => q.teil === 2);
 
-              // Navigate with a slight delay to allow React to complete rendering
-              setTimeout(() => {
-                router.push(`/${sessionType}`);
-              }, 100);
-            }}
-          />
-        );
+        // Show Teil 1 (GAP_TEXT_MULTIPLE_CHOICE)
+        if (currentTeil === 1 && teil1Questions.length > 0) {
+          return (
+            <AllQuestionsView
+              key="teil-1-view"
+              questions={teil1Questions}
+              showA4Format={showA4Format}
+              sessionId={sessionId}
+              onSubmit={(answers) => {
+                if (isNavigating) return;
+                console.log('Teil 1 answers submitted:', answers);
+
+                // Move to Teil 2 if available
+                if (teil2Questions.length > 0) {
+                  setCurrentTeil(2);
+                } else {
+                  // End session if no Teil 2
+                  setIsNavigating(true);
+                  endSession('completed');
+                  setTimeout(() => {
+                    router.push(`/${sessionType}`);
+                  }, 100);
+                }
+              }}
+            />
+          );
+        }
+
+        // Show Teil 2 (MULTIPLE_CHOICE)
+        if (currentTeil === 2 && teil2Questions.length > 0) {
+          const teil2Question = teil2Questions[0]; // Only one question in Teil 2
+          return (
+            <MultipleChoiceView
+              key="teil-2-view"
+              question={teil2Question}
+              showA4Format={showA4Format}
+              sessionId={sessionId}
+              onSubmit={(answer) => {
+                if (isNavigating) return;
+                console.log('Teil 2 answer submitted:', answer);
+                setIsNavigating(true);
+
+                // End the session
+                endSession('completed');
+                setTimeout(() => {
+                  router.push(`/${sessionType}`);
+                }, 100);
+              }}
+            />
+          );
+        }
+      } else {
+        // Legacy behavior: show all questions if GAP_TEXT_MULTIPLE_CHOICE
+        if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
+          return (
+            <AllQuestionsView
+              key="all-questions-view"
+              questions={allQuestions}
+              showA4Format={showA4Format}
+              sessionId={sessionId}
+              onSubmit={(answers) => {
+                if (isNavigating) return;
+                console.log('All answers submitted:', answers);
+                setIsNavigating(true);
+                endSession('completed');
+                setTimeout(() => {
+                  router.push(`/${sessionType}`);
+                }, 100);
+              }}
+            />
+          );
+        }
       }
     }
 
@@ -165,6 +224,9 @@ export function SessionOrchestrator() {
     switch (registryType) {
       // Unified MultipleChoice component handles all multiple choice variants
       case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
+        return <MultipleChoice {...questionProps} />;
+
+      case QuestionTypeName.MULTIPLE_CHOICE:
         return <MultipleChoice {...questionProps} />;
 
       case QuestionTypeName.TRUE_FALSE:
