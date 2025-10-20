@@ -164,6 +164,11 @@ export function SessionOrchestrator() {
               showResultsImmediately={true} // Show results after Teil 2 (final)
               isLastTeil={true} // Show "Test abgeben" button
               accumulatedAnswers={accumulatedAnswers} // Pass Teil 1 answers for combined marking
+              showBackButton={true} // Show back button on Teil 2
+              onBack={() => {
+                console.log('Going back to Teil 1');
+                setCurrentTeil(1);
+              }}
               onSubmit={(answers) => {
                 if (isNavigating) return;
                 console.log('Teil 2 answers submitted:', answers);

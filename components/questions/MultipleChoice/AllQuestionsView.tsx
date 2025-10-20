@@ -30,6 +30,8 @@ interface AllQuestionsViewProps {
   showResultsImmediately?: boolean; // If false, just call onSubmit without showing results
   isLastTeil?: boolean; // If true, shows "Test abgeben" button, otherwise shows "Weiter"
   accumulatedAnswers?: Record<string, string>; // Answers from previous Teils
+  onBack?: () => void; // Optional callback to go back to previous Teil
+  showBackButton?: boolean; // If true, shows "Zurück" button
 }
 
 export function AllQuestionsView({
@@ -39,7 +41,9 @@ export function AllQuestionsView({
   sessionId,
   showResultsImmediately = true,
   isLastTeil = true,
-  accumulatedAnswers = {}
+  accumulatedAnswers = {},
+  onBack,
+  showBackButton = false
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -386,13 +390,23 @@ export function AllQuestionsView({
 
           {/* Footer - Part of content */}
           <div className="text-primary-foreground p-6 flex justify-between items-center mt-auto">
-            {/* Goethe Logo */}
+            {/* Left side: Back button or Logo */}
             <div className="flex-shrink-0">
-              <img
-                src="/goethe-logo.png"
-                alt="Goethe-Institut"
-                className="h-12 w-auto dark:invert"
-              />
+              {showBackButton && onBack ? (
+                <button
+                  onClick={onBack}
+                  disabled={isSubmitted || isMarking}
+                  className="px-6 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity"
+                >
+                  ← Zurück
+                </button>
+              ) : (
+                <img
+                  src="/goethe-logo.png"
+                  alt="Goethe-Institut"
+                  className="h-12 w-auto dark:invert"
+                />
+              )}
             </div>
 
             {/* Submit/Next Button */}
