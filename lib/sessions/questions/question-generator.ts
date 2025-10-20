@@ -434,22 +434,53 @@ async function generateStandardLayout(
     throw error;
   }
 
-  // Teil 2: MULTIPLE_CHOICE (1 comprehension question with its own source)
+  // Teil 2: MULTIPLE_CHOICE (7 comprehension questions with shared context)
   console.log('🔵 Generating Teil 2: MULTIPLE_CHOICE...');
   try {
-    const generator = questionGeneratorRegistry.getGenerator(generatorName);
-    const teil2Question = await generator.generate(
-      QuestionTypeName.MULTIPLE_CHOICE,
+    const teil2Count = 7;
+    // Use session generation to get 1 context with 7 questions
+    const teil2Data = await generateQuestionsForSession(
       sessionType,
       difficulty,
-      1 // Index 1 for Teil 2
+      teil2Count,
+      [QuestionTypeName.MULTIPLE_CHOICE]
     );
 
-    // Mark as Teil 2
-    teil2Question.teil = 2;
+    if (teil2Data && teil2Data.length > 0) {
+      // Convert to Question objects with Teil 2 marker
+      const teil2Questions = teil2Data.map((q: any, i: number) => {
+        const metadata = getQuestionMetadata(QuestionTypeName.MULTIPLE_CHOICE);
+        return {
+          id: generateUUID(),
+          type: QuestionType.READING_COMPREHENSION,
+          sessionType,
+          difficulty,
+          answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
+          prompt: q.prompt,
+          context: q.context,
+          title: q.title,
+          subtitle: q.subtitle,
+          theme: q.theme,
+          options: q.options,
+          correctAnswer: q.correctOptionId,
+          correctOptionId: q.correctOptionId,
+          points: q.points || metadata.defaultPoints || 10,
+          timeLimit: q.timeLimit || metadata.defaultTimeLimit || 60,
+          explanation: q.explanation,
+          isExample: false,
+          scoringCriteria: {
+            requireExactMatch: true,
+            acceptPartialCredit: false,
+            keywords: [],
+          },
+          registryType: QuestionTypeName.MULTIPLE_CHOICE,
+          teil: 2,
+        };
+      });
 
-    allQuestions.push(teil2Question);
-    console.log(`✅ Generated MULTIPLE_CHOICE question for Teil 2`);
+      allQuestions.push(...teil2Questions);
+      console.log(`✅ Generated ${teil2Questions.length} MULTIPLE_CHOICE questions for Teil 2`);
+    }
   } catch (error) {
     console.error('❌ Failed to generate Teil 2:', error);
     throw error;

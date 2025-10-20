@@ -50,6 +50,7 @@ export function SessionOrchestrator() {
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
   const [currentTeil, setCurrentTeil] = useState(1);
+  const [accumulatedAnswers, setAccumulatedAnswers] = useState<Record<string, string>>({});
 
   // Reset state when question changes
   useEffect(() => {
@@ -133,6 +134,9 @@ export function SessionOrchestrator() {
                 if (isNavigating) return;
                 console.log('Teil 1 answers submitted:', answers);
 
+                // Accumulate answers from Teil 1
+                setAccumulatedAnswers(prev => ({ ...prev, ...answers }));
+
                 // Move to Teil 2 if available
                 if (hasMoreTeils) {
                   setCurrentTeil(2);
@@ -149,18 +153,20 @@ export function SessionOrchestrator() {
           );
         }
 
-        // Show Teil 2 (MULTIPLE_CHOICE)
+        // Show Teil 2 (MULTIPLE_CHOICE) - same UI as Teil 1
         if (currentTeil === 2 && teil2Questions.length > 0) {
-          const teil2Question = teil2Questions[0]; // Only one question in Teil 2
           return (
-            <MultipleChoiceView
+            <AllQuestionsView
               key="teil-2-view"
-              question={teil2Question}
+              questions={teil2Questions}
               showA4Format={showA4Format}
               sessionId={sessionId}
-              onSubmit={(answer) => {
+              showResultsImmediately={true} // Show results after Teil 2 (final)
+              isLastTeil={true} // Show "Test abgeben" button
+              accumulatedAnswers={accumulatedAnswers} // Pass Teil 1 answers for combined marking
+              onSubmit={(answers) => {
                 if (isNavigating) return;
-                console.log('Teil 2 answer submitted:', answer);
+                console.log('Teil 2 answers submitted:', answers);
                 setIsNavigating(true);
 
                 // End the session

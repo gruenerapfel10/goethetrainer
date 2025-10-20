@@ -29,6 +29,7 @@ interface AllQuestionsViewProps {
   sessionId?: string; // Optional: if provided, will use marking API
   showResultsImmediately?: boolean; // If false, just call onSubmit without showing results
   isLastTeil?: boolean; // If true, shows "Test abgeben" button, otherwise shows "Weiter"
+  accumulatedAnswers?: Record<string, string>; // Answers from previous Teils
 }
 
 export function AllQuestionsView({
@@ -37,7 +38,8 @@ export function AllQuestionsView({
   showA4Format = true,
   sessionId,
   showResultsImmediately = true,
-  isLastTeil = true
+  isLastTeil = true,
+  accumulatedAnswers = {}
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -119,9 +121,17 @@ export function AllQuestionsView({
       console.log('✅ SessionId found, using marking API');
       setIsMarking(true);
       try {
+        // Combine accumulated answers from previous Teils with current answers
+        const allAnswers = {
+          ...accumulatedAnswers,
+          ...selectedAnswers,
+        };
+
         const url = `/api/sessions/${sessionId}/mark`;
         console.log('🔵 Fetching:', url);
-        console.log('🔵 Request body:', { answers: selectedAnswers });
+        console.log('🔵 Accumulated answers:', accumulatedAnswers);
+        console.log('🔵 Current answers:', selectedAnswers);
+        console.log('🔵 Combined answers (all Teils):', allAnswers);
 
         const response = await fetch(url, {
           method: 'POST',
@@ -129,7 +139,7 @@ export function AllQuestionsView({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            answers: selectedAnswers,
+            answers: allAnswers,
           }),
         });
 
@@ -170,6 +180,9 @@ export function AllQuestionsView({
   const allQuestionsAnswered = questions
     .filter(q => !q.isExample)
     .every(q => selectedAnswers[q.id]);
+
+  // Detect which Teil this is from the questions
+  const teilNumber = (questions[0] as any)?.teil || 1;
 
   // Show results view if results are available
   if (results) {
@@ -231,7 +244,7 @@ export function AllQuestionsView({
 
                 {/* Header */}
                 <div className="mb-10">
-                  <h2 className="text-base font-bold">Teil 1</h2>
+                  <h2 className="text-base font-bold">Teil {teilNumber}</h2>
                 </div>
                 {questions.map((question, qIndex) => (
                   <div key={`q-${qIndex}-${question.id}`} className="overflow-visible mb-12">
@@ -297,7 +310,7 @@ export function AllQuestionsView({
 
                     {/* Header with title and time */}
                     <div className="flex items-start mb-8">
-                      <h3 className="font-bold text-base">Teil 1</h3>
+                      <h3 className="font-bold text-base">Teil {teilNumber}</h3>
                       <span className="text-muted-foreground ml-20 font-normal text-base">Vorgeschlagene Arbeitszeit: 10 Minuten</span>
                     </div>
 

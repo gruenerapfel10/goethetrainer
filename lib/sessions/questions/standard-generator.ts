@@ -210,11 +210,61 @@ export async function generateQuestionsForSession(
   count: number = 1,
   questionTypes?: QuestionTypeName[]
 ): Promise<any[]> {
-  // For reading session with 9 questions, use session generation (1 context + 9 questions)
-  const isReadingSession = count === 9 && sessionType === SessionTypeEnum.READING;
+  // Check if we're generating MULTIPLE_CHOICE questions
+  const isMultipleChoice = questionTypes?.includes(QuestionTypeName.MULTIPLE_CHOICE);
 
-  if (isReadingSession) {
-    console.log('Generating 9 questions from 1 context...');
+  // For MULTIPLE_CHOICE, use batch generation (1 context + N questions)
+  if (isMultipleChoice && count >= 1) {
+    console.log(`Generating ${count} MULTIPLE_CHOICE questions from 1 context...`);
+    try {
+      const config = QUESTION_CONFIGS[QuestionTypeName.MULTIPLE_CHOICE];
+      if (!config || !config.sessionGenerationSchema) {
+        throw new Error('MULTIPLE_CHOICE config missing sessionGenerationSchema');
+      }
+
+      const { aiGeneration } = config;
+      const model = anthropic(aiGeneration.modelId);
+
+      // Use session generation prompt
+      const userPrompt = aiGeneration.sessionUserPrompt?.replace('{{count}}', count.toString()) ||
+        `Generate a German reading passage with ${count} comprehension questions.`;
+
+      const result = await generateObject({
+        model,
+        schema: config.sessionGenerationSchema,
+        system: aiGeneration.sessionSystemPrompt || aiGeneration.systemPrompt,
+        prompt: userPrompt,
+        temperature: aiGeneration.temperature,
+      });
+
+      const data = result.object as any;
+      const { context, questions, title, subtitle, theme } = data;
+
+      // Transform result into array of questions with shared context
+      const questionsWithContext = questions.map((q: any, index: number) => ({
+        ...q,
+        context,
+        title,
+        subtitle,
+        theme,
+        isExample: false,
+        difficulty,
+        points: 10,
+        timeLimit: 60,
+      }));
+
+      return questionsWithContext;
+    } catch (error) {
+      console.error('MULTIPLE_CHOICE session generation failed:', error);
+      throw error;
+    }
+  }
+
+  // For reading session with 9 questions, use GAP_TEXT session generation (1 context + 9 questions)
+  const isGapTextSession = count === 9 && sessionType === SessionTypeEnum.READING;
+
+  if (isGapTextSession) {
+    console.log('Generating 9 GAP_TEXT questions from 1 context...');
     try {
       const result = await generateSessionQuestions(sessionType, difficulty);
       const { context, questions, title, subtitle, theme } = result;

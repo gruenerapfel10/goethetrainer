@@ -33,6 +33,29 @@ export function SessionResultsView({ results, summary, onClose }: SessionResults
     return 'Nicht bestanden';
   };
 
+  // Group results by Teil if available
+  const groupedResults = results.reduce((acc, result) => {
+    const teil = (result.question as any).teil || 0;
+    if (!acc[teil]) {
+      acc[teil] = [];
+    }
+    acc[teil].push(result);
+    return acc;
+  }, {} as Record<number, QuestionResult[]>);
+
+  const teilNumbers = Object.keys(groupedResults).map(Number).sort();
+  const hasTeilStructure = teilNumbers.length > 1 || (teilNumbers.length === 1 && teilNumbers[0] !== 0);
+
+  // Calculate per-Teil stats
+  const getTeilStats = (teilResults: QuestionResult[]) => {
+    const correct = teilResults.filter(r => r.isCorrect).length;
+    const total = teilResults.length;
+    const score = teilResults.reduce((sum, r) => sum + r.score, 0);
+    const maxScore = teilResults.reduce((sum, r) => sum + r.maxScore, 0);
+    const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
+    return { correct, total, score, maxScore, percentage };
+  };
+
   return (
     <div className="w-full h-full overflow-y-auto bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-6">

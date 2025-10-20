@@ -11,6 +11,7 @@ interface MultipleChoiceViewProps {
   showA4Format?: boolean;
   sessionId?: string;
   onSubmit?: (answer: string) => void;
+  accumulatedAnswers?: Record<string, string>; // Answers from previous Teils
 }
 
 export function MultipleChoiceView({
@@ -18,6 +19,7 @@ export function MultipleChoiceView({
   showA4Format = false,
   sessionId,
   onSubmit,
+  accumulatedAnswers = {},
 }: MultipleChoiceViewProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -48,11 +50,19 @@ export function MultipleChoiceView({
     // Call marking API if sessionId is provided
     if (sessionId) {
       try {
+        // Combine accumulated answers from previous Teils with current answer
+        const allAnswers = {
+          ...accumulatedAnswers,
+          [question.id]: selectedAnswer,
+        };
+
+        console.log('🔵 Submitting all answers (all Teils):', allAnswers);
+
         const response = await fetch(`/api/sessions/${sessionId}/mark`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            answers: { [question.id]: selectedAnswer },
+            answers: allAnswers,
           }),
         });
 
