@@ -36,7 +36,7 @@ interface LearningSessionContextType {
     unanswered: number;
     percentage: number;
   };
-  
+
   // Loading/error states
   isLoading: boolean;
   error: string | null;

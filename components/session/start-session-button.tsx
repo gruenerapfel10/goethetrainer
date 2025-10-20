@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Play, Pause, Square, Loader2 } from 'lucide-react';
@@ -24,30 +24,35 @@ export function StartSessionButton({
   onSessionEnd
 }: StartSessionButtonProps) {
   const router = useRouter();
-  const { 
-    activeSession, 
-    isLoading, 
-    startSession, 
+  const {
+    activeSession,
+    isLoading,
+    sessionQuestions,
+    startSession,
     pauseSession,
     resumeSession,
-    endSession 
+    endSession
   } = useLearningSession();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   const isActiveForType = activeSession && activeSession.type === type;
   const isPaused = isActiveForType && activeSession.status === 'paused';
 
-  const handleStart = async () => {
-    const session = await startSession(type, metadata);
-    if (session) {
-      // Navigate to the session detail page
-      router.push(`/${type}/session/${session.id}`);
-      
-      // Also call the callback if provided
+  // Navigate as soon as first question is available
+  useEffect(() => {
+    if (!hasNavigated && activeSession && sessionQuestions.length > 0) {
+      setHasNavigated(true);
+      router.push(`/${activeSession.type}/session/${activeSession.id}`);
       if (onSessionStart) {
-        onSessionStart(session.id);
+        onSessionStart(activeSession.id);
       }
     }
+  }, [activeSession, sessionQuestions.length, hasNavigated, router, onSessionStart]);
+
+  const handleStart = async () => {
+    setHasNavigated(false);
+    await startSession(type, metadata);
   };
 
   const handlePause = async () => {
