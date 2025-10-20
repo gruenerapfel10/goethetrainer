@@ -236,14 +236,6 @@ export class SessionManager {
     return this.sessionId;
   }
 
-  getQuestionManager(): QuestionManager {
-    return this.questionManager;
-  }
-
-  getStatisticsManager(): StatisticsManager | null {
-    return this.statisticsManager;
-  }
-
   // Question flow methods
   getCurrentQuestion(): Question | null {
     if (!this.questions.length || this.currentQuestionIndex >= this.questions.length) {
