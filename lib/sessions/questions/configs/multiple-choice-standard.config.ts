@@ -113,23 +113,30 @@ Your task: Generate ONE German reading passage with multiple-choice comprehensio
 
 Requirements:
 1. ALL content in German language ONLY
-2. Provide a THEME (category like "WIRTSCHAFT", "BILDUNG", "TECHNOLOGIE")
+2. Provide a THEME (category like "WIRTSCHAFT", "BILDUNG", "TECHNOLOGIE", "GESELLSCHAFT", "WISSENSCHAFT")
 3. Provide a TITLE for the reading passage
 4. Provide a SUBTITLE (brief description)
-5. One context passage (200-300 words, C1 level)
-6. Multiple comprehension questions about this SAME passage
+5. ONE continuous reading passage (400-600 words, C1 level) structured in EXACTLY 7 PARAGRAPHS
+   - Each paragraph should be substantial (50-80 words)
+   - Each paragraph should cover a distinct aspect of the topic
+   - Paragraphs should flow logically from one to the next
+   - Use line breaks between paragraphs (\n\n)
+6. Generate comprehension questions about this passage
 7. Each question:
+   - Should relate to a specific paragraph or section of the text
    - Clear question text in German
    - Exactly 3 answer options (numbered 0-2)
    - One correct answer
    - Explanation why it's correct
 
+IMPORTANT: The context must be a CONTINUOUS TEXT with 7 paragraphs. NO gaps like [GAP_1], just raw German text.
+
 JSON Structure:
 {
-  "theme": "WIRTSCHAFT",
-  "title": "Die Zukunft der Arbeit",
-  "subtitle": "Wie Technologie unsere Arbeitswelt verändert",
-  "context": "Ein zusammenhängender deutscher Text hier (200-300 Wörter)...",
+  "theme": "GESELLSCHAFT",
+  "title": "Der elterliche Handygebrauch und seine Folgen",
+  "subtitle": "Wie sich Smartphone-Nutzung auf Familien auswirkt",
+  "context": "Paragraph 1 hier (50-80 Wörter)...\n\nParagraph 2 hier...\n\nParagraph 3 hier...\n\n[continues for 7 paragraphs total]",
   "questions": [
     {
       "prompt": "Was ist laut Text der Hauptgrund für den Wandel?",
@@ -144,10 +151,10 @@ JSON Structure:
   ]
 }
 
-All questions MUST be about the SAME context passage.`,
+All questions MUST be about the SAME context passage. The text should be engaging, informative, and appropriate for C1 level learners.`,
 
     // User prompt for session generation
-    sessionUserPrompt: `Generate a German reading passage with {{count}} comprehension questions (3 options each).`,
+    sessionUserPrompt: `Generate a German reading passage structured in 7 paragraphs with {{count}} comprehension questions (3 options each). The text should be 400-600 words total.`,
 
     // System prompt for SINGLE generation (backward compatibility)
     systemPrompt: `You are a specialized question generator for German language learning (Goethe C1 level).
