@@ -3,18 +3,32 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { SessionTypeEnum } from './session-registry';
-import type { 
-  Session, 
+import type {
+  Session,
   SessionStats,
 } from './types';
 import type { Question, QuestionResult } from './questions/question-types';
 import type { QuestionTypeName } from './questions/question-registry';
 
+export enum QuestionStatus {
+  GENERATING = 'generating',
+  LOADED = 'loaded',
+  ERROR = 'error'
+}
+
+export interface SessionQuestion extends Question {
+  teil?: number;
+  answer?: string;
+  status: QuestionStatus;
+  answered: boolean;
+}
+
 interface LearningSessionContextType {
   // Session state
   activeSession: Session | null;
   currentQuestion: Question | null;
-  allQuestions: Question[];
+  sessionQuestions: SessionQuestion[]; // Single source of truth
+  currentTeil: number;
   questionProgress: {
     current: number;
     total: number;
@@ -39,10 +53,15 @@ interface LearningSessionContextType {
   nextQuestion: () => void;
   previousQuestion: () => void;
   completeQuestions: () => Promise<any>;
-  
-  // Session data getters
+
+  // Teil navigation
+  navigateToTeil: (teilNumber: number) => void;
+  submitTeilAnswers: (answers: Record<string, string>) => void;
+  updateQuestionStatus: (questionId: string, status: QuestionStatus) => void;
+  addQuestion: (question: Question) => void;
+
+  // Session data getters (all derived from sessionQuestions)
   getSupportedQuestionTypes: () => QuestionTypeName[];
-  getAllQuestions: () => Question[];
   getQuestionResults: () => QuestionResult[];
   
   // Utility functions
@@ -63,10 +82,11 @@ export function useLearningSession() {
 export function LearningSessionProvider({ children }: { children: React.ReactNode }) {
   const { data: authSession } = useSession();
   
-  // Core state
+  // Core state - SIMPLIFIED to single source of truth
   const [activeSession, setActiveSession] = useState<Session | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [allQuestions, setAllQuestions] = useState<Question[]>([]);
+  const [sessionQuestions, setSessionQuestions] = useState<SessionQuestion[]>([]); // Single source of truth
+  const [currentTeil, setCurrentTeil] = useState(1);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionResults, setQuestionResults] = useState<QuestionResult[]>([]);
   const [questionProgress, setQuestionProgress] = useState({
@@ -76,7 +96,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     unanswered: 0,
     percentage: 0
   });
-  
+
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +112,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
   const checkActiveSession = async () => {
     if (!authSession?.user?.email) return;
-    
+
     try {
       const response = await fetch('/api/sessions/active');
       if (response.ok) {
@@ -100,15 +120,21 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         if (sessions.length > 0) {
           const session = sessions[0];
           setActiveSession(session);
-          
+
           // Load questions for the session
           const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
           if (questionsRes.ok) {
-            const questions = await questionsRes.json();
-            setAllQuestions(questions);
-            if (questions.length > 0) {
-              setCurrentQuestion(questions[0]);
-              updateProgress(0, questions.length, 0);
+            const questions: Question[] = await questionsRes.json();
+            // Convert to SessionQuestion format
+            const sessionQs: SessionQuestion[] = questions.map(q => ({
+              ...q,
+              status: QuestionStatus.LOADED,
+              answered: false
+            }));
+            setSessionQuestions(sessionQs);
+            if (sessionQs.length > 0) {
+              setCurrentQuestion(sessionQs[0]);
+              updateProgress(0, sessionQs.length, 0);
             }
           }
         }
@@ -162,24 +188,31 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
       const session = await response.json();
       setActiveSession(session);
-      
+
       // Load questions
       const questionsRes = await fetch(`/api/sessions/${session.id}/questions`);
       if (questionsRes.ok) {
-        const questions = await questionsRes.json();
-        setAllQuestions(questions);
+        const questions: Question[] = await questionsRes.json();
+        // Convert to SessionQuestion format
+        const sessionQs: SessionQuestion[] = questions.map(q => ({
+          ...q,
+          status: QuestionStatus.LOADED,
+          answered: false
+        }));
+        setSessionQuestions(sessionQs);
         setCurrentQuestionIndex(0);
         setQuestionResults([]);
-        
-        if (questions.length > 0) {
-          setCurrentQuestion(questions[0]);
-          updateProgress(0, questions.length, 0);
+
+        if (sessionQs.length > 0) {
+          setCurrentQuestion(sessionQs[0]);
+          updateProgress(0, sessionQs.length, 0);
         }
-        
+
         console.log('Session started:', {
           sessionId: session.id,
           type,
-          totalQuestions: questions.length
+          totalQuestions: sessionQs.length,
+          teils: [...new Set(sessionQs.map(q => (q as any).teil || 1))]
         });
       }
       
@@ -247,7 +280,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       if (response.ok) {
         setActiveSession(null);
         setCurrentQuestion(null);
-        setAllQuestions([]);
+        setSessionQuestions([]);
+        setCurrentTeil(1);
         setCurrentQuestionIndex(0);
         setQuestionResults([]);
         setQuestionProgress({
@@ -308,33 +342,33 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       
       // Update progress
       const answered = questionResults.length + 1;
-      updateProgress(currentQuestionIndex, allQuestions.length, answered);
-      
+      updateProgress(currentQuestionIndex, sessionQuestions.length, answered);
+
       return result;
     } catch (err) {
       console.error('Failed to submit answer:', err);
       setError('Failed to submit answer');
       return null;
     }
-  }, [activeSession, currentQuestion, currentQuestionIndex, allQuestions.length, questionResults.length]);
+  }, [activeSession, currentQuestion, currentQuestionIndex, sessionQuestions.length, questionResults.length]);
 
   const nextQuestion = useCallback(() => {
-    if (currentQuestionIndex < allQuestions.length - 1) {
+    if (currentQuestionIndex < sessionQuestions.length - 1) {
       const newIndex = currentQuestionIndex + 1;
       setCurrentQuestionIndex(newIndex);
-      setCurrentQuestion(allQuestions[newIndex]);
-      updateProgress(newIndex, allQuestions.length, questionResults.length);
+      setCurrentQuestion(sessionQuestions[newIndex]);
+      updateProgress(newIndex, sessionQuestions.length, questionResults.length);
     }
-  }, [currentQuestionIndex, allQuestions, questionResults.length]);
+  }, [currentQuestionIndex, sessionQuestions, questionResults.length]);
 
   const previousQuestion = useCallback(() => {
     if (currentQuestionIndex > 0) {
       const newIndex = currentQuestionIndex - 1;
       setCurrentQuestionIndex(newIndex);
-      setCurrentQuestion(allQuestions[newIndex]);
-      updateProgress(newIndex, allQuestions.length, questionResults.length);
+      setCurrentQuestion(sessionQuestions[newIndex]);
+      updateProgress(newIndex, sessionQuestions.length, questionResults.length);
     }
-  }, [currentQuestionIndex, allQuestions, questionResults.length]);
+  }, [currentQuestionIndex, sessionQuestions, questionResults.length]);
 
   const completeQuestions = useCallback(async () => {
     if (!activeSession) return null;
@@ -358,20 +392,50 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     }
   }, [activeSession, endSession]);
 
-  // Getters
+  // Getters - SIMPLIFIED (derived from sessionQuestions)
   const getSupportedQuestionTypes = useCallback((): QuestionTypeName[] => {
     if (!activeSession) return [];
     // This would need to be fetched from the server or stored in session metadata
     return [];
   }, [activeSession]);
 
-  const getAllQuestions = useCallback((): Question[] => {
-    return allQuestions;
-  }, [allQuestions]);
-
   const getQuestionResults = useCallback((): QuestionResult[] => {
     return questionResults;
   }, [questionResults]);
+
+  // Teil-based session methods - SIMPLIFIED (derived from sessionQuestions)
+  const navigateToTeil = useCallback((teilNumber: number) => {
+    const teilQuestions = sessionQuestions.filter(q => (q.teil || 1) === teilNumber);
+    if (teilQuestions.length > 0 && teilQuestions.some(q => q.status === QuestionStatus.LOADED)) {
+      setCurrentTeil(teilNumber);
+    }
+  }, [sessionQuestions]);
+
+  const submitTeilAnswers = useCallback((answers: Record<string, string>) => {
+    setSessionQuestions(prev =>
+      prev.map(q => {
+        if (answers[q.id]) {
+          return { ...q, answer: answers[q.id], answered: true };
+        }
+        return q;
+      })
+    );
+  }, []);
+
+  const updateQuestionStatus = useCallback((questionId: string, status: QuestionStatus) => {
+    setSessionQuestions(prev =>
+      prev.map(q => q.id === questionId ? { ...q, status } : q)
+    );
+  }, []);
+
+  const addQuestion = useCallback((question: Question) => {
+    const sessionQ: SessionQuestion = {
+      ...question,
+      status: QuestionStatus.LOADED,
+      answered: false
+    };
+    setSessionQuestions(prev => [...prev, sessionQ]);
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -382,7 +446,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       value={{
         activeSession,
         currentQuestion,
-        allQuestions,
+        sessionQuestions,
+        currentTeil,
         questionProgress,
         isLoading,
         error,
@@ -395,8 +460,11 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         nextQuestion,
         previousQuestion,
         completeQuestions,
+        navigateToTeil,
+        submitTeilAnswers,
+        updateQuestionStatus,
+        addQuestion,
         getSupportedQuestionTypes,
-        getAllQuestions,
         getQuestionResults,
         refreshStats,
         clearError

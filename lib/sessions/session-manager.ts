@@ -7,7 +7,7 @@ import {
 } from './session-registry';
 import './configs'; // Import to register all configs
 import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
-import { generateQuestions } from './questions/question-generator';
+import { generateProgressively } from './questions/progressive-generator';
 import { markQuestions } from './questions/question-marker';
 import type { Question, UserAnswer, QuestionResult, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
@@ -57,18 +57,14 @@ export class SessionManager {
 
   async createSession(
     type: SessionTypeEnum,
-    metadata?: Record<string, any>
+    metadata?: Record<string, any>,
+    onQuestionGenerated?: (question: Question) => void
   ): Promise<Session> {
     const config = getSessionConfig(type);
     const initialData = initializeSessionData(type);
 
-    // Generate questions for the session
     const difficulty = (metadata?.difficulty as QuestionDifficulty) || 'intermediate';
-    const questionCount = metadata?.questionCount || (config.defaults?.questionCount as number) || 1;
-    const layout = (metadata?.layout as 'standard' | 'random') || 'standard'; // Default to standard exam layout
-
-    this.questions = await generateQuestions(type, difficulty, questionCount, true, layout);
-    
+    this.questions = [];
     this.currentQuestionIndex = 0;
     this.userAnswers = [];
     this.questionResults = [];
@@ -108,10 +104,27 @@ export class SessionManager {
 
     const { saveSession } = await import('./queries');
     await saveSession(session);
-    
+
     this.session = session;
     this.startTime = new Date();
-    
+
+    // Start progressive generation if layout is defined
+    if (config.questionLayout) {
+      generateProgressively({
+        layout: config.questionLayout,
+        sessionType: type,
+        difficulty,
+        onQuestionGenerated: (question) => {
+          this.questions.push(question);
+          // Update session data
+          if (this.session) {
+            this.session.data.allQuestions = this.questions;
+          }
+          onQuestionGenerated?.(question);
+        }
+      }).catch(console.error);
+    }
+
     return session;
   }
 

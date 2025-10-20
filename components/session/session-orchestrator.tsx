@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useLearningSession } from '@/lib/sessions/learning-session-context';
+import { useLearningSession, QuestionStatus } from '@/lib/sessions/learning-session-context';
 import { useSessionPage } from '@/lib/sessions/session-page-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +40,11 @@ export function SessionOrchestrator() {
     nextQuestion,
     previousQuestion,
     endSession,
+    // Teil-based session - SIMPLIFIED
+    sessionQuestions,
+    currentTeil,
+    navigateToTeil,
+    submitTeilAnswers,
   } = useLearningSession();
 
   // Local state
@@ -49,9 +54,6 @@ export function SessionOrchestrator() {
   const [timeOnQuestion, setTimeOnQuestion] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
-  const [currentTeil, setCurrentTeil] = useState(1);
-  const [accumulatedAnswers, setAccumulatedAnswers] = useState<Record<string, string>>({});
-  const [generatedTeils, setGeneratedTeils] = useState<Set<number>>(new Set([1])); // Track which Teils are generated
 
   // Reset state when question changes
   useEffect(() => {
@@ -60,26 +62,7 @@ export function SessionOrchestrator() {
     setTimeOnQuestion(0);
   }, [currentQuestion?.id]);
 
-  // Detect which Teils exist in the session and mark them as generated
-  useEffect(() => {
-    if (activeSession?.data?.allQuestions) {
-      const allQuestions = activeSession.data.allQuestions;
-      const existingTeils = new Set<number>();
-
-      // Check which Teils exist in the questions
-      allQuestions.forEach((q: any) => {
-        if (q.teil) {
-          existingTeils.add(q.teil);
-        }
-      });
-
-      // Update generatedTeils if we found any
-      if (existingTeils.size > 0) {
-        setGeneratedTeils(existingTeils);
-        console.log('✅ Detected existing Teils:', Array.from(existingTeils));
-      }
-    }
-  }, [activeSession?.data?.allQuestions]);
+  // Teil detection is now handled by the session context
 
   const handleSubmitAnswer = async () => {
     if (!currentQuestion || userAnswer === null) return;
@@ -130,124 +113,70 @@ export function SessionOrchestrator() {
   // Render question based on type
   const renderQuestion = () => {
     // Check if we have questions with Teil structure
-    if (!isNavigating && sessionType === SessionTypeEnum.READING && activeSession?.data?.allQuestions) {
-      const allQuestions = activeSession.data.allQuestions;
-
+    if (!isNavigating && sessionType === SessionTypeEnum.READING && sessionQuestions.length > 0) {
       // Check if questions have teil property (standard layout)
-      const hasTeilStructure = allQuestions.some((q: any) => q.teil !== undefined);
+      const hasTeilStructure = sessionQuestions.some((q: any) => q.teil !== undefined);
 
       if (hasTeilStructure) {
-        // Filter questions by Teil
-        const teil1Questions = allQuestions.filter((q: any) => q.teil === 1);
-        const teil2Questions = allQuestions.filter((q: any) => q.teil === 2);
+        // Derive everything from sessionQuestions
+        const teilsSet = new Set(sessionQuestions.map(q => (q as any).teil || 1));
+        const totalTeils = teilsSet.size;
+        const generatedTeils = new Set(
+          sessionQuestions
+            .filter(q => q.status === QuestionStatus.LOADED)
+            .map(q => (q as any).teil || 1)
+        );
+        const currentTeilQuestions = sessionQuestions.filter(q => ((q as any).teil || 1) === currentTeil);
+        const accumulatedAnswers = Object.fromEntries(
+          sessionQuestions.filter(q => q.answer).map(q => [q.id, q.answer!])
+        );
 
-        // Show Teil 1 (GAP_TEXT_MULTIPLE_CHOICE)
-        if (currentTeil === 1 && teil1Questions.length > 0) {
-          const hasMoreTeils = teil2Questions.length > 0;
-          const totalTeils = hasMoreTeils ? 2 : 1; // For now, hardcode to 2 Teils
-
+        // Show current Teil - UNIFIED for all Teils
+        if (currentTeilQuestions.length > 0) {
           return (
             <AllQuestionsView
-              key="teil-1-view"
-              questions={teil1Questions}
+              key={`teil-${currentTeil}-view`}
+              questions={currentTeilQuestions}
               showA4Format={showA4Format}
               sessionId={sessionId}
-              showResultsImmediately={false} // Don't show results yet, move to Teil 2
-              isLastTeil={!hasMoreTeils} // False if there are more Teils
+              showResultsImmediately={currentTeil === totalTeils}
+              isLastTeil={currentTeil === totalTeils}
+              accumulatedAnswers={accumulatedAnswers}
+              showBackButton={currentTeil > 1}
               totalTeils={totalTeils}
               generatedTeils={generatedTeils}
-              onTeilNavigate={(teilNum) => {
-                console.log('Navigating to Teil:', teilNum);
-                if (generatedTeils.has(teilNum)) {
-                  setCurrentTeil(teilNum);
-                }
-              }}
+              onTeilNavigate={navigateToTeil}
+              onBack={() => navigateToTeil(currentTeil - 1)}
               onSubmit={(answers) => {
                 if (isNavigating) return;
-                console.log('Teil 1 answers submitted:', answers);
+                submitTeilAnswers(answers);
 
-                // Accumulate answers from Teil 1
-                setAccumulatedAnswers(prev => ({ ...prev, ...answers }));
-
-                // Move to Teil 2 if available
-                if (hasMoreTeils) {
-                  setCurrentTeil(2);
-                  // Start generating Teil 2 if not already generated
-                  if (!generatedTeils.has(2)) {
-                    // TODO: Trigger Teil 2 generation here
-                    // For now, mark it as generated immediately
-                    setGeneratedTeils(prev => new Set([...prev, 2]));
-                  }
+                if (currentTeil < totalTeils) {
+                  navigateToTeil(currentTeil + 1);
                 } else {
-                  // End session if no Teil 2
                   setIsNavigating(true);
                   endSession('completed');
-                  setTimeout(() => {
-                    router.push(`/${sessionType}`);
-                  }, 100);
+                  setTimeout(() => router.push(`/${sessionType}`), 100);
                 }
-              }}
-            />
-          );
-        }
-
-        // Show Teil 2 (MULTIPLE_CHOICE) - same UI as Teil 1
-        if (currentTeil === 2 && teil2Questions.length > 0) {
-          const totalTeils = 2; // For now, hardcode to 2 Teils
-
-          return (
-            <AllQuestionsView
-              key="teil-2-view"
-              questions={teil2Questions}
-              showA4Format={showA4Format}
-              sessionId={sessionId}
-              showResultsImmediately={true} // Show results after Teil 2 (final)
-              isLastTeil={true} // Show "Test abgeben" button
-              accumulatedAnswers={accumulatedAnswers} // Pass Teil 1 answers for combined marking
-              showBackButton={true} // Show back button on Teil 2
-              totalTeils={totalTeils}
-              generatedTeils={generatedTeils}
-              onTeilNavigate={(teilNum) => {
-                console.log('Navigating to Teil:', teilNum);
-                if (generatedTeils.has(teilNum)) {
-                  setCurrentTeil(teilNum);
-                }
-              }}
-              onBack={() => {
-                console.log('Going back to Teil 1');
-                setCurrentTeil(1);
-              }}
-              onSubmit={(answers) => {
-                if (isNavigating) return;
-                console.log('Teil 2 answers submitted:', answers);
-                setIsNavigating(true);
-
-                // End the session
-                endSession('completed');
-                setTimeout(() => {
-                  router.push(`/${sessionType}`);
-                }, 100);
               }}
             />
           );
         }
       } else {
         // Legacy behavior: show all questions if GAP_TEXT_MULTIPLE_CHOICE
-        if (allQuestions.length > 0 && allQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
+        if (sessionQuestions.length > 0 && sessionQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
           return (
             <AllQuestionsView
               key="all-questions-view"
-              questions={allQuestions}
+              questions={sessionQuestions}
               showA4Format={showA4Format}
               sessionId={sessionId}
               onSubmit={(answers) => {
                 if (isNavigating) return;
-                console.log('All answers submitted:', answers);
+                submitTeilAnswers(answers);
                 setIsNavigating(true);
                 endSession('completed');
-                setTimeout(() => {
-                  router.push(`/${sessionType}`);
-                }, 100);
+                setTimeout(() => router.push(`/${sessionType}`), 100);
               }}
             />
           );

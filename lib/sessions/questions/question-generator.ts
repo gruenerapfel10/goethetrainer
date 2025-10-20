@@ -370,134 +370,228 @@ class QuestionGeneratorRegistry {
 // Singleton instance
 const questionGeneratorRegistry = new QuestionGeneratorRegistry();
 
-export type QuestionLayout = 'standard' | 'random';
-
 export interface GenerateQuestionsOptions {
   sessionType: SessionTypeEnum;
   difficulty?: QuestionDifficulty;
   count?: number;
   useAI?: boolean;
-  layout?: QuestionLayout;
+  layout?: QuestionTypeName[]; // Predefined layout of question types
 }
 
 /**
- * Generate questions for a session with layout support
+ * Generate questions - supports both predefined layouts and random generation
+ *
+ * @param sessionType - The session type
+ * @param difficulty - Question difficulty
+ * @param count - Number of questions (ignored if layout is provided)
+ * @param useAI - Whether to use AI generation
+ * @param layout - Optional predefined layout [GAP_TEXT_MULTIPLE_CHOICE, MULTIPLE_CHOICE, ...]
+ * @param progressive - If true, only generate first Teil (default: false for backward compatibility)
  */
 export async function generateQuestions(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   count: number = 1,
   useAI: boolean = true,
-  layout: QuestionLayout = 'random'
+  layout?: QuestionTypeName[],
+  progressive: boolean = false
 ): Promise<Question[]> {
   const generatorName = useAI ? 'ai' : 'mock';
+  const generator = questionGeneratorRegistry.getGenerator(generatorName);
 
-  // Standard layout: Generate specific question types for each Teil
-  if (layout === 'standard' && sessionType === SessionTypeEnum.READING) {
-    return await generateStandardLayout(sessionType, difficulty, generatorName);
+  // PREDEFINED LAYOUT MODE: Generate questions following the layout
+  if (layout && layout.length > 0) {
+    console.log('🎯 Using predefined layout:', layout);
+
+    // PROGRESSIVE MODE: Only generate Teil 1, user can start immediately
+    if (progressive) {
+      console.log('⚡ Progressive mode: Generating Teil 1 only');
+      return await generateSingleTeil(layout[0], 1, sessionType, difficulty, generator);
+    }
+
+    // FULL MODE: Generate all Teils
+    return await generateWithLayout(layout, sessionType, difficulty, generator);
   }
 
-  // Random layout: Use default behavior
+  // RANDOM MODE: Generate random questions
+  console.log(`🎲 Using random generation: ${count} questions`);
   return questionGeneratorRegistry.generateQuestions(sessionType, difficulty, count, generatorName);
 }
 
 /**
- * Generate standard exam layout - Teil 1 only (progressive generation)
- * Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 gap-fill questions)
- * Teil 2 should be generated separately when needed
+ * Generate a single Teil (for progressive generation)
  */
-async function generateStandardLayout(
+async function generateSingleTeil(
+  questionType: QuestionTypeName,
+  teilNumber: number,
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
-  generatorName: string
+  generator: QuestionGeneratorAlgorithm
 ): Promise<Question[]> {
-  const allQuestions: Question[] = [];
+  console.log(`🔵 Generating Teil ${teilNumber}: ${questionType}...`);
 
-  // Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 questions)
-  console.log('🔵 Generating Teil 1: GAP_TEXT_MULTIPLE_CHOICE...');
-  try {
-    const teil1Questions = await generateQuestionsForSession(sessionType, difficulty, 9);
-    const convertedTeil1 = teil1Questions.map((q, i) => ({
-      ...q,
+  const questionCount = questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7;
+
+  const teilData = await generateQuestionsForSession(
+    sessionType,
+    difficulty,
+    questionCount,
+    [questionType]
+  );
+
+  if (teilData && teilData.length > 0) {
+    const metadata = getQuestionMetadata(questionType);
+    const teilQuestions = teilData.map((q: any) => ({
       id: generateUUID(),
-      type: QuestionType.READING_COMPREHENSION,
+      type: mapToLegacyType(questionType, sessionType),
       sessionType,
       difficulty,
-      answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
-      registryType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-      teil: 1,
+      answerType: mapToAnswerType(questionType),
+      prompt: q.prompt,
+      context: q.context,
+      title: q.title,
+      subtitle: q.subtitle,
+      theme: q.theme,
+      options: q.options,
+      correctAnswer: q.correctOptionId,
+      correctOptionId: q.correctOptionId,
+      points: q.points || metadata.defaultPoints || 10,
+      timeLimit: q.timeLimit || metadata.defaultTimeLimit || 60,
+      explanation: q.explanation,
+      isExample: q.isExample || false,
+      exampleAnswer: q.exampleAnswer,
+      scoringCriteria: {
+        requireExactMatch: true,
+        acceptPartialCredit: false,
+        keywords: [],
+      },
+      registryType: questionType,
+      teil: teilNumber,
     }));
-    allQuestions.push(...convertedTeil1);
-    console.log(`✅ Generated ${teil1Questions.length} GAP_TEXT questions for Teil 1`);
-  } catch (error) {
-    console.error('❌ Failed to generate Teil 1:', error);
-    throw error;
-  }
 
-  console.log(`✅ Total questions generated for initial load: ${allQuestions.length}`);
-  return allQuestions;
-}
-
-/**
- * Generate Teil 2 separately (called when user is ready to progress)
- */
-export async function generateTeil2(
-  sessionType: SessionTypeEnum,
-  difficulty: QuestionDifficulty
-): Promise<Question[]> {
-  console.log('🔵 Generating Teil 2: MULTIPLE_CHOICE...');
-  try {
-    const teil2Count = 7;
-    // Use session generation to get 1 context with 7 questions
-    const teil2Data = await generateQuestionsForSession(
-      sessionType,
-      difficulty,
-      teil2Count,
-      [QuestionTypeName.MULTIPLE_CHOICE]
-    );
-
-    if (teil2Data && teil2Data.length > 0) {
-      // Convert to Question objects with Teil 2 marker
-      const teil2Questions = teil2Data.map((q: any, i: number) => {
-        const metadata = getQuestionMetadata(QuestionTypeName.MULTIPLE_CHOICE);
-        return {
-          id: generateUUID(),
-          type: QuestionType.READING_COMPREHENSION,
-          sessionType,
-          difficulty,
-          answerType: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
-          prompt: q.prompt,
-          context: q.context,
-          title: q.title,
-          subtitle: q.subtitle,
-          theme: q.theme,
-          options: q.options,
-          correctAnswer: q.correctOptionId,
-          correctOptionId: q.correctOptionId,
-          points: q.points || metadata.defaultPoints || 10,
-          timeLimit: q.timeLimit || metadata.defaultTimeLimit || 60,
-          explanation: q.explanation,
-          isExample: false,
-          scoringCriteria: {
-            requireExactMatch: true,
-            acceptPartialCredit: false,
-            keywords: [],
-          },
-          registryType: QuestionTypeName.MULTIPLE_CHOICE,
-          teil: 2,
-        };
-      });
-
-      console.log(`✅ Generated ${teil2Questions.length} MULTIPLE_CHOICE questions for Teil 2`);
-      return teil2Questions;
-    }
-  } catch (error) {
-    console.error('❌ Failed to generate Teil 2:', error);
-    throw error;
+    console.log(`✅ Generated ${teilQuestions.length} ${questionType} questions for Teil ${teilNumber}`);
+    return teilQuestions;
   }
 
   return [];
 }
+
+/**
+ * Generate questions following a predefined layout
+ * Each question type in the layout becomes one Teil
+ *
+ * Example: [GAP_TEXT_MULTIPLE_CHOICE, MULTIPLE_CHOICE]
+ * - Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 questions)
+ * - Teil 2: MULTIPLE_CHOICE (7 questions)
+ */
+async function generateWithLayout(
+  layout: QuestionTypeName[],
+  sessionType: SessionTypeEnum,
+  difficulty: QuestionDifficulty,
+  generator: QuestionGeneratorAlgorithm
+): Promise<Question[]> {
+  const allQuestions: Question[] = [];
+
+  for (let teilIndex = 0; teilIndex < layout.length; teilIndex++) {
+    const questionType = layout[teilIndex];
+    const teilNumber = teilIndex + 1;
+
+    console.log(`🔵 Generating Teil ${teilNumber}: ${questionType}...`);
+
+    try {
+      // Determine question count based on type
+      const questionCount = questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7;
+
+      // Generate all questions for this Teil using session generator
+      const teilData = await generateQuestionsForSession(
+        sessionType,
+        difficulty,
+        questionCount,
+        [questionType]
+      );
+
+      if (teilData && teilData.length > 0) {
+        // Convert to Question objects with Teil marker
+        const teilQuestions = teilData.map((q: any, i: number) => {
+          const metadata = getQuestionMetadata(questionType);
+          return {
+            id: generateUUID(),
+            type: mapToLegacyType(questionType, sessionType),
+            sessionType,
+            difficulty,
+            answerType: mapToAnswerType(questionType),
+            prompt: q.prompt,
+            context: q.context,
+            title: q.title,
+            subtitle: q.subtitle,
+            theme: q.theme,
+            options: q.options,
+            correctAnswer: q.correctOptionId,
+            correctOptionId: q.correctOptionId,
+            points: q.points || metadata.defaultPoints || 10,
+            timeLimit: q.timeLimit || metadata.defaultTimeLimit || 60,
+            explanation: q.explanation,
+            isExample: q.isExample || false,
+            exampleAnswer: q.exampleAnswer,
+            scoringCriteria: {
+              requireExactMatch: true,
+              acceptPartialCredit: false,
+              keywords: [],
+            },
+            registryType: questionType,
+            teil: teilNumber,
+          };
+        });
+
+        allQuestions.push(...teilQuestions);
+        console.log(`✅ Generated ${teilQuestions.length} ${questionType} questions for Teil ${teilNumber}`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to generate Teil ${teilNumber} (${questionType}):`, error);
+      throw error;
+    }
+  }
+
+  console.log(`✅ Total questions generated: ${allQuestions.length} across ${layout.length} Teils`);
+  return allQuestions;
+}
+
+// Helper functions for mapping
+function mapToLegacyType(questionTypeName: QuestionTypeName, sessionType: SessionTypeEnum): QuestionType {
+  switch (questionTypeName) {
+    case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
+      return sessionType === SessionTypeEnum.READING
+        ? QuestionType.READING_COMPREHENSION
+        : QuestionType.LISTENING_COMPREHENSION;
+    case QuestionTypeName.MULTIPLE_CHOICE:
+      return QuestionType.READING_COMPREHENSION;
+    case QuestionTypeName.TRUE_FALSE:
+      return QuestionType.READING_COMPREHENSION;
+    case QuestionTypeName.SHORT_ANSWER:
+      return sessionType === SessionTypeEnum.READING
+        ? QuestionType.READING_VOCABULARY
+        : QuestionType.WRITING_GRAMMAR;
+    default:
+      return QuestionType.READING_COMPREHENSION;
+  }
+}
+
+function mapToAnswerType(questionTypeName: QuestionTypeName): AnswerType {
+  const metadata = getQuestionMetadata(questionTypeName);
+  switch (metadata.category) {
+    case 'selection':
+      return questionTypeName === QuestionTypeName.TRUE_FALSE
+        ? AnswerType.TRUE_FALSE
+        : AnswerType.GAP_TEXT_MULTIPLE_CHOICE;
+    case 'written':
+      return questionTypeName === QuestionTypeName.ESSAY
+        ? AnswerType.LONG_ANSWER
+        : AnswerType.SHORT_ANSWER;
+    default:
+      return AnswerType.GAP_TEXT_MULTIPLE_CHOICE;
+  }
+}
+
 
 /**
  * Generate questions using mock data (for debugging)

@@ -6,6 +6,7 @@ import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 import { SessionResultsView } from '../SessionResultsView';
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
+import { QuestionStatus } from '@/lib/sessions/learning-session-context';
 
 interface Question {
   id: string;
@@ -20,6 +21,8 @@ interface Question {
   isExample?: boolean;
   exampleAnswer?: string;
   points?: number;
+  status?: QuestionStatus;
+  teil?: number;
 }
 
 interface AllQuestionsViewProps {
@@ -108,79 +111,41 @@ export function AllQuestionsView({
   };
 
   const handleSubmit = async () => {
-    console.log('🔵 handleSubmit called');
-    console.log('🔵 isMountedRef.current:', isMountedRef.current);
-    console.log('🔵 sessionId:', sessionId);
-    console.log('🔵 selectedAnswers:', selectedAnswers);
-
-    // Don't check isMountedRef here - it causes issues with React StrictMode
-    // The ref will be checked before state updates in callbacks
-
     setIsSubmitted(true);
-    console.log('✅ Set isSubmitted to true');
 
-    // If showResultsImmediately is false, just call onSubmit (for Teil-based sessions)
     if (!showResultsImmediately) {
-      console.log('✅ showResultsImmediately is false, calling onSubmit');
       onSubmit(selectedAnswers);
       return;
     }
 
-    // If sessionId is provided, use the marking API
     if (sessionId) {
-      console.log('✅ SessionId found, using marking API');
       setIsMarking(true);
       try {
-        // Combine accumulated answers from previous Teils with current answers
         const allAnswers = {
           ...accumulatedAnswers,
           ...selectedAnswers,
         };
 
-        const url = `/api/sessions/${sessionId}/mark`;
-        console.log('🔵 Fetching:', url);
-        console.log('🔵 Accumulated answers:', accumulatedAnswers);
-        console.log('🔵 Current answers:', selectedAnswers);
-        console.log('🔵 Combined answers (all Teils):', allAnswers);
-
-        const response = await fetch(url, {
+        const response = await fetch(`/api/sessions/${sessionId}/mark`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            answers: allAnswers,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers: allAnswers }),
         });
 
-        console.log('🔵 Response status:', response.status);
-        console.log('🔵 Response ok:', response.ok);
-
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('🔴 Response error:', errorText);
           throw new Error('Failed to mark questions');
         }
 
         const data = await response.json();
-        console.log('✅ Received results:', data);
         setResults(data);
-        console.log('✅ Set results state');
       } catch (error) {
-        console.error('🔴 Error marking questions:', error);
-        // Fallback to simple marking
-        console.log('🔵 Falling back to onSubmit callback');
         onSubmit(selectedAnswers);
       } finally {
         setIsMarking(false);
-        console.log('✅ Set isMarking to false');
       }
     } else {
-      console.log('⚠️ No sessionId, using fallback behavior');
-      // Fallback to old behavior
       setTimeout(() => {
         if (isMountedRef.current) {
-          console.log('🔵 Calling onSubmit callback');
           onSubmit(selectedAnswers);
         }
       }, 0);
@@ -195,20 +160,11 @@ export function AllQuestionsView({
   const teilNumber = (questions[0] as any)?.teil || 1;
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
-  const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice';
+  const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
 
-  // Debug logging for Teil navigation
-  console.log('🔍 Teil Navigation Debug:', {
-    totalTeils,
-    generatedTeils: Array.from(generatedTeils),
-    teilNumber,
-    shouldShowNav: totalTeils > 1,
-    hasOnTeilNavigate: !!onTeilNavigate
-  });
 
   // Show results view if results are available
   if (results) {
-    console.log('✅ Rendering SessionResultsView with results:', results);
     return (
       <SessionResultsView
         results={results.results}
@@ -217,8 +173,6 @@ export function AllQuestionsView({
       />
     );
   }
-
-  console.log('🔵 Rendering AllQuestionsView - isSubmitted:', isSubmitted, 'isMarking:', isMarking);
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -248,56 +202,35 @@ export function AllQuestionsView({
         </button>
       </div>
 
-      {/* Teil Navigation - Vertical on left edge */}
+      {/* Teil Navigation - Absolute positioned like Fragen/Quelle */}
       {totalTeils > 1 && (
-        <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-4">
-          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum, index, array) => {
-            const isGenerated = generatedTeils.has(teilNum);
+        <div className="absolute top-6 right-6 flex gap-0 z-10 border-b border-border">
+          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
+            // Check if at least one question in this Teil is loaded
+            const teilQuestions = questions.filter(q => (q.teil || 1) === teilNum);
+            const isLoaded = teilQuestions.some(q => q.status === QuestionStatus.LOADED);
+            const isGenerating = teilQuestions.some(q => q.status === QuestionStatus.GENERATING);
             const isCurrentTeil = teilNum === teilNumber;
-            const isLast = index === array.length - 1;
 
             return (
-              <div key={`teil-${teilNum}`} className="relative flex items-center gap-3">
-                {/* Connecting line */}
-                {!isLast && (
-                  <div className="absolute left-3 top-6 w-0.5 h-10 bg-border" />
-                )}
-
-                {/* Dot indicator */}
-                <button
-                  onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
-                  disabled={!isGenerated}
-                  className={cn(
-                    "relative z-10 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-                    isCurrentTeil
-                      ? "bg-sidebar-accent border-sidebar-accent animate-pulse"
-                      : isGenerated
-                      ? "bg-primary border-primary hover:scale-110 cursor-pointer"
-                      : "bg-muted border-border cursor-not-allowed opacity-40"
-                  )}
-                >
-                  {isGenerated && (
-                    <div className={cn(
-                      "w-2 h-2 rounded-full",
-                      isCurrentTeil ? "bg-white" : "bg-primary-foreground"
-                    )} />
-                  )}
-                </button>
-
-                {/* Label */}
-                <span className={cn(
-                  "text-sm font-medium transition-colors",
+              <button
+                key={`teil-${teilNum}`}
+                onClick={() => isLoaded && onTeilNavigate?.(teilNum)}
+                disabled={!isLoaded}
+                className={cn(
+                  "px-4 py-2 font-medium transition-colors relative",
                   isCurrentTeil
-                    ? "text-foreground"
-                    : isGenerated
+                    ? "text-foreground border-b-2 border-primary -mb-px"
+                    : isLoaded
                     ? "text-muted-foreground hover:text-foreground cursor-pointer"
-                    : "text-muted-foreground/40"
+                    : "text-muted-foreground/40 cursor-not-allowed"
                 )}
-                onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
-                >
-                  Teil {teilNum}
-                </span>
-              </div>
+              >
+                Teil {teilNum}
+                {isGenerating && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                )}
+              </button>
             );
           })}
         </div>
@@ -481,10 +414,7 @@ export function AllQuestionsView({
 
             {/* Submit/Next Button */}
             <button
-              onClick={() => {
-                console.log('🟡 Button clicked!');
-                handleSubmit();
-              }}
+              onClick={handleSubmit}
               disabled={
                 isSubmitted ||
                 !allQuestionsAnswered ||

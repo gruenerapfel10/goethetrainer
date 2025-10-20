@@ -44,7 +44,11 @@ export interface SessionConfig {
   
   // Supported question types for this session
   supportedQuestions: QuestionTypeName[];
-  
+
+  // Optional predefined question layout (e.g., [GAP_TEXT, MULTIPLE_CHOICE])
+  // If provided, questions will be generated following this layout
+  questionLayout?: QuestionTypeName[];
+
   // Features and capabilities
   features: {
     supportsAudioRecording?: boolean;
