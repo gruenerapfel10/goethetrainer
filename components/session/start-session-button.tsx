@@ -39,16 +39,16 @@ export function StartSessionButton({
   const isActiveForType = activeSession && activeSession.type === type;
   const isPaused = isActiveForType && activeSession.status === 'paused';
 
-  // Navigate as soon as first question is available
+  // Navigate as soon as session is created
   useEffect(() => {
-    if (!hasNavigated && activeSession && sessionQuestions.length > 0) {
+    if (!hasNavigated && activeSession) {
       setHasNavigated(true);
       router.push(`/${activeSession.type}/session/${activeSession.id}`);
       if (onSessionStart) {
         onSessionStart(activeSession.id);
       }
     }
-  }, [activeSession, sessionQuestions.length, hasNavigated, router, onSessionStart]);
+  }, [activeSession, hasNavigated, router, onSessionStart]);
 
   const handleStart = async () => {
     setHasNavigated(false);

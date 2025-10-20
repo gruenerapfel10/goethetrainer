@@ -18,7 +18,6 @@ import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 // Import question components
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
-import { MultipleChoiceView } from '@/components/questions/MultipleChoice/MultipleChoiceView';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
@@ -46,17 +45,6 @@ export function SessionOrchestrator() {
     navigateToTeil,
     submitTeilAnswers,
   } = useLearningSession();
-
-  // Debug logs
-  useEffect(() => {
-    console.log(`\n🎪 SessionOrchestrator mounted or updated:`);
-    console.log(`   sessionId from URL: ${sessionId}`);
-    console.log(`   activeSession?.id: ${activeSession?.id}`);
-    console.log(`   isLoading: ${isLoading}`);
-    console.log(`   error: ${error}`);
-    console.log(`   sessionQuestions.length: ${sessionQuestions.length}`);
-    console.log(`   Check: !activeSession=${!activeSession}, id mismatch=${activeSession?.id !== sessionId}, isLoading=${isLoading}`);
-  }, [sessionId, activeSession?.id, isLoading, error, sessionQuestions.length]);
 
   // Local state
   const [userAnswer, setUserAnswer] = useState<string | string[] | boolean | null>(null);
@@ -147,7 +135,7 @@ export function SessionOrchestrator() {
           return (
             <AllQuestionsView
               key={`teil-${currentTeil}-view`}
-              questions={currentTeilQuestions}
+              questions={currentTeilQuestions as any}
               showA4Format={showA4Format}
               sessionId={sessionId}
               showResultsImmediately={currentTeil === totalTeils}
@@ -179,7 +167,7 @@ export function SessionOrchestrator() {
           return (
             <AllQuestionsView
               key="all-questions-view"
-              questions={sessionQuestions}
+              questions={sessionQuestions as any}
               showA4Format={showA4Format}
               sessionId={sessionId}
               onSubmit={(answers) => {
