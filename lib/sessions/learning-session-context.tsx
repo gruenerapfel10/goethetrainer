@@ -112,12 +112,14 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
   // Stream questions when session starts - wrap in useEffect so it only fires when activeSession changes
   useEffect(() => {
+    console.log(`🔄 LearningSessionContext useEffect fired - activeSession?.id:`, activeSession?.id);
+
     if (!activeSession?.id) {
-      console.log('⚠️ LearningSessionContext: No active session to stream');
+      console.log('⚠️ LearningSessionContext: No active session to stream, skipping SSE connection');
       return;
     }
 
-    console.log(`🎯 LearningSessionContext: Setting up SSE stream for session ${activeSession.id}`);
+    console.log(`🎯 LearningSessionContext: USER CLICKED START - Setting up SSE stream for session ${activeSession.id}`);
 
     // Connect to SSE stream
     const eventSource = new EventSource(`/api/sessions/${activeSession.id}/stream`);
