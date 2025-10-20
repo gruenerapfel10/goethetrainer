@@ -246,6 +246,14 @@ export class SessionManager {
     return this.statisticsManager.getMetrics();
   }
 
+  getQuestionManager(): QuestionManager {
+    return this.questionManager;
+  }
+
+  getStatisticsManager(): StatisticsManager | null {
+    return this.statisticsManager;
+  }
+
   // Question flow methods
   getCurrentQuestion(): Question | null {
     if (!this.questions.length || this.currentQuestionIndex >= this.questions.length) {
@@ -274,47 +282,6 @@ export class SessionManager {
       return this.questions[this.currentQuestionIndex];
     }
     return null;
-  }
-
-  async submitAnswer(
-    questionId: string,
-    answer: string | string[] | boolean,
-    timeSpent: number = 0,
-    hintsUsed: number = 0
-  ): Promise<any> {
-    if (!this.session) {
-      throw new Error('No active session');
-    }
-
-    // Submit answer through question manager
-    const result = await this.questionManager.submitAnswer(
-      questionId,
-      answer,
-      timeSpent,
-      hintsUsed
-    );
-
-    // Update session data with current stats
-    const userAnswers = this.questionManager.getUserAnswers();
-    const questionResults = this.questionManager.getQuestionResults();
-    const scoreStats = this.questionManager.getScoreStats();
-
-    await this.updateSessionData({
-      questionsAnswered: userAnswers.length,
-      currentScore: scoreStats.currentScore,
-      maxPossibleScore: scoreStats.maxPossibleScore,
-      lastAnsweredQuestion: questionId,
-      answers: userAnswers,
-      results: questionResults.map(r => ({
-        questionId: r.questionId,
-        score: r.score,
-        maxScore: r.maxScore,
-        isCorrect: r.isCorrect,
-        feedback: r.feedback
-      }))
-    });
-
-    return result;
   }
 
   async completeQuestionFlow(): Promise<{

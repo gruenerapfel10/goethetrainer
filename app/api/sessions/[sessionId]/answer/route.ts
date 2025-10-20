@@ -14,9 +14,32 @@ export async function POST(
 
     const { sessionId } = await params;
     const { questionId, answer, timeSpent, hintsUsed } = await request.json();
-    
+
     const manager = await getSessionManager(authSession.user.email, sessionId);
-    const result = await manager.submitAnswer(questionId, answer, timeSpent, hintsUsed);
+    const questionManager = manager.getQuestionManager();
+
+    // Submit answer through question manager
+    const result = await questionManager.submitAnswer(questionId, answer, timeSpent, hintsUsed);
+
+    // Update session data with current stats
+    const userAnswers = questionManager.getUserAnswers();
+    const questionResults = questionManager.getQuestionResults();
+    const scoreStats = questionManager.getScoreStats();
+
+    await manager.updateSessionData({
+      questionsAnswered: userAnswers.length,
+      currentScore: scoreStats.currentScore,
+      maxPossibleScore: scoreStats.maxPossibleScore,
+      lastAnsweredQuestion: questionId,
+      answers: userAnswers,
+      results: questionResults.map(r => ({
+        questionId: r.questionId,
+        score: r.score,
+        maxScore: r.maxScore,
+        isCorrect: r.isCorrect,
+        feedback: r.feedback
+      }))
+    });
 
     return NextResponse.json(result);
   } catch (error) {
