@@ -1,5 +1,5 @@
 import { SessionTypeEnum, calculateSessionMetrics } from './session-registry';
-import type { SessionStats } from './types';
+import type { SessionStats, SessionAnalytics } from './types';
 
 /**
  * StatisticsManager - Handles all session metrics, duration, and statistics
@@ -228,5 +228,21 @@ export class StatisticsManager {
     this.duration = 0;
     this.metrics = {};
     this.sessionData = {};
+  }
+
+  /**
+   * Get user statistics (static method for aggregate stats)
+   */
+  static async getUserStats(userId: string): Promise<SessionStats> {
+    const { getUserSessionStats } = await import('./queries');
+    return await getUserSessionStats(userId);
+  }
+
+  /**
+   * Get session analytics (static method for analytics data)
+   */
+  static async getSessionAnalytics(userId: string, days: number = 30): Promise<SessionAnalytics> {
+    const { getSessionAnalytics } = await import('./queries');
+    return await getSessionAnalytics(userId, days);
   }
 }

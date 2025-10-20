@@ -5,7 +5,7 @@ import {
   initializeSessionData
 } from './session-registry';
 import './configs'; // Import to register all configs
-import type { Session, SessionStatus, SessionStats, SessionAnalytics } from './types';
+import type { Session, SessionStatus } from './types';
 import { generateSessionQuestion } from './questions/standard-generator';
 import type { Question, QuestionDifficulty } from './questions/question-types';
 import { getQuestionsForSession, QuestionTypeName } from './questions/question-registry';
@@ -339,16 +339,6 @@ export class SessionManager {
   }
 
   // Static helper methods
-  static async getUserStats(userId: string): Promise<SessionStats> {
-    const { getUserSessionStats } = await import('./queries');
-    return await getUserSessionStats(userId);
-  }
-
-  static async getSessionAnalytics(userId: string, days: number = 30): Promise<SessionAnalytics> {
-    const { getSessionAnalytics } = await import('./queries');
-    return await getSessionAnalytics(userId, days);
-  }
-
   static getAvailableSessionTypes(): Array<{
     type: SessionTypeEnum;
     metadata: ReturnType<typeof getSessionConfig>['metadata'];
