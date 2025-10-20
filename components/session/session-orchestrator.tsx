@@ -60,6 +60,27 @@ export function SessionOrchestrator() {
     setTimeOnQuestion(0);
   }, [currentQuestion?.id]);
 
+  // Detect which Teils exist in the session and mark them as generated
+  useEffect(() => {
+    if (activeSession?.data?.allQuestions) {
+      const allQuestions = activeSession.data.allQuestions;
+      const existingTeils = new Set<number>();
+
+      // Check which Teils exist in the questions
+      allQuestions.forEach((q: any) => {
+        if (q.teil) {
+          existingTeils.add(q.teil);
+        }
+      });
+
+      // Update generatedTeils if we found any
+      if (existingTeils.size > 0) {
+        setGeneratedTeils(existingTeils);
+        console.log('✅ Detected existing Teils:', Array.from(existingTeils));
+      }
+    }
+  }, [activeSession?.data?.allQuestions]);
+
   const handleSubmitAnswer = async () => {
     if (!currentQuestion || userAnswer === null) return;
 
