@@ -6,6 +6,8 @@ import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 import { SessionResultsView } from '../SessionResultsView';
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
+import { Timeline } from '@/components/ui/timeline';
+import { TimelineStep } from '@/components/timeline/components/timeline-step';
 
 interface Question {
   id: string;
@@ -239,36 +241,40 @@ export function AllQuestionsView({
         </button>
       </div>
 
-      {/* Teil Navigation - Below Quelle/Fragen */}
+      {/* Teil Navigation - Vertical Timeline on left edge */}
       {totalTeils > 1 && (
-        <div className="absolute top-16 left-6 flex gap-0 z-10 border-b border-border">
-          {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
-            const isGenerated = generatedTeils.has(teilNum);
-            const isCurrentTeil = teilNum === teilNumber;
+        <div className="fixed left-6 top-1/2 -translate-y-1/2 z-20">
+          <Timeline>
+            {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
+              const isGenerated = generatedTeils.has(teilNum);
+              const isCurrentTeil = teilNum === teilNumber;
 
-            return (
-              <button
-                key={teilNum}
-                onClick={() => isGenerated && onTeilNavigate?.(teilNum)}
-                disabled={!isGenerated}
-                className={cn(
-                  "px-4 py-2 font-medium transition-colors relative",
-                  isCurrentTeil
-                    ? "text-foreground border-b-2 border-sidebar-accent -mb-px"
-                    : isGenerated
-                    ? "text-muted-foreground hover:text-foreground cursor-pointer"
-                    : "text-muted-foreground/40 cursor-not-allowed"
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  {isCurrentTeil && (
-                    <span className="w-2 h-2 rounded-full bg-sidebar-accent animate-pulse" />
-                  )}
-                  Teil {teilNum}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <TimelineStep
+                  key={`teil-${teilNum}`}
+                  id={`teil-${teilNum}`}
+                  title={`Teil ${teilNum}`}
+                  status={isCurrentTeil ? 'running' : isGenerated ? 'completed' : 'pending'}
+                  iconParams={{
+                    src: null,
+                    alt: `Teil ${teilNum}`,
+                    width: 6,
+                    height: 6,
+                    className: cn(
+                      'w-6 h-6',
+                      isCurrentTeil && 'ring-2 ring-sidebar-accent'
+                    )
+                  }}
+                  onClick={() => {
+                    if (isGenerated) {
+                      onTeilNavigate?.(teilNum);
+                    }
+                  }}
+                  small
+                />
+              );
+            })}
+          </Timeline>
         </div>
       )}
 
