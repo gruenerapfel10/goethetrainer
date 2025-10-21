@@ -5,8 +5,6 @@ import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 import { QuestionTimeline } from './QuestionTimeline';
-import { SessionResultsView } from '../SessionResultsView';
-import { QuestionResult } from '@/lib/sessions/questions/question-types';
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
 
 interface Question {
@@ -27,18 +25,6 @@ interface Question {
   answer?: string | string[] | boolean;
 }
 
-interface QuestionResultsPayload {
-  results: QuestionResult[];
-  summary: {
-    totalQuestions: number;
-    correctAnswers: number;
-    incorrectAnswers: number;
-    totalScore: number;
-    maxScore: number;
-    percentage: number;
-  };
-}
-
 interface AllQuestionsViewProps {
   questions: Question[];
   onSubmit: (answers: Record<string, string>) => Promise<void> | void;
@@ -53,8 +39,6 @@ interface AllQuestionsViewProps {
   allQuestions?: Question[];
   onAnswerChange?: (questionId: string, answer: string) => void;
   isSubmitting?: boolean;
-  resultsSummary?: QuestionResultsPayload | null;
-  onResultsClose?: () => void;
   activeView?: 'fragen' | 'quelle';
   onActiveViewChange?: (view: 'fragen' | 'quelle') => void;
 }
@@ -73,13 +57,10 @@ export function AllQuestionsView({
   allQuestions,
   onAnswerChange,
   isSubmitting = false,
-  resultsSummary = null,
-  onResultsClose,
   activeView = 'fragen',
   onActiveViewChange,
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
 
   useEffect(() => {
@@ -105,7 +86,6 @@ export function AllQuestionsView({
   }, [view, onActiveViewChange]);
 
   useEffect(() => {
-    setIsSubmitted(false);
     const next: Record<string, string> = {};
     questions.forEach(question => {
       const existing = accumulatedAnswers?.[question.id];
@@ -121,7 +101,7 @@ export function AllQuestionsView({
   }, [questions, accumulatedAnswers]);
 
   const handleSelectOption = (questionId: string, optionId: string, isExample: boolean) => {
-    if (!isSubmitted && !isExample) {
+    if (!isExample) {
       setSelectedAnswers(prev => ({
         ...prev,
         [questionId]: optionId
@@ -133,13 +113,12 @@ export function AllQuestionsView({
   const handleSubmit = async () => {
     try {
       await onSubmit(selectedAnswers);
-      setIsSubmitted(true);
     } catch (error) {
       console.error('Failed to submit answers:', error);
     }
   };
 
-  const allQuestionsAnswered = questions
+  const requiredAnswered = questions
     .filter(q => !q.isExample)
     .every(q => selectedAnswers[q.id]);
 
@@ -152,17 +131,6 @@ export function AllQuestionsView({
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
-
-  // Show results view if results are available
-  if (resultsSummary) {
-    return (
-      <SessionResultsView
-        results={resultsSummary.results}
-        summary={resultsSummary.summary}
-        onClose={onResultsClose}
-      />
-    );
-  }
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -240,8 +208,6 @@ export function AllQuestionsView({
                           const isExample = question.isExample === true;
                           const isSelected = selectedAnswers[question.id] === option.id ||
                                              (isExample && question.exampleAnswer === option.id);
-                          const isCorrect = question.correctOptionId === option.id;
-                          const showIncorrect = isSubmitted && isSelected && !isCorrect;
                           const isFirstOption = index === 0;
 
                           return (
@@ -249,26 +215,22 @@ export function AllQuestionsView({
                               "relative",
                               isMultipleChoice ? "w-full" : "flex-1 min-w-0"
                             )}>
-                              {/* Example label above first option */}
                               {isFirstOption && isExample && (
                                 <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
                               )}
                               <div
                                 className={cn(
                                   "flex items-center gap-2 transition-colors p-2 -m-2",
-                                  !isSubmitted && !isExample && "cursor-pointer",
-                                  isSubmitted && !isSelected && !showIncorrect && "text-muted-foreground"
+                                  !isExample && !isSubmitting ? 'cursor-pointer hover:bg-muted/50 rounded-md' : 'cursor-default text-muted-foreground'
                                 )}
-                                onClick={() => !isSubmitted && !isExample && handleSelectOption(question.id, option.id, isExample)}
+                                onClick={() => handleSelectOption(question.id, option.id, isExample)}
                               >
                                 <MCQCheckbox
                                   letter={optionLetter}
                                   checked={isSelected}
                                   onChange={() => handleSelectOption(question.id, option.id, isExample)}
-                                  disabled={isSubmitted || isExample}
+                                  disabled={isSubmitting || isExample}
                                   isExample={isExample}
-                                  isCorrect={isCorrect}
-                                  showFeedback={isSubmitted}
                                 />
                                 <span className="text-sm break-words hyphens-auto" lang="de">
                                   {option.text}
@@ -364,7 +326,7 @@ export function AllQuestionsView({
               {showBackButton && onBack ? (
                 <button
                   onClick={onBack}
-                  disabled={isSubmitted || isSubmitting}
+                  disabled={isSubmitting}
                   className="px-6 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity"
                 >
                   ← Zurück
@@ -380,17 +342,16 @@ export function AllQuestionsView({
 
             {/* Submit/Next Button */}
             <button
-              onClick={handleSubmit}
-              disabled={
-                isSubmitted ||
-                !allQuestionsAnswered ||
-                isSubmitting ||
-                (!isLastTeil && !generatedTeils.has(teilNumber + 1))
-              }
-              className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
-            >
-              {isSubmitting ? 'Wird gespeichert...' : isSubmitted ? (isLastTeil ? 'Test abgeschlossen' : 'Weiter...') : (isLastTeil ? 'Test abgeben' : 'Weiter')}
-            </button>
+          onClick={handleSubmit}
+          disabled={
+            isSubmitting ||
+            !requiredAnswered ||
+            (!isLastTeil && !generatedTeils.has(teilNumber + 1))
+          }
+          className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
+        >
+          {isSubmitting ? 'Wird gespeichert...' : isLastTeil ? 'Test abgeben' : 'Weiter'}
+        </button>
           </div>
 
         </div>

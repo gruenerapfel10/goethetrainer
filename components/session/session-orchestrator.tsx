@@ -18,6 +18,7 @@ import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 // Import question components
 import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
+import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
 import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
 import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
@@ -47,6 +48,8 @@ export function SessionOrchestrator() {
     setActiveView,
     completeQuestions,
     initializeSession,
+    latestResults,
+    clearResults,
   } = useLearningSession();
 
   // Local state
@@ -55,7 +58,6 @@ export function SessionOrchestrator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
-  const [pendingCompletion, setPendingCompletion] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -149,33 +151,6 @@ export function SessionOrchestrator() {
     setQuestionResult(null);
   }, [currentQuestion?.id]);
 
-  useEffect(() => {
-    if (!pendingCompletion) {
-      return;
-    }
-
-    const allAnswered =
-      sessionQuestions.length > 0 &&
-      sessionQuestions.every(
-        question => question.answer !== undefined && question.answer !== null
-      );
-
-    if (allAnswered) {
-      (async () => {
-        const completion = await completeQuestions();
-        if (completion) {
-          try {
-            await endSession('completed');
-          } finally {
-            router.replace(`/${sessionType}`);
-          }
-        }
-        setPendingCompletion(false);
-        setIsNavigating(false);
-      })();
-    }
-  }, [pendingCompletion, sessionQuestions, completeQuestions, endSession, router, sessionType]);
-
   // Teil detection is now handled by the session context
 
   const handleSubmitAnswer = async () => {
@@ -218,6 +193,21 @@ export function SessionOrchestrator() {
   }
 
   // Render question based on type
+  if (latestResults) {
+    return (
+      <div className="p-6 h-full overflow-y-auto">
+        <SessionResultsView
+          results={latestResults.results}
+          summary={latestResults.summary}
+          onClose={() => {
+            clearResults();
+            router.replace(`/${sessionType}`);
+          }}
+        />
+      </div>
+    );
+  }
+
   const renderQuestion = () => {
     if (
       sessionType === SessionTypeEnum.READING &&
@@ -244,26 +234,29 @@ export function SessionOrchestrator() {
           allQuestions={sessionQuestions}
           onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
           isSubmitting={isSubmitting || isNavigating}
-          resultsSummary={null}
           activeView={activeView}
           onActiveViewChange={setActiveView}
-          onResultsClose={undefined}
           onTeilNavigate={teil => {
             if (isNavigating) return;
             activateTeil(teil);
           }}
           onSubmit={async answers => {
-            if (isNavigating) return;
+            if (isNavigating || latestResults) return;
             setIsNavigating(true);
             try {
               await submitTeilAnswers(answers, activeTeilNumber);
+
               if (nextTeilNumber) {
                 activateTeil(nextTeilNumber);
                 setIsNavigating(false);
-              } else {
-                setPendingCompletion(true);
+                return;
               }
-            } catch (error) {
+
+              const completion = await completeQuestions();
+              if (completion) {
+                await endSession('completed');
+              }
+            } finally {
               setIsNavigating(false);
             }
           }}

@@ -52,3 +52,24 @@ export interface UpdateSessionInput {
   duration?: number;
   answers?: Record<string, AnswerValue>;
 }
+
+export interface SubmitAnswerPayload {
+  questionId: string;
+  answer: AnswerValue;
+  timeSpent: number;
+  hintsUsed: number;
+}
+
+export interface CompletionSummary {
+  results: QuestionResult[];
+  summary: {
+    totalQuestions: number;
+    answeredQuestions: number;
+    incorrectAnswers: number;
+    correctAnswers: number;
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+    pendingManualReview: number;
+  };
+}

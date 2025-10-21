@@ -15,15 +15,20 @@ export function sanitizeForFirestore<T>(value: T): T {
   }
 
   if (typeof value === 'object') {
-    if (
-      typeof (value as any).seconds === 'number' &&
-      typeof (value as any).nanoseconds === 'number'
-    ) {
-      const seconds = Number((value as any).seconds);
-      const nanos = Number((value as any).nanoseconds);
-      if (Number.isFinite(seconds) && Number.isFinite(nanos)) {
+    const hasSeconds = Object.prototype.hasOwnProperty.call(value as Record<string, any>, 'seconds');
+    const hasNanos = Object.prototype.hasOwnProperty.call(value as Record<string, any>, 'nanoseconds');
+
+    if (hasSeconds || hasNanos) {
+      const seconds = (value as any).seconds;
+      const nanos = (value as any).nanoseconds;
+
+      if (
+        typeof seconds === 'number' && Number.isFinite(seconds) &&
+        typeof nanos === 'number' && Number.isFinite(nanos)
+      ) {
         return new Date(seconds * 1000 + nanos / 1e6) as unknown as T;
       }
+
       return undefined as unknown as T;
     }
 
@@ -42,9 +47,9 @@ export function sanitizeForFirestore<T>(value: T): T {
         return;
       }
       if (typeof cleanValue === 'object' && cleanValue !== null) {
-        const hasSeconds = Object.prototype.hasOwnProperty.call(cleanValue, 'seconds');
-        const hasNanos = Object.prototype.hasOwnProperty.call(cleanValue, 'nanoseconds');
-        if (hasSeconds && hasNanos) {
+        const childHasSeconds = Object.prototype.hasOwnProperty.call(cleanValue, 'seconds');
+        const childHasNanos = Object.prototype.hasOwnProperty.call(cleanValue, 'nanoseconds');
+        if (childHasSeconds || childHasNanos) {
           return;
         }
         if (Object.keys(cleanValue).length === 0) {

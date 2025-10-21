@@ -254,13 +254,14 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const activeSessionRef = useRef<Session | null>(null);
   const questionsRef = useRef<SessionQuestion[]>([]);
   const activeQuestionIdRef = useRef<string | null>(null);
-  const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
-  const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
-  const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(true);
-  const isFlushingRef = useRef(false);
-  const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
-  const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
+const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
+const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
+const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
+const isMountedRef = useRef(true);
+const isFlushingRef = useRef(false);
+const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
+const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
+const isCompletingRef = useRef(false);
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
@@ -908,21 +909,17 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      await forceSave();
-      let attempts = 0;
-      while (
-        attempts < 2 &&
-        (pendingUpdateRef.current || Object.keys(pendingAnswersRef.current).length > 0)
-      ) {
-        attempts += 1;
-        const flushed = await forceSave();
-        if (!flushed) {
-          break;
-        }
-      }
+    if (isCompletingRef.current) {
+      return null;
+    }
 
-      if (pendingUpdateRef.current || Object.keys(pendingAnswersRef.current).length > 0) {
+    isCompletingRef.current = true;
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const flushed = await forceSave();
+      if (!flushed && (pendingUpdateRef.current || Object.keys(pendingAnswersRef.current).length > 0)) {
         setError('Konnte Antworten nicht speichern. Bitte erneut versuchen, bevor du den Test abgibst.');
         return null;
       }
@@ -962,6 +959,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       setError(err instanceof Error ? err.message : 'Failed to complete questions');
       return null;
     } finally {
+      isCompletingRef.current = false;
       setIsSubmitting(false);
     }
   }, [forceSave, syncActiveSessionQuestions]);

@@ -105,7 +105,9 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
       questionType,
       sessionType,
       difficulty,
-      points: questionData.points || config.defaultPoints,
+      points: typeof questionData.points === 'number'
+        ? questionData.points
+        : questionData.isExample ? 0 : 1,
       timeLimit: questionData.timeLimit || config.defaultTimeLimit,
       markingMethod: config.markingMethod,
       answerType: inferAnswerType(questionType),
@@ -165,7 +167,7 @@ export async function generateSessionQuestion(
         theme,
         isExample: false,
         difficulty,
-        points: 10,
+        points: 1,
         timeLimit: 60,
         answerType: inferAnswerType(QuestionTypeName.MULTIPLE_CHOICE),
       }));
@@ -173,7 +175,7 @@ export async function generateSessionQuestion(
       return questionsWithContext;
     } catch (error) {
       console.error('MULTIPLE_CHOICE session generation failed:', error);
-      throw error;
+      // Fall back to individual generation below
     }
   }
 
@@ -244,7 +246,7 @@ Return as JSON with id (0-3) and text for each option.`;
         isExample: index === 0, // First question is example
         exampleAnswer: index === 0 ? q.correctOptionId : undefined,
         difficulty,
-        points: 10,
+        points: index === 0 ? 0 : 1,
         timeLimit: 60,
         answerType: inferAnswerType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
       }));
@@ -252,7 +254,7 @@ Return as JSON with id (0-3) and text for each option.`;
       return questionsWithContext;
     } catch (error) {
       console.error('Session generation failed:', error);
-      throw error; // Don't fall back for reading sessions, fail fast
+      // Fall back to individual generation below
     }
   }
 
