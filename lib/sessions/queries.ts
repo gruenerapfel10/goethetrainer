@@ -10,16 +10,47 @@ import type {
 
 const SESSIONS_COLLECTION = 'sessions';
 
-// Helper to remove undefined values from objects (Firestore doesn't allow undefined)
+function normaliseFirestoreTimestamp(value: any): any {
+  if (value && typeof value === 'object') {
+    if (typeof (value as any).toDate === 'function') {
+      try {
+        return (value as any).toDate();
+      } catch {
+        // fall through
+      }
+    }
+
+    if ('seconds' in value && 'nanoseconds' in value) {
+      const seconds = Number((value as any).seconds);
+      const nanoseconds = Number((value as any).nanoseconds);
+
+      if (!Number.isNaN(seconds) && !Number.isNaN(nanoseconds)) {
+        return new Date(seconds * 1000 + nanoseconds / 1e6);
+      }
+    }
+  }
+  return value;
+}
+
+// Helper to remove undefined values and normalise timestamps
 function removeUndefinedValues(obj: any): any {
   if (obj === null || obj === undefined) {
     return null;
   }
-  
+
+  if (obj instanceof Date) {
+    return obj;
+  }
+
   if (Array.isArray(obj)) {
     return obj.map(item => removeUndefinedValues(item));
   }
-  
+
+  const normalisedTimestamp = normaliseFirestoreTimestamp(obj);
+  if (normalisedTimestamp instanceof Date) {
+    return normalisedTimestamp;
+  }
+
   if (typeof obj === 'object' && obj.constructor === Object) {
     const cleaned: any = {};
     for (const key in obj) {
@@ -30,7 +61,7 @@ function removeUndefinedValues(obj: any): any {
     }
     return cleaned;
   }
-  
+
   return obj;
 }
 

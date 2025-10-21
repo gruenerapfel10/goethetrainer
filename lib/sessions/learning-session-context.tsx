@@ -108,7 +108,7 @@ interface LearningSessionContextValue {
 
 const LearningSessionContext = createContext<LearningSessionContextValue | null>(null);
 
-const SAVE_DEBOUNCE_MS = 600;
+const SAVE_DEBOUNCE_MS = 450;
 
 function hasAnswer(value: unknown): boolean {
   if (value === undefined || value === null) {
@@ -205,19 +205,16 @@ function cloneQuestionsForSession(questions: Question[]): Question[] {
   return questions.map(question => ({
     ...question,
     options: Array.isArray(question.options)
-      ? question.options.map(option => ({ ...option }))
+      ? question.options.map(option => JSON.parse(JSON.stringify(option)))
       : question.options,
     gaps: Array.isArray(question.gaps)
-      ? question.gaps.map(gap => ({
-          ...gap,
-          options: Array.isArray(gap.options) ? [...gap.options] : gap.options,
-        }))
+      ? question.gaps.map(gap => JSON.parse(JSON.stringify(gap)))
       : question.gaps,
     answer: Array.isArray(question.answer)
-      ? [...question.answer]
+      ? JSON.parse(JSON.stringify(question.answer))
       : question.answer && typeof question.answer === 'object'
-        ? { ...(question.answer as Record<string, string>) }
-        : question.answer,
+        ? JSON.parse(JSON.stringify(question.answer))
+        : question.answer ?? null,
   })) as Question[];
 }
 
@@ -323,6 +320,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       metadata: {
         ...(session.metadata ?? {}),
         ...(metadata ?? {}),
+        lastUpdatedAt: new Date().toISOString(),
       },
       data: {
         ...session.data,
@@ -347,6 +345,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       metadata: {
         ...(session.metadata ?? {}),
         ...metadata,
+        lastUpdatedAt: new Date().toISOString(),
       },
     };
 
@@ -357,15 +356,17 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const enqueueUpdate = useCallback(
     (update: UpdateSessionInput) => {
       const existing = pendingUpdateRef.current;
+      const nextMetadata = {
+        ...(existing?.metadata ?? {}),
+        ...(update.metadata ?? {}),
+        lastUpdatedAt: new Date().toISOString(),
+      };
       pendingUpdateRef.current = {
         data: {
           ...(existing?.data ?? {}),
           ...(update.data ?? {}),
         },
-        metadata: {
-          ...(existing?.metadata ?? {}),
-          ...(update.metadata ?? {}),
-        },
+        metadata: nextMetadata,
         status: update.status ?? existing?.status,
         duration: update.duration ?? existing?.duration,
       };
@@ -772,34 +773,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           setQuestionAnswer(questionId, value);
         });
 
-        await forceSave();
-
-        const response = await requestJson<{
-          results: QuestionResult[];
-        }>(`/api/sessions/${session.id}/mark`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers }),
-        });
-
-        setSessionQuestions(previous => {
-          const next = previous.map(question => {
-            const result = response.results.find(
-              item => item.questionId === question.id
-            );
-            if (!result) {
-              return question;
-            }
-            return {
-              ...question,
-              answered: true,
-              result,
-            };
-          });
-          questionsRef.current = next;
-          return next;
-        });
-        syncActiveSessionQuestions();
+        void forceSave();
       } catch (err) {
         console.error('Failed to submit Teil answers', err);
         setError(err instanceof Error ? err.message : 'Failed to submit answers');
@@ -807,7 +781,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setIsSubmitting(false);
       }
     },
-    [forceSave, setQuestionAnswer, syncActiveSessionQuestions]
+    [forceSave, setQuestionAnswer]
   );
 
   const completeQuestions = useCallback(async (): Promise<CompletionSummary | null> => {

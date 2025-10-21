@@ -24,6 +24,7 @@ import {
 import { generateSessionQuestion } from './questions/standard-generator';
 import { QuestionManager } from './question-manager';
 import { QuestionDifficulty } from './questions/question-types';
+import { sanitizeForFirestore } from './utils';
 
 export interface CompletionSummary {
   results: QuestionResult[];
@@ -312,19 +313,47 @@ function mapManagerStateToSession(
     const answer = answerIndex.get(question.id);
     const hasAnswer = !!answer;
 
-    return {
+    const clonedQuestion: Question = {
       ...question,
-      answer: answer?.answer ?? (question as any).answer,
+      answer: answer?.answer ?? (question as any).answer ?? null,
       answered: hasAnswer || !!question.answered,
       lastSubmittedAt:
         hasAnswer || question.id === lastAnsweredId
           ? timestamp
           : (question as any).lastSubmittedAt,
     };
+
+    if (Array.isArray(clonedQuestion.gaps)) {
+      clonedQuestion.gaps = clonedQuestion.gaps.map(gap => {
+        const nextGap = { ...gap } as any;
+        if (Array.isArray(nextGap.options)) {
+          nextGap.options = nextGap.options.map((option: any) => {
+            if (option && typeof option === 'object') {
+              const cleanedOption: Record<string, any> = { ...option };
+              Object.entries(cleanedOption).forEach(([key, value]) => {
+                if (
+                  value &&
+                  typeof value === 'object' &&
+                  typeof (value as any).seconds === 'number' &&
+                  typeof (value as any).nanoseconds === 'number'
+                ) {
+                  delete cleanedOption[key];
+                }
+              });
+              return cleanedOption;
+            }
+            return option;
+          });
+        }
+        return nextGap;
+      });
+    }
+
+    return sanitizeForFirestore(clonedQuestion);
   });
 
-  session.data.answers = state.answers;
-  session.data.results = state.results;
+  session.data.answers = sanitizeForFirestore(state.answers);
+  session.data.results = sanitizeForFirestore(state.results);
   session.data.currentScore = totalScore;
   session.data.maxPossibleScore = maxPossibleScore;
   session.data.questionsAnswered = state.answers.length;
