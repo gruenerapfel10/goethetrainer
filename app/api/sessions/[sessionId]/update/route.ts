@@ -5,7 +5,7 @@ import type { UpdateSessionInput } from '@/lib/sessions/types';
 
 export async function POST(
   request: Request,
-  { params }: { params: { sessionId: string } }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const authSession = await auth();
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = params;
+    const { sessionId } = await context.params;
     const input = (await request.json().catch(() => ({}))) as UpdateSessionInput;
 
     const manager = await getSessionManager(authSession.user.email, sessionId);

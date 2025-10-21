@@ -4,7 +4,7 @@ import { getSessionManager } from '@/lib/sessions/session-manager';
 
 export async function POST(
   request: Request,
-  { params }: { params: { sessionId: string } }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const authSession = await auth();
@@ -20,12 +20,14 @@ export async function POST(
       );
     }
 
-    const { sessionId } = params;
+    const { sessionId } = await context.params;
     const manager = await getSessionManager(authSession.user.email, sessionId);
 
     const preparedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
       questionId,
       answer: answer as string | string[] | boolean,
+      timeSpent: 0,
+      hintsUsed: 0,
     }));
 
     const results = await manager.submitAnswersBulk(preparedAnswers);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
@@ -24,83 +24,101 @@ interface Question {
   points?: number;
   status?: QuestionStatus;
   teil?: number;
+  answer?: string | string[] | boolean;
+}
+
+interface QuestionResultsPayload {
+  results: QuestionResult[];
+  summary: {
+    totalQuestions: number;
+    correctAnswers: number;
+    incorrectAnswers: number;
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+  };
 }
 
 interface AllQuestionsViewProps {
   questions: Question[];
-  onSubmit: (answers: Record<string, string>) => void;
+  onSubmit: (answers: Record<string, string>) => Promise<void> | void;
   showA4Format?: boolean;
-  sessionId?: string; // Optional: if provided, will use marking API
-  showResultsImmediately?: boolean; // If false, just call onSubmit without showing results
-  isLastTeil?: boolean; // If true, shows "Test abgeben" button, otherwise shows "Weiter"
-  accumulatedAnswers?: Record<string, string>; // Answers from previous Teils
-  onBack?: () => void; // Optional callback to go back to previous Teil
-  showBackButton?: boolean; // If true, shows "Zurück" button
-  totalTeils?: number; // Total number of Teils in this session
-  generatedTeils?: Set<number>; // Which Teils have been generated
-  onTeilNavigate?: (teilNumber: number) => void; // Navigate to a specific Teil
+  isLastTeil?: boolean;
+  accumulatedAnswers?: Record<string, string | string[] | boolean>;
+  onBack?: () => void;
+  showBackButton?: boolean;
+  totalTeils?: number;
+  generatedTeils?: Set<number>;
+  onTeilNavigate?: (teilNumber: number) => void;
+  allQuestions?: Question[];
+  onAnswerChange?: (questionId: string, answer: string) => void;
+  isSubmitting?: boolean;
+  resultsSummary?: QuestionResultsPayload | null;
+  onResultsClose?: () => void;
+  activeView?: 'fragen' | 'quelle';
+  onActiveViewChange?: (view: 'fragen' | 'quelle') => void;
 }
 
 export function AllQuestionsView({
   questions,
   onSubmit,
   showA4Format = true,
-  sessionId,
-  showResultsImmediately = true,
   isLastTeil = true,
   accumulatedAnswers = {},
   onBack,
   showBackButton = false,
   totalTeils = 1,
   generatedTeils = new Set([1]),
-  onTeilNavigate
+  onTeilNavigate,
+  allQuestions,
+  onAnswerChange,
+  isSubmitting = false,
+  resultsSummary = null,
+  onResultsClose,
+  activeView = 'fragen',
+  onActiveViewChange,
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isMarking, setIsMarking] = useState(false);
-  const [results, setResults] = useState<{
-    results: QuestionResult[];
-    summary: {
-      totalQuestions: number;
-      correctAnswers: number;
-      incorrectAnswers: number;
-      totalScore: number;
-      maxScore: number;
-      percentage: number;
-    };
-  } | null>(null);
-  const [activeView, setActiveView] = useState<'fragen' | 'quelle'>('quelle');
-  const isMountedRef = useRef(true);
-
-  // Track if component is mounted
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Tab') {
         e.preventDefault();
-        setActiveView(activeView === 'fragen' ? 'quelle' : 'fragen');
+        setView(prev => (prev === 'fragen' ? 'quelle' : 'fragen'));
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (activeView !== view) {
+      setView(activeView);
+    }
   }, [activeView]);
 
   useEffect(() => {
-    const exampleQuestion = questions.find(q => q.isExample);
-    if (exampleQuestion && exampleQuestion.exampleAnswer) {
-      setSelectedAnswers(prev => ({
-        ...prev,
-        [exampleQuestion.id]: exampleQuestion.exampleAnswer!
-      }));
-    }
-  }, [questions]);
+    onActiveViewChange?.(view);
+  }, [view, onActiveViewChange]);
+
+  useEffect(() => {
+    setIsSubmitted(false);
+    const next: Record<string, string> = {};
+    questions.forEach(question => {
+      const existing = accumulatedAnswers?.[question.id];
+      if (typeof existing === 'string') {
+        next[question.id] = existing;
+      } else if (typeof question.answer === 'string') {
+        next[question.id] = question.answer as string;
+      } else if (question.isExample && question.exampleAnswer) {
+        next[question.id] = question.exampleAnswer;
+      }
+    });
+    setSelectedAnswers(next);
+  }, [questions, accumulatedAnswers]);
 
   const handleSelectOption = (questionId: string, optionId: string, isExample: boolean) => {
     if (!isSubmitted && !isExample) {
@@ -108,48 +126,16 @@ export function AllQuestionsView({
         ...prev,
         [questionId]: optionId
       }));
+      onAnswerChange?.(questionId, optionId);
     }
   };
 
   const handleSubmit = async () => {
-    setIsSubmitted(true);
-
-    if (!showResultsImmediately) {
-      onSubmit(selectedAnswers);
-      return;
-    }
-
-    if (sessionId) {
-      setIsMarking(true);
-      try {
-        const allAnswers = {
-          ...accumulatedAnswers,
-          ...selectedAnswers,
-        };
-
-        const response = await fetch(`/api/sessions/${sessionId}/mark`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers: allAnswers }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to mark questions');
-        }
-
-        const data = await response.json();
-        setResults(data);
-      } catch (error) {
-        onSubmit(selectedAnswers);
-      } finally {
-        setIsMarking(false);
-      }
-    } else {
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          onSubmit(selectedAnswers);
-        }
-      }, 0);
+    try {
+      await onSubmit(selectedAnswers);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Failed to submit answers:', error);
     }
   };
 
@@ -158,22 +144,22 @@ export function AllQuestionsView({
     .every(q => selectedAnswers[q.id]);
 
   // Derive Teil information from actual questions
+  const timelineQuestions = allQuestions && allQuestions.length > 0 ? allQuestions : questions;
   const teilNumber = (questions[0] as any)?.teil || 1;
-  const teils = new Set(questions.map(q => (q as any).teil || 1));
+  const teils = new Set(timelineQuestions.map(q => (q as any).teil || 1));
   const derivedTotalTeils = teils.size;
   const actualTotalTeils = totalTeils || derivedTotalTeils;
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
 
-
   // Show results view if results are available
-  if (results) {
+  if (resultsSummary) {
     return (
       <SessionResultsView
-        results={results.results}
-        summary={results.summary}
-        onClose={() => setResults(null)}
+        results={resultsSummary.results}
+        summary={resultsSummary.summary}
+        onClose={onResultsClose}
       />
     );
   }
@@ -183,10 +169,10 @@ export function AllQuestionsView({
       {/* Quelle/Fragen Toggle - Absolute positioned */}
       <div className="absolute top-6 left-6 flex gap-0 z-10 border-b border-border">
         <button
-          onClick={() => setActiveView('fragen')}
+          onClick={() => setView('fragen')}
           className={cn(
             "px-4 py-2 font-medium transition-colors",
-            activeView === 'fragen'
+            view === 'fragen'
               ? "text-foreground border-b-2 border-primary -mb-px"
               : "text-muted-foreground hover:text-foreground"
           )}
@@ -194,10 +180,10 @@ export function AllQuestionsView({
           Fragen
         </button>
         <button
-          onClick={() => setActiveView('quelle')}
+          onClick={() => setView('quelle')}
           className={cn(
             "px-4 py-2 font-medium transition-colors",
-            activeView === 'quelle'
+            view === 'quelle'
               ? "text-foreground border-b-2 border-primary -mb-px"
               : "text-muted-foreground hover:text-foreground"
           )}
@@ -208,9 +194,10 @@ export function AllQuestionsView({
 
       {/* Teil Navigation */}
       <QuestionTimeline
-        questions={questions}
+        questions={timelineQuestions}
         totalTeils={actualTotalTeils}
         currentTeilNumber={teilNumber}
+        generatedTeils={generatedTeils}
         onTeilNavigate={onTeilNavigate}
       />
 
@@ -225,7 +212,7 @@ export function AllQuestionsView({
         <div className="flex-1 overflow-y-auto px-12 py-6 overflow-x-visible pt-8 flex flex-col">
           <div className="w-full overflow-visible flex-1">
             {/* Show based on active view */}
-            {activeView === 'fragen' ? (
+            {view === 'fragen' ? (
               <>
                 {/* Goethe Exam Header */}
                 <GoetheHeader />
@@ -377,7 +364,7 @@ export function AllQuestionsView({
               {showBackButton && onBack ? (
                 <button
                   onClick={onBack}
-                  disabled={isSubmitted || isMarking}
+                  disabled={isSubmitted || isSubmitting}
                   className="px-6 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity"
                 >
                   ← Zurück
@@ -397,24 +384,15 @@ export function AllQuestionsView({
               disabled={
                 isSubmitted ||
                 !allQuestionsAnswered ||
-                isMarking ||
-                // Disable if next Teil hasn't been generated yet
+                isSubmitting ||
                 (!isLastTeil && !generatedTeils.has(teilNumber + 1))
               }
               className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
             >
-              {isMarking ? 'Wird bewertet...' : isSubmitted ? (isLastTeil ? 'Test abgeschlossen' : 'Weiter...') : (isLastTeil ? 'Test abgeben' : 'Weiter')}
+              {isSubmitting ? 'Wird gespeichert...' : isSubmitted ? (isLastTeil ? 'Test abgeschlossen' : 'Weiter...') : (isLastTeil ? 'Test abgeben' : 'Weiter')}
             </button>
           </div>
 
-          {/* Results summary when submitted */}
-          {isSubmitted && (
-            <div className="bg-primary text-primary-foreground p-6">
-              <p className="font-medium text-center text-sm">
-                Test abgeschlossen! Ergebnis: {questions.filter(q => !q.isExample && selectedAnswers[q.id] === q.correctOptionId).length} von {questions.filter(q => !q.isExample).length} richtig
-              </p>
-            </div>
-          )}
         </div>
         </div>
       </div>

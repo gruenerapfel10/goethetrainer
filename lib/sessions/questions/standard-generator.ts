@@ -6,6 +6,7 @@ import { multipleChoiceConfig } from './configs/gap-text-multiple-choice.config'
 import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 import type { QuestionDifficulty } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
+import { AnswerType } from './question-types';
 import { generateSourceWithGaps } from './source-generator';
 
 export const maxDuration = 30;
@@ -107,6 +108,7 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
       points: questionData.points || config.defaultPoints,
       timeLimit: questionData.timeLimit || config.defaultTimeLimit,
       markingMethod: config.markingMethod,
+      answerType: inferAnswerType(questionType),
     };
 
     return generatedQuestion;
@@ -165,6 +167,7 @@ export async function generateSessionQuestion(
         difficulty,
         points: 10,
         timeLimit: 60,
+        answerType: inferAnswerType(QuestionTypeName.MULTIPLE_CHOICE),
       }));
 
       return questionsWithContext;
@@ -243,6 +246,7 @@ Return as JSON with id (0-3) and text for each option.`;
         difficulty,
         points: 10,
         timeLimit: 60,
+        answerType: inferAnswerType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
       }));
 
       return questionsWithContext;
@@ -308,4 +312,26 @@ export function getAvailableQuestionTypes(sessionType: SessionTypeEnum): Questio
     })
     .map(([type]) => type as QuestionTypeName);
 }
+const ANSWER_TYPE_MAP: Record<QuestionTypeName, AnswerType> = {
+  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
+  [QuestionTypeName.MULTIPLE_CHOICE]: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
+  [QuestionTypeName.TRUE_FALSE]: AnswerType.TRUE_FALSE,
+  [QuestionTypeName.SHORT_ANSWER]: AnswerType.SHORT_ANSWER,
+  [QuestionTypeName.FILL_IN_BLANK]: AnswerType.FILL_BLANK,
+  [QuestionTypeName.ESSAY]: AnswerType.LONG_ANSWER,
+  [QuestionTypeName.TRANSLATION]: AnswerType.LONG_ANSWER,
+  [QuestionTypeName.SENTENCE_CORRECTION]: AnswerType.SHORT_ANSWER,
+  [QuestionTypeName.AUDIO_COMPREHENSION]: AnswerType.SHORT_ANSWER,
+  [QuestionTypeName.DICTATION]: AnswerType.FILL_BLANK,
+  [QuestionTypeName.PRONUNCIATION]: AnswerType.AUDIO_RECORDING,
+  [QuestionTypeName.CONVERSATION]: AnswerType.LONG_ANSWER,
+  [QuestionTypeName.ORAL_PRESENTATION]: AnswerType.AUDIO_RECORDING,
+};
 
+function inferAnswerType(questionType: QuestionTypeName): AnswerType {
+  const mapping = ANSWER_TYPE_MAP[questionType];
+  if (!mapping) {
+    return AnswerType.SHORT_ANSWER;
+  }
+  return mapping;
+}

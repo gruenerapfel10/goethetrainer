@@ -13,6 +13,7 @@ interface QuestionTimelineProps {
   questions: Question[];
   totalTeils: number;
   currentTeilNumber: number;
+  generatedTeils?: Set<number>;
   onTeilNavigate?: (teilNumber: number) => void;
 }
 
@@ -20,6 +21,7 @@ export function QuestionTimeline({
   questions,
   totalTeils,
   currentTeilNumber,
+  generatedTeils,
   onTeilNavigate
 }: QuestionTimelineProps) {
   if (totalTeils <= 1) {
@@ -31,7 +33,8 @@ export function QuestionTimeline({
       {Array.from({ length: totalTeils }, (_, i) => i + 1).map((teilNum) => {
         // Check if at least one question in this Teil is loaded
         const teilQuestions = questions.filter(q => (q.teil || 1) === teilNum);
-        const isLoaded = teilQuestions.some(q => q.status === QuestionStatus.LOADED);
+        const isGenerated = generatedTeils ? generatedTeils.has(teilNum) : teilQuestions.length > 0;
+        const isLoaded = isGenerated || teilQuestions.some(q => q.status === QuestionStatus.LOADED);
         const isGenerating = teilQuestions.some(q => q.status === QuestionStatus.GENERATING);
         const isCurrentTeil = teilNum === currentTeilNumber;
 

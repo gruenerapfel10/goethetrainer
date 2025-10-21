@@ -39,9 +39,12 @@ const GapIdentificationSchema = z.object({
       removedWord: z.string().describe('The word/phrase that was removed (the correct answer)'),
       context: z.string().describe('Context around the gap (20 chars before and after)'),
     })
-  ).length(9).describe('Exactly 9 gaps identified in the text'),
+  ).describe('Exactly 9 gaps identified in the text'),
   gappedText: z.string().describe('The modified text with [GAP_1] [GAP_2] etc placeholders'),
 });
+
+const REQUIRED_GAP_COUNT = 9;
+const MAX_GAP_ATTEMPTS = 4;
 
 interface SourceWithGaps {
   theme: string;
@@ -110,29 +113,27 @@ export async function identifyGapsInSource(
 ): Promise<SourceWithGaps> {
   const model = anthropic('claude-haiku-4-5-20251001');
 
-  const systemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
+  const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
 
-Your task: Identify EXACTLY 9 strategically placed gaps in the provided German text.
-
-CRITICAL: You MUST return ALL 9 gaps. Do not return fewer than 9 gaps.
+Your task: Identify EXACTLY ${REQUIRED_GAP_COUNT} strategically placed gaps in the provided German text.
 
 Requirements:
-1. Select 9 words/phrases that are:
+1. Select ${REQUIRED_GAP_COUNT} words/phrases that are:
    - Important for comprehension
    - Varied in difficulty and position
    - Between 1-3 words each
    - Distributed throughout the entire text (don't cluster them)
    - Include gaps from the beginning, middle, and end of the text
-2. For each of the 9 gaps:
+2. For each of the ${REQUIRED_GAP_COUNT} gaps:
    - Record the exact word/phrase to remove (the correct answer)
    - Record its character position in the original text
    - Provide context around the gap
-3. Return the text with gaps replaced by [GAP_1], [GAP_2], ... [GAP_9] (all 9 must be present)
-4. The gaps array MUST have exactly 9 elements
+3. Return the text with gaps replaced by [GAP_1], [GAP_2], ... [GAP_${REQUIRED_GAP_COUNT}] (all must be present)
+4. The gaps array MUST have exactly ${REQUIRED_GAP_COUNT} elements
 
-Return ALL 9 gaps in order of appearance in the text. GAP_1 is the first gap, GAP_9 is the last gap.`;
+Return ALL ${REQUIRED_GAP_COUNT} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${REQUIRED_GAP_COUNT} is the last gap.`;
 
-  const userPrompt = `Identify and return EXACTLY 9 gaps in this German text. ALL 9 GAPS MUST BE RETURNED.
+  const buildUserPrompt = (attempt: number) => `Identify and return EXACTLY ${REQUIRED_GAP_COUNT} gaps in this German text. ALL ${REQUIRED_GAP_COUNT} GAPS MUST BE RETURNED.
 
 Theme: ${source.theme}
 Title: ${source.title}
@@ -141,43 +142,73 @@ Subtitle: ${source.subtitle}
 Text:
 ${source.context}
 
-IMPORTANT: Return all 9 gaps. Do not stop at 7 or 8 gaps. You MUST return 9 gaps.
-Return the gaps in order of appearance in the text.`;
 
-  try {
-    const result = await generateObject({
-      model,
-      mode: 'json', // Use JSON mode for structured output
-      schema: GapIdentificationSchema,
-      schemaName: 'gap_identification',
-      schemaDescription: 'Identifies gaps in German text for C1 level exercises',
-      system: systemPrompt,
-      prompt: userPrompt,
-      temperature: 0.5, // Lower temperature for consistent gap identification
-    });
+${attempt > 1 ? `HINWEIS: Beim letzten Versuch wurden zu wenige Lücken geliefert. Bitte gib dieses Mal unbedingt alle ${REQUIRED_GAP_COUNT} Lücken an.` : ''}
 
-    console.log('\n**** PASS 2: GAP IDENTIFICATION ****');
-    console.log(`Total gaps identified: ${result.object.gaps.length}`);
-    result.object.gaps.forEach((gap) => {
-      console.log(`  Gap ${gap.gapNumber}: "${gap.removedWord}" at position ${gap.position}`);
-    });
-    console.log(`\nGapped Text:\n${result.object.gappedText}\n`);
+IMPORTANT: Return all ${REQUIRED_GAP_COUNT} gaps. Do not stop early. Return the gaps in order of appearance in the text.`;
 
-    return {
-      theme: source.theme,
-      title: source.title,
-      subtitle: source.subtitle,
-      rawContext: source.context,
-      gappedContext: result.object.gappedText,
-      gaps: result.object.gaps.map((gap) => ({
-        gapNumber: gap.gapNumber,
-        removedWord: gap.removedWord,
-      })),
-    };
-  } catch (error) {
-    console.error('Error identifying gaps:', error);
-    throw new Error(`Failed to identify gaps in source: ${error instanceof Error ? error.message : String(error)}`);
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_GAP_ATTEMPTS; attempt += 1) {
+    try {
+      const result = await generateObject({
+        model,
+        mode: 'json',
+        schema: GapIdentificationSchema,
+        schemaName: 'gap_identification',
+        schemaDescription: 'Identifies gaps in German text for C1 level exercises',
+        system: baseSystemPrompt,
+        prompt: buildUserPrompt(attempt),
+        temperature: 0.4,
+      });
+
+      const { gaps, gappedText } = result.object;
+
+      if (!Array.isArray(gaps) || gaps.length !== REQUIRED_GAP_COUNT) {
+        throw new Error(`Expected ${REQUIRED_GAP_COUNT} gaps but received ${gaps?.length ?? 0}`);
+      }
+
+      const requiredPlaceholdersPresent = Array.from({ length: REQUIRED_GAP_COUNT }, (_, index) => `GAP_${index + 1}`)
+        .every(marker => gappedText.includes(`[${marker}]`));
+
+      if (!requiredPlaceholdersPresent) {
+        throw new Error('Gapped text does not contain all required placeholders');
+      }
+
+      const sanitizedGappedText = gappedText.replace(/\[(GAP_\d+)\]\]/g, '[$1]');
+
+      gaps.sort((a, b) => a.gapNumber - b.gapNumber);
+
+      console.log('\n**** PASS 2: GAP IDENTIFICATION ****');
+      console.log(`Total gaps identified: ${gaps.length}`);
+      gaps.forEach(gap => {
+        console.log(`  Gap ${gap.gapNumber}: "${gap.removedWord}" at position ${gap.position}`);
+      });
+      console.log(`\nGapped Text:\n${sanitizedGappedText}\n`);
+
+      return {
+        theme: source.theme,
+        title: source.title,
+        subtitle: source.subtitle,
+        rawContext: source.context,
+        gappedContext: sanitizedGappedText,
+        gaps: gaps.map(gap => ({
+          gapNumber: gap.gapNumber,
+          removedWord: gap.removedWord,
+        })),
+      };
+    } catch (error) {
+      lastError = error;
+      console.warn(`Gap identification attempt ${attempt} failed:`, error);
+    }
   }
+
+  console.error('Error identifying gaps after retries:', lastError);
+  throw new Error(
+    `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts: ${
+      lastError instanceof Error ? lastError.message : String(lastError)
+    }`
+  );
 }
 
 /**

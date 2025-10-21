@@ -44,10 +44,27 @@ export function MultipleChoice({
   const text = question.context || question.text || question.prompt;
   const gaps = (question.gaps || []) as Gap[];
 
+  const examplePrefill = question.isExample ? question.exampleAnswer || '' : '';
+
+  const deriveInitialSelection = () => {
+    const answer = question.answer as unknown;
+    if (typeof answer === 'string') {
+      return answer;
+    }
+
+    if (answer && typeof answer === 'object' && !Array.isArray(answer)) {
+      return { ...(answer as Record<string, string>) };
+    }
+
+    if (examplePrefill) {
+      return examplePrefill;
+    }
+
+    return hasGaps ? {} : '';
+  };
+
   // State for gap selections (gap-text mode) or single option (standard mode)
-  // Pre-fill answer for example questions
-  const initialAnswer = question.isExample ? question.exampleAnswer || '' : '';
-  const [selectedOptions, setSelectedOptions] = useState<Record<string, string> | string>(initialAnswer);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string> | string>(() => deriveInitialSelection());
   const [activeTab, setActiveTab] = useState<'source' | 'questions'>('questions');
 
   const isGapTextMode = hasGaps && text?.includes('[GAP_');
@@ -56,10 +73,36 @@ export function MultipleChoice({
 
   // Call onAnswer if this is an example question with pre-filled answer
   useEffect(() => {
-    if (question.isExample && initialAnswer) {
-      onAnswer(initialAnswer);
+    if (question.isExample && examplePrefill) {
+      onAnswer(examplePrefill);
     }
-  }, []); // Only run once on mount
+  }, [question.isExample, examplePrefill, onAnswer]);
+
+  useEffect(() => {
+    const nextSelection = deriveInitialSelection();
+
+    setSelectedOptions(prev => {
+      if (typeof prev === 'string' && typeof nextSelection === 'string') {
+        return prev === nextSelection ? prev : nextSelection;
+      }
+
+      if (typeof prev === 'object' && typeof nextSelection === 'object') {
+        const prevKeys = Object.keys(prev);
+        const nextKeys = Object.keys(nextSelection);
+
+        if (
+          prevKeys.length === nextKeys.length &&
+          prevKeys.every(key => (prev as Record<string, string>)[key] === (nextSelection as Record<string, string>)[key])
+        ) {
+          return prev;
+        }
+
+        return nextSelection;
+      }
+
+      return nextSelection;
+    });
+  }, [question.id, question.answer]);
 
   // Gap-text mode handlers
   const handleSelectGapOption = (gapId: string, optionValue: string) => {

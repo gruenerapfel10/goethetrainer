@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useActionState, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -114,6 +115,18 @@ export default function Page() {
               {t('login.submitButton')}
             </SubmitButton>
           </AuthForm>
+
+          {/* Sign Up Link */}
+          <p className="text-center text-sm text-muted-foreground">
+            {t('login.signup.text')}{' '}
+            <Link
+              href="/register"
+              className="font-semibold text-foreground hover:underline"
+            >
+              {t('login.signup.link')}
+            </Link>{' '}
+            {t('login.signup.suffix')}
+          </p>
         </div>
       </motion.div>
     </div>

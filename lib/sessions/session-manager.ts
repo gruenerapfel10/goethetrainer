@@ -9,13 +9,10 @@ import {
 import './configs'; // Ensure registry is populated
 import type { Session, SessionStatus, UpdateSessionInput } from './types';
 import { QuestionTypeName } from './questions/question-registry';
-import {
-  Question,
-  QuestionDifficulty,
-  QuestionResult,
-} from './questions/question-types';
+import { Question, QuestionDifficulty, QuestionResult } from './questions/question-types';
 import { generateSessionQuestion } from './questions/standard-generator';
-import { QuestionManager } from './question-manager';
+import { QuestionManager, QuestionSessionOutcome } from './question-manager';
+import { StatisticsManager } from './statistics-manager';
 
 interface GenerateQuestionsOptions {
   difficulty?: QuestionDifficulty;
@@ -24,10 +21,17 @@ interface GenerateQuestionsOptions {
 }
 
 interface CompletionSummary {
-  totalScore: number;
-  maxScore: number;
-  percentage: number;
   results: QuestionResult[];
+  summary: {
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctAnswers: number;
+    incorrectAnswers: number;
+    totalScore: number;
+    maxScore: number;
+    percentage: number;
+    pendingManualReview: number;
+  };
 }
 
 export class SessionManager {
@@ -45,11 +49,15 @@ export class SessionManager {
     if (sessionId) {
       this.sessionId = sessionId;
     }
-    this.session = await this.loadSessionFromStore();
-    if (!this.session) {
+    const loadedSession = await this.loadSessionFromStore();
+    if (!loadedSession) {
       throw new Error(`Session ${this.sessionId} not found`);
     }
-    this.questionsCache = [...(this.session.data?.questions ?? [])];
+    if (!loadedSession.data || !Array.isArray(loadedSession.data.questions)) {
+      throw new Error(`Session ${this.sessionId} has no question set`);
+    }
+    this.session = loadedSession;
+    this.questionsCache = [...loadedSession.data.questions];
   }
 
   async createSession(
@@ -127,9 +135,14 @@ export class SessionManager {
       }
     }
 
-    const mergedQuestions = options.replaceExisting === false
-      ? [...(session.data.questions ?? []), ...generatedQuestions]
-      : generatedQuestions;
+    if (!session.data || !Array.isArray(session.data.questions)) {
+      throw new Error('Session questions not initialised');
+    }
+
+    const mergedQuestions =
+      options.replaceExisting === false
+        ? [...session.data.questions, ...generatedQuestions]
+        : generatedQuestions;
 
     session.data.questions = mergedQuestions.map(question => ({
       ...question,
@@ -153,19 +166,22 @@ export class SessionManager {
   async submitAnswer(
     questionId: string,
     answer: string | string[] | boolean,
-    timeSpent: number = 0,
-    hintsUsed: number = 0
+    timeSpent: number,
+    hintsUsed: number
   ): Promise<QuestionResult> {
     const session = await this.ensureSessionLoaded();
-    const questions = session.data.questions ?? [];
-    if (!questions.length) {
+    if (!session.data || !Array.isArray(session.data.questions)) {
+      throw new Error('Session questions not initialised');
+    }
+    const questions = session.data.questions;
+    if (questions.length === 0) {
       throw new Error('No questions available for this session');
     }
 
     const questionManager = new QuestionManager(
       questions,
-      session.data.answers ?? [],
-      session.data.results ?? []
+      session.data.answers,
+      session.data.results
     );
 
     const result = await questionManager.submitAnswer(
@@ -176,7 +192,15 @@ export class SessionManager {
     );
 
     const state = questionManager.getState();
-    const scoreStats = questionManager.getScoreStats();
+    const totalScore = state.results.reduce((sum, item) => sum + item.score, 0);
+    const maxPossibleScore = state.questions.reduce(
+      (sum, item) => sum + (item.points ?? 0),
+      0
+    );
+    const correctAnswers = state.results.filter(item => item.isCorrect).length;
+    const incorrectAnswers = state.results.filter(
+      item => !item.isCorrect && item.markedBy !== 'manual'
+    ).length;
 
     session.data.questions = state.questions.map(question =>
       question.id === questionId
@@ -190,9 +214,11 @@ export class SessionManager {
     );
     session.data.answers = state.answers;
     session.data.results = state.results;
-    session.data.currentScore = scoreStats.currentScore;
-    session.data.maxPossibleScore = scoreStats.maxPossibleScore;
+    session.data.currentScore = totalScore;
+    session.data.maxPossibleScore = maxPossibleScore;
     session.data.questionsAnswered = state.answers.length;
+    session.data.questionsCorrect = correctAnswers;
+    session.data.questionsIncorrect = incorrectAnswers;
     session.data.lastAnsweredQuestion = questionId;
 
     await this.persistSession(session);
@@ -205,40 +231,58 @@ export class SessionManager {
     answers: Array<{
       questionId: string;
       answer: string | string[] | boolean;
-      timeSpent?: number;
-      hintsUsed?: number;
+      timeSpent: number;
+      hintsUsed: number;
     }>
   ): Promise<QuestionResult[]> {
     const session = await this.ensureSessionLoaded();
-    const questions = session.data.questions ?? [];
+    if (!session.data || !Array.isArray(session.data.questions)) {
+      throw new Error('Session questions not initialised');
+    }
+    const questions = session.data.questions;
 
     const questionManager = new QuestionManager(
       questions,
-      session.data.answers ?? [],
-      session.data.results ?? []
+      session.data.answers,
+      session.data.results
     );
 
     const results = await questionManager.submitAnswersBulk(answers);
     const state = questionManager.getState();
-    const scoreStats = questionManager.getScoreStats();
+    const totalScore = state.results.reduce((sum, item) => sum + item.score, 0);
+    const maxPossibleScore = state.questions.reduce(
+      (sum, item) => sum + (item.points ?? 0),
+      0
+    );
+    const correctAnswers = state.results.filter(item => item.isCorrect).length;
+    const incorrectAnswers = state.results.filter(
+      item => !item.isCorrect && item.markedBy !== 'manual'
+    ).length;
 
     const answeredIds = new Set(answers.map(item => item.questionId));
 
-    session.data.questions = state.questions.map(question =>
-      answeredIds.has(question.id)
-        ? {
-            ...question,
-            answered: true,
-            answer: answers.find(a => a.questionId === question.id)?.answer,
-            lastSubmittedAt: new Date().toISOString(),
-          }
-        : question
-    );
+    session.data.questions = state.questions.map(question => {
+      if (!answeredIds.has(question.id)) {
+        return question;
+      }
+      const submitted = answers.find(a => a.questionId === question.id);
+      if (!submitted) {
+        throw new Error(`Missing answer payload for question ${question.id}`);
+      }
+      return {
+        ...question,
+        answered: true,
+        answer: submitted.answer,
+        lastSubmittedAt: new Date().toISOString(),
+      };
+    });
     session.data.answers = state.answers;
     session.data.results = state.results;
-    session.data.currentScore = scoreStats.currentScore;
-    session.data.maxPossibleScore = scoreStats.maxPossibleScore;
+    session.data.currentScore = totalScore;
+    session.data.maxPossibleScore = maxPossibleScore;
     session.data.questionsAnswered = state.answers.length;
+    session.data.questionsCorrect = correctAnswers;
+    session.data.questionsIncorrect = incorrectAnswers;
 
     if (answers.length > 0) {
       session.data.lastAnsweredQuestion = answers[answers.length - 1].questionId;
@@ -253,46 +297,75 @@ export class SessionManager {
   async getQuestions(forceReload: boolean = false): Promise<Question[]> {
     if (!this.questionsCache || forceReload) {
       const fresh = await this.loadSessionFromStore();
-      if (fresh) {
-        this.session = fresh;
-        this.questionsCache = [...(fresh.data?.questions ?? [])];
-      } else {
-        this.questionsCache = [];
+      if (!fresh) {
+        throw new Error('Session not found while loading questions');
       }
+      if (!fresh.data || !Array.isArray(fresh.data.questions)) {
+        throw new Error('Session questions not available');
+      }
+      this.session = fresh;
+      this.questionsCache = [...fresh.data.questions];
     }
-    return this.questionsCache ? [...this.questionsCache] : [];
+    await this.ensureQuestionIdentifiers();
+    if (!this.questionsCache) {
+      throw new Error('Question cache not initialised');
+    }
+    return [...this.questionsCache];
   }
 
   async completeQuestionFlow(): Promise<CompletionSummary> {
     const session = await this.ensureSessionLoaded();
-    const questions = session.data.questions ?? [];
-    const answers = session.data.answers ?? [];
-    const existingResults = session.data.results ?? [];
+    if (!session.data || !Array.isArray(session.data.questions)) {
+      throw new Error('Session questions not initialised');
+    }
+    if (!Array.isArray(session.data.answers) || !Array.isArray(session.data.results)) {
+      throw new Error('Session answers or results not initialised');
+    }
 
-    const questionManager = new QuestionManager(questions, answers, existingResults);
-    const summary = await questionManager.completeAllQuestions();
+    const questionManager = new QuestionManager(
+      session.data.questions,
+      session.data.answers,
+      session.data.results
+    );
 
+    const outcome: QuestionSessionOutcome = await questionManager.finaliseSession();
     const state = questionManager.getState();
+
+    const answersMap = new Map(state.answers.map(answer => [answer.questionId, answer]));
 
     session.data.answers = state.answers;
     session.data.results = state.results;
-    session.data.currentScore = summary.totalScore;
-    session.data.maxPossibleScore = summary.maxScore;
-    session.data.questionsAnswered = state.answers.length;
-
-    const answeredIds = new Set(state.answers.map(answer => answer.questionId));
-    session.data.questions = session.data.questions.map(question =>
-      answeredIds.has(question.id)
-        ? { ...question, answered: true }
-        : question
-    );
+    session.data.questions = session.data.questions.map(question => {
+      const answerEntry = answersMap.get(question.id);
+      return {
+        ...question,
+        answered: !!answerEntry,
+        answer: answerEntry ? answerEntry.answer : question.answer,
+        lastSubmittedAt: answerEntry ? answerEntry.timestamp.toISOString() : question.lastSubmittedAt,
+      };
+    });
 
     this.markSessionEnded(session, 'completed');
 
-    await this.persistSession(session);
-    this.questionsCache = [...questions];
+    const statistics = StatisticsManager.calculate(session, outcome.results);
+    StatisticsManager.apply(session, statistics);
 
-    return summary;
+    await this.persistSession(session);
+    this.questionsCache = [...session.data.questions];
+
+    return {
+      results: outcome.results,
+      summary: {
+        totalQuestions: statistics.totalQuestions,
+        answeredQuestions: statistics.answeredQuestions,
+        correctAnswers: statistics.correctAnswers,
+        incorrectAnswers: statistics.incorrectAnswers,
+        totalScore: statistics.totalScore,
+        maxScore: statistics.maxScore,
+        percentage: statistics.percentage,
+        pendingManualReview: statistics.pendingManualReview,
+      },
+    };
   }
 
   async endSession(status: SessionStatus = 'completed'): Promise<Session> {
@@ -384,6 +457,10 @@ export class SessionManager {
 
     return rawQuestions.map((question: any, index: number) => ({
       ...question,
+      id:
+        typeof question.id === 'string' && question.id.trim().length > 0
+          ? question.id
+          : generateUUID(),
       teil,
       order: index,
       registryType: questionType,
@@ -402,14 +479,43 @@ export class SessionManager {
     this.session = session;
   }
 
+  private async ensureQuestionIdentifiers(): Promise<void> {
+    if (!this.questionsCache || this.questionsCache.length === 0) {
+      return;
+    }
+
+    let updated = false;
+    const normalised = this.questionsCache.map(question => {
+      if (typeof question.id === 'string' && question.id.trim().length > 0) {
+        return question;
+      }
+
+      updated = true;
+      return {
+        ...question,
+        id: generateUUID(),
+      } as Question;
+    });
+
+    if (updated) {
+      this.questionsCache = normalised;
+      const session = await this.ensureSessionLoaded();
+      session.data.questions = normalised;
+      await this.persistSession(session);
+    }
+  }
+
   private async ensureSessionLoaded(): Promise<Session> {
     if (!this.session) {
       const loaded = await this.loadSessionFromStore();
       if (!loaded) {
         throw new Error('Session not initialised');
       }
+      if (!loaded.data || !Array.isArray(loaded.data.questions)) {
+        throw new Error('Session questions not available');
+      }
       this.session = loaded;
-      this.questionsCache = [...(loaded.data?.questions ?? [])];
+      this.questionsCache = [...loaded.data.questions];
     }
     return this.session;
   }

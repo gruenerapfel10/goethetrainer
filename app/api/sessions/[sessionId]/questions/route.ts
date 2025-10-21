@@ -4,7 +4,7 @@ import { getSessionManager } from '@/lib/sessions/session-manager';
 
 export async function GET(
   _request: Request,
-  { params }: { params: { sessionId: string } }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const authSession = await auth();
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { sessionId } = params;
+    const { sessionId } = await context.params;
     const manager = await getSessionManager(authSession.user.email, sessionId);
     const questions = await manager.getAllQuestions();
 

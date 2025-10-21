@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLearningSession, QuestionStatus } from '@/lib/sessions/learning-session-context';
 import { useSessionPage } from '@/lib/sessions/session-page-context';
@@ -39,27 +39,142 @@ export function SessionOrchestrator() {
     nextQuestion,
     previousQuestion,
     endSession,
-    // Teil-based session - SIMPLIFIED
     sessionQuestions,
-    currentTeil,
-    navigateToTeil,
     submitTeilAnswers,
+    activateTeil,
+    setQuestionAnswer,
+    activeView,
+    setActiveView,
+    completeQuestions,
+    initializeSession,
   } = useLearningSession();
 
   // Local state
   const [userAnswer, setUserAnswer] = useState<string | string[] | boolean | null>(null);
   const [questionResult, setQuestionResult] = useState<QuestionResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [timeOnQuestion, setTimeOnQuestion] = useState(0);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
+  const [pendingCompletion, setPendingCompletion] = useState(false);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    if (activeSession && activeSession.id === sessionId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      const session = await initializeSession(sessionId);
+      if (!cancelled && !session) {
+        // initialization failed; stay on page so user can decide next steps
+        console.warn('Session initialization failed for', sessionId);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, activeSession?.id, initializeSession]);
+
+  const normaliseTeil = (value?: number | null) =>
+    typeof value === 'number' && !Number.isNaN(value) ? value : 1;
+
+  const teilSummaries = useMemo(
+    () =>
+      Array.from(
+        sessionQuestions.reduce((acc, question) => {
+          const teilNumber = normaliseTeil(question.teil);
+          const entry = acc.get(teilNumber) ?? { questions: [] as typeof sessionQuestions, state: 'pending' as 'pending' | 'active' | 'completed' };
+
+          entry.questions.push(question);
+          if (question.teilState === 'active') {
+            entry.state = 'active';
+          } else if (question.teilState === 'completed' && entry.state !== 'active') {
+            entry.state = 'completed';
+          }
+
+          acc.set(teilNumber, entry);
+          return acc;
+        }, new Map<number, { questions: typeof sessionQuestions; state: 'pending' | 'active' | 'completed' }>())
+      )
+        .sort(([a], [b]) => a - b)
+        .map(([teilNumber, entry]) => ({
+          teilNumber,
+          questions: entry.questions,
+          state: entry.state,
+        })),
+    [sessionQuestions]
+  );
+
+  const activeTeilEntry =
+    teilSummaries.find(entry => entry.state === 'active') ?? teilSummaries[0];
+  const activeTeilNumber = activeTeilEntry?.teilNumber ?? 1;
+  const activeTeilQuestions = activeTeilEntry?.questions ?? [];
+  const teilNumbers = teilSummaries.map(entry => entry.teilNumber);
+  const teilCount = teilSummaries.length;
+  const activeTeilIndex = teilNumbers.indexOf(activeTeilNumber);
+  const nextTeilNumber =
+    activeTeilIndex >= 0 && activeTeilIndex < teilNumbers.length - 1
+      ? teilNumbers[activeTeilIndex + 1]
+      : null;
+  const previousTeilNumber = activeTeilIndex > 0 ? teilNumbers[activeTeilIndex - 1] : null;
+  const isLastTeil = nextTeilNumber === null;
+  const generatedTeils = useMemo(
+    () =>
+      new Set(
+        sessionQuestions
+          .filter(question => question.status === QuestionStatus.LOADED)
+          .map(question => normaliseTeil(question.teil))
+      ),
+    [sessionQuestions]
+  );
+  const accumulatedAnswers = useMemo(
+    () =>
+      Object.fromEntries(
+        sessionQuestions
+          .filter(
+            question =>
+              question.id && question.answer !== undefined && question.answer !== null
+          )
+          .map(question => [question.id as string, String(question.answer)])
+      ),
+    [sessionQuestions]
+  );
 
   // Reset state when question changes
   useEffect(() => {
     setUserAnswer(null);
     setQuestionResult(null);
-    setTimeOnQuestion(0);
   }, [currentQuestion?.id]);
+
+  useEffect(() => {
+    if (!pendingCompletion) {
+      return;
+    }
+
+    const allAnswered =
+      sessionQuestions.length > 0 &&
+      sessionQuestions.every(
+        question => question.answer !== undefined && question.answer !== null
+      );
+
+    if (allAnswered) {
+      (async () => {
+        const completion = await completeQuestions();
+        if (completion) {
+          try {
+            await endSession('completed');
+          } finally {
+            router.replace(`/${sessionType}`);
+          }
+        }
+        setPendingCompletion(false);
+        setIsNavigating(false);
+      })();
+    }
+  }, [pendingCompletion, sessionQuestions, completeQuestions, endSession, router, sessionType]);
 
   // Teil detection is now handled by the session context
 
@@ -68,7 +183,7 @@ export function SessionOrchestrator() {
 
     setIsSubmitting(true);
     try {
-      const result = await submitAnswer(currentQuestion.id, userAnswer, timeOnQuestion);
+      const result = await submitAnswer(currentQuestion.id, userAnswer, 0, 0);
       setQuestionResult(result);
     } finally {
       setIsSubmitting(false);
@@ -77,13 +192,7 @@ export function SessionOrchestrator() {
 
   const handleNextQuestion = () => {
     if (!currentQuestion) return;
-
     nextQuestion();
-    // Check if we've reached the last question
-    if (questionProgress.current === questionProgress.total) {
-      // Session completed, navigate back
-      router.push(`/${sessionType}`);
-    }
   };
 
   const handleEndSession = () => {
@@ -92,15 +201,6 @@ export function SessionOrchestrator() {
   };
 
   // Loading state
-  if (!activeSession || activeSession.id !== sessionId || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">Loading session...</div>
-      </div>
-    );
-  }
-
-  // Error state
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -109,78 +209,66 @@ export function SessionOrchestrator() {
     );
   }
 
+  if (!activeSession || activeSession.id !== sessionId || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">Loading session...</div>
+      </div>
+    );
+  }
+
   // Render question based on type
   const renderQuestion = () => {
-    // Check if we have questions with Teil structure
-    if (!isNavigating && sessionType === SessionTypeEnum.READING && sessionQuestions.length > 0) {
-      // Check if questions have teil property (standard layout)
-      const hasTeilStructure = sessionQuestions.some((q: any) => q.teil !== undefined);
-
-      if (hasTeilStructure) {
-        // Derive everything from sessionQuestions
-        const teilsSet = new Set(sessionQuestions.map(q => (q as any).teil || 1));
-        const totalTeils = teilsSet.size;
-        const generatedTeils = new Set(
-          sessionQuestions
-            .filter(q => q.status === QuestionStatus.LOADED)
-            .map(q => (q as any).teil || 1)
-        );
-        const currentTeilQuestions = sessionQuestions.filter(q => ((q as any).teil || 1) === currentTeil);
-        const accumulatedAnswers = Object.fromEntries(
-          sessionQuestions.filter(q => q.answer).map(q => [q.id, q.answer!])
-        );
-
-        // Show current Teil - UNIFIED for all Teils
-        if (currentTeilQuestions.length > 0) {
-          return (
-            <AllQuestionsView
-              key={`teil-${currentTeil}-view`}
-              questions={currentTeilQuestions as any}
-              showA4Format={showA4Format}
-              sessionId={sessionId}
-              showResultsImmediately={currentTeil === totalTeils}
-              isLastTeil={currentTeil === totalTeils}
-              accumulatedAnswers={accumulatedAnswers}
-              showBackButton={currentTeil > 1}
-              totalTeils={totalTeils}
-              generatedTeils={generatedTeils}
-              onTeilNavigate={navigateToTeil}
-              onBack={() => navigateToTeil(currentTeil - 1)}
-              onSubmit={(answers) => {
-                if (isNavigating) return;
-                submitTeilAnswers(answers);
-
-                if (currentTeil < totalTeils) {
-                  navigateToTeil(currentTeil + 1);
-                } else {
-                  setIsNavigating(true);
-                  endSession('completed');
-                  setTimeout(() => router.push(`/${sessionType}`), 100);
+    if (
+      sessionType === SessionTypeEnum.READING &&
+      activeTeilQuestions.length > 0
+    ) {
+      return (
+        <AllQuestionsView
+          key={`teil-${activeTeilNumber}`}
+          questions={activeTeilQuestions}
+          showA4Format={showA4Format}
+          isLastTeil={isLastTeil}
+          accumulatedAnswers={accumulatedAnswers}
+          onBack={
+            previousTeilNumber
+              ? () => {
+                  if (isNavigating) return;
+                  activateTeil(previousTeilNumber);
                 }
-              }}
-            />
-          );
-        }
-      } else {
-        // Legacy behavior: show all questions if GAP_TEXT_MULTIPLE_CHOICE
-        if (sessionQuestions.length > 0 && sessionQuestions[0].registryType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE) {
-          return (
-            <AllQuestionsView
-              key="all-questions-view"
-              questions={sessionQuestions as any}
-              showA4Format={showA4Format}
-              sessionId={sessionId}
-              onSubmit={(answers) => {
-                if (isNavigating) return;
-                submitTeilAnswers(answers);
-                setIsNavigating(true);
-                endSession('completed');
-                setTimeout(() => router.push(`/${sessionType}`), 100);
-              }}
-            />
-          );
-        }
-      }
+              : undefined
+          }
+          showBackButton={!!previousTeilNumber}
+          totalTeils={teilCount}
+          generatedTeils={generatedTeils}
+          allQuestions={sessionQuestions}
+          onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
+          isSubmitting={isSubmitting || isNavigating}
+          resultsSummary={null}
+          activeView={activeView}
+          onActiveViewChange={setActiveView}
+          onResultsClose={undefined}
+          onTeilNavigate={teil => {
+            if (isNavigating) return;
+            activateTeil(teil);
+          }}
+          onSubmit={async answers => {
+            if (isNavigating) return;
+            setIsNavigating(true);
+            try {
+              await submitTeilAnswers(answers, activeTeilNumber);
+              if (nextTeilNumber) {
+                activateTeil(nextTeilNumber);
+                setIsNavigating(false);
+              } else {
+                setPendingCompletion(true);
+              }
+            } catch (error) {
+              setIsNavigating(false);
+            }
+          }}
+        />
+      );
     }
 
     // Single question display for other cases

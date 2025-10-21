@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Play, Square, Loader2 } from 'lucide-react';
@@ -27,29 +27,20 @@ export function StartSessionButton({
   const {
     activeSession,
     isLoading,
-    sessionQuestions,
     startSession,
     endSession
   } = useLearningSession();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [hasNavigated, setHasNavigated] = useState(false);
-
   const isActiveForType = activeSession && activeSession.type === type;
 
-  // Navigate as soon as session is created
-  useEffect(() => {
-    if (!hasNavigated && activeSession) {
-      setHasNavigated(true);
-      router.push(`/${activeSession.type}/session/${activeSession.id}`);
+  const handleStart = async () => {
+    const session = await startSession(type, metadata);
+    if (session && (session.status === 'active' || session.status === 'paused')) {
+      router.push(`/${session.type}/session/${session.id}`);
       if (onSessionStart) {
-        onSessionStart(activeSession.id);
+        onSessionStart(session.id);
       }
     }
-  }, [activeSession, hasNavigated, router, onSessionStart]);
-
-  const handleStart = async () => {
-    setHasNavigated(false);
-    await startSession(type, metadata);
   };
 
   const handleEnd = async () => {

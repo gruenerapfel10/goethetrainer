@@ -1,5 +1,5 @@
-import type { Question, UserAnswer, QuestionResult } from './questions/question-types';
-import { markQuestions } from './questions/question-marker';
+import { markQuestion, markQuestions } from './questions/question-marker';
+import type { Question, QuestionResult, UserAnswer } from './questions/question-types';
 
 export interface QuestionManagerState {
   questions: Question[];
@@ -7,281 +7,242 @@ export interface QuestionManagerState {
   results: QuestionResult[];
 }
 
-/**
- * QuestionManager - Handles all question-related operations
- * Manages answering, marking, results, and question flow
- */
+export interface QuestionSessionSummary {
+  totalQuestions: number;
+  answeredQuestions: number;
+  unansweredQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  totalScore: number;
+  maxScore: number;
+  percentage: number;
+  pendingManualReview: number;
+  aiMarkedCount: number;
+  automaticMarkedCount: number;
+}
+
+export interface QuestionSessionOutcome {
+  results: QuestionResult[];
+  summary: QuestionSessionSummary;
+}
+
+function cloneQuestion(question: Question): Question {
+  return JSON.parse(JSON.stringify(question));
+}
+
+function cloneAnswer(answer: UserAnswer): UserAnswer {
+  return {
+    ...answer,
+    timestamp: new Date(answer.timestamp),
+  };
+}
+
+function cloneResult(result: QuestionResult): QuestionResult {
+  return {
+    ...result,
+    question: cloneQuestion(result.question),
+    userAnswer: cloneAnswer(result.userAnswer),
+  };
+}
+
 export class QuestionManager {
-  private questions: Question[];
-  private userAnswers: UserAnswer[];
-  private questionResults: QuestionResult[];
+  private questionIndex: Map<string, Question>;
+  private answerIndex: Map<string, UserAnswer>;
+  private resultIndex: Map<string, QuestionResult>;
 
   constructor(
-    questions: Question[] = [],
-    answers: UserAnswer[] = [],
-    results: QuestionResult[] = []
+    questions: Question[],
+    answers: UserAnswer[],
+    results: QuestionResult[]
   ) {
-    this.questions = [...questions];
-    this.userAnswers = [...answers];
-    this.questionResults = [...results];
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error('QuestionManager initialisation requires at least one question');
+    }
+
+    this.questionIndex = new Map(questions.map(question => [question.id, cloneQuestion(question)]));
+    this.answerIndex = new Map(
+      answers.map(answer => [answer.questionId, cloneAnswer(answer)])
+    );
+    this.resultIndex = new Map(
+      results.map(result => [result.questionId, cloneResult(result)])
+    );
   }
 
-  /**
-   * Update the question set (useful when questions are loaded/updated)
-   */
-  setQuestions(questions: Question[]): void {
-    this.questions = [...questions];
+  private ensureQuestion(questionId: string): Question {
+    const question = this.questionIndex.get(questionId);
+    if (!question) {
+      throw new Error(`Question ${questionId} is not registered in the manager`);
+    }
+    return question;
   }
 
-  /**
-   * Hydrate manager with persisted answers/results
-   */
-  hydrate(answers: UserAnswer[] = [], results: QuestionResult[] = []): void {
-    this.userAnswers = [...answers];
-    this.questionResults = [...results];
+  private toArray<T>(map: Map<string, T>): T[] {
+    return Array.from(map.values());
   }
 
-  /**
-   * Snapshot current state for persistence
-   */
-  getState(): QuestionManagerState {
+  private buildEmptyAnswer(questionId: string): UserAnswer {
     return {
-      questions: [...this.questions],
-      answers: [...this.userAnswers],
-      results: [...this.questionResults],
+      questionId,
+      answer: '',
+      timeSpent: 0,
+      attempts: 0,
+      hintsUsed: 0,
+      timestamp: new Date(),
     };
   }
 
-  /**
-   * Get all questions
-   */
+  private updateResult(result: QuestionResult): void {
+    this.resultIndex.set(result.questionId, cloneResult(result));
+  }
+
+  private updateAnswer(answer: UserAnswer): void {
+    this.answerIndex.set(answer.questionId, cloneAnswer(answer));
+  }
+
+  getState(): QuestionManagerState {
+    return {
+      questions: this.toArray(this.questionIndex),
+      answers: this.toArray(this.answerIndex),
+      results: this.toArray(this.resultIndex),
+    };
+  }
+
   getAllQuestions(): Question[] {
-    return [...this.questions];
+    return this.toArray(this.questionIndex);
   }
 
-  /**
-   * Get a specific question by ID
-   */
-  getQuestionById(questionId: string): Question | null {
-    return this.questions.find(q => q.id === questionId) || null;
+  getUserAnswers(): UserAnswer[] {
+    return this.toArray(this.answerIndex);
   }
 
-  /**
-   * Submit an answer for a question
-   */
+  getQuestionResults(): QuestionResult[] {
+    return this.toArray(this.resultIndex);
+  }
+
+  getResultForQuestion(questionId: string): QuestionResult | null {
+    return this.resultIndex.get(questionId) ?? null;
+  }
+
+  getAnswerForQuestion(questionId: string): UserAnswer | null {
+    return this.answerIndex.get(questionId) ?? null;
+  }
+
   async submitAnswer(
     questionId: string,
-    answer: string | string[] | boolean,
-    timeSpent: number = 0,
-    hintsUsed: number = 0
+    answerValue: string | string[] | boolean,
+    timeSpent: number,
+    hintsUsed: number
   ): Promise<QuestionResult> {
-    const question = this.getQuestionById(questionId);
-    if (!question) {
-      throw new Error(`Question with ID ${questionId} not found`);
-    }
+    const question = this.ensureQuestion(questionId);
 
-    const previousAnswer = this.userAnswers.find(a => a.questionId === questionId);
+    const previousAnswer = this.answerIndex.get(questionId);
     const attempts = previousAnswer ? previousAnswer.attempts + 1 : 1;
 
-    const userAnswer: UserAnswer = {
+    const payload: UserAnswer = {
       questionId,
-      answer,
+      answer: answerValue,
       timeSpent,
-      attempts,
       hintsUsed,
+      attempts,
       timestamp: new Date(),
     };
 
-    if (previousAnswer) {
-      this.userAnswers = this.userAnswers.map(a =>
-        a.questionId === questionId ? userAnswer : a
-      );
-    } else {
-      this.userAnswers = [...this.userAnswers, userAnswer];
-    }
-
-    const [result] = await markQuestions([question], [userAnswer]);
-    this.upsertResult(result);
+    this.updateAnswer(payload);
+    const result = await markQuestion(question, payload);
+    this.updateResult(result);
 
     return result;
   }
 
-  /**
-   * Batch submit multiple answers (e.g., Teil submission)
-   */
   async submitAnswersBulk(
     answers: Array<{
       questionId: string;
       answer: string | string[] | boolean;
-      timeSpent?: number;
-      hintsUsed?: number;
+      timeSpent: number;
+      hintsUsed: number;
     }>
   ): Promise<QuestionResult[]> {
     const results: QuestionResult[] = [];
+
     for (const entry of answers) {
+      if (!this.questionIndex.has(entry.questionId)) {
+        throw new Error(`Question ${entry.questionId} is not tracked by QuestionManager`);
+      }
+
       const result = await this.submitAnswer(
         entry.questionId,
         entry.answer,
-        entry.timeSpent ?? 0,
-        entry.hintsUsed ?? 0
+        entry.timeSpent,
+        entry.hintsUsed
       );
       results.push(result);
     }
+
     return results;
   }
 
-  /**
-   * Get all user answers submitted so far
-   */
-  getUserAnswers(): UserAnswer[] {
-    return [...this.userAnswers];
-  }
+  async finaliseSession(): Promise<QuestionSessionOutcome> {
+    const orderedQuestions = this.getAllQuestions();
 
-  /**
-   * Get answer for a specific question
-   */
-  getAnswerForQuestion(questionId: string): UserAnswer | null {
-    return this.userAnswers.find(a => a.questionId === questionId) || null;
-  }
+    // Ensure every question has an answer object for downstream persistence
+    const answers: UserAnswer[] = orderedQuestions.map(question => {
+      const existing = this.answerIndex.get(question.id);
+      if (existing) {
+        return existing;
+      }
+      const emptyAnswer = this.buildEmptyAnswer(question.id);
+      this.updateAnswer(emptyAnswer);
+      return emptyAnswer;
+    });
 
-  /**
-   * Get all question results
-   */
-  getQuestionResults(): QuestionResult[] {
-    return [...this.questionResults];
-  }
+    const results = await markQuestions(orderedQuestions, answers);
+    results.forEach(result => this.updateResult(result));
 
-  /**
-   * Get result for a specific question
-   */
-  getResultForQuestion(questionId: string): QuestionResult | null {
-    return this.questionResults.find(r => r.questionId === questionId) || null;
-  }
-
-  /**
-   * Complete all unanswered questions (mark them as incorrect)
-   */
-  async completeAllQuestions(): Promise<{
-    totalScore: number;
-    maxScore: number;
-    percentage: number;
-    results: QuestionResult[];
-  }> {
-    if (this.questions.length === 0) {
-      return {
-        totalScore: 0,
-        maxScore: 0,
-        percentage: 0,
-        results: [],
-      };
-    }
-
-    const allResults = await markQuestions(this.questions, this.userAnswers);
-    this.questionResults = allResults;
-
-    const totalScore = allResults.reduce((sum, r) => sum + r.score, 0);
-    const maxScore = this.questions.reduce((sum, q) => sum + q.points, 0);
-    const percentage = maxScore > 0 ? (totalScore / maxScore) * 100 : 0;
+    const summary = this.buildSummary(results, orderedQuestions);
 
     return {
+      results: results.map(cloneResult),
+      summary,
+    };
+  }
+
+  private buildSummary(results: QuestionResult[], questions: Question[]): QuestionSessionSummary {
+    const totalQuestions = questions.length;
+    const answeredQuestions = results.filter(result => {
+      const value = result.userAnswer.answer;
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== '' && value !== null && value !== undefined;
+    }).length;
+
+    const totalScore = results.reduce((sum, result) => sum + result.score, 0);
+    const maxScore = questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
+
+    const correctAnswers = results.filter(result => result.isCorrect).length;
+    const pendingManualReview = results.filter(result => result.markedBy === 'manual').length;
+    const incorrectAnswers = results.filter(
+      result => !result.isCorrect && result.markedBy !== 'manual'
+    ).length;
+
+    const aiMarkedCount = results.filter(result => result.markedBy === 'ai').length;
+    const automaticMarkedCount = results.filter(result => result.markedBy === 'automatic').length;
+
+    const unansweredQuestions = totalQuestions - answeredQuestions;
+    const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+    return {
+      totalQuestions,
+      answeredQuestions,
+      unansweredQuestions,
+      correctAnswers,
+      incorrectAnswers,
       totalScore,
       maxScore,
       percentage,
-      results: allResults,
+      pendingManualReview,
+      aiMarkedCount,
+      automaticMarkedCount,
     };
-  }
-
-  /**
-   * Get question statistics
-   */
-  getQuestionStats(): {
-    total: number;
-    answered: number;
-    unanswered: number;
-    correct: number;
-    incorrect: number;
-    percentage: number;
-  } {
-    const total = this.questions.length;
-    const answered = this.userAnswers.length;
-    const unanswered = total - answered;
-    const correct = this.questionResults.filter(r => r.isCorrect).length;
-    const incorrect = this.questionResults.filter(r => !r.isCorrect).length;
-    const percentage = total > 0 ? (answered / total) * 100 : 0;
-
-    return {
-      total,
-      answered,
-      unanswered,
-      correct,
-      incorrect,
-      percentage,
-    };
-  }
-
-  /**
-   * Get score statistics
-   */
-  getScoreStats(): {
-    currentScore: number;
-    maxPossibleScore: number;
-    percentage: number;
-  } {
-    const currentScore = this.questionResults.reduce((sum, r) => sum + r.score, 0);
-    const maxPossibleScore = this.questions.reduce((sum, q) => sum + q.points, 0);
-    const percentage = maxPossibleScore > 0 ? (currentScore / maxPossibleScore) * 100 : 0;
-
-    return {
-      currentScore,
-      maxPossibleScore,
-      percentage,
-    };
-  }
-
-  /**
-   * Reset all answers and results (useful for starting over)
-   */
-  reset(): void {
-    this.userAnswers = [];
-    this.questionResults = [];
-  }
-
-  private upsertResult(result: QuestionResult): void {
-    const existingIndex = this.questionResults.findIndex(
-      r => r.questionId === result.questionId
-    );
-    if (existingIndex >= 0) {
-      this.questionResults[existingIndex] = result;
-    } else {
-      this.questionResults = [...this.questionResults, result];
-    }
-  }
-
-  /**
-   * Export current state for persistence
-   */
-  export(): {
-    userAnswers: UserAnswer[];
-    questionResults: QuestionResult[];
-  } {
-    return {
-      userAnswers: this.userAnswers,
-      questionResults: this.questionResults
-    };
-  }
-
-  /**
-   * Import state from persistence
-   */
-  import(data: {
-    userAnswers?: UserAnswer[];
-    questionResults?: QuestionResult[];
-  }): void {
-    if (data.userAnswers) {
-      this.userAnswers = data.userAnswers;
-    }
-    if (data.questionResults) {
-      this.questionResults = data.questionResults;
-    }
   }
 }

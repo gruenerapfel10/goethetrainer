@@ -4,7 +4,7 @@ import { getSessionManager } from '@/lib/sessions/session-manager';
 
 export async function POST(
   request: Request,
-  { params }: { params: { sessionId: string } }
+  context: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const authSession = await auth();
@@ -12,15 +12,21 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { questionId, answer, timeSpent = 0, hintsUsed = 0 } = await request.json();
+    const { questionId, answer, timeSpent, hintsUsed } = await request.json();
     if (!questionId) {
       return NextResponse.json(
         { error: 'questionId is required' },
         { status: 400 }
       );
     }
+    if (typeof timeSpent !== 'number' || typeof hintsUsed !== 'number') {
+      return NextResponse.json(
+        { error: 'timeSpent and hintsUsed must be numbers' },
+        { status: 400 }
+      );
+    }
 
-    const { sessionId } = params;
+    const { sessionId } = await context.params;
     const manager = await getSessionManager(authSession.user.email, sessionId);
 
     const result = await manager.submitAnswer(

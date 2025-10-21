@@ -17,6 +17,7 @@ import {
   Award
 } from 'lucide-react';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import { SessionResultsView } from '@/components/questions/SessionResultsView';
 
 // Icon mapping for session types
 const ICON_MAP = {
@@ -39,7 +40,7 @@ const COLOR_CLASSES = {
 
 function SessionContent() {
   const { sessionType, metadata, features, defaults } = useSessionPage();
-  const { activeSession, stats, updateSessionProgress } = useLearningSession();
+  const { activeSession, stats, latestResults, clearResults } = useLearningSession();
   const [sessionTime, setSessionTime] = useState(0);
   const [primaryMetricValue, setPrimaryMetricValue] = useState(0);
 
@@ -92,6 +93,18 @@ function SessionContent() {
     if (!target) return 0;
     return Math.min(100, Math.round((primaryMetricValue / target) * 100));
   };
+
+  if (latestResults) {
+    return (
+      <div className="p-8">
+        <SessionResultsView
+          results={latestResults.results}
+          summary={latestResults.summary}
+          onClose={clearResults}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-6">

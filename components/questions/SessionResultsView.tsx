@@ -1,18 +1,20 @@
 'use client';
 
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
-import { CheckCircle2, XCircle, Award, Target } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, Target, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SessionResultsViewProps {
   results: QuestionResult[];
   summary: {
     totalQuestions: number;
+    answeredQuestions?: number;
     correctAnswers: number;
     incorrectAnswers: number;
     totalScore: number;
     maxScore: number;
     percentage: number;
+    pendingManualReview?: number;
   };
   onClose?: () => void;
 }
@@ -145,6 +147,12 @@ export function SessionResultsView({ results, summary, onClose }: SessionResults
                 </div>
               </div>
             </div>
+
+            {summary.pendingManualReview && summary.pendingManualReview > 0 && (
+              <div className="text-sm text-muted-foreground text-center">
+                {summary.pendingManualReview} Antwort(en) werden noch manuell bewertet.
+              </div>
+            )}
           </div>
         </div>
 
@@ -154,6 +162,8 @@ export function SessionResultsView({ results, summary, onClose }: SessionResults
 
           <div className="space-y-3">
             {results.map((result, index) => {
+              const isManualReview = result.markedBy === 'manual';
+              const isCorrect = !isManualReview && result.isCorrect;
               const userAnswerOption = result.question.options?.find(
                 opt => opt.id === result.userAnswer.answer
               );
@@ -166,14 +176,18 @@ export function SessionResultsView({ results, summary, onClose }: SessionResults
                   key={result.questionId}
                   className={cn(
                     "border rounded-lg p-4 space-y-2",
-                    result.isCorrect
-                      ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                      : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                    isManualReview
+                      ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
+                      : isCorrect
+                        ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                        : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 flex-1">
-                      {result.isCorrect ? (
+                      {isManualReview ? (
+                        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                      ) : isCorrect ? (
                         <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                       ) : (
                         <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
@@ -191,13 +205,21 @@ export function SessionResultsView({ results, summary, onClose }: SessionResults
                         {userAnswerOption && (
                           <div className="text-sm">
                             <span className="text-muted-foreground">Deine Antwort: </span>
-                            <span className={result.isCorrect ? "text-foreground" : "text-red-600 dark:text-red-400 line-through"}>
+                            <span
+                              className={
+                                isManualReview
+                                  ? "text-foreground"
+                                  : isCorrect
+                                    ? "text-foreground"
+                                    : "text-red-600 dark:text-red-400 line-through"
+                              }
+                            >
                               {userAnswerOption.text}
                             </span>
                           </div>
                         )}
 
-                        {!result.isCorrect && correctOption && (
+                        {!isManualReview && !isCorrect && correctOption && (
                           <div className="text-sm">
                             <span className="text-muted-foreground">Richtige Antwort: </span>
                             <span className="text-green-600 dark:text-green-400 font-medium">
