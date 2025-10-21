@@ -13,7 +13,7 @@ interface AnswerSheetProps {
 
 export const AnswerSheet: React.FC<AnswerSheetProps> = ({ className = '' }) => {
   return (
-    <div className={`relative w-[210mm] h-[297mm] bg-background px-6 pt-4 mx-auto flex flex-col ${className}`} style={{ fontSize: '10pt' }}>
+    <div className={`relative w-[210mm] h-[297mm] bg-background px-6 py-4 mx-auto flex flex-col ${className}`} style={{ fontSize: '10pt' }}>
       {/* Corner markers */}
       <div className="absolute top-4 left-4 w-6 h-6 bg-foreground z-20"></div>
       <div className="absolute top-4 right-4 w-6 h-6 bg-foreground z-20"></div>
@@ -95,30 +95,30 @@ export const AnswerSheet: React.FC<AnswerSheetProps> = ({ className = '' }) => {
         {/* First Row */}
         <div className="flex gap-4 flex-1">
           {/* Teil 1 - 1 part */}
-          <div className="p-4" style={{ flex: '1' }}>
+          <div style={{ flex: '1' }}>
             <TeilAnswerGrid teilNumber={1} questionCount={10} optionsPerQuestion={4} />
           </div>
 
           {/* Teil 2 - 1 part */}
-          <div className="p-4" style={{ flex: '1' }}>
+          <div style={{ flex: '1' }}>
             <TeilAnswerGrid teilNumber={2} questionCount={10} optionsPerQuestion={3} />
           </div>
 
           {/* Marking Guide - 2 parts */}
-          <div style={{ flex: '2' }} className="flex items-start justify-end p-4">
-            <MarkingGuide width="200px" />
+          <div style={{ flex: '2' }} className="flex items-start justify-end px-0">
+            <MarkingGuide width="220px" />
           </div>
         </div>
 
         {/* Second Row */}
         <div className="flex gap-4 flex-1">
           {/* Teil 3 */}
-          <div className="p-4" style={{ flex: '2' }}>
+          <div style={{ flex: '2' }}>
             <TeilAnswerGrid teilNumber={3} questionCount={10} optionsPerQuestion={10} />
           </div>
 
           {/* Teil 4 */}
-          <div className="p-4" style={{ flex: '1' }}>
+          <div style={{ flex: '1' }}>
             <TeilAnswerGrid teilNumber={4} questionCount={10} optionsPerQuestion={4} />
           </div>
         </div>

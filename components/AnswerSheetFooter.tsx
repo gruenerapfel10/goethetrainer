@@ -52,7 +52,7 @@ interface AnswerSheetFooterProps {
 
 export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className = '' }) => {
   return (
-    <div className={`relative z-10 space-y-3 ${className}`}>
+    <div className={`relative z-10 space-y-8 ${className}`}>
       {/* First Row - Signatures and Points/Date */}
       <div className="flex items-end">
         {/* Signature 1 */}
@@ -107,7 +107,7 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
       </div>
 
       {/* Second Row - Barcode and Processing Area */}
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-4 px-8">
         {/* Data Matrix Barcode - 40% */}
         <div style={{ width: '40%' }} className="flex justify-center">
           <img

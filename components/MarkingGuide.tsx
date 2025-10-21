@@ -62,11 +62,11 @@ export const MarkingGuide: React.FC<MarkingGuideProps> = ({ className = '', widt
   );
 
   return (
-    <div className={`border-2 border-black p-1.5 ${className}`} style={{ width }}>
-      <div className="space-y-1 text-[7px] leading-tight">
+    <div className={`border border-black p-1.5 ${className}`} style={{ width }}>
+      <div className="space-y-1 text-[10px] leading-tight">
         {/* Correct marking */}
         <div className="flex items-center gap-1.5">
-          <span className="flex-1">Markieren Sie so:</span>
+          <span>Markieren Sie so:</span>
           <CorrectMark />
         </div>
 
@@ -78,7 +78,7 @@ export const MarkingGuide: React.FC<MarkingGuideProps> = ({ className = '', widt
 
         {/* Correction instruction */}
         <div className="flex items-center gap-1.5">
-          <span className="flex-1">Füllen Sie zur Korrektur das Feld aus:</span>
+          <span>Füllen Sie zur Korrektur das Feld aus:</span>
           <MCQCheckbox
             display={true}
             size="sm"
@@ -90,7 +90,7 @@ export const MarkingGuide: React.FC<MarkingGuideProps> = ({ className = '', widt
 
         {/* Remark instruction */}
         <div className="flex items-center gap-1.5">
-          <span className="flex-1">Markieren Sie das richtige Feld neu:</span>
+          <span>Markieren Sie das richtige Feld neu:</span>
           <CorrectMark />
         </div>
       </div>

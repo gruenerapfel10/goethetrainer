@@ -30,7 +30,7 @@ export const TeilAnswerGrid: React.FC<TeilAnswerGridProps> = ({
   );
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col gap-0 ${className}`}>
       {/* Header */}
       <div
         className="text-[10px] font-bold border-foreground px-1 py-0.5 w-full"
@@ -43,7 +43,7 @@ export const TeilAnswerGrid: React.FC<TeilAnswerGridProps> = ({
       <div className="flex gap-3">
         {/* Question Numbers Column */}
         <div
-          className="flex flex-col border-foreground"
+          className="flex flex-col border-foreground ml-2"
           style={{ borderWidth: '0.5px', borderStyle: 'solid' }}
         >
           {/* Header - empty space */}
