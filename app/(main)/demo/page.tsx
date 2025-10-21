@@ -12,7 +12,7 @@ export default function DemoPage() {
   };
 
   return (
-    <div className="h-full bg-gray-100 flex items-center justify-center overflow-hidden">
+    <div className="h-full bg-gray-200 dark:bg-sidebar flex items-center justify-center overflow-hidden">
       <AnswerSheet />
 
     </div>

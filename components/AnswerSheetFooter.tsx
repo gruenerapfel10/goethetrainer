@@ -52,18 +52,18 @@ interface AnswerSheetFooterProps {
 
 export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className = '' }) => {
   return (
-    <div className={`relative z-10 space-y-8 ${className}`}>
+    <div className={`relative z-10 space-y-3 ${className}`}>
       {/* First Row - Signatures and Points/Date */}
       <div className="flex items-end">
         {/* Signature 1 */}
         <div className="flex-1">
-          <div className="border-b border-black h-6"></div>
+          <div className="border-b border-foreground h-6"></div>
           <div className="text-[10px] mt-1">Unterschrift Bewertende/r 1</div>
         </div>
 
         {/* Signature 2 */}
         <div className="flex-1">
-          <div className="border-b border-black h-6"></div>
+          <div className="border-b border-foreground h-6"></div>
           <div className="text-[10px] mt-1">Unterschrift Bewertende/r 2</div>
         </div>
 
@@ -75,13 +75,13 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
             <div className="flex items-center gap-3">
               <div className="flex gap-1">
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} className="w-7 h-9 border-2 border-black"></div>
+                  <div key={i} className="w-7 h-9 border-2 border-foreground"></div>
                 ))}
               </div>
               <span className="text-xl">/</span>
               <div className="flex items-center justify-center gap-1">
-                <div className="w-7 h-9 border-2 border-black flex items-center justify-center font-bold text-lg">3</div>
-                <div className="w-7 h-9 border-2 border-black flex items-center justify-center font-bold text-lg">0</div>
+                <div className="w-7 h-9 border-2 border-foreground flex items-center justify-center font-bold text-lg">3</div>
+                <div className="w-7 h-9 border-2 border-foreground flex items-center justify-center font-bold text-lg">0</div>
               </div>
             </div>
           </div>
@@ -90,15 +90,15 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
           <div className="flex flex-col gap-2 text-[11px]">
             <div className="flex gap-1">
               {[...Array(2)].map((_, i) => (
-                <div key={`bd${i}`} className="w-6 h-8 border border-black"></div>
+                <div key={`bd${i}`} className="w-6 h-8 border border-foreground"></div>
               ))}
               <span className="mx-1 font-bold">.</span>
               {[...Array(2)].map((_, i) => (
-                <div key={`bm${i}`} className="w-6 h-8 border border-black"></div>
+                <div key={`bm${i}`} className="w-6 h-8 border border-foreground"></div>
               ))}
               <span className="mx-1 font-bold">.</span>
               {[...Array(4)].map((_, i) => (
-                <div key={`by${i}`} className="w-6 h-8 border border-black"></div>
+                <div key={`by${i}`} className="w-6 h-8 border border-foreground"></div>
               ))}
             </div>
             <span>Datum</span>
@@ -114,7 +114,7 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
             src="https://barcode.tec-it.com/barcode.ashx?data=40001-AntBo-LV&code=Code128&dpi=96"
             alt="Barcode"
             height={60}
-            className="w-auto"
+            className="w-auto dark:invert"
           />
         </div>
 

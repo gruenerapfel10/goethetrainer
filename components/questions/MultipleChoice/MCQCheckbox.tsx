@@ -10,7 +10,7 @@ interface MCQCheckboxProps {
   isExample?: boolean;
   display?: boolean; // Display only mode - non-interactive
   className?: string; // Custom className
-  size?: 'sm' | 'md' | 'lg'; // Size presets
+  size?: 'sm' | 'msm' | 'md' | 'lg'; // Size presets
   showContent?: boolean; // Whether to show the X or letter
   customContent?: React.ReactNode; // Custom content instead of letter/X
 }
@@ -30,6 +30,7 @@ export function MCQCheckbox({
   // Size classes
   const sizeClasses = {
     sm: 'w-3 h-3',
+    msm: 'w-4 h-4',
     md: 'w-6 h-6',
     lg: 'w-8 h-8',
   };
@@ -37,17 +38,19 @@ export function MCQCheckbox({
   // Default styling
   const baseClasses = cn(
     sizeClasses[size],
-    'border flex items-center justify-center flex-shrink-0',
+    'flex items-center justify-center flex-shrink-0',
     'font-bold text-xs font-mono transition-all',
-    'border-black bg-white',
+    'border-foreground bg-background',
     !display && 'cursor-pointer',
     display && 'cursor-default',
     className
   );
 
+  const borderStyle = { borderWidth: '0.5px' };
+
   // Interactive styling (when not in display mode)
   const interactiveClasses = cn(
-    !display && !checked && 'hover:bg-gray-50',
+    !display && !checked && 'hover:bg-muted',
     !display && checked && 'border-primary',
     disabled && !isExample && 'cursor-not-allowed opacity-60',
     isExample && 'opacity-50'
@@ -60,6 +63,7 @@ export function MCQCheckbox({
       onClick={!display ? onChange : undefined}
       disabled={display || disabled || isExample}
       className={finalClasses}
+      style={borderStyle}
       type="button"
     >
       {showContent && (
