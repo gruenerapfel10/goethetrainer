@@ -3,6 +3,7 @@ import type {
   Session,
   SessionStatus,
   UpdateSessionInput,
+  AnswerValue,
 } from './types';
 import type {
   Question,
@@ -24,6 +25,7 @@ import {
 import { generateSessionQuestion } from './questions/standard-generator';
 import { QuestionManager } from './question-manager';
 import { QuestionDifficulty } from './questions/question-types';
+import { QuestionTypeName } from './questions/question-registry';
 import { sanitizeForFirestore } from './utils';
 
 export interface CompletionSummary {
@@ -40,11 +42,9 @@ export interface CompletionSummary {
   };
 }
 
-type QuestionAnswerValue = string | string[] | boolean;
-
 interface SubmitAnswerPayload {
   questionId: string;
-  answer: QuestionAnswerValue;
+  answer: AnswerValue;
   timeSpent: number;
   hintsUsed: number;
 }
@@ -70,7 +70,8 @@ async function loadSessionForUser(sessionId: string, userId: string): Promise<Se
 }
 
 async function persistSession(session: Session): Promise<void> {
-  await updateSessionDocument(session);
+  const sanitized = sanitizeSession(session);
+  await updateSessionDocument(sanitized);
 }
 
 function touchSession(session: Session) {
@@ -78,6 +79,114 @@ function touchSession(session: Session) {
     session.metadata = {};
   }
   session.metadata.lastUpdatedAt = new Date().toISOString();
+}
+
+function sanitizeSession(session: Session): Session {
+  const base: Session = {
+    ...session,
+    startedAt: session.startedAt ?? new Date(),
+    endedAt: session.endedAt ?? null,
+  };
+
+  return sanitizeForFirestore(base) as Session;
+}
+
+function ensureSessionCollections(session: Session) {
+  if (!session.data) {
+    session.data = {
+      questions: [],
+      answers: [],
+      results: [],
+    } as Session['data'];
+  }
+
+  if (!Array.isArray(session.data.questions)) {
+    session.data.questions = [];
+  }
+
+  if (!Array.isArray(session.data.answers)) {
+    session.data.answers = [];
+  }
+
+  if (!Array.isArray(session.data.results)) {
+    session.data.results = [];
+  }
+}
+
+function hasAnswerValue(value: AnswerValue | null | undefined): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (typeof value === 'boolean') {
+    return true;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  if (typeof value === 'object') {
+    return Object.keys(value).length > 0;
+  }
+
+  return false;
+}
+
+function applyAnswersToSession(session: Session, answers: Record<string, AnswerValue>) {
+  ensureSessionCollections(session);
+
+  const questions = session.data.questions as Question[];
+  const answerList = session.data.answers ?? [];
+  let updatedResults = session.data.results ?? [];
+  const now = new Date();
+
+  Object.entries(answers).forEach(([questionId, value]) => {
+    const questionIndex = questions.findIndex(question => question.id === questionId);
+    if (questionIndex >= 0) {
+      const question = questions[questionIndex];
+      questions[questionIndex] = {
+        ...question,
+        answer: value ?? null,
+        answered: hasAnswerValue(value),
+        lastSubmittedAt: now.toISOString(),
+      } as Question;
+    }
+
+    const existingAnswerIndex = answerList.findIndex(answer => answer.questionId === questionId);
+    if (value === null) {
+      if (existingAnswerIndex >= 0) {
+        answerList.splice(existingAnswerIndex, 1);
+      }
+    } else if (existingAnswerIndex >= 0) {
+      answerList[existingAnswerIndex] = {
+        ...answerList[existingAnswerIndex],
+        answer: value,
+        timestamp: now,
+        attempts: (answerList[existingAnswerIndex].attempts ?? 0) + 1,
+      };
+    } else {
+      answerList.push({
+        questionId,
+        answer: value,
+        timeSpent: 0,
+        attempts: 1,
+        hintsUsed: 0,
+        timestamp: now,
+      });
+    }
+
+    updatedResults = updatedResults.filter(result => result.questionId !== questionId);
+    session.data.lastAnsweredQuestion = questionId;
+  });
+
+  session.data.answers = answerList;
+  session.data.questions = ensureQuestionIdentifiers(questions);
+  session.data.results = updatedResults;
 }
 
 function ensureQuestionIdentifiers(questions: Question[]): Question[] {
@@ -180,12 +289,34 @@ export async function updateSessionForUser(
   updates: UpdateSessionInput
 ): Promise<Session> {
   const session = await loadSessionForUser(sessionId, userId);
+  ensureSessionCollections(session);
+
+  if (updates.answers && Object.keys(updates.answers).length > 0) {
+    applyAnswersToSession(session, updates.answers);
+  }
 
   if (updates.data) {
-    session.data = {
-      ...session.data,
-      ...updates.data,
-    };
+    const { questions, answers, results, ...rest } = updates.data;
+    if (rest && Object.keys(rest).length > 0) {
+      session.data = {
+        ...session.data,
+        ...rest,
+      };
+    }
+
+    if (Array.isArray(results) && results.length > 0) {
+      session.data.results = results;
+    }
+
+    if (Array.isArray(answers) && answers.length > 0) {
+      session.data.answers = answers;
+    }
+
+    if (Array.isArray(questions) && questions.length > 0) {
+      session.data.questions = ensureQuestionIdentifiers(
+        questions.map(normaliseAnsweredFlag)
+      );
+    }
   }
 
   if (updates.metadata) {
@@ -205,12 +336,12 @@ export async function updateSessionForUser(
 
   touchSession(session);
   await persistSession(session);
-  return session;
+  return sanitizeSession(session);
 }
 
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
-  questionType: string,
+  questionType: QuestionTypeName,
   difficulty: QuestionDifficulty,
   teilNumber: number
 ): Promise<Question[]> {
@@ -270,7 +401,9 @@ export async function generateQuestionsForSession(
 
   const questionsWithFlags = generated.map(normaliseAnsweredFlag);
 
-  session.data.questions = questionsWithFlags;
+  ensureSessionCollections(session);
+
+  session.data.questions = ensureQuestionIdentifiers(questionsWithFlags);
   session.data.answers = [];
   session.data.results = [];
   session.metadata = {
@@ -284,8 +417,9 @@ export async function generateQuestionsForSession(
     lastUpdatedAt: new Date().toISOString(),
   };
 
+  touchSession(session);
   await persistSession(session);
-  return questionsWithFlags;
+  return session.data.questions;
 }
 
 function mapManagerStateToSession(
@@ -293,6 +427,7 @@ function mapManagerStateToSession(
   state: ReturnType<QuestionManager['getState']>,
   lastAnsweredId: string | null
 ) {
+  ensureSessionCollections(session);
   const answerIndex = new Map(
     state.answers.map(answer => [answer.questionId, answer])
   );
@@ -309,11 +444,11 @@ function mapManagerStateToSession(
 
   const timestamp = new Date().toISOString();
 
-  session.data.questions = state.questions.map(question => {
+  session.data.questions = ensureQuestionIdentifiers(state.questions.map(question => {
     const answer = answerIndex.get(question.id);
     const hasAnswer = !!answer;
 
-    const clonedQuestion: Question = {
+    return {
       ...question,
       answer: answer?.answer ?? (question as any).answer ?? null,
       answered: hasAnswer || !!question.answered,
@@ -321,39 +456,11 @@ function mapManagerStateToSession(
         hasAnswer || question.id === lastAnsweredId
           ? timestamp
           : (question as any).lastSubmittedAt,
-    };
+    } as Question;
+  }));
 
-    if (Array.isArray(clonedQuestion.gaps)) {
-      clonedQuestion.gaps = clonedQuestion.gaps.map(gap => {
-        const nextGap = { ...gap } as any;
-        if (Array.isArray(nextGap.options)) {
-          nextGap.options = nextGap.options.map((option: any) => {
-            if (option && typeof option === 'object') {
-              const cleanedOption: Record<string, any> = { ...option };
-              Object.entries(cleanedOption).forEach(([key, value]) => {
-                if (
-                  value &&
-                  typeof value === 'object' &&
-                  typeof (value as any).seconds === 'number' &&
-                  typeof (value as any).nanoseconds === 'number'
-                ) {
-                  delete cleanedOption[key];
-                }
-              });
-              return cleanedOption;
-            }
-            return option;
-          });
-        }
-        return nextGap;
-      });
-    }
-
-    return sanitizeForFirestore(clonedQuestion);
-  });
-
-  session.data.answers = sanitizeForFirestore(state.answers);
-  session.data.results = sanitizeForFirestore(state.results);
+  session.data.answers = state.answers;
+  session.data.results = state.results;
   session.data.currentScore = totalScore;
   session.data.maxPossibleScore = maxPossibleScore;
   session.data.questionsAnswered = state.answers.length;
@@ -400,26 +507,10 @@ export async function submitAnswersBulkForSession(
   userId: string,
   answers: SubmitAnswerPayload[]
 ): Promise<QuestionResult[]> {
-  const session = await loadSessionForUser(sessionId, userId);
-  if (!Array.isArray(session.data?.questions) || session.data.questions.length === 0) {
-    throw new Error('Session questions not initialised');
-  }
-
-  const manager = new QuestionManager(
-    session.data.questions,
-    session.data.answers ?? [],
-    session.data.results ?? []
+  throw Object.assign(
+    new Error('Bulk marking route is deprecated; use completeSessionForUser'),
+    { statusCode: 410 }
   );
-
-  const results = await manager.submitAnswersBulk(answers);
-  const lastAnsweredId =
-    answers.length > 0 ? answers[answers.length - 1]?.questionId ?? null : null;
-
-  mapManagerStateToSession(session, manager.getState(), lastAnsweredId);
-  touchSession(session);
-  await persistSession(session);
-
-  return results;
 }
 
 export async function completeSessionForUser(
@@ -431,6 +522,8 @@ export async function completeSessionForUser(
     throw new Error('Session questions not initialised');
   }
 
+  ensureSessionCollections(session);
+
   const manager = new QuestionManager(
     session.data.questions,
     session.data.answers ?? [],
@@ -439,12 +532,14 @@ export async function completeSessionForUser(
 
   const outcome = await manager.finaliseSession();
 
-  session.data.questions = outcome.results.map(result => ({
-    ...result.question,
-    answer: result.userAnswer.answer,
-    answered: true,
-    lastSubmittedAt: new Date().toISOString(),
-  }));
+  session.data.questions = ensureQuestionIdentifiers(
+    outcome.results.map(result => ({
+      ...result.question,
+      answer: result.userAnswer.answer,
+      answered: true,
+      lastSubmittedAt: new Date().toISOString(),
+    }))
+  );
   session.data.answers = manager.getUserAnswers();
   session.data.results = manager.getQuestionResults();
   session.data.currentScore = outcome.summary.totalScore;

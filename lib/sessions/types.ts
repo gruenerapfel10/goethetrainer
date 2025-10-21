@@ -43,10 +43,12 @@ export interface SessionStats {
 // Backwards compatible re-exports
 export type Question = SessionQuestion;
 export type QuestionResult = SessionQuestionResult;
+export type AnswerValue = UserAnswer['answer'] | null;
 
 export interface UpdateSessionInput {
   data?: Partial<SessionData>;
   metadata?: Partial<SessionMetadata>;
   status?: SessionStatus;
   duration?: number;
+  answers?: Record<string, AnswerValue>;
 }

@@ -14,6 +14,7 @@ import type {
   SessionStats,
   SessionType,
   UpdateSessionInput,
+  AnswerValue,
 } from './types';
 import type {
   Question,
@@ -130,8 +131,12 @@ function normaliseAnswer(
     return null;
   }
 
+  if (Array.isArray(value)) {
+    return [...value] as AnswerValue;
+  }
+
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return { ...(value as Record<string, string>) };
+    return JSON.parse(JSON.stringify(value));
   }
 
   return value;
@@ -218,6 +223,10 @@ function cloneQuestionsForSession(questions: Question[]): Question[] {
   })) as Question[];
 }
 
+function answersEqual(a: AnswerValue | undefined, b: AnswerValue | undefined): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 async function requestJson<TResponse>(
   input: RequestInfo,
   init?: RequestInit
@@ -246,9 +255,12 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const questionsRef = useRef<SessionQuestion[]>([]);
   const activeQuestionIdRef = useRef<string | null>(null);
   const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
+  const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
   const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   const isFlushingRef = useRef(false);
+  const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
+  const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
@@ -265,21 +277,40 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const clearError = useCallback(() => setError(null), []);
   const clearResults = useCallback(() => setLatestResults(null), []);
 
-  const flushPendingUpdates = useCallback(async () => {
-    if (isFlushingRef.current) {
-      return;
+  const flushPendingUpdates = useCallback(async (): Promise<boolean> => {
+    if (isFlushingRef.current && activeFlushPromiseRef.current) {
+      return activeFlushPromiseRef.current;
     }
+
     const session = activeSessionRef.current;
-    const payload = pendingUpdateRef.current;
-    if (!session || !payload) {
-      return;
+    const pendingPayload = pendingUpdateRef.current;
+    if (!session || !pendingPayload) {
+      return false;
     }
+
+    const answersPayload = pendingPayload.answers
+      ? { ...pendingPayload.answers }
+      : Object.keys(pendingAnswersRef.current).length > 0
+        ? { ...pendingAnswersRef.current }
+        : undefined;
+
+    const payload: UpdateSessionInput = {
+      ...pendingPayload,
+      answers: answersPayload,
+    };
 
     pendingUpdateRef.current = null;
     isFlushingRef.current = true;
+    const flushPromise = new Promise<boolean>(resolve => {
+      resolveFlushPromiseRef.current = resolve;
+    });
+    activeFlushPromiseRef.current = flushPromise;
     if (isMountedRef.current) {
       setIsSaving(true);
     }
+
+    let success = false;
+
     try {
       const updatedSession = await requestJson<Session>(
         `/api/sessions/${session.id}/update`,
@@ -290,20 +321,73 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         }
       );
 
+      if (answersPayload) {
+        Object.entries(answersPayload).forEach(([key, value]) => {
+          if (key in pendingAnswersRef.current && answersEqual(pendingAnswersRef.current[key], value)) {
+            delete pendingAnswersRef.current[key];
+          }
+        });
+      }
+
       if (isMountedRef.current) {
         setActiveSession(updatedSession);
       }
       activeSessionRef.current = updatedSession;
+      success = true;
     } catch (err) {
+      if (answersPayload) {
+        pendingAnswersRef.current = {
+          ...answersPayload,
+          ...pendingAnswersRef.current,
+        };
+      }
+
+      const existing = pendingUpdateRef.current;
+      const mergedAnswers = {
+        ...(payload.answers ?? {}),
+        ...(existing?.answers ?? {}),
+      };
+      const mergedData = {
+        ...(payload.data ?? {}),
+        ...(existing?.data ?? {}),
+      };
+      const mergedMetadata = {
+        ...(payload.metadata ?? {}),
+        ...(existing?.metadata ?? {}),
+      };
+
+      pendingUpdateRef.current = {
+        answers: Object.keys(mergedAnswers).length > 0 ? mergedAnswers : undefined,
+        data: Object.keys(mergedData).length > 0 ? mergedData : undefined,
+        metadata:
+          Object.keys(mergedMetadata).length > 0
+            ? { ...mergedMetadata, lastUpdatedAt: new Date().toISOString() }
+            : undefined,
+        status: existing?.status ?? payload.status,
+        duration: existing?.duration ?? payload.duration,
+      };
+
       console.error('Failed to persist session', err);
       if (isMountedRef.current) {
         setError(err instanceof Error ? err.message : 'Failed to save session');
+      }
+
+      if (!flushTimerRef.current) {
+        flushTimerRef.current = setTimeout(() => {
+          flushPendingUpdates();
+        }, SAVE_DEBOUNCE_MS);
       }
     } finally {
       isFlushingRef.current = false;
       if (isMountedRef.current) {
         setIsSaving(false);
       }
+      if (resolveFlushPromiseRef.current) {
+        resolveFlushPromiseRef.current(success);
+      }
+      activeFlushPromiseRef.current = null;
+      resolveFlushPromiseRef.current = null;
+      return success;
     }
   }, []);
 
@@ -356,6 +440,11 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const enqueueUpdate = useCallback(
     (update: UpdateSessionInput) => {
       const existing = pendingUpdateRef.current;
+      const answersMerged = {
+        ...(existing?.answers ?? {}),
+        ...(pendingAnswersRef.current ?? {}),
+        ...(update.answers ?? {}),
+      };
       const nextMetadata = {
         ...(existing?.metadata ?? {}),
         ...(update.metadata ?? {}),
@@ -367,6 +456,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           ...(update.data ?? {}),
         },
         metadata: nextMetadata,
+        answers: Object.keys(answersMerged).length > 0 ? answersMerged : undefined,
         status: update.status ?? existing?.status,
         duration: update.duration ?? existing?.duration,
       };
@@ -383,18 +473,34 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     [flushPendingUpdates]
   );
 
-  const forceSave = useCallback(async () => {
+  const forceSave = useCallback(async (): Promise<boolean> => {
     if (flushTimerRef.current) {
       clearTimeout(flushTimerRef.current);
       flushTimerRef.current = null;
     }
-    await flushPendingUpdates();
+    return await flushPendingUpdates();
   }, [flushPendingUpdates]);
 
   const sendBeaconForPendingUpdates = useCallback(() => {
     const session = activeSessionRef.current;
-    const payload = pendingUpdateRef.current;
-    if (!session || !payload || typeof navigator === 'undefined' || !navigator.sendBeacon) {
+    const payload = pendingUpdateRef.current ?? (
+      Object.keys(pendingAnswersRef.current).length > 0
+        ? {
+            answers: { ...pendingAnswersRef.current },
+            metadata: {
+              activeQuestionId: activeQuestionIdRef.current,
+              activeView,
+            },
+          }
+        : null
+    );
+
+    if (
+      !session ||
+      !payload ||
+      typeof navigator === 'undefined' ||
+      !navigator.sendBeacon
+    ) {
       return false;
     }
 
@@ -416,7 +522,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       console.warn('Failed to send beacon update', error);
       return false;
     }
-  }, []);
+  }, [activeView]);
 
   useEffect(() => {
     return () => {
@@ -513,6 +619,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     setActiveQuestionId(derivedActiveId);
     activeQuestionIdRef.current = derivedActiveId;
     setActiveViewState(derivedActiveView);
+    pendingAnswersRef.current = {};
+    pendingUpdateRef.current = null;
   }, []);
 
   const startSession = useCallback(
@@ -572,13 +680,14 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         return;
       }
 
+      const normalised = normaliseAnswer(answerValue);
+
       setSessionQuestions(previous => {
         const updated = previous.map(question => {
           if (question.id !== questionId) {
             return question;
           }
 
-          const normalised = normaliseAnswer(answerValue);
           return {
             ...question,
             answer: normalised,
@@ -592,12 +701,17 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         return withState;
       });
 
-      const sanitizedQuestions = syncActiveSessionQuestions({
+      pendingAnswersRef.current = {
+        ...pendingAnswersRef.current,
+        [questionId]: normalised ?? null,
+      };
+
+      syncActiveSessionQuestions({
         activeQuestionId: activeQuestionIdRef.current,
         activeView,
       });
       enqueueUpdate({
-        data: { questions: sanitizedQuestions },
+        answers: { [questionId]: normalised ?? null },
         metadata: {
           activeQuestionId: activeQuestionIdRef.current,
           activeView,
@@ -796,6 +910,23 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
     try {
       await forceSave();
+      let attempts = 0;
+      while (
+        attempts < 2 &&
+        (pendingUpdateRef.current || Object.keys(pendingAnswersRef.current).length > 0)
+      ) {
+        attempts += 1;
+        const flushed = await forceSave();
+        if (!flushed) {
+          break;
+        }
+      }
+
+      if (pendingUpdateRef.current || Object.keys(pendingAnswersRef.current).length > 0) {
+        setError('Konnte Antworten nicht speichern. Bitte erneut versuchen, bevor du den Test abgibst.');
+        return null;
+      }
+
       const completion = await requestJson<CompletionSummary>(
         `/api/sessions/${session.id}/complete`,
         { method: 'POST' }

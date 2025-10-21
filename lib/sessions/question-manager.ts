@@ -1,5 +1,6 @@
 import { markQuestion, markQuestions } from './questions/question-marker';
 import type { Question, QuestionResult, UserAnswer } from './questions/question-types';
+import type { AnswerValue } from './types';
 
 export interface QuestionManagerState {
   questions: Question[];
@@ -129,7 +130,7 @@ export class QuestionManager {
 
   async submitAnswer(
     questionId: string,
-    answerValue: string | string[] | boolean,
+    answerValue: AnswerValue,
     timeSpent: number,
     hintsUsed: number
   ): Promise<QuestionResult> {
@@ -148,7 +149,12 @@ export class QuestionManager {
     };
 
     this.updateAnswer(payload);
-    const result = await markQuestion(question, payload);
+    const normalizedAnswer = answerValue === null ? '' : answerValue;
+
+    const result = await markQuestion(question, {
+      ...payload,
+      answer: normalizedAnswer,
+    });
     this.updateResult(result);
 
     return result;
@@ -157,7 +163,7 @@ export class QuestionManager {
   async submitAnswersBulk(
     answers: Array<{
       questionId: string;
-      answer: string | string[] | boolean;
+      answer: AnswerValue;
       timeSpent: number;
       hintsUsed: number;
     }>

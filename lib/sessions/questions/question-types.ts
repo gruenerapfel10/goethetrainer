@@ -119,13 +119,13 @@ export interface Question {
   teil?: number;
   order?: number;
   answered?: boolean;
-  answer?: string | string[] | boolean;
+  answer?: string | string[] | boolean | Record<string, string> | null;
   lastSubmittedAt?: string;
 }
 
 export interface UserAnswer {
   questionId: string;
-  answer: string | string[] | boolean;
+  answer: string | string[] | boolean | Record<string, string> | null;
   timeSpent: number; // in seconds
   attempts: number;
   hintsUsed: number;

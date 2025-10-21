@@ -1,81 +1,26 @@
 import 'server-only';
 
 import { adminDb } from '@/lib/firebase/admin';
-import type { 
-  Session, 
-  SessionStats, 
+import type {
+  Session,
+  SessionStats,
   SessionAnalytics,
-  SessionType 
+  SessionType,
 } from './types';
+import { sanitizeForFirestore } from './utils';
 
 const SESSIONS_COLLECTION = 'sessions';
-
-function normaliseFirestoreTimestamp(value: any): any {
-  if (value && typeof value === 'object') {
-    if (typeof (value as any).toDate === 'function') {
-      try {
-        return (value as any).toDate();
-      } catch {
-        // fall through
-      }
-    }
-
-    if ('seconds' in value && 'nanoseconds' in value) {
-      const seconds = Number((value as any).seconds);
-      const nanoseconds = Number((value as any).nanoseconds);
-
-      if (!Number.isNaN(seconds) && !Number.isNaN(nanoseconds)) {
-        return new Date(seconds * 1000 + nanoseconds / 1e6);
-      }
-    }
-  }
-  return value;
-}
-
-// Helper to remove undefined values and normalise timestamps
-function removeUndefinedValues(obj: any): any {
-  if (obj === null || obj === undefined) {
-    return null;
-  }
-
-  if (obj instanceof Date) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => removeUndefinedValues(item));
-  }
-
-  const normalisedTimestamp = normaliseFirestoreTimestamp(obj);
-  if (normalisedTimestamp instanceof Date) {
-    return normalisedTimestamp;
-  }
-
-  if (typeof obj === 'object' && obj.constructor === Object) {
-    const cleaned: any = {};
-    for (const key in obj) {
-      const value = obj[key];
-      if (value !== undefined) {
-        cleaned[key] = removeUndefinedValues(value);
-      }
-    }
-    return cleaned;
-  }
-
-  return obj;
-}
 
 // Save a new session
 export async function saveSession(session: Session): Promise<void> {
   try {
-    // Clean the session object to remove undefined values
-    const cleanedSession = removeUndefinedValues({
+    const cleanedSession = sanitizeForFirestore({
       ...session,
       startedAt: session.startedAt,
-      endedAt: session.endedAt || null,
-      updatedAt: new Date()
+      endedAt: session.endedAt ?? null,
+      updatedAt: new Date(),
     });
-    
+
     await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).set(cleanedSession);
   } catch (error) {
     console.error('Error saving session:', error);
@@ -107,12 +52,11 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
 // Update existing session
 export async function updateSession(session: Session): Promise<void> {
   try {
-    // Clean the session object to remove undefined values
-    const cleanedSession = removeUndefinedValues({
+    const cleanedSession = sanitizeForFirestore({
       ...session,
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
-    
+
     await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).update(cleanedSession);
   } catch (error) {
     console.error('Error updating session:', error);
