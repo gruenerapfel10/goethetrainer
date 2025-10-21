@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionManager } from '@/lib/sessions/session-manager';
+import { submitAnswerForSession } from '@/lib/sessions/session-service';
 
 export async function POST(
   request: Request,
@@ -27,21 +27,27 @@ export async function POST(
     }
 
     const { sessionId } = await context.params;
-    const manager = await getSessionManager(authSession.user.email, sessionId);
-
-    const result = await manager.submitAnswer(
-      questionId,
-      answer,
-      timeSpent,
-      hintsUsed
+    const result = await submitAnswerForSession(
+      sessionId,
+      authSession.user.email,
+      {
+        questionId,
+        answer,
+        timeSpent,
+        hintsUsed,
+      }
     );
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error submitting answer:', error);
+    const status =
+      typeof (error as any)?.statusCode === 'number'
+        ? (error as any).statusCode
+        : 500;
     return NextResponse.json(
       { error: 'Failed to submit answer' },
-      { status: 500 }
+      { status }
     );
   }
 }

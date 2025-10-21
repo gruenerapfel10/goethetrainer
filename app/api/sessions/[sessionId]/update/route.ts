@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionManager } from '@/lib/sessions/session-manager';
+import { updateSessionForUser } from '@/lib/sessions/session-service';
 import type { UpdateSessionInput } from '@/lib/sessions/types';
 
 export async function POST(
@@ -17,15 +17,22 @@ export async function POST(
     const { sessionId } = await context.params;
     const input = (await request.json().catch(() => ({}))) as UpdateSessionInput;
 
-    const manager = await getSessionManager(authSession.user.email, sessionId);
-    const updatedSession = await manager.updateSession(input);
+    const updatedSession = await updateSessionForUser(
+      sessionId,
+      authSession.user.email,
+      input
+    );
 
     return NextResponse.json(updatedSession);
   } catch (error) {
     console.error('Error updating session:', error);
+    const status =
+      typeof (error as any)?.statusCode === 'number'
+        ? (error as any).statusCode
+        : 500;
     return NextResponse.json(
       { error: 'Failed to update session' },
-      { status: 500 }
+      { status }
     );
   }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionManager } from '@/lib/sessions/session-manager';
+import { generateQuestionsForSession } from '@/lib/sessions/session-service';
 
 export async function POST(
   _request: Request,
@@ -13,15 +13,21 @@ export async function POST(
     }
 
     const { sessionId } = await context.params;
-    const manager = await getSessionManager(authSession.user.email, sessionId);
-    const questions = await manager.generateQuestions();
+    const questions = await generateQuestionsForSession(
+      sessionId,
+      authSession.user.email
+    );
 
     return NextResponse.json({ questions });
   } catch (error) {
     console.error('Error generating questions:', error);
+    const status =
+      typeof (error as any)?.statusCode === 'number'
+        ? (error as any).statusCode
+        : 500;
     return NextResponse.json(
       { error: 'Failed to generate questions' },
-      { status: 500 }
+      { status }
     );
   }
 }

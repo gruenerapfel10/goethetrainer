@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionManager } from '@/lib/sessions/session-manager';
+import { submitAnswersBulkForSession } from '@/lib/sessions/session-service';
 
 export async function POST(
   request: Request,
@@ -21,8 +21,6 @@ export async function POST(
     }
 
     const { sessionId } = await context.params;
-    const manager = await getSessionManager(authSession.user.email, sessionId);
-
     const preparedAnswers = Object.entries(answers).map(([questionId, answer]) => ({
       questionId,
       answer: answer as string | string[] | boolean,
@@ -30,7 +28,11 @@ export async function POST(
       hintsUsed: 0,
     }));
 
-    const results = await manager.submitAnswersBulk(preparedAnswers);
+    const results = await submitAnswersBulkForSession(
+      sessionId,
+      authSession.user.email,
+      preparedAnswers
+    );
 
     const totalQuestions = results.length;
     const correctAnswers = results.filter(r => r.isCorrect).length;
@@ -51,9 +53,13 @@ export async function POST(
     });
   } catch (error) {
     console.error('Error marking questions:', error);
+    const status =
+      typeof (error as any)?.statusCode === 'number'
+        ? (error as any).statusCode
+        : 500;
     return NextResponse.json(
       { error: 'Failed to mark questions', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
+      { status }
     );
   }
 }

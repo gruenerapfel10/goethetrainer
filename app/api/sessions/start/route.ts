@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { getSessionManager } from '@/lib/sessions/session-manager';
+import { createSession } from '@/lib/sessions/session-service';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 
 export async function POST(request: Request) {
@@ -20,8 +20,11 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const manager = await getSessionManager(session.user.email);
-    const newSession = await manager.createSession(type as SessionTypeEnum, metadata);
+    const newSession = await createSession(
+      session.user.email,
+      type as SessionTypeEnum,
+      metadata
+    );
 
     return NextResponse.json(newSession);
   } catch (error) {

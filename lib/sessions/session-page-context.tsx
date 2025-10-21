@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import { SessionTypeEnum, getSessionConfig } from './session-registry';
-import { useLearningSession } from './learning-session-context';
 import type { SessionConfig } from './session-registry';
 import './configs'; // Import to register all configs
 

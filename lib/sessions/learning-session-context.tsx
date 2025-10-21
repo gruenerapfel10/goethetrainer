@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-use-before-define */
 'use client';
 
 import {
@@ -19,26 +18,30 @@ import type {
 import type {
   Question,
   QuestionResult,
-  UserAnswer,
 } from './questions/question-types';
 import { QuestionTypeName } from './questions/question-registry';
-import { SessionTypeEnum } from './session-registry';
+import {
+  SessionTypeEnum,
+  getSupportedQuestionTypes as getSupportedQuestionTypesFromRegistry,
+} from './session-registry';
 
 export enum QuestionStatus {
-  GENERATING = 'generating',
   LOADED = 'loaded',
+  SAVING = 'saving',
   ERROR = 'error',
 }
 
 type TeilState = 'pending' | 'active' | 'completed';
 
+type AnswerValue = string | string[] | boolean | Record<string, string>;
+
 export interface SessionQuestion extends Question {
-  answer?: string | string[] | boolean;
+  answer?: AnswerValue | null;
   answered: boolean;
-  result?: QuestionResult;
-  isCurrent: boolean;
-  teilState: TeilState;
   status: QuestionStatus;
+  teilState: TeilState;
+  isCurrent: boolean;
+  result?: QuestionResult;
 }
 
 export interface CompletionSummary {
@@ -62,12 +65,13 @@ interface QuestionProgress {
   completedTeilCount: number;
 }
 
-interface LearningSessionContextType {
+interface LearningSessionContextValue {
   activeSession: Session | null;
   sessionQuestions: SessionQuestion[];
   currentQuestion: SessionQuestion | null;
   questionProgress: QuestionProgress;
   isLoading: boolean;
+  isSaving: boolean;
   isSubmitting: boolean;
   error: string | null;
   stats: SessionStats | null;
@@ -81,19 +85,19 @@ interface LearningSessionContextType {
   endSession: (status?: 'completed' | 'abandoned') => Promise<void>;
   submitAnswer: (
     questionId: string,
-    answer: string | string[] | boolean,
+    answer: AnswerValue,
     timeSpent?: number,
     hintsUsed?: number
   ) => Promise<QuestionResult | null>;
   submitTeilAnswers: (
-    answers: Record<string, string | string[] | boolean>,
+    answers: Record<string, AnswerValue>,
     teilNumber: number
   ) => Promise<void>;
   activateTeil: (teilNumber: number) => void;
   nextQuestion: () => void;
   previousQuestion: () => void;
   setActiveView: (view: 'fragen' | 'quelle') => void;
-  setQuestionAnswer: (questionId: string, answer: string | string[] | boolean) => void;
+  setQuestionAnswer: (questionId: string, answer: AnswerValue) => void;
   completeQuestions: () => Promise<CompletionSummary | null>;
   refreshStats: () => Promise<void>;
   clearError: () => void;
@@ -102,7 +106,132 @@ interface LearningSessionContextType {
   getSupportedQuestionTypes: () => QuestionTypeName[];
 }
 
-const LearningSessionContext = createContext<LearningSessionContextType | null>(null);
+const LearningSessionContext = createContext<LearningSessionContextValue | null>(null);
+
+const SAVE_DEBOUNCE_MS = 600;
+
+function hasAnswer(value: unknown): boolean {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+  return true;
+}
+
+function normaliseAnswer(
+  value: AnswerValue | null | undefined
+): AnswerValue | null {
+  if (value === undefined) {
+    return null;
+  }
+
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return { ...(value as Record<string, string>) };
+  }
+
+  return value;
+}
+
+function deriveActiveQuestionId(
+  questions: Question[],
+  preferredId?: string | null
+): string | null {
+  if (preferredId && questions.some(question => question.id === preferredId)) {
+    return preferredId;
+  }
+  const firstUnanswered = questions.find(question => !hasAnswer((question as any).answer));
+  if (firstUnanswered?.id) {
+    return firstUnanswered.id;
+  }
+  return questions[0]?.id ?? null;
+}
+
+function toSessionQuestion(
+  question: Question,
+  currentQuestionId: string | null
+): SessionQuestion {
+  const answer = normaliseAnswer((question as any).answer);
+  const result = (question as any).result as QuestionResult | undefined;
+  const answered = hasAnswer(answer);
+  const isCurrent = question.id === currentQuestionId;
+  const teilState: TeilState = isCurrent ? 'active' : answered ? 'completed' : 'pending';
+
+  return {
+    ...question,
+    answer,
+    answered,
+    result,
+    isCurrent,
+    teilState,
+    status: QuestionStatus.LOADED,
+  };
+}
+
+function withCurrentQuestionState(
+  questions: SessionQuestion[],
+  activeQuestionId: string | null
+): SessionQuestion[] {
+  return questions.map(question => {
+    const isCurrent = question.id === activeQuestionId;
+    return {
+      ...question,
+      isCurrent,
+      teilState: isCurrent ? 'active' : question.answered ? 'completed' : 'pending',
+    };
+  });
+}
+
+function stripQuestionForSave(question: SessionQuestion): Question {
+  const {
+    isCurrent,
+    teilState,
+    status,
+    result,
+    ...rest
+  } = question as any;
+
+  return {
+    ...rest,
+    answer: normaliseAnswer(rest.answer),
+  };
+}
+
+function cloneQuestionsForSession(questions: Question[]): Question[] {
+  return questions.map(question => ({
+    ...question,
+    options: Array.isArray(question.options)
+      ? question.options.map(option => ({ ...option }))
+      : question.options,
+    gaps: Array.isArray(question.gaps)
+      ? question.gaps.map(gap => ({
+          ...gap,
+          options: Array.isArray(gap.options) ? [...gap.options] : gap.options,
+        }))
+      : question.gaps,
+    answer: Array.isArray(question.answer)
+      ? [...question.answer]
+      : question.answer && typeof question.answer === 'object'
+        ? { ...(question.answer as Record<string, string>) }
+        : question.answer,
+  })) as Question[];
+}
+
+async function requestJson<TResponse>(
+  input: RequestInfo,
+  init?: RequestInit
+): Promise<TResponse> {
+  const response = await fetch(input, init);
+  if (!response.ok) {
+    const details = await response.text().catch(() => '');
+    throw new Error(details || response.statusText || 'Request failed');
+  }
+  return (await response.json()) as TResponse;
+}
 
 export function LearningSessionProvider({ children }: { children: React.ReactNode }) {
   const [activeSession, setActiveSession] = useState<Session | null>(null);
@@ -110,32 +239,218 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [activeView, setActiveViewState] = useState<'fragen' | 'quelle'>('fragen');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [latestResults, setLatestResults] = useState<CompletionSummary | null>(null);
 
   const activeSessionRef = useRef<Session | null>(null);
-const sessionQuestionsRef = useRef<SessionQuestion[]>([]);
-const answersRef = useRef<Map<string, UserAnswer>>(new Map());
-const resultsRef = useRef<Map<string, QuestionResult>>(new Map());
-const sessionVersionRef = useRef<number>(0);
-const sessionHydratedRef = useRef<boolean>(false);
-const dirtyRef = useRef<boolean>(false);
-const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const questionsRef = useRef<SessionQuestion[]>([]);
+  const activeQuestionIdRef = useRef<string | null>(null);
+  const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
+  const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const isFlushingRef = useRef(false);
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
   }, [activeSession]);
 
   useEffect(() => {
-    sessionQuestionsRef.current = sessionQuestions;
+    questionsRef.current = sessionQuestions;
   }, [sessionQuestions]);
 
-  const currentQuestion = useMemo(
-    () => sessionQuestions.find(question => question.isCurrent) ?? null,
-    [sessionQuestions]
+  useEffect(() => {
+    activeQuestionIdRef.current = activeQuestionId;
+  }, [activeQuestionId]);
+
+  const clearError = useCallback(() => setError(null), []);
+  const clearResults = useCallback(() => setLatestResults(null), []);
+
+  const flushPendingUpdates = useCallback(async () => {
+    if (isFlushingRef.current) {
+      return;
+    }
+    const session = activeSessionRef.current;
+    const payload = pendingUpdateRef.current;
+    if (!session || !payload) {
+      return;
+    }
+
+    pendingUpdateRef.current = null;
+    isFlushingRef.current = true;
+    if (isMountedRef.current) {
+      setIsSaving(true);
+    }
+    try {
+      const updatedSession = await requestJson<Session>(
+        `/api/sessions/${session.id}/update`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (isMountedRef.current) {
+        setActiveSession(updatedSession);
+      }
+      activeSessionRef.current = updatedSession;
+    } catch (err) {
+      console.error('Failed to persist session', err);
+      if (isMountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to save session');
+      }
+    } finally {
+      isFlushingRef.current = false;
+      if (isMountedRef.current) {
+        setIsSaving(false);
+      }
+    }
+  }, []);
+
+  const syncActiveSessionQuestions = useCallback((metadata?: Record<string, any>) => {
+    const sanitizedQuestions = questionsRef.current.map(stripQuestionForSave);
+
+    const session = activeSessionRef.current;
+    if (!session) {
+      return sanitizedQuestions;
+    }
+
+    const nextSession: Session = {
+      ...session,
+      metadata: {
+        ...(session.metadata ?? {}),
+        ...(metadata ?? {}),
+      },
+      data: {
+        ...session.data,
+        questions: cloneQuestionsForSession(sanitizedQuestions),
+      },
+    };
+
+    activeSessionRef.current = nextSession;
+    setActiveSession(nextSession);
+
+    return sanitizedQuestions;
+  }, []);
+
+  const updateSessionMetadata = useCallback((metadata: Record<string, any>) => {
+    const session = activeSessionRef.current;
+    if (!session) {
+      return;
+    }
+
+    const nextSession: Session = {
+      ...session,
+      metadata: {
+        ...(session.metadata ?? {}),
+        ...metadata,
+      },
+    };
+
+    activeSessionRef.current = nextSession;
+    setActiveSession(nextSession);
+  }, []);
+
+  const enqueueUpdate = useCallback(
+    (update: UpdateSessionInput) => {
+      const existing = pendingUpdateRef.current;
+      pendingUpdateRef.current = {
+        data: {
+          ...(existing?.data ?? {}),
+          ...(update.data ?? {}),
+        },
+        metadata: {
+          ...(existing?.metadata ?? {}),
+          ...(update.metadata ?? {}),
+        },
+        status: update.status ?? existing?.status,
+        duration: update.duration ?? existing?.duration,
+      };
+
+      if (flushTimerRef.current) {
+        clearTimeout(flushTimerRef.current);
+      }
+
+      flushTimerRef.current = setTimeout(() => {
+        flushTimerRef.current = null;
+        void flushPendingUpdates();
+      }, SAVE_DEBOUNCE_MS);
+    },
+    [flushPendingUpdates]
   );
+
+  const forceSave = useCallback(async () => {
+    if (flushTimerRef.current) {
+      clearTimeout(flushTimerRef.current);
+      flushTimerRef.current = null;
+    }
+    await flushPendingUpdates();
+  }, [flushPendingUpdates]);
+
+  const sendBeaconForPendingUpdates = useCallback(() => {
+    const session = activeSessionRef.current;
+    const payload = pendingUpdateRef.current;
+    if (!session || !payload || typeof navigator === 'undefined' || !navigator.sendBeacon) {
+      return false;
+    }
+
+    try {
+      const url = `/api/sessions/${session.id}/update`;
+      const blob = new Blob([JSON.stringify(payload)], {
+        type: 'application/json',
+      });
+      const sent = navigator.sendBeacon(url, blob);
+      if (sent) {
+        if (flushTimerRef.current) {
+          clearTimeout(flushTimerRef.current);
+          flushTimerRef.current = null;
+        }
+        pendingUpdateRef.current = null;
+      }
+      return sent;
+    } catch (error) {
+      console.warn('Failed to send beacon update', error);
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (pendingUpdateRef.current) {
+        void flushPendingUpdates();
+      }
+    };
+  }, [flushPendingUpdates]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        const sent = sendBeaconForPendingUpdates();
+        if (!sent) {
+          void forceSave();
+        }
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      const sent = sendBeaconForPendingUpdates();
+      if (!sent) {
+        void forceSave();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [forceSave, sendBeaconForPendingUpdates]);
 
   const questionProgress = useMemo<QuestionProgress>(() => {
     const total = sessionQuestions.length;
@@ -144,7 +459,7 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const completedTeils = new Set(
       sessionQuestions
         .filter(question => question.teilState === 'completed')
-        .map(question => normaliseTeil(question.teil))
+        .map(question => question.teil ?? 1)
     );
 
     return {
@@ -155,255 +470,66 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     };
   }, [sessionQuestions]);
 
-  const applySessionDoc = useCallback(
-    (session: Session, preferredQuestionId?: string | null) => {
-      const rawQuestions = Array.isArray(session.data?.questions)
-        ? (session.data?.questions as Question[])
-        : [];
-      const rawAnswers = normalizeAnswers(session.data?.answers ?? []);
-      const rawResults = normalizeResults(session.data?.results ?? []);
-
-      answersRef.current = new Map(rawAnswers.map(answer => [answer.questionId, answer]));
-      resultsRef.current = new Map(rawResults.map(result => [result.questionId, result]));
-
-      const { questions, activeQuestionId: derivedActiveId } = deriveSessionView(
-        rawQuestions,
-        rawAnswers,
-        rawResults,
-        preferredQuestionId ??
-          session.metadata?.uiState?.activeQuestionId ??
-          session.metadata?.uiState?.lastViewedQuestionId ??
-          null
-      );
-
-      sessionVersionRef.current = session.metadata?.uiState?.currentVersion ?? 0;
-      sessionHydratedRef.current = true;
-      dirtyRef.current = false;
-      if (autoFlushTimeoutRef.current) {
-        clearTimeout(autoFlushTimeoutRef.current);
-        autoFlushTimeoutRef.current = null;
-      }
-
-      setActiveSession(session);
-      setSessionQuestions(questions);
-      setActiveQuestionId(derivedActiveId);
-      setActiveViewState(detectActiveView(session.metadata?.uiState));
-    },
-    []
-  );
-
-  const fetchAndApplySession = useCallback(
-    async (sessionId: string, preferredQuestionId?: string | null) => {
-      const session = await requestJson<Session>(
-        `/api/sessions/${sessionId}`,
-        { cache: 'no-store' }
-      );
-
-      const firstQuestionId =
-        session.data?.questions && Array.isArray(session.data.questions)
-          ? (session.data.questions[0] as Question | undefined)?.id ?? null
-          : null;
-
-      const preferred =
-        preferredQuestionId ??
-        session.metadata?.uiState?.activeQuestionId ??
-        session.metadata?.uiState?.lastViewedQuestionId ??
-        sessionQuestionsRef.current[0]?.id ??
-        firstQuestionId;
-
-      applySessionDoc(session, preferred);
-      return session;
-    },
-    [applySessionDoc]
-  );
-
-  const sendSessionUpdate = useCallback(
-    async (
-      update: UpdateSessionInput,
-      options: { transport?: 'fetch' | 'beacon'; preferredQuestionId?: string | null } = {}
-    ): Promise<Session | null> => {
-      const session = activeSessionRef.current;
-      if (!session) {
-        return null;
-      }
-
-      if (!sessionHydratedRef.current) {
-        return null;
-      }
-
-      const questionsSnapshot = sessionQuestionsRef.current;
-      const targetQuestionId =
-        options.preferredQuestionId ??
-        update.metadata?.uiState?.activeQuestionId ??
-        activeQuestionId ??
-        questionsSnapshot[0]?.id ??
-        null;
-      const viewOverride = update.metadata?.uiState?.activeView ?? activeView;
-      const nextVersion = sessionVersionRef.current + 1;
-      const uiState = {
-        ...buildUiState(questionsSnapshot, targetQuestionId, viewOverride, nextVersion),
-        ...(update.metadata?.uiState ?? {}),
-        currentVersion: nextVersion,
-      };
-
-      const payload: UpdateSessionInput = {
-        ...update,
-        data: update.data ?? {},
-        metadata: {
-          ...(update.metadata ?? {}),
-          uiState,
-        },
-      };
-
-      const body = JSON.stringify(payload);
-      const endpoint = `/api/sessions/${session.id}/update`;
-
-      if (options.transport === 'beacon' && typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        const success = navigator.sendBeacon(
-          endpoint,
-          new Blob([body], { type: 'application/json' })
-        );
-        if (success) {
-          sessionVersionRef.current = nextVersion;
-          dirtyRef.current = false;
-        }
-        return null;
-      }
-
-      const updatedSession = await requestJson<Session>(endpoint, {
-        method: 'POST',
-        body,
-      });
-
-      sessionVersionRef.current =
-        updatedSession.metadata?.uiState?.currentVersion ?? nextVersion;
-      applySessionDoc(updatedSession, targetQuestionId);
-      dirtyRef.current = false;
-      return updatedSession;
-    },
-    [activeQuestionId, activeView, applySessionDoc]
-  );
-
-  const flushPendingSession = useCallback(
-    async (transport: 'fetch' | 'beacon' = 'fetch') => {
-      if (!sessionHydratedRef.current || !dirtyRef.current || !activeSessionRef.current) {
-        return null;
-      }
-
-      if (autoFlushTimeoutRef.current) {
-        clearTimeout(autoFlushTimeoutRef.current);
-        autoFlushTimeoutRef.current = null;
-      }
-
-      const questionsSnapshot = sessionQuestionsRef.current;
-      if (questionsSnapshot.length === 0) {
-        return null;
-      }
-
-      const answersPayload = buildAnswerPayload(questionsSnapshot, answersRef.current);
-
-      return sendSessionUpdate(
-        {
-          data: { answers: answersPayload },
-          metadata: { uiState: { activeQuestionId, activeView } },
-        },
-        { transport, preferredQuestionId: activeQuestionId }
-      );
-    },
-    [activeQuestionId, activeView, sendSessionUpdate]
-  );
-
-  const scheduleFlush = useCallback(
-    (delay = 500) => {
-      if (!sessionHydratedRef.current) {
-        return;
-      }
-
-      if (autoFlushTimeoutRef.current) {
-        clearTimeout(autoFlushTimeoutRef.current);
-      }
-
-      autoFlushTimeoutRef.current = setTimeout(() => {
-        autoFlushTimeoutRef.current = null;
-        void flushPendingSession('fetch');
-      }, delay);
-    },
-    [flushPendingSession]
+  const currentQuestion = useMemo(
+    () => sessionQuestions.find(question => question.isCurrent) ?? null,
+    [sessionQuestions]
   );
 
   const refreshStats = useCallback(async () => {
     try {
-      const data = await requestJson<SessionStats>('/api/sessions/stats', {
-        cache: 'no-store',
-      });
-      setStats(data);
+      const result = await requestJson<SessionStats>('/api/sessions/stats');
+      setStats(result);
     } catch (err) {
-      console.error('Failed to refresh stats', err);
+      console.warn('Failed to refresh session stats', err);
     }
   }, []);
 
-  const resetState = useCallback(() => {
-    if (autoFlushTimeoutRef.current) {
-      clearTimeout(autoFlushTimeoutRef.current);
-      autoFlushTimeoutRef.current = null;
-    }
-    setActiveSession(null);
-    setSessionQuestions([]);
-    setActiveQuestionId(null);
-    setLatestResults(null);
-    answersRef.current = new Map();
-    resultsRef.current = new Map();
-    sessionQuestionsRef.current = [];
-    sessionVersionRef.current = 0;
-    sessionHydratedRef.current = false;
-    dirtyRef.current = false;
+  useEffect(() => {
+    void refreshStats();
+  }, [refreshStats]);
+
+  const buildSessionState = useCallback((session: Session) => {
+    const questions = Array.isArray(session.data?.questions)
+      ? (session.data.questions as Question[])
+      : [];
+
+    const derivedActiveView =
+      session.metadata?.activeView === 'quelle' ? 'quelle' : 'fragen';
+    const derivedActiveId = deriveActiveQuestionId(
+      questions,
+      session.metadata?.activeQuestionId
+    );
+
+    const statefulQuestions = withCurrentQuestionState(
+      questions.map(question => toSessionQuestion(question, derivedActiveId)),
+      derivedActiveId
+    );
+
+    setActiveSession(session);
+    activeSessionRef.current = session;
+    setSessionQuestions(statefulQuestions);
+    questionsRef.current = statefulQuestions;
+    setActiveQuestionId(derivedActiveId);
+    activeQuestionIdRef.current = derivedActiveId;
+    setActiveViewState(derivedActiveView);
   }, []);
-
-  const initializeSession = useCallback(
-    async (sessionId: string): Promise<Session | null> => {
-      setIsLoading(true);
-      setError(null);
-      setLatestResults(null);
-
-      try {
-        const session = await fetchAndApplySession(sessionId);
-        await refreshStats();
-        return session;
-      } catch (err) {
-        console.error('Failed to initialize session', err);
-        setError(err instanceof Error ? err.message : 'Failed to load session');
-        return null;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [fetchAndApplySession, refreshStats]
-  );
 
   const startSession = useCallback(
-    async (type: SessionType | SessionTypeEnum, metadata?: Record<string, any>) => {
+    async (
+      type: SessionType | SessionTypeEnum,
+      metadata?: Record<string, any>
+    ) => {
       setIsLoading(true);
       setError(null);
-      setLatestResults(null);
-
       try {
-        if (activeSessionRef.current) {
-          await requestJson(`/api/sessions/${activeSessionRef.current.id}/end`, {
-            method: 'POST',
-            body: JSON.stringify({ status: 'abandoned' }),
-          });
-        }
-
-        resetState();
-
         const session = await requestJson<Session>('/api/sessions/start', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type, metadata }),
         });
 
-        await requestJson(`/api/sessions/${session.id}/generate`, { method: 'POST' });
-        await fetchAndApplySession(session.id);
-        await refreshStats();
+        buildSessionState(session);
+        setLatestResults(null);
         return session;
       } catch (err) {
         console.error('Failed to start session', err);
@@ -413,194 +539,100 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         setIsLoading(false);
       }
     },
-    [fetchAndApplySession, refreshStats, resetState]
+    [buildSessionState]
   );
 
-  const endSession = useCallback(
-    async (status: 'completed' | 'abandoned' = 'completed') => {
-      if (!activeSessionRef.current) {
-        return;
-      }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await flushPendingSession('fetch');
-      await requestJson(`/api/sessions/${activeSessionRef.current.id}/end`, {
-        method: 'POST',
-        body: JSON.stringify({ status }),
-      });
-      resetState();
-        await refreshStats();
+  const initializeSession = useCallback(
+    async (sessionId: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const session = await requestJson<Session>(`/api/sessions/${sessionId}`, {
+          cache: 'no-store',
+        });
+        buildSessionState(session);
+        setLatestResults(null);
+        return session;
       } catch (err) {
-        console.error('Failed to end session', err);
-        setError(err instanceof Error ? err.message : 'Failed to end session');
+        console.error('Failed to load session', err);
+        setError(err instanceof Error ? err.message : 'Failed to load session');
+        return null;
       } finally {
         setIsLoading(false);
       }
     },
-    [flushPendingSession, refreshStats, resetState]
-  );
-
-  const submitAnswer = useCallback(
-    async (
-      questionId: string,
-      answer: string | string[] | boolean,
-      timeSpent: number = 0,
-      hintsUsed: number = 0
-    ): Promise<QuestionResult | null> => {
-      if (!activeSessionRef.current) {
-        setError('No active session');
-        return null;
-      }
-
-      setIsSubmitting(true);
-      setError(null);
-
-      try {
-        const result = await requestJson<QuestionResult>(
-          `/api/sessions/${activeSessionRef.current.id}/answer`,
-          {
-            method: 'POST',
-            body: JSON.stringify({ questionId, answer, timeSpent, hintsUsed }),
-          }
-        );
-
-        await fetchAndApplySession(activeSessionRef.current.id, questionId);
-        return result;
-      } catch (err) {
-        console.error('Failed to submit answer', err);
-        setError(err instanceof Error ? err.message : 'Failed to submit answer');
-        return null;
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [fetchAndApplySession]
+    [buildSessionState]
   );
 
   const setQuestionAnswer = useCallback(
-    (questionId: string, answer: string | string[] | boolean) => {
-      if (!activeSessionRef.current || !sessionHydratedRef.current) {
+    (questionId: string, answerValue: AnswerValue) => {
+      const session = activeSessionRef.current;
+      if (!session) {
         return;
       }
 
-      const previousQuestions = sessionQuestionsRef.current;
-      const targetQuestion = previousQuestions.find(question => question.id === questionId);
-      if (targetQuestion && answersEqual(targetQuestion.answer, answer)) {
-        return;
-      }
-      const updated = previousQuestions.map(question =>
-        question.id === questionId
-          ? { ...question, answer, answered: true }
-          : question
-      );
-      const { questions } = updateQuestionsFocus(
-        updated,
-        activeQuestionId ?? questionId
-      );
-
-      sessionQuestionsRef.current = questions;
-    setSessionQuestions(questions);
-    setActiveQuestionId(activeQuestionId ?? questionId);
-
-    const existing = answersRef.current.get(questionId);
-    answersRef.current.set(questionId, {
-        questionId,
-        answer,
-        attempts: existing?.attempts ?? 1,
-        hintsUsed: existing?.hintsUsed ?? 0,
-        timeSpent: existing?.timeSpent ?? 0,
-      timestamp: new Date(),
-    });
-    dirtyRef.current = true;
-    scheduleFlush();
-  },
-    [activeQuestionId, scheduleFlush]
-  );
-
-  const submitTeilAnswers = useCallback(
-    async (
-      answers: Record<string, string | string[] | boolean>,
-      _teilNumber: number
-    ) => {
-      if (!activeSessionRef.current) {
-        setError('No active session');
-        return;
-      }
-
-      setIsSubmitting(true);
-      setError(null);
-
-      try {
-        const previousQuestions = sessionQuestionsRef.current;
-        const updated = previousQuestions.map(question => {
-          if (answers[question.id] !== undefined) {
-            return { ...question, answer: answers[question.id], answered: true };
+      setSessionQuestions(previous => {
+        const updated = previous.map(question => {
+          if (question.id !== questionId) {
+            return question;
           }
-          return question;
+
+          const normalised = normaliseAnswer(answerValue);
+          return {
+            ...question,
+            answer: normalised,
+            answered: hasAnswer(normalised),
+            result: undefined,
+          };
         });
 
-        const { questions } = updateQuestionsFocus(updated, activeQuestionId);
-        sessionQuestionsRef.current = questions;
-        setSessionQuestions(questions);
+        const withState = withCurrentQuestionState(updated, activeQuestionIdRef.current);
+        questionsRef.current = withState;
+        return withState;
+      });
 
-        Object.entries(answers).forEach(([questionId, value]) => {
-          answersRef.current.set(questionId, {
-            questionId,
-            answer: value,
-            attempts: 1,
-            hintsUsed: 0,
-            timeSpent: 0,
-            timestamp: new Date(),
-          });
-        });
-
-        dirtyRef.current = true;
-        scheduleFlush();
-      } catch (err) {
-        console.error('Failed to submit Teil answers', err);
-        setError(err instanceof Error ? err.message : 'Failed to submit answers');
-      } finally {
-        setIsSubmitting(false);
-      }
+      const sanitizedQuestions = syncActiveSessionQuestions({
+        activeQuestionId: activeQuestionIdRef.current,
+        activeView,
+      });
+      enqueueUpdate({
+        data: { questions: sanitizedQuestions },
+        metadata: {
+          activeQuestionId: activeQuestionIdRef.current,
+          activeView,
+        },
+      });
     },
-    [activeQuestionId, scheduleFlush]
+    [activeView, enqueueUpdate, syncActiveSessionQuestions]
   );
 
-  const moveToQuestion = useCallback(
-    (questionId: string | null) => {
-      if (!questionId || !sessionHydratedRef.current) {
-        return;
-      }
-
-      const previousQuestions = sessionQuestionsRef.current;
-      const { questions } = updateQuestionsFocus(previousQuestions, questionId);
-
-      sessionQuestionsRef.current = questions;
-      setSessionQuestions(questions);
-      setActiveQuestionId(questionId);
-      dirtyRef.current = true;
-      scheduleFlush();
-    },
-    [scheduleFlush]
-  );
-
-  const activateTeil = useCallback(
-    (teilNumber: number) => {
-      const target = sessionQuestionsRef.current.find(
-        question => normaliseTeil(question.teil) === teilNumber
+  const updateActiveQuestion = useCallback(
+    (nextQuestionId: string | null) => {
+      setActiveQuestionId(nextQuestionId);
+      const updated = withCurrentQuestionState(
+        questionsRef.current,
+        nextQuestionId
       );
-      if (target) {
-        moveToQuestion(target.id);
-      }
+      questionsRef.current = updated;
+      setSessionQuestions(updated);
+
+      updateSessionMetadata({
+        activeQuestionId: nextQuestionId,
+        activeView,
+      });
+
+      enqueueUpdate({
+        metadata: {
+          activeQuestionId: nextQuestionId,
+          activeView,
+        },
+      });
     },
-    [moveToQuestion]
+    [activeView, enqueueUpdate, updateSessionMetadata]
   );
 
   const nextQuestion = useCallback(() => {
-    const questions = sessionQuestionsRef.current;
+    const questions = questionsRef.current;
     if (!questions.length) {
       return;
     }
@@ -611,11 +643,13 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         ? questions[currentIndex + 1]
         : questions[Math.max(currentIndex, 0)];
 
-    moveToQuestion(target?.id ?? null);
-  }, [moveToQuestion]);
+    if (target) {
+      updateActiveQuestion(target.id);
+    }
+  }, [updateActiveQuestion]);
 
   const previousQuestion = useCallback(() => {
-    const questions = sessionQuestionsRef.current;
+    const questions = questionsRef.current;
     if (!questions.length) {
       return;
     }
@@ -624,8 +658,23 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const target =
       currentIndex > 0 ? questions[currentIndex - 1] : questions[Math.max(currentIndex, 0)];
 
-    moveToQuestion(target?.id ?? null);
-  }, [moveToQuestion]);
+    if (target) {
+      updateActiveQuestion(target.id);
+    }
+  }, [updateActiveQuestion]);
+
+  const activateTeil = useCallback(
+    (teilNumber: number) => {
+      const questions = questionsRef.current;
+      const target = questions.find(
+        question => (question.teil ?? 1) === teilNumber
+      );
+      if (target) {
+        updateActiveQuestion(target.id);
+      }
+    },
+    [updateActiveQuestion]
+  );
 
   const setActiveView = useCallback(
     (view: 'fragen' | 'quelle') => {
@@ -633,17 +682,137 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         return;
       }
       setActiveViewState(view);
-      if (!sessionHydratedRef.current) {
+      updateSessionMetadata({
+        activeView: view,
+        activeQuestionId: activeQuestionIdRef.current,
+      });
+
+      enqueueUpdate({
+        metadata: {
+          activeView: view,
+          activeQuestionId: activeQuestionIdRef.current,
+        },
+      });
+    },
+    [activeView, enqueueUpdate, updateSessionMetadata]
+  );
+
+  const submitAnswer = useCallback(
+    async (
+      questionId: string,
+      answerValue: AnswerValue,
+      timeSpent: number = 0,
+      hintsUsed: number = 0
+    ) => {
+      const session = activeSessionRef.current;
+      if (!session) {
+        setError('No active session');
+        return null;
+      }
+
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        const result = await requestJson<QuestionResult>(
+          `/api/sessions/${session.id}/answer`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              questionId,
+              answer: answerValue,
+              timeSpent,
+              hintsUsed,
+            }),
+          }
+        );
+
+        setSessionQuestions(previous => {
+          const next = previous.map(question =>
+            question.id === questionId
+              ? {
+                  ...question,
+                  answer: normaliseAnswer(answerValue),
+                  answered: true,
+                  result,
+                }
+              : question
+          );
+          questionsRef.current = next;
+          return next;
+        });
+
+        syncActiveSessionQuestions();
+
+        void forceSave();
+        return result;
+      } catch (err) {
+        console.error('Failed to submit answer', err);
+        setError(err instanceof Error ? err.message : 'Failed to submit answer');
+        return null;
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [forceSave, syncActiveSessionQuestions]
+  );
+
+  const submitTeilAnswers = useCallback(
+    async (answers: Record<string, AnswerValue>) => {
+      const session = activeSessionRef.current;
+      if (!session) {
+        setError('No active session');
         return;
       }
-      dirtyRef.current = true;
-      scheduleFlush();
+
+      setIsSubmitting(true);
+      setError(null);
+      try {
+        Object.entries(answers).forEach(([questionId, value]) => {
+          setQuestionAnswer(questionId, value);
+        });
+
+        await forceSave();
+
+        const response = await requestJson<{
+          results: QuestionResult[];
+        }>(`/api/sessions/${session.id}/mark`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers }),
+        });
+
+        setSessionQuestions(previous => {
+          const next = previous.map(question => {
+            const result = response.results.find(
+              item => item.questionId === question.id
+            );
+            if (!result) {
+              return question;
+            }
+            return {
+              ...question,
+              answered: true,
+              result,
+            };
+          });
+          questionsRef.current = next;
+          return next;
+        });
+        syncActiveSessionQuestions();
+      } catch (err) {
+        console.error('Failed to submit Teil answers', err);
+        setError(err instanceof Error ? err.message : 'Failed to submit answers');
+      } finally {
+        setIsSubmitting(false);
+      }
     },
-    [activeView, scheduleFlush]
+    [forceSave, setQuestionAnswer, syncActiveSessionQuestions]
   );
 
   const completeQuestions = useCallback(async (): Promise<CompletionSummary | null> => {
-    if (!activeSessionRef.current) {
+    const session = activeSessionRef.current;
+    if (!session) {
       setError('No active session');
       return null;
     }
@@ -652,96 +821,95 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     setError(null);
 
     try {
-      await flushPendingSession('fetch');
-
-      const results = await requestJson<CompletionSummary>(
-        `/api/sessions/${activeSessionRef.current.id}/complete`,
+      await forceSave();
+      const completion = await requestJson<CompletionSummary>(
+        `/api/sessions/${session.id}/complete`,
         { method: 'POST' }
       );
 
-      setLatestResults(results);
-      await fetchAndApplySession(activeSessionRef.current.id);
-      await refreshStats();
-      return results;
+      setLatestResults(completion);
+      setSessionQuestions(previous => {
+        const next = previous.map(question => {
+          const result = completion.results.find(
+            entry => entry.questionId === question.id
+          );
+          if (!result) {
+            return {
+              ...question,
+              answered: true,
+            };
+          }
+          return {
+            ...question,
+            answer: normaliseAnswer(result.userAnswer.answer),
+            answered: true,
+            result,
+          };
+        });
+        questionsRef.current = next;
+        return next;
+      });
+      syncActiveSessionQuestions();
+
+      return completion;
     } catch (err) {
-      console.error('Failed to complete session', err);
-      setError(err instanceof Error ? err.message : 'Failed to complete session');
+      console.error('Failed to complete questions', err);
+      setError(err instanceof Error ? err.message : 'Failed to complete questions');
       return null;
     } finally {
       setIsSubmitting(false);
     }
-  }, [fetchAndApplySession, flushPendingSession, refreshStats]);
+  }, [forceSave, syncActiveSessionQuestions]);
 
-  const getQuestionResults = useCallback(
-    () => sessionQuestions.map(question => question.result).filter(Boolean) as QuestionResult[],
-    [sessionQuestions]
+  const endSession = useCallback(
+    async (status: 'completed' | 'abandoned' = 'completed') => {
+      const session = activeSessionRef.current;
+      if (!session) {
+        return;
+      }
+
+      try {
+        await forceSave();
+        const updated = await requestJson<Session>(
+          `/api/sessions/${session.id}/end`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          }
+        );
+
+        setActiveSession(updated);
+        activeSessionRef.current = updated;
+      } catch (err) {
+        console.error('Failed to end session', err);
+        setError(err instanceof Error ? err.message : 'Failed to end session');
+      }
+    },
+    [forceSave]
   );
 
-  const getSupportedQuestionTypes = useCallback((): QuestionTypeName[] => {
-    return Array.from(
-      new Set(
-        sessionQuestions
-          .map(question => question.registryType)
-          .filter((type): type is QuestionTypeName => typeof type === 'string')
-      )
-    );
+  const getQuestionResults = useCallback((): QuestionResult[] => {
+    return sessionQuestions
+      .map(question => question.result)
+      .filter((result): result is QuestionResult => !!result);
   }, [sessionQuestions]);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  const clearResults = useCallback(() => {
-    setLatestResults(null);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
+  const getSupportedQuestionTypes = useCallback((): QuestionTypeName[] => {
+    if (!activeSession) {
+      return [];
     }
+    return getSupportedQuestionTypesFromRegistry(activeSession.type as SessionTypeEnum);
+  }, [activeSession]);
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        void flushPendingSession('beacon');
-      }
-    };
-
-    const handlePageHide = () => {
-      void flushPendingSession('beacon');
-    };
-
-    const handleBeforeUnload = () => {
-      void flushPendingSession('beacon');
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pagehide', handlePageHide);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pagehide', handlePageHide);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [flushPendingSession]);
-
-  useEffect(() => {
-    return () => {
-      if (autoFlushTimeoutRef.current) {
-        clearTimeout(autoFlushTimeoutRef.current);
-        autoFlushTimeoutRef.current = null;
-      }
-      void flushPendingSession('beacon');
-    };
-  }, [flushPendingSession]);
-
-  const value = useMemo<LearningSessionContextType>(
+  const value = useMemo<LearningSessionContextValue>(
     () => ({
       activeSession,
       sessionQuestions,
       currentQuestion,
       questionProgress,
       isLoading,
+      isSaving,
       isSubmitting,
       error,
       stats,
@@ -766,30 +934,32 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     }),
     [
       activeSession,
-      activeView,
-      clearError,
-      clearResults,
-      completeQuestions,
+      sessionQuestions,
       currentQuestion,
-      endSession,
-      error,
-      getQuestionResults,
-      getSupportedQuestionTypes,
-      initializeSession,
-      isLoading,
-      isSubmitting,
-      latestResults,
-      nextQuestion,
-      previousQuestion,
       questionProgress,
-      refreshStats,
-      setActiveView,
-      setQuestionAnswer,
-      startSession,
+      isLoading,
+      isSaving,
+      isSubmitting,
+      error,
       stats,
+      activeView,
+      latestResults,
+      startSession,
+      initializeSession,
+      endSession,
       submitAnswer,
       submitTeilAnswers,
       activateTeil,
+      nextQuestion,
+      previousQuestion,
+      setActiveView,
+      setQuestionAnswer,
+      completeQuestions,
+      refreshStats,
+      clearError,
+      clearResults,
+      getQuestionResults,
+      getSupportedQuestionTypes,
     ]
   );
 
@@ -800,242 +970,10 @@ const autoFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   );
 }
 
-export function useLearningSession(): LearningSessionContextType {
+export function useLearningSession(): LearningSessionContextValue {
   const context = useContext(LearningSessionContext);
   if (!context) {
     throw new Error('useLearningSession must be used within LearningSessionProvider');
   }
   return context;
-}
-
-function normalizeTimestamp(value: any): string {
-  if (value instanceof Date) {
-    return value.toISOString();
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (value && typeof value.toDate === 'function') {
-    try {
-      return value.toDate().toISOString();
-    } catch {
-      // fall through
-    }
-  }
-  return new Date().toISOString();
-}
-
-async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-    cache: init.cache ?? 'no-store',
-  });
-
-  if (!response.ok) {
-    let message = 'Request failed';
-    try {
-      const data = await response.json();
-      if (data?.error) {
-        message = data.error;
-      }
-    } catch {
-      // ignore
-    }
-    throw new Error(message);
-  }
-
-  return response.json() as Promise<T>;
-}
-
-function normaliseTeil(value?: number | null): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return 1;
-  }
-  return value;
-}
-
-function normalizeAnswers(answers: any[]): UserAnswer[] {
-  return answers.map(answer => ({
-    ...answer,
-    timestamp:
-      answer?.timestamp instanceof Date
-        ? answer.timestamp
-        : new Date(answer?.timestamp ?? Date.now()),
-  }));
-}
-
-function normalizeResults(results: any[]): QuestionResult[] {
-  return results.map(result => ({
-    ...result,
-    userAnswer: result.userAnswer
-      ? {
-          ...result.userAnswer,
-          timestamp:
-            result.userAnswer.timestamp instanceof Date
-              ? result.userAnswer.timestamp
-              : new Date(result.userAnswer.timestamp ?? Date.now()),
-        }
-      : undefined,
-  }));
-}
-
-function deriveSessionView(
-  questions: Question[],
-  answers: UserAnswer[],
-  results: QuestionResult[],
-  preferredQuestionId: string | null
-): { questions: SessionQuestion[]; activeQuestionId: string | null; activeTeil: number } {
-  const answersMap = new Map(answers.map(answer => [answer.questionId, answer]));
-  const resultsMap = new Map(results.map(result => [result.questionId, result]));
-
-  const prepared = questions.map(question => {
-    const answerEntry = answersMap.get(question.id);
-    const resultEntry = resultsMap.get(question.id);
-    const answered = Boolean(answerEntry || question.answered || resultEntry);
-
-    return {
-      ...question,
-      answer: answerEntry?.answer ?? question.answer,
-      answered,
-      result: resultEntry ?? question.result,
-      isCurrent: false,
-      teilState: 'pending' as TeilState,
-      status: QuestionStatus.LOADED,
-    };
-  }) as SessionQuestion[];
-
-  let activeId = preferredQuestionId;
-  if (!activeId || !prepared.some(question => question.id === activeId)) {
-    const firstUnanswered = prepared.find(question => !question.answered);
-    activeId = firstUnanswered?.id ?? prepared[0]?.id ?? null;
-  }
-
-  const { questions: focussed, activeTeil } = updateQuestionsFocus(prepared, activeId);
-  return {
-    questions: focussed,
-    activeQuestionId: activeId,
-    activeTeil,
-  };
-}
-
-function updateQuestionsFocus(
-  questions: SessionQuestion[],
-  targetQuestionId: string | null
-): { questions: SessionQuestion[]; activeTeil: number } {
-  if (questions.length === 0) {
-    return { questions, activeTeil: 1 };
-  }
-
-  const activeQuestion =
-    targetQuestionId ? questions.find(question => question.id === targetQuestionId) : null;
-  const activeTeil = activeQuestion
-    ? normaliseTeil(activeQuestion.teil)
-    : normaliseTeil(questions[0].teil);
-
-  const derived = questions.map(question => {
-    const questionTeil = normaliseTeil(question.teil);
-    let teilState: TeilState = question.answered ? 'completed' : 'pending';
-
-    if (questionTeil === activeTeil && !question.answered) {
-      teilState = 'active';
-    }
-
-    if (questionTeil < activeTeil) {
-      teilState = 'completed';
-    }
-
-    return {
-      ...question,
-      isCurrent: question.id === targetQuestionId,
-      teilState,
-    };
-  });
-
-  return { questions: derived, activeTeil };
-}
-
-function buildUiState(
-  questions: SessionQuestion[],
-  activeQuestionId: string | null,
-  view: 'fragen' | 'quelle',
-  version: number
-) {
-  if (questions.length === 0) {
-    return {
-      activeQuestionId: null,
-      activeTeil: 1,
-      activeView: view,
-      currentVersion: version,
-    };
-  }
-
-  const targetQuestion = activeQuestionId
-    ? questions.find(question => question.id === activeQuestionId)
-    : questions[0];
-  const activeTeil = targetQuestion ? normaliseTeil(targetQuestion.teil) : 1;
-
-  return {
-    activeQuestionId: targetQuestion?.id ?? null,
-    activeTeil,
-    activeView: view,
-    lastViewedQuestionId: targetQuestion?.id ?? null,
-    lastViewedTeil: activeTeil,
-    lastViewedView: view,
-    currentVersion: version,
-  };
-}
-
-interface AnswerPayload {
-  questionId: string;
-  answer: string | string[] | boolean;
-  timeSpent: number;
-  attempts: number;
-  hintsUsed: number;
-  timestamp: string;
-}
-
-function detectActiveView(uiState: any): 'fragen' | 'quelle' {
-  const raw = uiState?.activeView;
-  if (raw === 'fragen' || raw === 'quelle') {
-    return raw;
-  }
-  return 'fragen';
-}
-
-function buildAnswerPayload(
-  questions: SessionQuestion[],
-  answersMap: Map<string, UserAnswer>
-): AnswerPayload[] {
-  return questions
-    .filter(question => question.answer !== undefined && question.answer !== null)
-    .map(question => {
-      const existing = answersMap.get(question.id);
-      const timestamp = normalizeTimestamp(existing?.timestamp);
-
-      return {
-        questionId: question.id,
-        answer: question.answer!,
-        timeSpent: existing?.timeSpent ?? 0,
-        attempts: existing?.attempts ?? 1,
-        hintsUsed: existing?.hintsUsed ?? 0,
-        timestamp,
-      };
-    });
-}
-
-function answersEqual(
-  a: string | string[] | boolean | undefined,
-  b: string | string[] | boolean
-): boolean {
-  if (Array.isArray(a) || Array.isArray(b)) {
-    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
-      return false;
-    }
-    return a.every((value, index) => value === b[index]);
-  }
-  return a === b;
 }

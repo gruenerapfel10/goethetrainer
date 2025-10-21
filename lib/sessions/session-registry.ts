@@ -129,7 +129,8 @@ export function validateSessionData(
   const errors: string[] = [];
   
   // Check required fields
-  Object.entries(config.schema.fields).forEach(([fieldName, fieldDef]) => {
+  const fields = config.schema?.fields ?? {};
+  Object.entries(fields).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.required && !(fieldName in data)) {
       errors.push(`Missing required field: ${fieldName}`);
     }
@@ -158,8 +159,9 @@ export function validateSessionData(
 export function initializeSessionData(type: SessionTypeEnum | SessionType): Record<string, any> {
   const config = getSessionConfig(type);
   const data: Record<string, any> = {};
-  
-  Object.entries(config.schema.fields).forEach(([fieldName, fieldDef]) => {
+
+  const fields = config.schema?.fields ?? {};
+  Object.entries(fields).forEach(([fieldName, fieldDef]) => {
     if (fieldDef.defaultValue !== undefined) {
       data[fieldName] = fieldDef.defaultValue;
     } else {
