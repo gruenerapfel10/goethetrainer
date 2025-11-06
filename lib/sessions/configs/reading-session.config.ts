@@ -132,9 +132,32 @@ export const readingSessionConfig: SessionConfig = {
   // Fixed layout for reading sessions (Goethe C1 exam structure)
   // Teil 1: GAP_TEXT_MULTIPLE_CHOICE (9 questions)
   // Teil 2: MULTIPLE_CHOICE (7 questions)
+  // Teil 3: GAP_TEXT_MULTIPLE_CHOICE (single-line layout)
   fixedLayout: [
-    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-    QuestionTypeName.MULTIPLE_CHOICE,
+    {
+      id: 'teil_1',
+      label: 'Teil 1',
+      questionType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
+      source: {
+        type: 'gapped_text',
+      },
+    },
+    {
+      id: 'teil_2',
+      label: 'Teil 2',
+      questionType: QuestionTypeName.MULTIPLE_CHOICE,
+    },
+    {
+      id: 'teil_3',
+      label: 'Teil 3',
+      questionType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
+      question: {
+        layoutVariant: 'single_line',
+      },
+      source: {
+        type: 'gapped_text',
+      },
+    },
   ],
   
   features: {

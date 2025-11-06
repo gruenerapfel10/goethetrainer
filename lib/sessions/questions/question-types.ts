@@ -116,6 +116,10 @@ export interface Question {
   answered?: boolean;
   answer?: string | string[] | boolean | Record<string, string> | null;
   lastSubmittedAt?: string;
+  layoutVariant?: string;
+  layoutId?: string;
+  layoutLabel?: string;
+  presentation?: Record<string, unknown>;
 }
 
 export interface UserAnswer {

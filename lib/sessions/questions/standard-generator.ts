@@ -5,7 +5,12 @@ import { QuestionTypeName } from './question-enums';
 import { multipleChoiceConfig } from './configs/gap-text-multiple-choice.config';
 import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 import type { QuestionDifficulty } from './question-types';
-import { SessionTypeEnum } from '../session-registry';
+import {
+  SessionTypeEnum,
+  type AIGenerationOverrides,
+  type SessionSourceOptions,
+  type SessionLayoutQuestionDefaults,
+} from '../session-registry';
 import { QuestionInputType } from './question-types';
 import { generateSourceWithGaps } from './source-generator';
 
@@ -40,12 +45,83 @@ const QUESTION_CONFIGS: Record<string, QuestionConfig> = {
   // [QuestionTypeName.SHORT_ANSWER]: shortAnswerConfig,
 };
 
+interface QuestionConfigOverrides {
+  aiGeneration?: AIGenerationOverrides;
+  defaults?: SessionLayoutQuestionDefaults;
+}
+
+export interface SessionQuestionGenerationOptions {
+  questionCount?: number;
+  aiGeneration?: AIGenerationOverrides;
+  defaults?: SessionLayoutQuestionDefaults;
+  source?: SessionSourceOptions;
+}
+
+const AI_OVERRIDE_KEYS: Array<keyof QuestionConfig['aiGeneration']> = [
+  'modelId',
+  'temperature',
+  'maxTokens',
+  'systemPrompt',
+  'userPrompt',
+  'sessionSystemPrompt',
+  'sessionUserPrompt',
+];
+
+function mergeAIGenerationConfig(
+  base: QuestionConfig['aiGeneration'],
+  overrides?: AIGenerationOverrides
+): QuestionConfig['aiGeneration'] {
+  if (!overrides) {
+    return { ...base };
+  }
+
+  const merged: QuestionConfig['aiGeneration'] = { ...base };
+  AI_OVERRIDE_KEYS.forEach(key => {
+    const value = overrides[key as keyof AIGenerationOverrides];
+    if (value !== undefined) {
+      (merged as any)[key] = value;
+    }
+  });
+  return merged;
+}
+
+function resolvePoints(
+  questionData: Record<string, any>,
+  defaults?: SessionLayoutQuestionDefaults
+): number {
+  if (typeof questionData.points === 'number') {
+    return questionData.points;
+  }
+  if (questionData.isExample) {
+    return 0;
+  }
+  if (defaults?.points !== undefined) {
+    return defaults.points;
+  }
+  return 1;
+}
+
+function resolveTimeLimit(
+  questionData: Record<string, any>,
+  defaults: SessionLayoutQuestionDefaults | undefined,
+  fallback: number
+): number {
+  if (typeof questionData.timeLimit === 'number') {
+    return questionData.timeLimit;
+  }
+  if (defaults?.timeLimit !== undefined) {
+    return defaults.timeLimit;
+  }
+  return fallback;
+}
+
 interface GenerateQuestionOptions {
   questionType: QuestionTypeName;
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
   topicIndex: number;
   userLocale?: string;
+  overrides?: QuestionConfigOverrides;
 }
 
 /**
@@ -58,6 +134,7 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
     difficulty,
     topicIndex,
     userLocale: _userLocale = 'de',
+    overrides,
   } = options;
 
   // Get the config for this question type
@@ -71,7 +148,8 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
     throw new Error(`Question type ${questionType} is not supported for session type ${sessionType}`);
   }
 
-  const { aiGeneration, generationSchema } = config;
+  const generationSchema = config.generationSchema;
+  const aiGeneration = mergeAIGenerationConfig(config.aiGeneration, overrides?.aiGeneration);
 
   // Initialize the model
   const model = anthropic(aiGeneration.modelId);
@@ -92,7 +170,7 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
       temperature: aiGeneration.temperature,
     };
 
-    if (aiGeneration.maxTokens) {
+    if (aiGeneration.maxTokens !== undefined) {
       generateParams.maxTokens = aiGeneration.maxTokens;
     }
 
@@ -105,10 +183,8 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
       questionType,
       sessionType,
       difficulty,
-      points: typeof questionData.points === 'number'
-        ? questionData.points
-        : questionData.isExample ? 0 : 1,
-      timeLimit: questionData.timeLimit || config.defaultTimeLimit,
+      points: resolvePoints(questionData, overrides?.defaults),
+      timeLimit: resolveTimeLimit(questionData, overrides?.defaults, config.defaultTimeLimit ?? 60),
       markingMethod: config.markingMethod,
       inputType: inferInputType(questionType),
       // Legacy mirror to keep downstream consumers stable during migration.
@@ -126,80 +202,95 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
 export async function generateSessionQuestion(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty = 'intermediate' as QuestionDifficulty,
-  questionType: QuestionTypeName
+  questionType: QuestionTypeName,
+  options: SessionQuestionGenerationOptions = {}
 ): Promise<any[]> {
-  const questionTypes = [questionType];
-  const count = questionType === 'gap_text_multiple_choice' ? 9 : 7;
-  // Check if we're generating MULTIPLE_CHOICE questions
-  const isMultipleChoice = questionTypes?.includes(QuestionTypeName.MULTIPLE_CHOICE);
+  const config = QUESTION_CONFIGS[questionType];
+  if (!config) {
+    throw new Error(`No configuration found for question type: ${questionType}`);
+  }
 
-  // For MULTIPLE_CHOICE, use batch generation (1 context + N questions)
-  if (isMultipleChoice && count >= 1) {
-    console.log(`Generating ${count} MULTIPLE_CHOICE questions from 1 context...`);
+  const count =
+    options.questionCount ??
+    options.source?.gaps?.requiredCount ??
+    (questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE ? 9 : 7);
+
+  if (count <= 0) {
+    return [];
+  }
+
+  const aiGeneration = mergeAIGenerationConfig(config.aiGeneration, options.aiGeneration);
+  const defaultPoints = options.defaults?.points ?? 1;
+  const defaultTimeLimit = options.defaults?.timeLimit ?? (config.defaultTimeLimit ?? 60);
+
+  // Batch generation for MULTIPLE_CHOICE (Teil 2 style)
+  if (
+    questionType === QuestionTypeName.MULTIPLE_CHOICE &&
+    config.sessionGenerationSchema &&
+    count >= 1
+  ) {
+    console.log(`Generating ${count} MULTIPLE_CHOICE questions from shared context...`);
     try {
-      const config = QUESTION_CONFIGS[QuestionTypeName.MULTIPLE_CHOICE];
-      if (!config || !config.sessionGenerationSchema) {
-        throw new Error('MULTIPLE_CHOICE config missing sessionGenerationSchema');
-      }
-
-      const { aiGeneration } = config;
       const model = anthropic(aiGeneration.modelId);
-
-      // Use session generation prompt
-      const userPrompt = aiGeneration.sessionUserPrompt?.replace('{{count}}', count.toString()) ||
-        `Generate a German reading passage with ${count} comprehension questions.`;
+      const sessionSystemPrompt = aiGeneration.sessionSystemPrompt ?? aiGeneration.systemPrompt;
+      const sessionUserPromptTemplate = aiGeneration.sessionUserPrompt ?? aiGeneration.userPrompt;
+      const userPrompt = sessionUserPromptTemplate.replace('{{count}}', count.toString());
 
       const result = await generateObject({
         model,
         schema: config.sessionGenerationSchema,
-        system: aiGeneration.sessionSystemPrompt || aiGeneration.systemPrompt,
+        system: sessionSystemPrompt,
         prompt: userPrompt,
         temperature: aiGeneration.temperature,
+        ...(aiGeneration.maxTokens !== undefined ? { maxTokens: aiGeneration.maxTokens } : {}),
       });
 
       const data = result.object as any;
       const { context, questions, title, subtitle, theme } = data;
 
-      // Transform result into array of questions with shared context
-      const questionsWithContext = questions.map((q: any) => ({
+      return questions.map((q: any) => ({
         ...q,
         context,
         title,
         subtitle,
         theme,
         difficulty,
-        points: 1,
-        timeLimit: 60,
+        points: q.points ?? defaultPoints,
+        timeLimit: q.timeLimit ?? defaultTimeLimit,
         inputType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
         answerType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
       }));
-
-      return questionsWithContext;
     } catch (error) {
       console.error('MULTIPLE_CHOICE session generation failed:', error);
       // Fall back to individual generation below
     }
   }
 
-  // For reading session with 9 questions, use GAP_TEXT session generation (1 context + 9 questions)
-  const isGapTextSession = count === 9 && sessionType === SessionTypeEnum.READING && questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE;
-
-  if (isGapTextSession) {
-    console.log('Generating 9 GAP_TEXT questions from 1 context...');
+  // Reading GAP_TEXT generation with shared source (Teils 1 & 3)
+  if (
+    sessionType === SessionTypeEnum.READING &&
+    questionType === QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE
+  ) {
+    console.log(`Generating ${count} GAP_TEXT questions from 1 context...`);
     try {
-      // Use two-pass system: generate source with gaps
-      const sourceWithGaps = await generateSourceWithGaps(difficulty);
-
-      // Now generate 4 options for each gap
-      const config = QUESTION_CONFIGS[questionType];
-      if (!config) {
-        throw new Error(`No configuration found for question type: ${questionType}`);
-      }
-
-      const { aiGeneration } = config;
+      const sourceWithGaps = await generateSourceWithGaps(difficulty, options.source);
       const model = anthropic(aiGeneration.modelId);
 
-      const questionPromises = sourceWithGaps.gaps.map(async (gap, index) => {
+      const optionsSchema = z.object({
+        options: z
+          .array(
+            z.object({
+              id: z.string().describe('Option ID: 0, 1, 2, or 3'),
+              text: z.string().describe('Option text (1-3 words)'),
+            })
+          )
+          .length(4)
+          .describe('Exactly 4 options'),
+        correctOptionId: z.string().describe('ID of correct option (0-3)'),
+      });
+
+      const gaps = sourceWithGaps.gaps.slice(0, count);
+      const questionPromises = gaps.map(async gap => {
         const gapPrompt = `Generate 4 multiple choice options for this gap fill exercise.
 
 Gap number: ${gap.gapNumber}
@@ -210,22 +301,15 @@ Create 4 plausible options where one is the correct answer "${gap.removedWord}".
 Options should be 1-3 words each.
 Return as JSON with id (0-3) and text for each option.`;
 
-        const optionsSchema = z.object({
-          options: z.array(
-            z.object({
-              id: z.string().describe('Option ID: 0, 1, 2, or 3'),
-              text: z.string().describe('Option text (1-3 words)'),
-            })
-          ).length(4).describe('Exactly 4 options'),
-          correctOptionId: z.string().describe('ID of correct option (0-3)'),
-        });
-
         const result = await generateObject({
           model,
           schema: optionsSchema,
-          system: 'You are a German language expert creating multiple choice options for gap fill exercises.',
-          prompt: gapPrompt,
-          temperature: 0.7,
+          system:
+            options.source?.gaps?.systemPrompt ??
+            'You are a German language expert creating multiple choice options for gap fill exercises.',
+          prompt: options.source?.gaps?.userPrompt ?? gapPrompt,
+          temperature: aiGeneration.temperature,
+          ...(aiGeneration.maxTokens !== undefined ? { maxTokens: aiGeneration.maxTokens } : {}),
         });
 
         return {
@@ -238,63 +322,60 @@ Return as JSON with id (0-3) and text for each option.`;
 
       const questions = await Promise.all(questionPromises);
 
-      // Transform result into array of questions with shared context
-      const questionsWithContext = questions.map((q: any, index: number) => ({
+      return questions.map((q: any, index: number) => ({
         ...q,
         context: sourceWithGaps.gappedContext,
         title: sourceWithGaps.title,
         subtitle: sourceWithGaps.subtitle,
         theme: sourceWithGaps.theme,
-        isExample: index === 0, // First question is example
+        isExample: index === 0,
         exampleAnswer: index === 0 ? q.correctOptionId : undefined,
         difficulty,
-        points: index === 0 ? 0 : 1,
-        timeLimit: 60,
+        points: index === 0 ? 0 : defaultPoints,
+        timeLimit: defaultTimeLimit,
         inputType: inferInputType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
         answerType: inferInputType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
       }));
-
-      return questionsWithContext;
     } catch (error) {
-      console.error('Session generation failed:', error);
+      console.error('GAP_TEXT session generation failed:', error);
       // Fall back to individual generation below
     }
   }
 
-  // Original sequential generation logic
-  const questions = [];
+  // Fallback: generate questions individually
+  const questions: any[] = [];
+  const promises: Array<Promise<any>> = [];
 
-  // If no specific question types provided, use all supported types
-  const typesToUse = questionTypes || Object.keys(QUESTION_CONFIGS) as QuestionTypeName[];
-
-  // Generate questions in parallel for better performance
-  const promises = [];
   for (let i = 0; i < count; i++) {
-    const questionType = typesToUse[i % typesToUse.length];
     promises.push(
       generateQuestionWithAI({
         questionType,
         sessionType,
         difficulty,
         topicIndex: i,
+        overrides: {
+          aiGeneration: options.aiGeneration,
+          defaults: options.defaults,
+        },
       })
     );
   }
 
   try {
-    const results = await Promise.all(promises);
-    return results;
+    return await Promise.all(promises);
   } catch (error) {
-    console.error('Error generating questions:', error);
-    // Fallback to sequential generation if parallel fails
+    console.error('Error generating questions in parallel, retrying sequentially:', error);
     for (let i = 0; i < count; i++) {
       try {
-        const questionType = typesToUse[i % typesToUse.length];
         const question = await generateQuestionWithAI({
           questionType,
           sessionType,
           difficulty,
           topicIndex: i,
+          overrides: {
+            aiGeneration: options.aiGeneration,
+            defaults: options.defaults,
+          },
         });
         questions.push(question);
       } catch (err) {

@@ -12,10 +12,9 @@ import {
   SessionTypeEnum,
   getSessionConfig,
   getSessionLayout,
-  getSupportedQuestionTypes,
   initializeSessionData,
+  type NormalisedSessionLayoutEntry,
 } from './session-registry';
-import { QuestionTypeName } from './questions/question-registry';
 import './configs';
 import { generateSessionQuestion } from './questions/standard-generator';
 import { QuestionDifficulty } from './questions/question-types';
@@ -35,14 +34,20 @@ import { finaliseSession, gradeAnswer } from './session-grading';
 
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
-  questionType: QuestionTypeName,
+  layoutEntry: NormalisedSessionLayoutEntry,
   difficulty: QuestionDifficulty,
   teilNumber: number
 ): Promise<Question[]> {
   const rawQuestions = await generateSessionQuestion(
     sessionType,
     difficulty,
-    questionType
+    layoutEntry.questionType,
+    {
+      questionCount: layoutEntry.questionCount,
+      aiGeneration: layoutEntry.question?.aiGeneration,
+      defaults: layoutEntry.question?.defaults,
+      source: layoutEntry.source,
+    }
   );
 
   return ensureQuestionIdentifiers(
@@ -51,10 +56,17 @@ async function generateTeilQuestions(
       answer: question.answer ?? null,
       teil: teilNumber,
       order: index,
-      registryType: questionType,
+      registryType: layoutEntry.questionType,
       answered: !!question.answer,
       inputType: question.inputType ?? question.answerType,
       answerType: question.answerType ?? question.inputType,
+      layoutVariant: layoutEntry.question?.layoutVariant ?? question.layoutVariant,
+      layoutId: layoutEntry.id,
+      layoutLabel: layoutEntry.label,
+      presentation: {
+        ...(question.presentation ?? {}),
+        ...(layoutEntry.question?.metadata ?? {}),
+      },
     }))
   );
 }
@@ -206,11 +218,10 @@ export async function generateQuestionsForSession(
       (session.metadata?.difficulty as QuestionDifficulty | undefined) ??
       QuestionDifficulty.INTERMEDIATE;
 
-    const layout = getSessionLayout(sessionType);
-    const plan = layout.length ? layout : getSupportedQuestionTypes(sessionType);
+    const plan = getSessionLayout(sessionType);
 
     if (!plan.length) {
-      throw new Error(`No question types registered for session type "${sessionType}"`);
+      throw new Error(`No question layout defined for session type "${sessionType}"`);
     }
 
     if (regenerate) {
@@ -322,10 +333,10 @@ export async function generateQuestionsForSession(
     };
 
     try {
-      for (const questionType of plan) {
+      for (const layoutEntry of plan) {
         const teilQuestions = await generateTeilQuestions(
           sessionType,
-          questionType,
+          layoutEntry,
           difficulty,
           teilNumber
         );

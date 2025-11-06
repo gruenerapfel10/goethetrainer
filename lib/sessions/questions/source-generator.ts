@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { QuestionDifficulty } from './question-types';
-import { SessionTypeEnum } from '../session-registry';
+import type { SessionSourceOptions } from '../session-registry';
 
 export const maxDuration = 30;
 
@@ -62,26 +62,35 @@ interface SourceWithGaps {
  * Pass 1: Generate raw source material with diverse themes
  */
 export async function generateRawSource(
-  difficulty: QuestionDifficulty = 'intermediate'
+  difficulty: QuestionDifficulty = 'intermediate',
+  overrides?: SessionSourceOptions['raw']
 ): Promise<z.infer<typeof RawSourceSchema>> {
-  const randomTheme = THEMES[Math.floor(Math.random() * THEMES.length)];
+  const selectedTheme = overrides?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
 
   const model = anthropic('claude-haiku-4-5-20251001');
 
-  const systemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
+  const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
 
 Generate ONE German text passage (200-300 words) with theme, title, and subtitle.
 
 Requirements:
 1. ALL content in German language ONLY
-2. Provide a THEME (category): ${randomTheme}
+2. Provide a THEME (category): ${selectedTheme}
 3. Provide a TITLE for the passage (5-10 words)
 4. Provide a SUBTITLE (brief description 10-15 words)
 5. One context passage (200-300 words, C1 level, naturally written)
 
 The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.`;
 
-  const userPrompt = `Generate a reading passage for theme: ${randomTheme} at ${difficulty} level.`;
+  const defaultUserPrompt = `Generate a reading passage for theme: ${selectedTheme} at ${difficulty} level.`;
+
+  const systemPrompt = (overrides?.systemPrompt ?? defaultSystemPrompt)
+    .replace('{{theme}}', selectedTheme)
+    .replace('{{difficulty}}', String(difficulty));
+
+  const userPrompt = (overrides?.userPrompt ?? defaultUserPrompt)
+    .replace('{{theme}}', selectedTheme)
+    .replace('{{difficulty}}', String(difficulty));
 
   try {
     const result = await generateObject({
@@ -109,31 +118,34 @@ The passage should be rich with vocabulary and complex sentence structures suita
  * Pass 2: Identify 9 gaps in the source text and extract answers
  */
 export async function identifyGapsInSource(
-  source: z.infer<typeof RawSourceSchema>
+  source: z.infer<typeof RawSourceSchema>,
+  overrides?: SessionSourceOptions['gaps']
 ): Promise<SourceWithGaps> {
   const model = anthropic('claude-haiku-4-5-20251001');
+  const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
 
   const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
 
-Your task: Identify EXACTLY ${REQUIRED_GAP_COUNT} strategically placed gaps in the provided German text.
+Your task: Identify EXACTLY ${requiredCount} strategically placed gaps in the provided German text.
 
 Requirements:
-1. Select ${REQUIRED_GAP_COUNT} words/phrases that are:
+1. Select ${requiredCount} words/phrases that are:
    - Important for comprehension
    - Varied in difficulty and position
    - Between 1-3 words each
    - Distributed throughout the entire text (don't cluster them)
    - Include gaps from the beginning, middle, and end of the text
-2. For each of the ${REQUIRED_GAP_COUNT} gaps:
+2. For each of the ${requiredCount} gaps:
    - Record the exact word/phrase to remove (the correct answer)
    - Record its character position in the original text
    - Provide context around the gap
-3. Return the text with gaps replaced by [GAP_1], [GAP_2], ... [GAP_${REQUIRED_GAP_COUNT}] (all must be present)
-4. The gaps array MUST have exactly ${REQUIRED_GAP_COUNT} elements
+3. Return the text with gaps replaced by [GAP_1], [GAP_2], ... [GAP_${requiredCount}] (all must be present)
+4. The gaps array MUST have exactly ${requiredCount} elements
 
-Return ALL ${REQUIRED_GAP_COUNT} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${REQUIRED_GAP_COUNT} is the last gap.`;
+Return ALL ${requiredCount} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${requiredCount} is the last gap.`;
 
-  const buildUserPrompt = (attempt: number) => `Identify and return EXACTLY ${REQUIRED_GAP_COUNT} gaps in this German text. ALL ${REQUIRED_GAP_COUNT} GAPS MUST BE RETURNED.
+  const buildUserPrompt = (attempt: number) => (overrides?.userPrompt ??
+`Identify and return EXACTLY ${requiredCount} gaps in this German text. ALL ${requiredCount} GAPS MUST BE RETURNED.
 
 Theme: ${source.theme}
 Title: ${source.title}
@@ -143,9 +155,10 @@ Text:
 ${source.context}
 
 
-${attempt > 1 ? `HINWEIS: Beim letzten Versuch wurden zu wenige Lücken geliefert. Bitte gib dieses Mal unbedingt alle ${REQUIRED_GAP_COUNT} Lücken an.` : ''}
+${attempt > 1 ? `HINWEIS: Beim letzten Versuch wurden zu wenige Lücken geliefert. Bitte gib dieses Mal unbedingt alle ${requiredCount} Lücken an.` : ''}
 
-IMPORTANT: Return all ${REQUIRED_GAP_COUNT} gaps. Do not stop early. Return the gaps in order of appearance in the text.`;
+IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps in order of appearance in the text.`)
+    .replace('{{requiredCount}}', requiredCount.toString());
 
   let lastError: unknown;
 
@@ -157,18 +170,18 @@ IMPORTANT: Return all ${REQUIRED_GAP_COUNT} gaps. Do not stop early. Return the 
         schema: GapIdentificationSchema,
         schemaName: 'gap_identification',
         schemaDescription: 'Identifies gaps in German text for C1 level exercises',
-        system: baseSystemPrompt,
+        system: (overrides?.systemPrompt ?? baseSystemPrompt).replace('{{requiredCount}}', requiredCount.toString()),
         prompt: buildUserPrompt(attempt),
         temperature: 0.4,
       });
 
       const { gaps, gappedText } = result.object;
 
-      if (!Array.isArray(gaps) || gaps.length !== REQUIRED_GAP_COUNT) {
-        throw new Error(`Expected ${REQUIRED_GAP_COUNT} gaps but received ${gaps?.length ?? 0}`);
+      if (!Array.isArray(gaps) || gaps.length !== requiredCount) {
+        throw new Error(`Expected ${requiredCount} gaps but received ${gaps?.length ?? 0}`);
       }
 
-      const requiredPlaceholdersPresent = Array.from({ length: REQUIRED_GAP_COUNT }, (_, index) => `GAP_${index + 1}`)
+      const requiredPlaceholdersPresent = Array.from({ length: requiredCount }, (_, index) => `GAP_${index + 1}`)
         .every(marker => gappedText.includes(`[${marker}]`));
 
       if (!requiredPlaceholdersPresent) {
@@ -215,13 +228,14 @@ IMPORTANT: Return all ${REQUIRED_GAP_COUNT} gaps. Do not stop early. Return the 
  * Complete two-pass source generation
  */
 export async function generateSourceWithGaps(
-  difficulty: QuestionDifficulty = 'intermediate'
+  difficulty: QuestionDifficulty = 'intermediate',
+  options?: SessionSourceOptions
 ): Promise<SourceWithGaps> {
   // Pass 1: Generate raw source
-  const rawSource = await generateRawSource(difficulty);
+  const rawSource = await generateRawSource(difficulty, options?.raw);
 
   // Pass 2: Identify gaps
-  const sourceWithGaps = await identifyGapsInSource(rawSource);
+  const sourceWithGaps = await identifyGapsInSource(rawSource, options?.gaps);
 
   return sourceWithGaps;
 }

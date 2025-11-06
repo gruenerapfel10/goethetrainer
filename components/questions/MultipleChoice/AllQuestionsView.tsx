@@ -119,12 +119,16 @@ export function AllQuestionsView({
   // Derive Teil information from actual questions
   const timelineQuestions = allQuestions && allQuestions.length > 0 ? allQuestions : questions;
   const teilNumber = (questions[0] as any)?.teil || 1;
+  const teilLabel = questions[0]?.layoutLabel ?? `Teil ${teilNumber}`;
   const teils = new Set(timelineQuestions.map(q => (q as any).teil || 1));
   const derivedTotalTeils = teils.size;
   const actualTotalTeils = totalTeils || derivedTotalTeils;
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
+  const layoutVariant = questions[0]?.layoutVariant ?? null;
+  const isSingleLineVariant = layoutVariant === 'single_line';
+  const isColumnLayout = isMultipleChoice || isSingleLineVariant;
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -205,7 +209,7 @@ export function AllQuestionsView({
 
                 {/* Header */}
                 <div className="mb-10">
-                  <h2 className="text-base font-bold">Teil {teilNumber}</h2>
+                  <h2 className="text-base font-bold">{teilLabel}</h2>
                 </div>
                 {questions.map((question, qIndex) => (
                   <div key={`q-${qIndex}-${question.id}`} className="overflow-visible mb-12">
@@ -217,10 +221,12 @@ export function AllQuestionsView({
                   </div>
 
                       {/* Options - horizontal for GAP_TEXT, vertical for MULTIPLE_CHOICE */}
-                      <div className={cn(
-                        "flex flex-1",
-                        isMultipleChoice ? "flex-col gap-3" : "gap-6 flex-nowrap"
-                      )}>
+                      <div
+                        className={cn(
+                          "flex flex-1",
+                          isColumnLayout ? "flex-col gap-3" : "gap-6 flex-nowrap"
+                        )}
+                      >
                         {question.options?.map((option, index) => {
                           const optionLetter = String.fromCharCode(97 + index);
                           const isExample = question.isExample === true;
@@ -229,17 +235,23 @@ export function AllQuestionsView({
                           const isFirstOption = index === 0;
 
                           return (
-                            <div key={option.id} className={cn(
-                              "relative",
-                              isMultipleChoice ? "w-full" : "flex-1 min-w-0"
-                            )}>
+                            <div
+                              key={option.id}
+                              className={cn(
+                                "relative",
+                                isColumnLayout ? "w-full" : "flex-1 min-w-0"
+                              )}
+                            >
                               {isFirstOption && isExample && (
                                 <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
                               )}
                               <div
                                 className={cn(
-                                  "flex items-center gap-2 transition-colors p-2 -m-2",
-                                  !isExample && !isSubmitting ? 'cursor-pointer hover:bg-muted rounded-md' : 'cursor-default text-muted-foreground'
+                                  "flex gap-2 transition-colors p-2 -m-2",
+                                  isColumnLayout ? 'items-start' : 'items-center',
+                                  !isExample && !isSubmitting
+                                    ? 'cursor-pointer hover:bg-muted rounded-md'
+                                    : 'cursor-default text-muted-foreground'
                                 )}
                                 onClick={() => handleSelectOption(question.id, option.id, isExample)}
                               >
@@ -272,7 +284,7 @@ export function AllQuestionsView({
 
                     {/* Header with title and time */}
                     <div className="flex items-start mb-8">
-                      <h3 className="font-bold text-base">Teil {teilNumber}</h3>
+                      <h3 className="font-bold text-base">{teilLabel}</h3>
                       <span className="text-muted-foreground ml-20 font-normal text-base">Vorgeschlagene Arbeitszeit: 10 Minuten</span>
                     </div>
 

@@ -9,6 +9,87 @@ export enum SessionTypeEnum {
   SPEAKING = 'speaking',
 }
 
+export interface AIGenerationOverrides {
+  modelId?: string;
+  temperature?: number;
+  maxTokens?: number;
+  systemPrompt?: string;
+  userPrompt?: string;
+  sessionSystemPrompt?: string;
+  sessionUserPrompt?: string;
+}
+
+export interface SessionLayoutQuestionDefaults {
+  points?: number;
+  timeLimit?: number;
+}
+
+export interface SessionLayoutQuestionOverrides {
+  /**
+   * Presentation hint consumed by the UI (e.g., 'single_line', 'grid').
+   */
+  layoutVariant?: string;
+  /**
+   * Arbitrary metadata forwarded to question renderers.
+   */
+  metadata?: Record<string, unknown>;
+  /**
+   * Runtime overrides for AI generation prompts and settings.
+   */
+  aiGeneration?: AIGenerationOverrides;
+  /**
+   * Override default scoring/time-limit values.
+   */
+  defaults?: SessionLayoutQuestionDefaults;
+}
+
+export interface SessionSourceOptions {
+  /**
+   * Source content type (e.g., 'gapped_text', 'transcript').
+   */
+  type?: string;
+  /**
+   * Customisation for the raw source generation pass.
+   */
+  raw?: {
+    theme?: string;
+    systemPrompt?: string;
+    userPrompt?: string;
+  };
+  /**
+   * Customisation for post-processing/identification (e.g., gap extraction).
+   */
+  gaps?: {
+    requiredCount?: number;
+    systemPrompt?: string;
+    userPrompt?: string;
+  };
+  /**
+   * Additional implementation-specific configuration.
+   */
+  config?: Record<string, unknown>;
+}
+
+export interface SessionLayoutEntryConfig {
+  id?: string;
+  label?: string;
+  questionType: QuestionTypeName;
+  questionCount?: number;
+  question?: SessionLayoutQuestionOverrides;
+  source?: SessionSourceOptions;
+}
+
+export type SessionLayoutDefinition = Array<QuestionTypeName | SessionLayoutEntryConfig>;
+
+export interface NormalisedSessionLayoutEntry {
+  id: string;
+  label?: string;
+  questionType: QuestionTypeName;
+  questionCount?: number;
+  question?: SessionLayoutQuestionOverrides;
+  source?: SessionSourceOptions;
+}
+
 export interface SessionFieldDefinition {
   name: string;
   type: 'number' | 'string' | 'boolean' | 'array' | 'object';
@@ -46,9 +127,9 @@ export interface SessionConfig {
   // Supported question types for this session
   supportedQuestions: QuestionTypeName[];
 
-  // Optional fixed layout (e.g., [GAP_TEXT, MULTIPLE_CHOICE])
+  // Optional fixed layout (e.g., [{ questionType: GAP_TEXT, question: {...}}])
   // If provided, questions will be generated following this exact structure
-  fixedLayout?: QuestionTypeName[];
+  fixedLayout?: SessionLayoutDefinition;
 
   // Features and capabilities
   features: {
@@ -119,9 +200,40 @@ export function getSupportedQuestionTypes(type: SessionTypeEnum | SessionType) {
   return config.supportedQuestions || [];
 }
 
-export function getSessionLayout(type: SessionTypeEnum | SessionType) {
+function normaliseSessionLayout(
+  layout: SessionLayoutDefinition | undefined,
+  supportedQuestions: QuestionTypeName[]
+): NormalisedSessionLayoutEntry[] {
+  const rawEntries = (layout && layout.length > 0 ? layout : supportedQuestions) ?? [];
+
+  return rawEntries.map((entry, index) => {
+    if (typeof entry === 'string') {
+      return {
+        id: `teil_${index + 1}`,
+        label: `Teil ${index + 1}`,
+        questionType: entry,
+      };
+    }
+
+    const questionType = entry.questionType ?? (entry as any).type;
+    if (!questionType) {
+      throw new Error(`Session layout entry at index ${index} is missing questionType`);
+    }
+
+    return {
+      id: entry.id ?? `teil_${index + 1}`,
+      label: entry.label ?? entry.id ?? `Teil ${index + 1}`,
+      questionType,
+      questionCount: entry.questionCount,
+      question: entry.question,
+      source: entry.source,
+    };
+  });
+}
+
+export function getSessionLayout(type: SessionTypeEnum | SessionType): NormalisedSessionLayoutEntry[] {
   const config = getSessionConfig(type);
-  return config.fixedLayout || [];
+  return normaliseSessionLayout(config.fixedLayout, config.supportedQuestions);
 }
 
 export function validateSessionData(

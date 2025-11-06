@@ -4,11 +4,14 @@
 
 import { generateSessionQuestion } from './standard-generator';
 import { QuestionTypeName } from './question-registry';
-import { SessionTypeEnum } from '../session-registry';
+import {
+  SessionTypeEnum,
+  type NormalisedSessionLayoutEntry,
+} from '../session-registry';
 import { QuestionDifficulty } from './question-types';
 
 export interface ProgressiveGeneratorOptions {
-  layout: QuestionTypeName[];
+  layout: NormalisedSessionLayoutEntry[];
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
   onQuestionGenerated: (question: any) => void;
@@ -23,7 +26,8 @@ export async function generateProgressively(options: ProgressiveGeneratorOptions
   const { layout, sessionType, difficulty, onQuestionGenerated, onTeilComplete, onComplete } = options;
 
   for (let teilIndex = 0; teilIndex < layout.length; teilIndex++) {
-    const questionType = layout[teilIndex];
+    const layoutEntry = layout[teilIndex];
+    const questionType = layoutEntry.questionType;
     const teilNumber = teilIndex + 1;
 
     try {
@@ -31,7 +35,13 @@ export async function generateProgressively(options: ProgressiveGeneratorOptions
       const questions = await generateSessionQuestion(
         sessionType,
         difficulty,
-        questionType
+        questionType,
+        {
+          questionCount: layoutEntry.questionCount,
+          aiGeneration: layoutEntry.question?.aiGeneration,
+          defaults: layoutEntry.question?.defaults,
+          source: layoutEntry.source,
+        }
       );
 
       // Emit each question as it's ready
@@ -39,7 +49,10 @@ export async function generateProgressively(options: ProgressiveGeneratorOptions
         onQuestionGenerated({
           ...question,
           teil: teilNumber,
-          registryType: questionType
+          registryType: questionType,
+          layoutVariant: layoutEntry.question?.layoutVariant ?? question.layoutVariant,
+          layoutId: layoutEntry.id,
+          layoutLabel: layoutEntry.label,
         });
       }
 
