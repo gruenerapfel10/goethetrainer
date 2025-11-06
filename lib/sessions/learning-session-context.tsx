@@ -25,6 +25,11 @@ import {
   SessionTypeEnum,
   getSupportedQuestionTypes as getSupportedQuestionTypesFromRegistry,
 } from './session-registry';
+import {
+  getInputDefinition,
+  hasInputDefinition,
+  QuestionInputType,
+} from './inputs';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -33,8 +38,6 @@ export enum QuestionStatus {
 }
 
 type TeilState = 'pending' | 'active' | 'completed';
-
-type AnswerValue = string | string[] | boolean | Record<string, string>;
 
 export interface SessionQuestion extends Question {
   answer?: AnswerValue | null;
@@ -71,6 +74,8 @@ interface LearningSessionContextValue {
   sessionQuestions: SessionQuestion[];
   currentQuestion: SessionQuestion | null;
   questionProgress: QuestionProgress;
+  sessionProgress: ReturnType<typeof deriveProgressSummary> | null;
+  sessionMetrics: Record<string, number>;
   isLoading: boolean;
   isSaving: boolean;
   isSubmitting: boolean;
@@ -124,7 +129,7 @@ function hasAnswer(value: unknown): boolean {
   return true;
 }
 
-function normaliseAnswer(
+function defaultNormaliseAnswer(
   value: AnswerValue | null | undefined
 ): AnswerValue | null {
   if (value === undefined) {
@@ -160,7 +165,7 @@ function toSessionQuestion(
   question: Question,
   currentQuestionId: string | null
 ): SessionQuestion {
-  const answer = normaliseAnswer((question as any).answer);
+  const answer = normaliseAnswerForQuestion(question, (question as any).answer);
   const result = (question as any).result as QuestionResult | undefined;
   const answered = hasAnswer(answer);
   const isCurrent = question.id === currentQuestionId;
@@ -191,6 +196,28 @@ function withCurrentQuestionState(
   });
 }
 
+function deriveProgressSummary(questions: SessionQuestion[]) {
+  const totalQuestions = questions.length;
+  const answeredQuestions = questions.filter(question => question.answered).length;
+  const correctAnswers = questions.filter(question => question.result?.isCorrect).length;
+  const score = questions.reduce(
+    (sum, question) => sum + (question.result?.score ?? 0),
+    0
+  );
+  const maxScore = questions.reduce(
+    (sum, question) => sum + (question.points ?? 0),
+    0
+  );
+
+  return {
+    totalQuestions,
+    answeredQuestions,
+    correctAnswers,
+    score,
+    maxScore,
+  };
+}
+
 function stripQuestionForSave(question: SessionQuestion): Question {
   const {
     isCurrent,
@@ -202,7 +229,7 @@ function stripQuestionForSave(question: SessionQuestion): Question {
 
   return {
     ...rest,
-    answer: normaliseAnswer(rest.answer),
+    answer: defaultNormaliseAnswer(rest.answer),
   };
 }
 
@@ -400,6 +427,11 @@ const isCompletingRef = useRef(false);
       return sanitizedQuestions;
     }
 
+    const currentQuestion = questionsRef.current.find(
+      question => question.id === activeQuestionIdRef.current
+    );
+    const progressSummary = deriveProgressSummary(questionsRef.current);
+
     const nextSession: Session = {
       ...session,
       metadata: {
@@ -410,6 +442,15 @@ const isCompletingRef = useRef(false);
       data: {
         ...session.data,
         questions: cloneQuestionsForSession(sanitizedQuestions),
+        state: {
+          ...(session.data?.state ?? {}),
+          activeTeil: (currentQuestion?.teil ?? session.data?.state?.activeTeil ?? null) as number | null,
+          activeQuestionId: metadata?.activeQuestionId ?? activeQuestionIdRef.current,
+          activeView: (metadata?.activeView ??
+            session.data?.state?.activeView ??
+            'fragen') as 'fragen' | 'quelle' | 'overview',
+        },
+        progress: progressSummary,
       },
     };
 
@@ -425,12 +466,30 @@ const isCompletingRef = useRef(false);
       return;
     }
 
+    const nextState = {
+      ...(session.data?.state ?? {}),
+    };
+
+    if ('activeQuestionId' in metadata) {
+      nextState.activeQuestionId = metadata.activeQuestionId;
+    }
+    if ('activeView' in metadata) {
+      nextState.activeView = metadata.activeView;
+    }
+    if ('activeTeil' in metadata) {
+      nextState.activeTeil = metadata.activeTeil;
+    }
+
     const nextSession: Session = {
       ...session,
       metadata: {
         ...(session.metadata ?? {}),
         ...metadata,
         lastUpdatedAt: new Date().toISOString(),
+      },
+      data: {
+        ...session.data,
+        state: nextState,
       },
     };
 
@@ -681,7 +740,13 @@ const isCompletingRef = useRef(false);
         return;
       }
 
-      const normalised = normaliseAnswer(answerValue);
+      const sourceQuestion =
+        questionsRef.current.find(question => question.id === questionId) ??
+        (session.data.questions as Question[] | undefined)?.find(question => question.id === questionId);
+
+      const normalised = sourceQuestion
+        ? normaliseAnswerForQuestion(sourceQuestion, answerValue)
+        : defaultNormaliseAnswer(answerValue);
 
       setSessionQuestions(previous => {
         const updated = previous.map(question => {
@@ -707,6 +772,17 @@ const isCompletingRef = useRef(false);
         [questionId]: normalised ?? null,
       };
 
+      const updatedQuestions = questionsRef.current;
+      const progressSummary = deriveProgressSummary(updatedQuestions);
+      const activeQuestion = updatedQuestions.find(
+        question => question.id === activeQuestionIdRef.current
+      );
+      const nextState = {
+        activeTeil: (activeQuestion?.teil ?? null) as number | null,
+        activeQuestionId: activeQuestionIdRef.current,
+        activeView,
+      };
+
       syncActiveSessionQuestions({
         activeQuestionId: activeQuestionIdRef.current,
         activeView,
@@ -716,6 +792,10 @@ const isCompletingRef = useRef(false);
         metadata: {
           activeQuestionId: activeQuestionIdRef.current,
           activeView,
+        },
+        data: {
+          progress: progressSummary,
+          state: nextState,
         },
       });
     },
@@ -732,6 +812,13 @@ const isCompletingRef = useRef(false);
       questionsRef.current = updated;
       setSessionQuestions(updated);
 
+      const activeQuestion = updated.find(question => question.id === nextQuestionId);
+      const nextState = {
+        activeQuestionId: nextQuestionId,
+        activeView,
+        activeTeil: (activeQuestion?.teil ?? null) as number | null,
+      };
+
       updateSessionMetadata({
         activeQuestionId: nextQuestionId,
         activeView,
@@ -741,6 +828,9 @@ const isCompletingRef = useRef(false);
         metadata: {
           activeQuestionId: nextQuestionId,
           activeView,
+        },
+        data: {
+          state: nextState,
         },
       });
     },
@@ -798,15 +888,28 @@ const isCompletingRef = useRef(false);
         return;
       }
       setActiveViewState(view);
+      const currentQuestion = questionsRef.current.find(
+        question => question.id === activeQuestionIdRef.current
+      );
+      const nextState = {
+        activeView: view,
+        activeQuestionId: activeQuestionIdRef.current,
+        activeTeil: (currentQuestion?.teil ?? null) as number | null,
+      };
+
       updateSessionMetadata({
         activeView: view,
         activeQuestionId: activeQuestionIdRef.current,
+        activeTeil: nextState.activeTeil,
       });
 
       enqueueUpdate({
         metadata: {
           activeView: view,
           activeQuestionId: activeQuestionIdRef.current,
+        },
+        data: {
+          state: nextState,
         },
       });
     },
@@ -848,7 +951,7 @@ const isCompletingRef = useRef(false);
             question.id === questionId
               ? {
                   ...question,
-                  answer: normaliseAnswer(answerValue),
+                  answer: normaliseAnswerForQuestion(question, answerValue),
                   answered: true,
                   result,
                 }
@@ -943,7 +1046,10 @@ const isCompletingRef = useRef(false);
           }
           return {
             ...question,
-            answer: normaliseAnswer(result.userAnswer.answer),
+            answer: normaliseAnswerForQuestion(
+              question,
+              result.userAnswer.answer as AnswerValue
+            ),
             answered: true,
             result,
           };
@@ -1005,12 +1111,31 @@ const isCompletingRef = useRef(false);
     return getSupportedQuestionTypesFromRegistry(activeSession.type as SessionTypeEnum);
   }, [activeSession]);
 
+  const sessionProgress = useMemo(() => {
+    if (activeSession?.data?.progress) {
+      return activeSession.data.progress;
+    }
+    if (sessionQuestions.length) {
+      return deriveProgressSummary(sessionQuestions);
+    }
+    return null;
+  }, [activeSession?.data?.progress, sessionQuestions]);
+
+  const sessionMetrics = useMemo(() => {
+    if (activeSession?.data?.metrics) {
+      return activeSession.data.metrics;
+    }
+    return {};
+  }, [activeSession?.data?.metrics]);
+
   const value = useMemo<LearningSessionContextValue>(
     () => ({
       activeSession,
       sessionQuestions,
       currentQuestion,
       questionProgress,
+      sessionProgress,
+      sessionMetrics,
       isLoading,
       isSaving,
       isSubmitting,
@@ -1040,6 +1165,8 @@ const isCompletingRef = useRef(false);
       sessionQuestions,
       currentQuestion,
       questionProgress,
+      sessionProgress,
+      sessionMetrics,
       isLoading,
       isSaving,
       isSubmitting,
@@ -1079,4 +1206,36 @@ export function useLearningSession(): LearningSessionContextValue {
     throw new Error('useLearningSession must be used within LearningSessionProvider');
   }
   return context;
+}
+function resolveInputType(question: Question): QuestionInputType {
+  return (
+    (question.inputType as QuestionInputType | undefined) ??
+    (question.answerType as QuestionInputType | undefined) ??
+    QuestionInputType.SHORT_TEXT
+  );
+}
+
+function normaliseAnswerForQuestion(
+  question: Question,
+  value: AnswerValue | null | undefined
+): AnswerValue | null {
+  const inputType = resolveInputType(question);
+
+  if (hasInputDefinition(inputType)) {
+    const definition = getInputDefinition(inputType);
+
+    if (typeof definition.normalise === 'function') {
+      const transformed = definition.normalise(value, question);
+      if (transformed !== undefined) {
+        return transformed;
+      }
+    }
+
+    const parsed = definition.answerSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data ?? null;
+    }
+  }
+
+  return defaultNormaliseAnswer(value);
 }

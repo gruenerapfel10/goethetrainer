@@ -12,6 +12,24 @@ export interface SessionData {
   questions: SessionQuestion[];
   answers: UserAnswer[];
   results: SessionQuestionResult[];
+  progress?: {
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctAnswers: number;
+    score: number;
+    maxScore: number;
+  };
+  metrics?: Record<string, number>;
+  activity?: Array<{
+    type: string;
+    timestamp: string;
+    payload?: Record<string, unknown>;
+  }>;
+  state?: {
+    activeTeil: number | null;
+    activeQuestionId: string | null;
+    activeView: 'fragen' | 'quelle' | 'overview';
+  };
   [key: string]: any;
 }
 
@@ -38,6 +56,7 @@ export interface SessionStats {
   averageDuration?: number;
   lastSessionDate?: Date | string;
   streakDays?: number;
+  sessionsByType?: Record<string, number>;
 }
 
 // Backwards compatible re-exports

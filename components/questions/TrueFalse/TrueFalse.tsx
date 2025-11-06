@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
@@ -18,7 +18,26 @@ export function TrueFalse({
   questionNumber,
   totalQuestions,
 }: QuestionComponentProps) {
-  const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
+  const deriveInitialAnswer = () => {
+    if (typeof question.answer === 'boolean') {
+      return question.answer;
+    }
+    if (typeof question.answer === 'string') {
+      if (question.answer.toLowerCase() === 'true') {
+        return true;
+      }
+      if (question.answer.toLowerCase() === 'false') {
+        return false;
+      }
+    }
+    return null;
+  };
+
+  const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(deriveInitialAnswer);
+
+  useEffect(() => {
+    setSelectedAnswer(deriveInitialAnswer());
+  }, [question.id, question.answer]);
   
   const handleSelect = (value: boolean) => {
     if (!isSubmitted) {
@@ -27,7 +46,20 @@ export function TrueFalse({
     }
   };
 
-  const correctAnswer = question.correctAnswer === 'true' || question.correctAnswer === true;
+  const correctAnswer = (() => {
+    if (typeof question.correctAnswer === 'boolean') {
+      return question.correctAnswer;
+    }
+    if (Array.isArray(question.correctAnswer)) {
+      return question.correctAnswer.some(
+        value => typeof value === 'string' && value.toLowerCase() === 'true'
+      );
+    }
+    if (typeof question.correctAnswer === 'string') {
+      return question.correctAnswer.toLowerCase() === 'true';
+    }
+    return false;
+  })();
 
   return (
     <Card className="w-full max-w-4xl mx-auto">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,19 @@ export function ShortAnswer({
   showHint,
   currentHintIndex = 0,
 }: QuestionComponentProps) {
-  const [answer, setAnswer] = useState('');
+  const deriveInitialAnswer = () => {
+    if (typeof question.answer === 'string') {
+      return question.answer;
+    }
+    return '';
+  };
+
+  const [answer, setAnswer] = useState(deriveInitialAnswer);
   const [showHintState, setShowHintState] = useState(false);
+
+  useEffect(() => {
+    setAnswer(deriveInitialAnswer());
+  }, [question.id, question.answer]);
   
   const handleChange = (value: string) => {
     if (!isSubmitted) {
@@ -123,7 +134,10 @@ export function ShortAnswer({
           
           <Button
             onClick={onNext}
-            disabled={!onNext || (!isSubmitted && answer.trim().length === 0)}
+            disabled={
+              !onNext ||
+              (!isSubmitted && answer.trim().length === 0)
+            }
           >
             {questionNumber === totalQuestions ? 'Finish' : 'Next'}
           </Button>

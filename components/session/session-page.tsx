@@ -40,9 +40,15 @@ const COLOR_CLASSES = {
 
 function SessionContent() {
   const { sessionType, metadata, features, defaults } = useSessionPage();
-  const { activeSession, stats, latestResults, clearResults } = useLearningSession();
+  const {
+    activeSession,
+    stats,
+    latestResults,
+    clearResults,
+    sessionProgress,
+    sessionMetrics,
+  } = useLearningSession();
   const [sessionTime, setSessionTime] = useState(0);
-  const [primaryMetricValue, setPrimaryMetricValue] = useState(0);
 
   // Get the icon component
   const IconComponent = ICON_MAP[metadata.icon as keyof typeof ICON_MAP] || Activity;
@@ -58,13 +64,32 @@ function SessionContent() {
     }
   }, [activeSession, sessionType]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+  const formatTime = (seconds: number | null | undefined) => {
+    const safeSeconds = Number.isFinite(seconds as number) ? Math.max(0, Number(seconds)) : 0;
+    const mins = Math.floor(safeSeconds / 60);
+    const secs = Math.floor(safeSeconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   // Get primary metric name for display
+  const determineTargetKey = () => {
+    if (sessionType === SessionTypeEnum.READING) return 'wordsRead';
+    if (sessionType === SessionTypeEnum.WRITING) return 'wordCount';
+    if (sessionType === SessionTypeEnum.LISTENING) return 'audioPlayed';
+    if (sessionType === SessionTypeEnum.SPEAKING) return 'recordingDuration';
+    return 'answeredQuestions';
+  };
+
+  const targetKey = determineTargetKey();
+  const primaryMetricValueRaw =
+    sessionMetrics[targetKey] ??
+    (targetKey === 'answeredQuestions'
+      ? sessionProgress?.answeredQuestions ?? 0
+      : sessionProgress?.answeredQuestions ?? 0);
+  const primaryMetricValue = typeof primaryMetricValueRaw === 'number'
+    ? primaryMetricValueRaw
+    : Number(primaryMetricValueRaw ?? 0);
+
   const getPrimaryMetricDisplay = () => {
     switch (sessionType) {
       case SessionTypeEnum.READING:
@@ -84,14 +109,16 @@ function SessionContent() {
 
   // Calculate progress percentage
   const getProgressPercentage = () => {
-    if (!defaults.targetMetrics || !activeSession) return 0;
-    const targetKey = sessionType === SessionTypeEnum.READING ? 'wordsRead' :
-                     sessionType === SessionTypeEnum.WRITING ? 'wordCount' :
-                     sessionType === SessionTypeEnum.LISTENING ? 'audioPlayed' :
-                     'recordingDuration';
-    const target = defaults.targetMetrics[targetKey];
-    if (!target) return 0;
-    return Math.min(100, Math.round((primaryMetricValue / target) * 100));
+    const target = defaults.targetMetrics?.[targetKey];
+    if (target && target > 0) {
+      return Math.min(100, Math.round((primaryMetricValue / target) * 100));
+    }
+    if (sessionProgress?.totalQuestions) {
+      return Math.round(
+        (sessionProgress.answeredQuestions / sessionProgress.totalQuestions) * 100
+      );
+    }
+    return 0;
   };
 
   if (latestResults) {
@@ -125,12 +152,10 @@ function SessionContent() {
           onSessionStart={(sessionId) => {
             console.log(`${sessionType} session started:`, sessionId);
             setSessionTime(0);
-            setPrimaryMetricValue(0);
           }}
           onSessionEnd={() => {
             console.log(`${sessionType} session ended`);
             setSessionTime(0);
-            setPrimaryMetricValue(0);
           }}
         />
       </div>
@@ -248,9 +273,9 @@ function SessionContent() {
               <CardTitle className="text-sm font-medium">Average Duration</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatTime(stats.averageDuration)}</div>
+              <div className="text-2xl font-bold">{formatTime(stats.averageDuration ?? 0)}</div>
               <p className="text-xs text-muted-foreground mt-1">
-                Target: {formatTime(defaults.targetDuration)}
+                Target: {formatTime(defaults.targetDuration ?? 0)}
               </p>
             </CardContent>
           </Card>
@@ -261,11 +286,11 @@ function SessionContent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold flex items-center gap-2">
-                {stats.streakDays}
-                {stats.streakDays >= 7 && <Award className="h-5 w-5 text-yellow-500" />}
+                {(stats.streakDays ?? 0)}
+                {(stats.streakDays ?? 0) >= 7 && <Award className="h-5 w-5 text-yellow-500" />}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {stats.streakDays === 1 ? 'day' : 'days'}
+                {(stats.streakDays ?? 0) === 1 ? 'day' : 'days'}
               </p>
             </CardContent>
           </Card>

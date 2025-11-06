@@ -1,6 +1,7 @@
 import type { Session } from './types';
 import { sanitizeForFirestore } from './utils';
 import { getSessionById, saveSession, updateSession as updateSessionDocument } from './queries';
+import { ensureStandardSessionData } from './session-blueprint';
 
 export function touchSession(session: Session): void {
   if (!session.metadata) {
@@ -10,25 +11,7 @@ export function touchSession(session: Session): void {
 }
 
 export function ensureSessionCollections(session: Session): void {
-  if (!session.data) {
-    session.data = {
-      questions: [],
-      answers: [],
-      results: [],
-    } as Session['data'];
-  }
-
-  if (!Array.isArray(session.data.questions)) {
-    session.data.questions = [];
-  }
-
-  if (!Array.isArray(session.data.answers)) {
-    session.data.answers = [];
-  }
-
-  if (!Array.isArray(session.data.results)) {
-    session.data.results = [];
-  }
+  session.data = ensureStandardSessionData(session.data) as Session['data'];
 }
 
 export function sanitizeSession(session: Session): Session {

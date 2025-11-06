@@ -14,14 +14,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal } from 'lucide-react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
+import type { AnswerValue } from '@/lib/sessions/types';
+import { resolveInputComponent } from '@/components/inputs/registry';
+import { QuestionInputType } from '@/lib/sessions/inputs';
 
 // Import question components
-import { MultipleChoice } from '@/components/questions/MultipleChoice/MultipleChoice';
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
-import { TrueFalse } from '@/components/questions/TrueFalse/TrueFalse';
-import { ShortAnswer } from '@/components/questions/ShortAnswer/ShortAnswer';
-import { QuestionTypeName } from '@/lib/sessions/questions/question-registry';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 
 export function SessionOrchestrator() {
@@ -53,11 +52,13 @@ export function SessionOrchestrator() {
   } = useLearningSession();
 
   // Local state
-  const [userAnswer, setUserAnswer] = useState<string | string[] | boolean | null>(null);
+  const [userAnswer, setUserAnswer] = useState<AnswerValue>(null);
   const [questionResult, setQuestionResult] = useState<QuestionResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
+  const effectiveAnswer: AnswerValue =
+    (userAnswer ?? (currentQuestion?.answer as AnswerValue | null)) ?? null;
 
   useEffect(() => {
     if (!sessionId) return;
@@ -147,18 +148,25 @@ export function SessionOrchestrator() {
 
   // Reset state when question changes
   useEffect(() => {
-    setUserAnswer(null);
+    setUserAnswer((currentQuestion?.answer as AnswerValue) ?? null);
     setQuestionResult(null);
   }, [currentQuestion?.id]);
 
   // Teil detection is now handled by the session context
 
   const handleSubmitAnswer = async () => {
-    if (!currentQuestion || userAnswer === null) return;
+    if (!currentQuestion) return;
+
+    const answerPayload =
+      (userAnswer ?? (currentQuestion.answer as AnswerValue | null)) ?? null;
+
+    if (answerPayload === null) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const result = await submitAnswer(currentQuestion.id, userAnswer, 0, 0);
+      const result = await submitAnswer(currentQuestion.id, answerPayload, 0, 0);
       setQuestionResult(result);
     } finally {
       setIsSubmitting(false);
@@ -273,48 +281,40 @@ export function SessionOrchestrator() {
       );
     }
 
-    const questionProps = {
-      question: currentQuestion,
-      onAnswer: setUserAnswer,
-      onNext: handleNextQuestion,
-      onPrevious: previousQuestion,
-      isSubmitted: !!questionResult,
-      isCorrect: questionResult?.isCorrect,
-      feedback: questionResult?.feedback,
-      questionNumber: questionProgress.current,
-      totalQuestions: questionProgress.total,
-    };
+    const inputType =
+      currentQuestion.inputType ??
+      currentQuestion.answerType ??
+      QuestionInputType.MULTIPLE_CHOICE;
+    const InputComponent = resolveInputComponent(inputType);
+    const effectiveValue = effectiveAnswer;
 
-    const registryType = currentQuestion.registryType as QuestionTypeName;
-
-    // DEBUG: Log the registryType value
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Rendering question with registryType:', registryType, 'Expected:', QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE);
+    if (InputComponent) {
+      return (
+        <InputComponent
+          question={currentQuestion}
+          value={effectiveValue}
+          onChange={value => {
+            setUserAnswer(value);
+            setQuestionAnswer(currentQuestion.id, value);
+          }}
+          onNext={handleNextQuestion}
+          onPrevious={previousQuestion}
+          feedback={questionResult}
+          position={{
+            current: questionProgress.current,
+            total: questionProgress.total,
+          }}
+        />
+      );
     }
 
-    switch (registryType) {
-      // Unified MultipleChoice component handles all multiple choice variants
-      case QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE:
-        return <MultipleChoice {...questionProps} />;
-
-      case QuestionTypeName.MULTIPLE_CHOICE:
-        return <MultipleChoice {...questionProps} />;
-
-      case QuestionTypeName.TRUE_FALSE:
-        return <TrueFalse {...questionProps} />;
-
-      case QuestionTypeName.SHORT_ANSWER:
-        return <ShortAnswer {...questionProps} />;
-
-      default:
-        return (
-          <div className="text-center p-8">
-            <p className="text-muted-foreground mb-4">
-              Question type "{registryType}" is not yet implemented.
-            </p>
-          </div>
-        );
-    }
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground mb-4">
+          Kein Renderer für Eingabetyp "{inputType}" registriert.
+        </p>
+      </div>
+    );
   };
 
   return (
@@ -347,7 +347,7 @@ export function SessionOrchestrator() {
       </div>
 
       {/* Submit Button */}
-      {currentQuestion && userAnswer !== null && !questionResult && (
+      {currentQuestion && effectiveAnswer !== null && !questionResult && (
         <div className="flex justify-center p-4">
           <Button
             onClick={handleSubmitAnswer}

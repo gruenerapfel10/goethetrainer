@@ -6,7 +6,7 @@ import { multipleChoiceConfig } from './configs/gap-text-multiple-choice.config'
 import { multipleChoiceStandardConfig } from './configs/multiple-choice-standard.config';
 import type { QuestionDifficulty } from './question-types';
 import { SessionTypeEnum } from '../session-registry';
-import { AnswerType } from './question-types';
+import { QuestionInputType } from './question-types';
 import { generateSourceWithGaps } from './source-generator';
 
 export const maxDuration = 30;
@@ -110,7 +110,9 @@ export async function generateQuestionWithAI(options: GenerateQuestionOptions) {
         : questionData.isExample ? 0 : 1,
       timeLimit: questionData.timeLimit || config.defaultTimeLimit,
       markingMethod: config.markingMethod,
-      answerType: inferAnswerType(questionType),
+      inputType: inferInputType(questionType),
+      // Legacy mirror to keep downstream consumers stable during migration.
+      answerType: inferInputType(questionType),
     };
 
     return generatedQuestion;
@@ -159,18 +161,23 @@ export async function generateSessionQuestion(
       const { context, questions, title, subtitle, theme } = data;
 
       // Transform result into array of questions with shared context
-      const questionsWithContext = questions.map((q: any, index: number) => ({
-        ...q,
-        context,
-        title,
-        subtitle,
-        theme,
-        isExample: false,
-        difficulty,
-        points: 1,
-        timeLimit: 60,
-        answerType: inferAnswerType(QuestionTypeName.MULTIPLE_CHOICE),
-      }));
+      const questionsWithContext = questions.map((q: any, index: number) => {
+        const isExample = index === 0;
+        return {
+          ...q,
+          context,
+          title,
+          subtitle,
+          theme,
+          isExample,
+          exampleAnswer: isExample ? q.correctOptionId : undefined,
+          difficulty,
+          points: isExample ? 0 : 1,
+          timeLimit: 60,
+          inputType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
+          answerType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
+        };
+      });
 
       return questionsWithContext;
     } catch (error) {
@@ -248,7 +255,8 @@ Return as JSON with id (0-3) and text for each option.`;
         difficulty,
         points: index === 0 ? 0 : 1,
         timeLimit: 60,
-        answerType: inferAnswerType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
+        inputType: inferInputType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
+        answerType: inferInputType(QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE),
       }));
 
       return questionsWithContext;
@@ -314,26 +322,26 @@ export function getAvailableQuestionTypes(sessionType: SessionTypeEnum): Questio
     })
     .map(([type]) => type as QuestionTypeName);
 }
-const ANSWER_TYPE_MAP: Record<QuestionTypeName, AnswerType> = {
-  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
-  [QuestionTypeName.MULTIPLE_CHOICE]: AnswerType.GAP_TEXT_MULTIPLE_CHOICE,
-  [QuestionTypeName.TRUE_FALSE]: AnswerType.TRUE_FALSE,
-  [QuestionTypeName.SHORT_ANSWER]: AnswerType.SHORT_ANSWER,
-  [QuestionTypeName.FILL_IN_BLANK]: AnswerType.FILL_BLANK,
-  [QuestionTypeName.ESSAY]: AnswerType.LONG_ANSWER,
-  [QuestionTypeName.TRANSLATION]: AnswerType.LONG_ANSWER,
-  [QuestionTypeName.SENTENCE_CORRECTION]: AnswerType.SHORT_ANSWER,
-  [QuestionTypeName.AUDIO_COMPREHENSION]: AnswerType.SHORT_ANSWER,
-  [QuestionTypeName.DICTATION]: AnswerType.FILL_BLANK,
-  [QuestionTypeName.PRONUNCIATION]: AnswerType.AUDIO_RECORDING,
-  [QuestionTypeName.CONVERSATION]: AnswerType.LONG_ANSWER,
-  [QuestionTypeName.ORAL_PRESENTATION]: AnswerType.AUDIO_RECORDING,
+const INPUT_TYPE_MAP: Record<QuestionTypeName, QuestionInputType> = {
+  [QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE]: QuestionInputType.MULTIPLE_CHOICE,
+  [QuestionTypeName.MULTIPLE_CHOICE]: QuestionInputType.MULTIPLE_CHOICE,
+  [QuestionTypeName.TRUE_FALSE]: QuestionInputType.TRUE_FALSE,
+  [QuestionTypeName.SHORT_ANSWER]: QuestionInputType.SHORT_TEXT,
+  [QuestionTypeName.FILL_IN_BLANK]: QuestionInputType.MATCHING,
+  [QuestionTypeName.ESSAY]: QuestionInputType.LONG_TEXT,
+  [QuestionTypeName.TRANSLATION]: QuestionInputType.LONG_TEXT,
+  [QuestionTypeName.SENTENCE_CORRECTION]: QuestionInputType.SHORT_TEXT,
+  [QuestionTypeName.AUDIO_COMPREHENSION]: QuestionInputType.MULTIPLE_CHOICE,
+  [QuestionTypeName.DICTATION]: QuestionInputType.MATCHING,
+  [QuestionTypeName.PRONUNCIATION]: QuestionInputType.AUDIO_RECORDING,
+  [QuestionTypeName.CONVERSATION]: QuestionInputType.LONG_TEXT,
+  [QuestionTypeName.ORAL_PRESENTATION]: QuestionInputType.AUDIO_RECORDING,
 };
 
-function inferAnswerType(questionType: QuestionTypeName): AnswerType {
-  const mapping = ANSWER_TYPE_MAP[questionType];
+function inferInputType(questionType: QuestionTypeName): QuestionInputType {
+  const mapping = INPUT_TYPE_MAP[questionType];
   if (!mapping) {
-    return AnswerType.SHORT_ANSWER;
+    return QuestionInputType.SHORT_TEXT;
   }
   return mapping;
 }

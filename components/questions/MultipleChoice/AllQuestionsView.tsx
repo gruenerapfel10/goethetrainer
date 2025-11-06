@@ -6,27 +6,15 @@ import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 import { QuestionTimeline } from './QuestionTimeline';
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
+import type { Question as SessionQuestionType } from '@/lib/sessions/types';
 
-interface Question {
-  id: string;
-  prompt?: string;
-  context?: string;
-  title?: string;
-  subtitle?: string;
-  theme?: string;
-  options?: Array<{ id: string; text: string }>;
-  correctAnswer?: string;
-  correctOptionId?: string;
-  isExample?: boolean;
-  exampleAnswer?: string;
-  points?: number;
+type MCQuestion = SessionQuestionType & {
   status?: QuestionStatus;
-  teil?: number;
-  answer?: string | string[] | boolean;
-}
+  exampleAnswer?: string;
+};
 
 interface AllQuestionsViewProps {
-  questions: Question[];
+  questions: MCQuestion[];
   onSubmit: (answers: Record<string, string>) => Promise<void> | void;
   showA4Format?: boolean;
   isLastTeil?: boolean;
@@ -36,7 +24,7 @@ interface AllQuestionsViewProps {
   totalTeils?: number;
   generatedTeils?: Set<number>;
   onTeilNavigate?: (teilNumber: number) => void;
-  allQuestions?: Question[];
+  allQuestions?: MCQuestion[];
   onAnswerChange?: (questionId: string, answer: string) => void;
   isSubmitting?: boolean;
   activeView?: 'fragen' | 'quelle';

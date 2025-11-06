@@ -53,6 +53,8 @@ async function generateTeilQuestions(
       order: index,
       registryType: questionType,
       answered: !!question.answer,
+      inputType: question.inputType ?? question.answerType,
+      answerType: question.answerType ?? question.inputType,
     }))
   );
 }
@@ -64,6 +66,7 @@ export async function createSession(
 ): Promise<Session> {
   const sessionId = generateUUID();
   const now = new Date();
+  const config = getSessionConfig(type);
   const data = initializeSessionData(type);
 
   const session: Session = {
@@ -74,6 +77,7 @@ export async function createSession(
     startedAt: now,
     duration: 0,
     metadata: {
+      ...(config.metadataDefaults ?? {}),
       ...metadata,
       activeView: 'fragen',
       activeQuestionId: null,
@@ -211,6 +215,30 @@ export async function generateQuestionsForSession(
   session.data.questions = ensureQuestionIdentifiers(questionsWithFlags);
   session.data.answers = [];
   session.data.results = [];
+  session.data.progress = {
+    totalQuestions: session.data.questions.length,
+    answeredQuestions: 0,
+    correctAnswers: 0,
+    score: 0,
+    maxScore: session.data.questions.reduce(
+      (sum, question) => sum + (question.points ?? 0),
+      0
+    ),
+  };
+  session.data.metrics = {
+    ...(session.data.metrics ?? {}),
+    totalQuestions: session.data.progress.totalQuestions,
+    answeredQuestions: 0,
+    correctAnswers: 0,
+    score: 0,
+    maxScore: session.data.progress.maxScore,
+  };
+  session.data.state = {
+    ...(session.data.state ?? {}),
+    activeQuestionId: session.data.questions[0]?.id ?? null,
+    activeTeil: (session.data.questions[0]?.teil ?? null) as number | null,
+    activeView: (session.metadata?.activeView ?? 'fragen') as 'fragen' | 'quelle' | 'overview',
+  };
   session.metadata = {
     ...session.metadata,
     config: {

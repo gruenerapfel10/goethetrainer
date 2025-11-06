@@ -1,5 +1,6 @@
 'use client';
 
+import type { JSX } from 'react';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ export function MultipleChoice({
   const gaps = (question.gaps || []) as Gap[];
 
   const examplePrefill = question.isExample ? question.exampleAnswer || '' : '';
+  const isExampleQuestion = Boolean(question.isExample);
 
   const deriveInitialSelection = () => {
     const answer = question.answer as unknown;
@@ -106,28 +108,32 @@ export function MultipleChoice({
 
   // Gap-text mode handlers
   const handleSelectGapOption = (gapId: string, optionValue: string) => {
-    if (!isSubmitted) {
-      const newSelections = {
-        ...(typeof selectedOptions === 'object' ? selectedOptions : {}),
-        [gapId]: optionValue,
-      };
-      setSelectedOptions(newSelections);
-      onAnswer(newSelections);
+    if (isSubmitted || isExampleQuestion) {
+      return;
     }
+
+    const newSelections = {
+      ...(typeof selectedOptions === 'object' ? selectedOptions : {}),
+      [gapId]: optionValue,
+    };
+    setSelectedOptions(newSelections);
+    onAnswer(newSelections);
   };
 
   // Standard mode handlers
   const handleSelectOption = (value: string) => {
-    if (!isSubmitted) {
-      setSelectedOptions(value);
-      onAnswer(value);
+    if (isSubmitted || isExampleQuestion) {
+      return;
     }
+
+    setSelectedOptions(value);
+    onAnswer(value);
   };
 
   // Render text with inline gap dropdowns
   const renderTextWithGaps = () => {
-    let parts = text.split(/\[GAP_(\d+)\]/g);
-    let result = [];
+    const parts = text.split(/\[GAP_(\d+)\]/g);
+    const result: JSX.Element[] = [];
     const selections = typeof selectedOptions === 'object' ? selectedOptions : {};
 
     for (let i = 0; i < parts.length; i++) {
@@ -156,8 +162,8 @@ export function MultipleChoice({
                 !selectedValue && "bg-gray-50"
               )}
               value={selectedValue || ''}
-              onChange={(e) => handleSelectGapOption(gapId, e.target.value)}
-              disabled={isSubmitted}
+              onChange={e => handleSelectGapOption(gapId, e.target.value)}
+              disabled={isSubmitted || isExampleQuestion}
             >
               <option value="">___</option>
               {gap.options?.map((option, idx) => {
@@ -293,7 +299,7 @@ export function MultipleChoice({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => !isSubmitted && handleSelectGapOption(gap.id, optionId)}
-                            disabled={isSubmitted}
+                            disabled={isSubmitted || isExampleQuestion}
                             className="w-4 h-4 cursor-pointer"
                           />
                           <span className="font-semibold text-gray-600 min-w-[24px]">
@@ -353,7 +359,7 @@ export function MultipleChoice({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => !isSubmitted && handleSelectOption(option.id)}
-                        disabled={isSubmitted || question.isExample}
+                        disabled={isSubmitted || isExampleQuestion}
                         className="w-4 h-4 cursor-pointer"
                       />
                       <span className="font-normal text-gray-700">

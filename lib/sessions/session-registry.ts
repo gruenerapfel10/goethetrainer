@@ -1,5 +1,6 @@
 import type { SessionType } from './types';
 import { QuestionTypeName } from './questions/question-registry';
+import { mergeSessionDataDefaults } from './session-blueprint';
 
 export enum SessionTypeEnum {
   READING = 'reading',
@@ -65,6 +66,8 @@ export interface SessionConfig {
     targetMetrics?: Record<string, number>;
     questionCount?: number;
   };
+  dataDefaults?: Record<string, any>;
+  metadataDefaults?: Record<string, any>;
   
   // Validation rules
   validation?: {
@@ -158,7 +161,10 @@ export function validateSessionData(
 // Initialize default session data based on schema
 export function initializeSessionData(type: SessionTypeEnum | SessionType): Record<string, any> {
   const config = getSessionConfig(type);
-  const data: Record<string, any> = {};
+
+  const data: Record<string, any> = mergeSessionDataDefaults(
+    config.dataDefaults ?? {},
+  );
 
   const fields = config.schema?.fields ?? {};
   Object.entries(fields).forEach(([fieldName, fieldDef]) => {

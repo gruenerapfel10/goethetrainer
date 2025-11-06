@@ -1,4 +1,5 @@
 import { SessionTypeEnum } from '../session-registry';
+import { QuestionInputType } from '../inputs/types';
 
 /**
  * Centralized question type definitions
@@ -32,16 +33,6 @@ export enum QuestionDifficulty {
   ADVANCED = 'advanced',
 }
 
-export enum AnswerType {
-  GAP_TEXT_MULTIPLE_CHOICE = 'multiple_choice',
-  SHORT_ANSWER = 'short_answer',
-  LONG_ANSWER = 'long_answer',
-  AUDIO_RECORDING = 'audio_recording',
-  TRUE_FALSE = 'true_false',
-  MATCHING = 'matching',
-  FILL_BLANK = 'fill_blank',
-}
-
 export interface QuestionOption {
   id: string;
   text: string;
@@ -53,13 +44,16 @@ export interface Question {
   type: QuestionType;
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
-  answerType: AnswerType;
+  inputType: QuestionInputType;
+  /** @deprecated use inputType to determine rendering/marking */
+  answerType?: QuestionInputType;
   
   // Registry type reference
   registryType?: string; // References QuestionTypeName from registry
   
   // Question content
   prompt: string;
+  text?: string;
   context?: string; // For reading/listening passages
   options?: QuestionOption[]; // For multiple choice
   correctAnswer?: string | string[]; // For validation
@@ -71,6 +65,7 @@ export interface Question {
   heading?: string; // Article heading/introduction
   instructions?: string; // Task instructions
   workingTime?: string; // Suggested working time (e.g., "10 Minuten")
+  theme?: string;
 
   // Goethe C1 specific fields
   gaps?: Array<{
@@ -142,3 +137,7 @@ export interface QuestionResult {
   feedback?: string;
   markedBy: 'manual' | 'ai' | 'automatic';
 }
+
+// Backwards compatible alias while legacy code migrates.
+export { QuestionInputType as AnswerType };
+export { QuestionInputType } from '../inputs/types';

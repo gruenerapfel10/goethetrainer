@@ -2,7 +2,7 @@ import type { Question, UserAnswer } from '@/lib/sessions/questions/question-typ
 
 export interface QuestionComponentProps {
   question: Question;
-  onAnswer: (answer: string | string[] | boolean) => void;
+  onAnswer: (answer: string | string[] | boolean | Record<string, string>) => void;
   onNext?: () => void;
   onPrevious?: () => void;
   showHint?: boolean;

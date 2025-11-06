@@ -18,8 +18,8 @@ interface SessionQuestionRendererProps {
   isSubmitted: boolean;
   isCorrect?: boolean;
   feedback?: string;
-  userAnswer: string | string[] | boolean | null;
-  onAnswer: (answer: string | string[] | boolean) => void;
+  userAnswer: string | string[] | boolean | Record<string, string> | null;
+  onAnswer: (answer: string | string[] | boolean | Record<string, string>) => void;
   onNext: () => void;
   onPrevious: () => void;
   allQuestions: Question[];

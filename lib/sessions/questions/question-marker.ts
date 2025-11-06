@@ -1,13 +1,17 @@
 import { getQuestionMetadata } from './question-registry';
 import { MarkingMethod, QuestionTypeName } from './question-enums';
 import {
-  AnswerType,
   Question,
   QuestionOption,
   QuestionResult,
   UserAnswer,
+  QuestionInputType,
 } from './question-types';
 import { markQuestionWithAI } from './standard-marker';
+import {
+  getInputDefinition,
+  hasInputDefinition,
+} from '../inputs';
 
 type MarkerId = 'automatic' | 'ai' | 'manual';
 
@@ -32,17 +36,55 @@ class AutomaticMarker implements Marker {
 
   async mark({ question, answer }: MarkerContext): Promise<QuestionResult> {
     const basePoints = question.points ?? 0;
+    const inputType =
+      question.inputType ??
+      question.answerType ??
+      QuestionInputType.SHORT_TEXT;
+
+    if (hasInputDefinition(inputType)) {
+      const definition = getInputDefinition(inputType);
+
+      if (definition.marking.strategy === 'automatic' && typeof definition.marking.mark === 'function') {
+        const normalisedValue =
+          definition.normalise?.(answer.answer, question) ??
+          (() => {
+            const parsed = definition.answerSchema.safeParse(answer.answer);
+            return parsed.success ? parsed.data : answer.answer;
+          })();
+
+        const userAnswer: UserAnswer = {
+          ...answer,
+          answer: normalisedValue as UserAnswer['answer'],
+        };
+
+        const result = await definition.marking.mark({
+          question,
+          answer: normalisedValue,
+          userAnswer,
+        });
+
+        return {
+          questionId: question.id,
+          question,
+          userAnswer,
+          score: result.score,
+          maxScore: result.maxScore ?? basePoints,
+          isCorrect: result.isCorrect,
+          feedback: result.feedback,
+          markedBy: result.markedBy ?? 'automatic',
+        };
+      }
+    }
+
     let score = 0;
     let isCorrect = false;
     let feedback = '';
 
-    switch (question.answerType) {
-      case AnswerType.GAP_TEXT_MULTIPLE_CHOICE:
-      case AnswerType.MATCHING:
-      case AnswerType.TRUE_FALSE:
-      case AnswerType.SHORT_ANSWER:
-      case AnswerType.FILL_BLANK: {
-        const evaluation = this.evaluateObjectiveQuestion(question, answer.answer);
+    switch (inputType) {
+      case QuestionInputType.TRUE_FALSE:
+      case QuestionInputType.MATCHING:
+      case QuestionInputType.SHORT_TEXT: {
+        const evaluation = this.evaluateObjectiveQuestion(question, answer.answer, inputType);
         score = evaluation.score * basePoints;
         isCorrect = evaluation.isCorrect;
         feedback = evaluation.feedback;
@@ -70,35 +112,12 @@ class AutomaticMarker implements Marker {
 
   private evaluateObjectiveQuestion(
     question: Question,
-    rawAnswer: string | string[] | boolean
+    rawAnswer: unknown,
+    inputType: QuestionInputType
   ): { score: number; isCorrect: boolean; feedback: string } {
-    const basePoints = question.points ?? 0;
-    const answerType = question.answerType;
+    const resolvedType = inputType ?? QuestionInputType.SHORT_TEXT;
 
-    if (answerType === AnswerType.GAP_TEXT_MULTIPLE_CHOICE) {
-      const userAnswerId = String(rawAnswer ?? '');
-      const correctId = question.correctOptionId ?? '';
-      const isCorrect = userAnswerId === correctId;
-
-      const userOption = question.options?.find(opt => opt.id === userAnswerId);
-      const correctOption =
-        question.options?.find(opt => opt.id === correctId) ??
-        question.options?.find(opt => opt.isCorrect);
-
-      const feedback = isCorrect
-        ? 'Richtige Antwort.'
-        : correctOption
-          ? `Falsch. Die richtige Antwort lautet: ${correctOption.text}.`
-          : 'Falsch.';
-
-      return {
-        score: isCorrect ? 1 : 0,
-        isCorrect,
-        feedback,
-      };
-    }
-
-    if (answerType === AnswerType.TRUE_FALSE) {
+    if (resolvedType === QuestionInputType.TRUE_FALSE) {
       const expected = String(question.correctAnswer).toLowerCase();
       const provided = String(rawAnswer ?? '').toLowerCase();
       const isCorrect = expected === provided;
@@ -109,12 +128,8 @@ class AutomaticMarker implements Marker {
       };
     }
 
-    if (answerType === AnswerType.FILL_BLANK) {
+    if (resolvedType === QuestionInputType.MATCHING) {
       const expected = question.correctAnswer;
-      if (!expected) {
-        return { score: 0, isCorrect: false, feedback: 'Keine korrekte Lösung hinterlegt.' };
-      }
-
       if (Array.isArray(expected) && Array.isArray(rawAnswer)) {
         const comparisons = expected.map((value, index) => {
           const provided = rawAnswer[index];
@@ -136,18 +151,29 @@ class AutomaticMarker implements Marker {
         };
       }
 
-      const isCorrect =
-        String(rawAnswer ?? '').trim().toLowerCase() ===
-        String(expected ?? '').trim().toLowerCase();
+      const expectedMatches = question.correctMatches ?? {};
+      const provided = typeof rawAnswer === 'object' && rawAnswer !== null ? rawAnswer as Record<string, unknown> : {};
+
+      const expectedKeys = Object.keys(expectedMatches);
+      if (expectedKeys.length === 0) {
+        return { score: 0, isCorrect: false, feedback: 'Keine Referenzlösung vorhanden.' };
+      }
+
+      const correctMatches = expectedKeys.filter(key => provided?.[key] === expectedMatches[key])
+        .length;
+      const score = correctMatches / expectedKeys.length;
+      const isCorrect = correctMatches === expectedKeys.length;
 
       return {
-        score: isCorrect ? 1 : 0,
+        score,
         isCorrect,
-        feedback: isCorrect ? 'Richtige Antwort.' : 'Falsch ausgefüllt.',
+        feedback: isCorrect
+          ? 'Alle Zuordnungen korrekt.'
+          : `${correctMatches} von ${expectedKeys.length} Zuordnungen korrekt.`,
       };
     }
 
-    if (answerType === AnswerType.SHORT_ANSWER) {
+    if (resolvedType === QuestionInputType.SHORT_TEXT) {
       const supplied = String(rawAnswer ?? '').trim().toLowerCase();
       const expected = String(question.correctAnswer ?? '').trim().toLowerCase();
       if (!supplied) {
@@ -173,29 +199,6 @@ class AutomaticMarker implements Marker {
         score: 0,
         isCorrect: false,
         feedback: `Antwort stimmt nicht mit der erwarteten Lösung überein (${expected}).`,
-      };
-    }
-
-    if (answerType === AnswerType.MATCHING) {
-      const expectedMatches = question.correctMatches ?? {};
-      const provided = typeof rawAnswer === 'object' ? rawAnswer : {};
-
-      const expectedKeys = Object.keys(expectedMatches);
-      if (expectedKeys.length === 0) {
-        return { score: 0, isCorrect: false, feedback: 'Keine Referenzlösung vorhanden.' };
-      }
-
-      const correctMatches = expectedKeys.filter(key => provided?.[key] === expectedMatches[key])
-        .length;
-      const score = correctMatches / expectedKeys.length;
-      const isCorrect = correctMatches === expectedKeys.length;
-
-      return {
-        score,
-        isCorrect,
-        feedback: isCorrect
-          ? 'Alle Zuordnungen korrekt.'
-          : `${correctMatches} von ${expectedKeys.length} Zuordnungen korrekt.`,
       };
     }
 

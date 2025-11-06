@@ -2,6 +2,7 @@ import { generateUUID } from '@/lib/utils';
 import type { Session, AnswerValue } from './types';
 import type { Question } from './questions/question-types';
 import { ensureSessionCollections } from './session-store';
+import { QuestionInputType } from './inputs';
 
 export function hasAnswerValue(value: AnswerValue | null | undefined): boolean {
   if (value === null || value === undefined) {
@@ -58,10 +59,17 @@ export function normaliseAnsweredFlag(question: Question): Question {
       value.length === 0
     );
 
+  const resolvedInputType: QuestionInputType =
+    (question as Question).inputType ??
+    (question as Question).answerType ??
+    QuestionInputType.SHORT_TEXT;
+
   return {
     ...question,
     answer: value ?? null,
     answered,
+    inputType: resolvedInputType,
+    answerType: resolvedInputType,
   };
 }
 
@@ -118,4 +126,24 @@ export function applyAnswersToSession(
   session.data.answers = answerList;
   session.data.questions = ensureQuestionIdentifiers(questions);
   session.data.results = results;
+  const totalQuestions = session.data.questions.length;
+  const answeredCount = answerList.length;
+  const correctCount = session.data.results.filter(result => result.isCorrect).length;
+  const score = session.data.results.reduce((sum, result) => sum + (result.score ?? 0), 0);
+  const maxScore = session.data.questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
+
+  session.data.progress = {
+    totalQuestions,
+    answeredQuestions: answeredCount,
+    correctAnswers: correctCount,
+    score,
+    maxScore,
+  };
+  session.data.metrics = {
+    ...(session.data.metrics ?? {}),
+    answeredQuestions: answeredCount,
+    correctAnswers: correctCount,
+    score,
+    maxScore,
+  };
 }
