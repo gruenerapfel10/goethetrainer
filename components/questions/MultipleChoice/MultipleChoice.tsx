@@ -46,7 +46,9 @@ export function MultipleChoice({
   const gaps = (question.gaps || []) as Gap[];
 
   const examplePrefill = question.isExample ? question.exampleAnswer || '' : '';
-  const isExampleQuestion = Boolean(question.isExample);
+  const isExampleQuestion = Boolean(question.isExample && hasGaps);
+  const zeroBasedQuestionNumber =
+    typeof questionNumber === 'number' ? Math.max(0, questionNumber - 1) : null;
 
   const deriveInitialSelection = () => {
     const answer = question.answer as unknown;
@@ -122,7 +124,7 @@ export function MultipleChoice({
 
   // Standard mode handlers
   const handleSelectOption = (value: string) => {
-    if (isSubmitted || isExampleQuestion) {
+    if (isSubmitted) {
       return;
     }
 
@@ -326,7 +328,7 @@ export function MultipleChoice({
             <div className="flex gap-6">
               {/* Question number */}
               <div className="font-bold text-lg min-w-[30px]">
-                {question.isExample ? '0' : (questionNumber - 1).toString()}
+                {(zeroBasedQuestionNumber ?? qIndex).toString()}
               </div>
 
               {/* Options grid with Beispiel label if needed */}

@@ -4,6 +4,17 @@ import type {
   UserAnswer,
 } from './questions/question-types';
 
+export interface SessionGenerationState {
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  total: number;
+  generated: number;
+  currentTeil?: number | null;
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+  lastGeneratedQuestionId?: string;
+}
+
 // Centralized type definitions for session flow
 export type SessionType = 'reading' | 'listening' | 'writing' | 'speaking';
 export type SessionStatus = 'active' | 'completed' | 'abandoned' | 'paused';
@@ -25,6 +36,7 @@ export interface SessionData {
     timestamp: string;
     payload?: Record<string, unknown>;
   }>;
+  generation?: SessionGenerationState | null;
   state?: {
     activeTeil: number | null;
     activeQuestionId: string | null;

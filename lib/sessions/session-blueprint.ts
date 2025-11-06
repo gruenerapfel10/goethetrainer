@@ -3,6 +3,7 @@ import type {
   QuestionResult,
   UserAnswer,
 } from './questions/question-types';
+import type { SessionGenerationState } from './types';
 
 export interface StandardSessionData {
   questions: Question[];
@@ -21,6 +22,7 @@ export interface StandardSessionData {
     timestamp: string;
     payload?: Record<string, unknown>;
   }>;
+  generation: SessionGenerationState | null;
   state: {
     activeTeil: number | null;
     activeQuestionId: string | null;
@@ -42,6 +44,7 @@ export function createStandardSessionData(): StandardSessionData {
     },
     metrics: {},
     activity: [],
+    generation: null,
     state: {
       activeTeil: null,
       activeQuestionId: null,
@@ -66,6 +69,7 @@ export function mergeSessionDataDefaults<T extends Record<string, any>>(
       ...(overrides?.metrics ?? {}),
     },
     activity: Array.isArray(overrides?.activity) ? overrides.activity : base.activity,
+    generation: overrides?.generation ?? base.generation,
     state: {
       ...base.state,
       ...(overrides?.state ?? {}),
@@ -94,6 +98,10 @@ export function ensureStandardSessionData(
   };
 
   safe.activity = Array.isArray(safe.activity) ? safe.activity : base.activity;
+  safe.generation =
+    typeof safe.generation === 'object' || safe.generation === null
+      ? (safe.generation as SessionGenerationState | null)
+      : base.generation;
 
   safe.state = {
     ...base.state,

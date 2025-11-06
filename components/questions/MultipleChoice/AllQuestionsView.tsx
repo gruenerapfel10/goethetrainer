@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
@@ -50,6 +50,12 @@ export function AllQuestionsView({
 }: AllQuestionsViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
+  const globalOrder = useMemo(() => {
+    if (!allQuestions || allQuestions.length === 0) {
+      return new Map<string, number>();
+    }
+    return new Map(allQuestions.map((question, index) => [question.id, index]));
+  }, [allQuestions]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -182,9 +188,9 @@ export function AllQuestionsView({
                     {/* Question row with number and options */}
                     <div className="flex gap-3 items-start overflow-visible">
                       {/* Question number */}
-                      <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
-                        {qIndex}
-                      </div>
+                  <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
+                    {(globalOrder.get(question.id) ?? qIndex).toString()}
+                  </div>
 
                       {/* Options - horizontal for GAP_TEXT, vertical for MULTIPLE_CHOICE */}
                       <div className={cn(

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { Loader2, MoreHorizontal } from 'lucide-react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import type { AnswerValue } from '@/lib/sessions/types';
 import { resolveInputComponent } from '@/components/inputs/registry';
@@ -33,6 +33,8 @@ export function SessionOrchestrator() {
     activeSession,
     currentQuestion,
     questionProgress,
+    generationState,
+    isGeneratingQuestions,
     isLoading,
     error,
     submitAnswer,
@@ -57,6 +59,7 @@ export function SessionOrchestrator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [showA4Format, setShowA4Format] = useState(true);
+  const [pendingTeilUnlock, setPendingTeilUnlock] = useState(false);
   const effectiveAnswer: AnswerValue =
     (userAnswer ?? (currentQuestion?.answer as AnswerValue | null)) ?? null;
 
@@ -133,6 +136,7 @@ export function SessionOrchestrator() {
       ),
     [sessionQuestions]
   );
+  const totalLoadedQuestions = sessionQuestions.length;
   const accumulatedAnswers = useMemo(
     () =>
       Object.fromEntries(
@@ -145,6 +149,30 @@ export function SessionOrchestrator() {
       ),
     [sessionQuestions]
   );
+
+  useEffect(() => {
+    if (!pendingTeilUnlock) {
+      return;
+    }
+
+    if (nextTeilNumber) {
+      activateTeil(nextTeilNumber);
+      setPendingTeilUnlock(false);
+      return;
+    }
+
+    const expectedTotal = generationState?.total ?? totalLoadedQuestions;
+    if (!isGeneratingQuestions || totalLoadedQuestions >= expectedTotal) {
+      setPendingTeilUnlock(false);
+    }
+  }, [
+    pendingTeilUnlock,
+    nextTeilNumber,
+    activateTeil,
+    generationState?.total,
+    totalLoadedQuestions,
+    isGeneratingQuestions,
+  ]);
 
   // Reset state when question changes
   useEffect(() => {
@@ -203,20 +231,41 @@ export function SessionOrchestrator() {
   // Render question based on type
   if (latestResults) {
     return (
-      <div className="p-6 h-full overflow-y-auto">
-        <SessionResultsView
-          results={latestResults.results}
-          summary={latestResults.summary}
-          onClose={() => {
-            clearResults();
-            router.replace(`/${sessionType}`);
-          }}
-        />
+      <div className="p-6 h-full overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          <SessionResultsView
+            results={latestResults.results}
+            summary={latestResults.summary}
+            onClose={() => {
+              clearResults();
+              router.replace(`/${sessionType}`);
+            }}
+          />
+        </div>
       </div>
     );
   }
 
   const renderQuestion = () => {
+    if (isGeneratingQuestions && sessionQuestions.length === 0) {
+      const generated = generationState?.generated ?? 0;
+      const total = generationState?.total ?? 0;
+      const progressLabel =
+        total > 0
+          ? `${generated} von ${total} Fragen sind bereit.`
+          : 'Wir generieren deine erste Frage.';
+
+      return (
+        <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <div className="space-y-1">
+            <p className="text-foreground font-medium">Fragen werden vorbereitet …</p>
+            <p className="text-sm text-muted-foreground">{progressLabel}</p>
+          </div>
+        </div>
+      );
+    }
+
     if (
       sessionType === SessionTypeEnum.READING &&
       activeTeilQuestions.length > 0
@@ -256,6 +305,17 @@ export function SessionOrchestrator() {
 
               if (nextTeilNumber) {
                 activateTeil(nextTeilNumber);
+                setPendingTeilUnlock(false);
+                setIsNavigating(false);
+                return;
+              }
+
+              const expectedTotal = generationState?.total ?? totalLoadedQuestions;
+              if (
+                isGeneratingQuestions ||
+                totalLoadedQuestions < expectedTotal
+              ) {
+                setPendingTeilUnlock(true);
                 setIsNavigating(false);
                 return;
               }
@@ -263,6 +323,7 @@ export function SessionOrchestrator() {
               const completion = await completeQuestions();
               if (completion) {
                 await endSession('completed');
+                setPendingTeilUnlock(false);
               }
             } finally {
               setIsNavigating(false);
@@ -276,7 +337,11 @@ export function SessionOrchestrator() {
     if (!currentQuestion) {
       return (
         <div className="text-center p-8">
-          <p className="text-muted-foreground">No questions available</p>
+          <p className="text-muted-foreground">
+            {isGeneratingQuestions
+              ? 'Weitere Fragen werden geladen …'
+              : 'No questions available'}
+          </p>
         </div>
       );
     }
@@ -318,7 +383,25 @@ export function SessionOrchestrator() {
   };
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full overflow-hidden">
+      {isGeneratingQuestions && (
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-md bg-muted/80 px-3 py-1 text-sm text-muted-foreground shadow-sm backdrop-blur">
+          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+          <span>
+            Fragen werden geladen
+            {generationState?.total
+              ? ` (${generationState.generated ?? 0}/${generationState.total})`
+              : ''}
+          </span>
+        </div>
+      )}
+
+      {pendingTeilUnlock && (
+        <div className="absolute top-16 left-1/2 z-10 -translate-x-1/2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary shadow-sm">
+          Teil {activeTeilNumber + 1} wird vorbereitet …
+        </div>
+      )}
+
       {/* Triple dot menu */}
       <div className="absolute top-4 right-4 z-10">
         <DropdownMenu>
@@ -342,8 +425,10 @@ export function SessionOrchestrator() {
       </div>
 
       {/* Question Component */}
-      <div className="h-full">
-        {renderQuestion()}
+      <div className="h-full overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          {renderQuestion()}
+        </div>
       </div>
 
       {/* Submit Button */}

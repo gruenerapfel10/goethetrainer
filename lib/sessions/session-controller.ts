@@ -81,6 +81,11 @@ export async function createSession(
       ...metadata,
       activeView: 'fragen',
       activeQuestionId: null,
+      config: {
+        displayName: config.metadata.displayName,
+        icon: config.metadata.icon,
+        color: config.metadata.color,
+      },
       lastUpdatedAt: now.toISOString(),
     },
     data: {
@@ -88,11 +93,18 @@ export async function createSession(
       questions: [],
       answers: [],
       results: [],
+      generation: {
+        status: 'in_progress',
+        total: 0,
+        generated: 0,
+        currentTeil: null,
+        startedAt: now.toISOString(),
+      },
     },
   };
 
   await saveSessionRecord(session);
-  await generateQuestionsForSession(sessionId, userId);
+  void generateQuestionsForSession(sessionId, userId, { awaitCompletion: false });
   return loadSessionForUser(sessionId, userId);
 }
 
@@ -172,87 +184,220 @@ export async function updateSessionForUser(
   return persistSession(session);
 }
 
+interface GenerateQuestionsOptions {
+  awaitCompletion?: boolean;
+  regenerate?: boolean;
+}
+
 export async function generateQuestionsForSession(
   sessionId: string,
-  userId: string
+  userId: string,
+  options: GenerateQuestionsOptions = {}
 ): Promise<Question[]> {
-  const session = await loadSessionForUser(sessionId, userId);
-  ensureSessionCollections(session);
+  const { awaitCompletion = true, regenerate = true } = options;
 
-  const sessionType = session.type as SessionTypeEnum;
-  const config = getSessionConfig(sessionType);
-  const difficulty =
-    (session.metadata?.difficulty as QuestionDifficulty | undefined) ??
-    QuestionDifficulty.INTERMEDIATE;
+  const run = async () => {
+    const session = await loadSessionForUser(sessionId, userId);
+    ensureSessionCollections(session);
 
-  const layout = getSessionLayout(sessionType);
-  const plan = layout.length
-    ? layout
-    : getSupportedQuestionTypes(sessionType);
+    const sessionType = session.type as SessionTypeEnum;
+    const config = getSessionConfig(sessionType);
+    const difficulty =
+      (session.metadata?.difficulty as QuestionDifficulty | undefined) ??
+      QuestionDifficulty.INTERMEDIATE;
 
-  if (!plan.length) {
-    throw new Error(`No question types registered for session type "${sessionType}"`);
-  }
+    const layout = getSessionLayout(sessionType);
+    const plan = layout.length ? layout : getSupportedQuestionTypes(sessionType);
 
-  const generated: Question[] = [];
-  let teilNumber = 1;
-
-  for (const questionType of plan) {
-    const teilQuestions = await generateTeilQuestions(
-      sessionType,
-      questionType,
-      difficulty,
-      teilNumber
-    );
-    if (teilQuestions.length > 0) {
-      generated.push(...teilQuestions);
-      teilNumber += 1;
+    if (!plan.length) {
+      throw new Error(`No question types registered for session type "${sessionType}"`);
     }
+
+    if (regenerate) {
+      session.data.questions = [];
+      session.data.answers = [];
+      session.data.results = [];
+      session.data.progress = {
+        totalQuestions: 0,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        score: 0,
+        maxScore: 0,
+      };
+      session.data.metrics = {
+        ...(session.data.metrics ?? {}),
+        totalQuestions: 0,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        score: 0,
+        maxScore: 0,
+      };
+      session.data.state = {
+        ...(session.data.state ?? {}),
+        activeQuestionId: null,
+        activeTeil: null,
+        activeView: (session.metadata?.activeView ?? 'fragen') as 'fragen' | 'quelle' | 'overview',
+      };
+    }
+
+    session.metadata = {
+      ...session.metadata,
+      config: {
+        displayName: config.metadata.displayName,
+        icon: config.metadata.icon,
+        color: config.metadata.color,
+      },
+    };
+
+    session.data.generation = {
+      status: 'in_progress',
+      total: session.data.generation?.total ?? 0,
+      generated: session.data.generation?.generated ?? 0,
+      currentTeil: session.data.generation?.currentTeil ?? null,
+      startedAt: session.data.generation?.startedAt ?? new Date().toISOString(),
+      error: undefined,
+      completedAt: undefined,
+      lastGeneratedQuestionId: session.data.generation?.lastGeneratedQuestionId,
+    };
+
+    touchSession(session);
+    await persistSession(session);
+
+    let teilNumber = 1;
+    let maxScore = session.data.progress.maxScore ?? 0;
+
+    const appendQuestion = async (question: Question) => {
+      const normalised = normaliseAnsweredFlag(question);
+      session.data.questions.push(normalised);
+      session.data.questions = ensureQuestionIdentifiers(session.data.questions);
+
+      maxScore += normalised.points ?? 0;
+
+      const answerList = session.data.answers ?? [];
+      const resultList = session.data.results ?? [];
+      const correctCount = resultList.filter(result => result.isCorrect).length;
+      const scoreSum = resultList.reduce(
+        (sum, result) => sum + (result.score ?? 0),
+        0
+      );
+
+      session.data.progress = {
+        ...session.data.progress,
+        totalQuestions: session.data.questions.length,
+        answeredQuestions: answerList.length,
+        correctAnswers: correctCount,
+        score: scoreSum,
+        maxScore,
+      };
+
+      session.data.metrics = {
+        ...(session.data.metrics ?? {}),
+        totalQuestions: session.data.questions.length,
+        answeredQuestions: answerList.length,
+        correctAnswers: correctCount,
+        score: scoreSum,
+        maxScore,
+      };
+
+      if (!session.data.state.activeQuestionId) {
+        session.data.state.activeQuestionId = normalised.id;
+        session.data.state.activeTeil = normalised.teil ?? teilNumber;
+        session.metadata.activeQuestionId = normalised.id;
+      }
+
+      session.data.generation = {
+        ...(session.data.generation ?? {
+          status: 'in_progress',
+          total: 0,
+          generated: 0,
+        }),
+        status: 'in_progress',
+        generated: (session.data.generation?.generated ?? 0) + 1,
+        lastGeneratedQuestionId: normalised.id,
+        currentTeil: normalised.teil ?? teilNumber,
+      };
+
+      touchSession(session);
+      await persistSession(session);
+    };
+
+    try {
+      for (const questionType of plan) {
+        const teilQuestions = await generateTeilQuestions(
+          sessionType,
+          questionType,
+          difficulty,
+          teilNumber
+        );
+
+        if (!teilQuestions.length) {
+          teilNumber += 1;
+          continue;
+        }
+
+        session.data.generation = {
+          ...(session.data.generation ?? {
+            status: 'in_progress',
+            total: 0,
+            generated: 0,
+          }),
+          status: 'in_progress',
+          total: (session.data.generation?.total ?? 0) + teilQuestions.length,
+          currentTeil: teilNumber,
+        };
+        touchSession(session);
+        await persistSession(session);
+
+        for (const question of teilQuestions) {
+          await appendQuestion(question);
+        }
+
+        teilNumber += 1;
+      }
+
+      session.data.generation = {
+        ...(session.data.generation ?? {
+          status: 'completed',
+          total: session.data.questions.length,
+          generated: session.data.questions.length,
+        }),
+        status: 'completed',
+        total: session.data.questions.length,
+        generated: session.data.questions.length,
+        currentTeil: null,
+        completedAt: new Date().toISOString(),
+      };
+      touchSession(session);
+      await persistSession(session);
+    } catch (error) {
+      session.data.generation = {
+        ...(session.data.generation ?? {
+          status: 'failed',
+          total: session.data.questions.length,
+          generated: session.data.questions.length,
+        }),
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        currentTeil: null,
+      };
+      touchSession(session);
+      await persistSession(session);
+      throw error;
+    }
+
+    return session.data.questions;
+  };
+
+  if (!awaitCompletion) {
+    void run().catch(error => {
+      console.error('Question generation failed:', error);
+    });
+    const session = await loadSessionForUser(sessionId, userId);
+    ensureSessionCollections(session);
+    return session.data.questions;
   }
 
-  const questionsWithFlags = generated.map(normaliseAnsweredFlag);
-
-  session.data.questions = ensureQuestionIdentifiers(questionsWithFlags);
-  session.data.answers = [];
-  session.data.results = [];
-  session.data.progress = {
-    totalQuestions: session.data.questions.length,
-    answeredQuestions: 0,
-    correctAnswers: 0,
-    score: 0,
-    maxScore: session.data.questions.reduce(
-      (sum, question) => sum + (question.points ?? 0),
-      0
-    ),
-  };
-  session.data.metrics = {
-    ...(session.data.metrics ?? {}),
-    totalQuestions: session.data.progress.totalQuestions,
-    answeredQuestions: 0,
-    correctAnswers: 0,
-    score: 0,
-    maxScore: session.data.progress.maxScore,
-  };
-  session.data.state = {
-    ...(session.data.state ?? {}),
-    activeQuestionId: session.data.questions[0]?.id ?? null,
-    activeTeil: (session.data.questions[0]?.teil ?? null) as number | null,
-    activeView: (session.metadata?.activeView ?? 'fragen') as 'fragen' | 'quelle' | 'overview',
-  };
-  session.metadata = {
-    ...session.metadata,
-    config: {
-      displayName: config.metadata.displayName,
-      icon: config.metadata.icon,
-      color: config.metadata.color,
-    },
-    activeQuestionId: session.data.questions[0]?.id ?? null,
-    lastUpdatedAt: new Date().toISOString(),
-  };
-
-  touchSession(session);
-  await persistSession(session);
-  return session.data.questions;
+  return run();
 }
 
 export async function submitAnswerForSession(

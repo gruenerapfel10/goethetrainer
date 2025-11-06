@@ -161,23 +161,18 @@ export async function generateSessionQuestion(
       const { context, questions, title, subtitle, theme } = data;
 
       // Transform result into array of questions with shared context
-      const questionsWithContext = questions.map((q: any, index: number) => {
-        const isExample = index === 0;
-        return {
-          ...q,
-          context,
-          title,
-          subtitle,
-          theme,
-          isExample,
-          exampleAnswer: isExample ? q.correctOptionId : undefined,
-          difficulty,
-          points: isExample ? 0 : 1,
-          timeLimit: 60,
-          inputType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
-          answerType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
-        };
-      });
+      const questionsWithContext = questions.map((q: any) => ({
+        ...q,
+        context,
+        title,
+        subtitle,
+        theme,
+        difficulty,
+        points: 1,
+        timeLimit: 60,
+        inputType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
+        answerType: inferInputType(QuestionTypeName.MULTIPLE_CHOICE),
+      }));
 
       return questionsWithContext;
     } catch (error) {

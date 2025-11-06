@@ -15,6 +15,7 @@ import type {
   SessionType,
   UpdateSessionInput,
   AnswerValue,
+  SessionGenerationState,
 } from './types';
 import type {
   Question,
@@ -74,6 +75,8 @@ interface LearningSessionContextValue {
   sessionQuestions: SessionQuestion[];
   currentQuestion: SessionQuestion | null;
   questionProgress: QuestionProgress;
+  generationState: SessionGenerationState | null;
+  isGeneratingQuestions: boolean;
   sessionProgress: ReturnType<typeof deriveProgressSummary> | null;
   sessionMetrics: Record<string, number>;
   isLoading: boolean;
@@ -277,18 +280,20 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<SessionStats | null>(null);
   const [latestResults, setLatestResults] = useState<CompletionSummary | null>(null);
+  const [generationState, setGenerationState] = useState<SessionGenerationState | null>(null);
 
   const activeSessionRef = useRef<Session | null>(null);
   const questionsRef = useRef<SessionQuestion[]>([]);
   const activeQuestionIdRef = useRef<string | null>(null);
-const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
-const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
-const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
-const isMountedRef = useRef(true);
-const isFlushingRef = useRef(false);
-const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
-const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
-const isCompletingRef = useRef(false);
+  const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
+  const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
+  const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const isFlushingRef = useRef(false);
+  const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
+  const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
+  const isCompletingRef = useRef(false);
+  const generationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
@@ -304,6 +309,28 @@ const isCompletingRef = useRef(false);
 
   const clearError = useCallback(() => setError(null), []);
   const clearResults = useCallback(() => setLatestResults(null), []);
+
+  const stopGenerationMonitor = useCallback((): void => {
+    if (generationPollRef.current) {
+      clearInterval(generationPollRef.current);
+      generationPollRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (generationPollRef.current) {
+        clearInterval(generationPollRef.current);
+        generationPollRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (generationState?.status === 'completed' || generationState?.status === 'failed') {
+      stopGenerationMonitor();
+    }
+  }, [generationState?.status, stopGenerationMonitor]);
 
   const flushPendingUpdates = useCallback(async (): Promise<boolean> => {
     if (isFlushingRef.current && activeFlushPromiseRef.current) {
@@ -620,7 +647,10 @@ const isCompletingRef = useRef(false);
   }, [forceSave, sendBeaconForPendingUpdates]);
 
   const questionProgress = useMemo<QuestionProgress>(() => {
-    const total = sessionQuestions.length;
+    const expectedTotal = Math.max(
+      sessionQuestions.length,
+      generationState?.total ?? 0
+    );
     const answered = sessionQuestions.filter(question => question.answered).length;
     const currentIndex = sessionQuestions.findIndex(question => question.isCurrent);
     const completedTeils = new Set(
@@ -631,16 +661,18 @@ const isCompletingRef = useRef(false);
 
     return {
       current: currentIndex >= 0 ? currentIndex + 1 : 0,
-      total,
+      total: expectedTotal,
       answered,
       completedTeilCount: completedTeils.size,
     };
-  }, [sessionQuestions]);
+  }, [sessionQuestions, generationState?.total]);
 
   const currentQuestion = useMemo(
     () => sessionQuestions.find(question => question.isCurrent) ?? null,
     [sessionQuestions]
   );
+
+  const isGeneratingQuestions = generationState?.status === 'in_progress';
 
   const refreshStats = useCallback(async () => {
     try {
@@ -655,33 +687,127 @@ const isCompletingRef = useRef(false);
     void refreshStats();
   }, [refreshStats]);
 
-  const buildSessionState = useCallback((session: Session) => {
-    const questions = Array.isArray(session.data?.questions)
-      ? (session.data.questions as Question[])
-      : [];
+  const buildSessionState = useCallback(
+    (session: Session, options: { merge?: boolean } = {}) => {
+      const { merge = false } = options;
 
-    const derivedActiveView =
-      session.metadata?.activeView === 'quelle' ? 'quelle' : 'fragen';
-    const derivedActiveId = deriveActiveQuestionId(
-      questions,
-      session.metadata?.activeQuestionId
-    );
+      const questions = Array.isArray(session.data?.questions)
+        ? (session.data.questions as Question[])
+        : [];
 
-    const statefulQuestions = withCurrentQuestionState(
-      questions.map(question => toSessionQuestion(question, derivedActiveId)),
-      derivedActiveId
-    );
+      const derivedActiveView =
+        session.metadata?.activeView === 'quelle' ? 'quelle' : 'fragen';
 
-    setActiveSession(session);
-    activeSessionRef.current = session;
-    setSessionQuestions(statefulQuestions);
-    questionsRef.current = statefulQuestions;
-    setActiveQuestionId(derivedActiveId);
-    activeQuestionIdRef.current = derivedActiveId;
-    setActiveViewState(derivedActiveView);
-    pendingAnswersRef.current = {};
-    pendingUpdateRef.current = null;
-  }, []);
+      if (!merge) {
+        const derivedActiveId = deriveActiveQuestionId(
+          questions,
+          session.metadata?.activeQuestionId
+        );
+
+        const statefulQuestions = withCurrentQuestionState(
+          questions.map(question => toSessionQuestion(question, derivedActiveId)),
+          derivedActiveId
+        );
+
+        setActiveSession(session);
+        activeSessionRef.current = session;
+        setGenerationState(session.data?.generation ?? null);
+        setSessionQuestions(statefulQuestions);
+        questionsRef.current = statefulQuestions;
+        setActiveQuestionId(derivedActiveId);
+        activeQuestionIdRef.current = derivedActiveId;
+        setActiveViewState(derivedActiveView);
+        pendingAnswersRef.current = {};
+        pendingUpdateRef.current = null;
+        return;
+      }
+
+      const existingQuestions = questionsRef.current;
+      const existingMap = new Map(existingQuestions.map(question => [question.id, question]));
+
+      const currentActiveId = activeQuestionIdRef.current;
+      const derivedActiveId = currentActiveId && questions.some(q => q.id === currentActiveId)
+        ? currentActiveId
+        : deriveActiveQuestionId(questions, session.metadata?.activeQuestionId);
+
+      const mergedQuestions = questions.map(question => {
+        const existing = existingMap.get(question.id);
+        if (!existing) {
+          return toSessionQuestion(question, derivedActiveId);
+        }
+
+        const base = toSessionQuestion(question, derivedActiveId);
+        const hasLocalAnswer = hasAnswer(existing.answer);
+
+        return {
+          ...base,
+          ...existing,
+          answer: hasLocalAnswer ? existing.answer : base.answer,
+          answered: hasLocalAnswer ? existing.answered : base.answered,
+          result: base.result ?? existing.result,
+          status: existing.status === QuestionStatus.SAVING ? existing.status : QuestionStatus.LOADED,
+        };
+      });
+
+      const statefulQuestions = withCurrentQuestionState(mergedQuestions, derivedActiveId);
+
+      setActiveSession(session);
+      activeSessionRef.current = session;
+      setGenerationState(session.data?.generation ?? null);
+      setSessionQuestions(statefulQuestions);
+      questionsRef.current = statefulQuestions;
+      if (!currentActiveId || currentActiveId !== derivedActiveId) {
+        setActiveQuestionId(derivedActiveId);
+        activeQuestionIdRef.current = derivedActiveId;
+      }
+    },
+    []
+  );
+
+  const refreshSessionSnapshot = useCallback(
+    async (sessionId: string) => {
+      try {
+        const session = await requestJson<Session>(`/api/sessions/${sessionId}`, {
+          cache: 'no-store',
+        });
+        buildSessionState(session, { merge: true });
+        return session;
+      } catch (err) {
+        console.error('Failed to refresh session snapshot', err);
+        return null;
+      }
+    },
+    [buildSessionState]
+  );
+
+  const startGenerationMonitor = useCallback(
+    (sessionId: string) => {
+      stopGenerationMonitor();
+
+      const tick = async () => {
+        const latest = await refreshSessionSnapshot(sessionId);
+        if (!latest) {
+          return;
+        }
+
+        const status = latest.data?.generation?.status;
+        if (
+          status === 'completed' ||
+          status === 'failed' ||
+          latest.status !== 'active'
+        ) {
+          stopGenerationMonitor();
+        }
+      };
+
+      generationPollRef.current = setInterval(() => {
+        void tick();
+      }, 2500);
+
+      void tick();
+    },
+    [refreshSessionSnapshot, stopGenerationMonitor]
+  );
 
   const startSession = useCallback(
     async (
@@ -699,6 +825,13 @@ const isCompletingRef = useRef(false);
 
         buildSessionState(session);
         setLatestResults(null);
+        if (session?.id) {
+          if (session.data?.generation?.status !== 'completed') {
+            startGenerationMonitor(session.id);
+          } else {
+            stopGenerationMonitor();
+          }
+        }
         return session;
       } catch (err) {
         console.error('Failed to start session', err);
@@ -708,7 +841,7 @@ const isCompletingRef = useRef(false);
         setIsLoading(false);
       }
     },
-    [buildSessionState]
+    [buildSessionState, startGenerationMonitor, stopGenerationMonitor]
   );
 
   const initializeSession = useCallback(
@@ -721,6 +854,13 @@ const isCompletingRef = useRef(false);
         });
         buildSessionState(session);
         setLatestResults(null);
+        if (session?.id) {
+          if (session.data?.generation?.status !== 'completed') {
+            startGenerationMonitor(session.id);
+          } else {
+            stopGenerationMonitor();
+          }
+        }
         return session;
       } catch (err) {
         console.error('Failed to load session', err);
@@ -730,7 +870,7 @@ const isCompletingRef = useRef(false);
         setIsLoading(false);
       }
     },
-    [buildSessionState]
+    [buildSessionState, startGenerationMonitor, stopGenerationMonitor]
   );
 
   const setQuestionAnswer = useCallback(
@@ -1134,6 +1274,8 @@ const isCompletingRef = useRef(false);
       sessionQuestions,
       currentQuestion,
       questionProgress,
+      generationState,
+      isGeneratingQuestions,
       sessionProgress,
       sessionMetrics,
       isLoading,
@@ -1190,6 +1332,8 @@ const isCompletingRef = useRef(false);
       clearResults,
       getQuestionResults,
       getSupportedQuestionTypes,
+      generationState,
+      isGeneratingQuestions,
     ]
   );
 
