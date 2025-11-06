@@ -16,7 +16,6 @@ import {
   type NormalisedSessionLayoutEntry,
 } from './session-registry';
 import './configs';
-import { generateSessionQuestion } from './questions/standard-generator';
 import { QuestionDifficulty } from './questions/question-types';
 import {
   loadSessionForUser,
@@ -31,6 +30,13 @@ import {
   normaliseAnsweredFlag,
 } from './session-answers';
 import { finaliseSession, gradeAnswer } from './session-grading';
+import {
+  executeQuestionModuleTask,
+  registerDefaultQuestionModules,
+} from '@/lib/questions/modules';
+import type { QuestionModuleTask } from '@/lib/questions/modules/types';
+
+registerDefaultQuestionModules();
 
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
@@ -38,17 +44,22 @@ async function generateTeilQuestions(
   difficulty: QuestionDifficulty,
   teilNumber: number
 ): Promise<Question[]> {
-  const rawQuestions = await generateSessionQuestion(
+  const task: QuestionModuleTask = {
+    id: layoutEntry.id,
+    label: layoutEntry.label,
+    moduleId: layoutEntry.moduleId,
+    questionCount: layoutEntry.questionCount ?? 0,
+    promptOverrides: layoutEntry.promptOverrides,
+    renderOverrides: layoutEntry.renderOverrides,
+    sourceOverrides: layoutEntry.sourceOverrides,
+    scoringOverrides: layoutEntry.scoringOverrides,
+    metadata: layoutEntry.metadata,
+  };
+
+  const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
     sessionType,
     difficulty,
-    layoutEntry.questionType,
-    {
-      questionCount: layoutEntry.questionCount,
-      aiGeneration: layoutEntry.question?.aiGeneration,
-      defaults: layoutEntry.question?.defaults,
-      source: layoutEntry.source,
-    }
-  );
+  });
 
   return ensureQuestionIdentifiers(
     rawQuestions.map((question: any, index: number) => ({
@@ -56,20 +67,16 @@ async function generateTeilQuestions(
       answer: question.answer ?? null,
       teil: teilNumber,
       order: index,
-      registryType: layoutEntry.questionType,
+      registryType: layoutEntry.moduleId,
       answered: !!question.answer,
       inputType: question.inputType ?? question.answerType,
       answerType: question.answerType ?? question.inputType,
-      layoutVariant: layoutEntry.question?.layoutVariant ?? question.layoutVariant,
       layoutId: layoutEntry.id,
       layoutLabel: layoutEntry.label,
-      presentation: {
-        ...(question.presentation ?? {}),
-        ...(layoutEntry.question?.metadata ?? {}),
-      },
     }))
   );
 }
+
 
 export async function createSession(
   userId: string,

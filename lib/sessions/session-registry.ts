@@ -1,6 +1,12 @@
 import type { SessionType } from './types';
-import { QuestionTypeName } from './questions/question-registry';
 import { mergeSessionDataDefaults } from './session-blueprint';
+import type {
+  QuestionModulePromptConfig,
+  QuestionModuleRenderConfig,
+  QuestionModuleSourceConfig,
+  ScoringPolicy,
+} from '@/lib/questions/modules/types';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export enum SessionTypeEnum {
   READING = 'reading',
@@ -70,24 +76,38 @@ export interface SessionSourceOptions {
   config?: Record<string, unknown>;
 }
 
-export interface SessionLayoutEntryConfig {
+export interface SessionLayoutEntryConfig<
+  P extends QuestionModulePromptConfig = QuestionModulePromptConfig,
+  R extends QuestionModuleRenderConfig = QuestionModuleRenderConfig,
+  S extends QuestionModuleSourceConfig = QuestionModuleSourceConfig
+> {
   id?: string;
   label?: string;
-  questionType: QuestionTypeName;
+  moduleId: QuestionModuleId;
   questionCount?: number;
-  question?: SessionLayoutQuestionOverrides;
-  source?: SessionSourceOptions;
+  promptOverrides?: Partial<P>;
+  renderOverrides?: Partial<R>;
+  sourceOverrides?: Partial<S>;
+  scoringOverrides?: Partial<ScoringPolicy>;
+  metadata?: Record<string, unknown>;
 }
 
-export type SessionLayoutDefinition = Array<QuestionTypeName | SessionLayoutEntryConfig>;
+export type SessionLayoutDefinition = Array<QuestionModuleId | SessionLayoutEntryConfig>;
 
-export interface NormalisedSessionLayoutEntry {
+export interface NormalisedSessionLayoutEntry<
+  P extends QuestionModulePromptConfig = QuestionModulePromptConfig,
+  R extends QuestionModuleRenderConfig = QuestionModuleRenderConfig,
+  S extends QuestionModuleSourceConfig = QuestionModuleSourceConfig
+> {
   id: string;
   label?: string;
-  questionType: QuestionTypeName;
+  moduleId: QuestionModuleId;
   questionCount?: number;
-  question?: SessionLayoutQuestionOverrides;
-  source?: SessionSourceOptions;
+  promptOverrides?: Partial<P>;
+  renderOverrides?: Partial<R>;
+  sourceOverrides?: Partial<S>;
+  scoringOverrides?: Partial<ScoringPolicy>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SessionFieldDefinition {
@@ -124,11 +144,10 @@ export interface SessionConfig {
     metrics: SessionMetrics;
   };
   
-  // Supported question types for this session
-  supportedQuestions: QuestionTypeName[];
+  // Supported question modules for this session
+  supportedModules: QuestionModuleId[];
 
-  // Optional fixed layout (e.g., [{ questionType: GAP_TEXT, question: {...}}])
-  // If provided, questions will be generated following this exact structure
+  // Optional fixed layout defining specific module tasks per Teil.
   fixedLayout?: SessionLayoutDefinition;
 
   // Features and capabilities
@@ -195,45 +214,48 @@ export function getSessionDefaults(type: SessionTypeEnum | SessionType) {
   return getSessionConfig(type).defaults;
 }
 
-export function getSupportedQuestionTypes(type: SessionTypeEnum | SessionType) {
+export function getSupportedModules(type: SessionTypeEnum | SessionType) {
   const config = getSessionConfig(type);
-  return config.supportedQuestions || [];
+  return config.supportedModules || [];
 }
 
 function normaliseSessionLayout(
   layout: SessionLayoutDefinition | undefined,
-  supportedQuestions: QuestionTypeName[]
+  supportedModules: QuestionModuleId[]
 ): NormalisedSessionLayoutEntry[] {
-  const rawEntries = (layout && layout.length > 0 ? layout : supportedQuestions) ?? [];
+  const rawEntries = (layout && layout.length > 0 ? layout : supportedModules) ?? [];
 
   return rawEntries.map((entry, index) => {
     if (typeof entry === 'string') {
       return {
         id: `teil_${index + 1}`,
         label: `Teil ${index + 1}`,
-        questionType: entry,
+        moduleId: entry,
       };
     }
 
-    const questionType = entry.questionType ?? (entry as any).type;
-    if (!questionType) {
-      throw new Error(`Session layout entry at index ${index} is missing questionType`);
+    const moduleId = entry.moduleId ?? (entry as any).module;
+    if (!moduleId) {
+      throw new Error(`Session layout entry at index ${index} is missing moduleId`);
     }
 
     return {
       id: entry.id ?? `teil_${index + 1}`,
       label: entry.label ?? entry.id ?? `Teil ${index + 1}`,
-      questionType,
+      moduleId,
       questionCount: entry.questionCount,
-      question: entry.question,
-      source: entry.source,
+      promptOverrides: entry.promptOverrides,
+      renderOverrides: entry.renderOverrides,
+      sourceOverrides: entry.sourceOverrides,
+      scoringOverrides: entry.scoringOverrides,
+      metadata: entry.metadata,
     };
   });
 }
 
 export function getSessionLayout(type: SessionTypeEnum | SessionType): NormalisedSessionLayoutEntry[] {
   const config = getSessionConfig(type);
-  return normaliseSessionLayout(config.fixedLayout, config.supportedQuestions);
+  return normaliseSessionLayout(config.fixedLayout, config.supportedModules);
 }
 
 export function validateSessionData(

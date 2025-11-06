@@ -48,8 +48,10 @@ export interface Question {
   /** @deprecated use inputType to determine rendering/marking */
   answerType?: QuestionInputType;
   
-  // Registry type reference
-  registryType?: string; // References QuestionTypeName from registry
+  // Module reference
+  registryType?: string; // Legacy reference
+  moduleId?: string;
+  moduleLabel?: string;
   
   // Question content
   prompt: string;
@@ -120,6 +122,8 @@ export interface Question {
   layoutId?: string;
   layoutLabel?: string;
   presentation?: Record<string, unknown>;
+  renderConfig?: Record<string, unknown>;
+  scoring?: Record<string, unknown>;
 }
 
 export interface UserAnswer {

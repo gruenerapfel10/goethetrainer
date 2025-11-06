@@ -21,16 +21,11 @@ import type {
   Question,
   QuestionResult,
 } from './questions/question-types';
-import { QuestionTypeName } from './questions/question-registry';
 import {
   SessionTypeEnum,
-  getSupportedQuestionTypes as getSupportedQuestionTypesFromRegistry,
+  getSupportedModules as getSupportedModulesFromRegistry,
 } from './session-registry';
-import {
-  getInputDefinition,
-  hasInputDefinition,
-  QuestionInputType,
-} from './inputs';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -112,7 +107,7 @@ interface LearningSessionContextValue {
   clearError: () => void;
   clearResults: () => void;
   getQuestionResults: () => QuestionResult[];
-  getSupportedQuestionTypes: () => QuestionTypeName[];
+  getSupportedModules: () => QuestionModuleId[];
 }
 
 const LearningSessionContext = createContext<LearningSessionContextValue | null>(null);
@@ -1244,11 +1239,11 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       .filter((result): result is QuestionResult => !!result);
   }, [sessionQuestions]);
 
-  const getSupportedQuestionTypes = useCallback((): QuestionTypeName[] => {
+  const getSupportedModules = useCallback((): QuestionModuleId[] => {
     if (!activeSession) {
       return [];
     }
-    return getSupportedQuestionTypesFromRegistry(activeSession.type as SessionTypeEnum);
+    return getSupportedModulesFromRegistry(activeSession.type as SessionTypeEnum);
   }, [activeSession]);
 
   const sessionProgress = useMemo(() => {
@@ -1300,7 +1295,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       clearError,
       clearResults,
       getQuestionResults,
-      getSupportedQuestionTypes,
+      getSupportedModules,
     }),
     [
       activeSession,
@@ -1331,7 +1326,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       clearError,
       clearResults,
       getQuestionResults,
-      getSupportedQuestionTypes,
+      getSupportedModules,
       generationState,
       isGeneratingQuestions,
     ]

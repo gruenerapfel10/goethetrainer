@@ -15,8 +15,8 @@ import {
 import { Loader2, MoreHorizontal } from 'lucide-react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import type { AnswerValue } from '@/lib/sessions/types';
-import { resolveInputComponent } from '@/components/inputs/registry';
-import { QuestionInputType } from '@/lib/sessions/inputs';
+import { resolveModuleComponent } from '@/components/question-modules/module-registry';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 // Import question components
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
@@ -346,11 +346,11 @@ export function SessionOrchestrator() {
       );
     }
 
-    const inputType =
-      currentQuestion.inputType ??
-      currentQuestion.answerType ??
-      QuestionInputType.MULTIPLE_CHOICE;
-    const InputComponent = resolveInputComponent(inputType);
+    const moduleId =
+      (currentQuestion.moduleId ??
+        currentQuestion.registryType ??
+        QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
+    const InputComponent = resolveModuleComponent(moduleId);
     const effectiveValue = effectiveAnswer;
 
     if (InputComponent) {
@@ -376,7 +376,7 @@ export function SessionOrchestrator() {
     return (
       <div className="text-center p-8">
         <p className="text-muted-foreground mb-4">
-          Kein Renderer für Eingabetyp "{inputType}" registriert.
+          Kein Renderer für Fragemodul "{moduleId}" registriert.
         </p>
       </div>
     );

@@ -1,5 +1,5 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
-import { QuestionTypeName } from '../questions/question-registry';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export const readingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.READING,
@@ -123,10 +123,9 @@ export const readingSessionConfig: SessionConfig = {
     },
   },
   
-  // Supported question types for reading sessions (Goethe C1 compliant)
-  supportedQuestions: [
-    QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-    QuestionTypeName.MULTIPLE_CHOICE,
+  // Supported question modules for reading sessions
+  supportedModules: [
+    QuestionModuleId.MULTIPLE_CHOICE,
   ],
 
   // Fixed layout for reading sessions (Goethe C1 exam structure)
@@ -137,25 +136,58 @@ export const readingSessionConfig: SessionConfig = {
     {
       id: 'teil_1',
       label: 'Teil 1',
-      questionType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-      source: {
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      questionCount: 8,
+      sourceOverrides: {
         type: 'gapped_text',
+        gapCount: 8,
+        optionsPerGap: 3,
+      },
+      renderOverrides: {
+        layout: 'horizontal',
+        showSourceToggle: true,
+      },
+      scoringOverrides: {
+        maxPoints: 8,
+        strategy: 'per_gap',
       },
     },
     {
       id: 'teil_2',
       label: 'Teil 2',
-      questionType: QuestionTypeName.MULTIPLE_CHOICE,
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      questionCount: 9,
+      renderOverrides: {
+        layout: 'vertical',
+        showSourceToggle: false,
+      },
+      sourceOverrides: {
+        type: 'text_passage',
+        questionCount: 9,
+        optionsPerQuestion: 3,
+      },
+      scoringOverrides: {
+        maxPoints: 9,
+        strategy: 'single_select',
+      },
     },
     {
       id: 'teil_3',
       label: 'Teil 3',
-      questionType: QuestionTypeName.GAP_TEXT_MULTIPLE_CHOICE,
-      question: {
-        layoutVariant: 'single_line',
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      questionCount: 11,
+      renderOverrides: {
+        layout: 'single_column',
+        showSourceToggle: true,
       },
-      source: {
+      sourceOverrides: {
         type: 'gapped_text',
+        gapCount: 11,
+        optionsPerGap: 4,
+      },
+      scoringOverrides: {
+        maxPoints: 11,
+        strategy: 'per_gap',
       },
     },
   ],
