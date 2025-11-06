@@ -50,7 +50,7 @@ export function MCQCheckbox({
 
   // Interactive styling (when not in display mode)
   const interactiveClasses = cn(
-    !display && !checked && 'hover:bg-muted',
+    !display && !checked && 'hover:bg-primary',
     !display && checked && 'border-primary',
     disabled && !isExample && 'cursor-not-allowed opacity-60',
     isExample && 'opacity-50'

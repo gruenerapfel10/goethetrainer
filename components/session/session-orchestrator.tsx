@@ -384,17 +384,6 @@ export function SessionOrchestrator() {
 
   return (
     <div className="relative h-full overflow-hidden">
-      {isGeneratingQuestions && (
-        <div className="absolute top-4 left-4 z-10 flex items-center gap-2 rounded-md bg-muted/80 px-3 py-1 text-sm text-muted-foreground shadow-sm backdrop-blur">
-          <Loader2 className="h-4 w-4 animate-spin text-primary" />
-          <span>
-            Fragen werden geladen
-            {generationState?.total
-              ? ` (${generationState.generated ?? 0}/${generationState.total})`
-              : ''}
-          </span>
-        </div>
-      )}
 
       {pendingTeilUnlock && (
         <div className="absolute top-16 left-1/2 z-10 -translate-x-1/2 rounded-md bg-primary/10 px-3 py-2 text-sm text-primary shadow-sm">

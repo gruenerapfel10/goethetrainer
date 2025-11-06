@@ -154,6 +154,30 @@ export function AllQuestionsView({
         </button>
       </div>
 
+      {/* Back button - Bottom left */}
+      {showBackButton && onBack && (
+        <button
+          onClick={onBack}
+          disabled={isSubmitting}
+          className="absolute bottom-6 left-6 px-4 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity z-10"
+        >
+          ← Zurück
+        </button>
+      )}
+
+      {/* Submit/Next Button - Bottom right */}
+      <button
+        onClick={handleSubmit}
+        disabled={
+          isSubmitting ||
+          !requiredAnswered ||
+          (!isLastTeil && !generatedTeils.has(teilNumber + 1))
+        }
+        className="absolute bottom-6 right-6 px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity z-10"
+      >
+        {isSubmitting ? 'Wird gespeichert...' : isLastTeil ? 'Test abgeben' : 'Weiter'}
+      </button>
+
       {/* Teil Navigation */}
       <QuestionTimeline
         questions={timelineQuestions}
@@ -215,7 +239,7 @@ export function AllQuestionsView({
                               <div
                                 className={cn(
                                   "flex items-center gap-2 transition-colors p-2 -m-2",
-                                  !isExample && !isSubmitting ? 'cursor-pointer hover:bg-muted/50 rounded-md' : 'cursor-default text-muted-foreground'
+                                  !isExample && !isSubmitting ? 'cursor-pointer hover:bg-muted rounded-md' : 'cursor-default text-muted-foreground'
                                 )}
                                 onClick={() => handleSelectOption(question.id, option.id, isExample)}
                               >
@@ -314,38 +338,13 @@ export function AllQuestionsView({
           </div>
 
           {/* Footer - Part of content */}
-          <div className="text-primary-foreground p-6 flex justify-between items-center mt-auto">
-            {/* Left side: Back button or Logo */}
-            <div className="flex-shrink-0">
-              {showBackButton && onBack ? (
-                <button
-                  onClick={onBack}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity"
-                >
-                  ← Zurück
-                </button>
-              ) : (
-                <img
-                  src="/goethe-logo.png"
-                  alt="Goethe-Institut"
-                  className="h-12 w-auto dark:invert"
-                />
-              )}
-            </div>
-
-            {/* Submit/Next Button */}
-            <button
-          onClick={handleSubmit}
-          disabled={
-            isSubmitting ||
-            !requiredAnswered ||
-            (!isLastTeil && !generatedTeils.has(teilNumber + 1))
-          }
-          className="px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity"
-        >
-          {isSubmitting ? 'Wird gespeichert...' : isLastTeil ? 'Test abgeben' : 'Weiter'}
-        </button>
+          <div className="text-primary-foreground p-6 flex justify-center items-center mt-auto">
+            {/* Center: Logo */}
+            <img
+              src="/goethe-logo.png"
+              alt="Goethe-Institut"
+              className="h-12 w-auto dark:invert"
+            />
           </div>
 
         </div>
