@@ -53,7 +53,7 @@ export interface Session {
   id: string;
   userId: string;
   type: SessionType;
-  startedAt?: Date;
+  startedAt: Date;
   endedAt?: Date | null;
   status?: SessionStatus;
   duration?: number; // seconds
@@ -70,6 +70,16 @@ export interface SessionStats {
   streakDays?: number;
   sessionsByType?: Record<string, number>;
 }
+
+export type SessionAnalytics = Record<
+  SessionType,
+  {
+    count: number;
+    totalDuration: number;
+    averageDuration: number;
+    completionRate: number;
+  }
+>;
 
 // Backwards compatible re-exports
 export type Question = SessionQuestion;

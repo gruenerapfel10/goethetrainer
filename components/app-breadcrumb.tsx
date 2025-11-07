@@ -36,7 +36,13 @@ export function AppBreadcrumb() {
   }
 
   const segments = pathname.split('/').filter(Boolean);
-  const breadcrumbs = [];
+  type BreadcrumbEntry = {
+    href: string;
+    label: string;
+    isLast: boolean;
+    isUUID: boolean;
+  };
+  const breadcrumbs: BreadcrumbEntry[] = [];
 
   // Build breadcrumb items
   segments.forEach((segment, index) => {
@@ -70,7 +76,7 @@ export function AppBreadcrumb() {
     return (
       <Breadcrumb>
         <BreadcrumbList>
-          {firstItems.map((item, index) => (
+          {firstItems.map(item => (
             <React.Fragment key={item.href}>
               <BreadcrumbItem>
                 {item.isLast ? (
@@ -88,7 +94,7 @@ export function AppBreadcrumb() {
             <BreadcrumbEllipsis />
           </BreadcrumbItem>
           <BreadcrumbSeparator />
-          {lastItems.map((item, index) => (
+          {lastItems.map(item => (
             <React.Fragment key={item.href}>
               <BreadcrumbItem>
                 {item.isLast ? (
@@ -110,7 +116,7 @@ export function AppBreadcrumb() {
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {breadcrumbs.map((item, index) => (
+        {breadcrumbs.map(item => (
           <React.Fragment key={item.href}>
             <BreadcrumbItem>
               {item.isLast ? (

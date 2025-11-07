@@ -282,7 +282,7 @@ export async function generateQuestionsForSession(
     await persistSession(session);
 
     let teilNumber = 1;
-    let maxScore = session.data.progress.maxScore ?? 0;
+    let maxScore = session.data.progress?.maxScore ?? 0;
 
     const appendQuestion = async (question: Question) => {
       const normalised = normaliseAnsweredFlag(question);
@@ -317,10 +317,14 @@ export async function generateQuestionsForSession(
         maxScore,
       };
 
-      if (!session.data.state.activeQuestionId) {
-        session.data.state.activeQuestionId = normalised.id;
-        session.data.state.activeTeil = normalised.teil ?? teilNumber;
-        session.metadata.activeQuestionId = normalised.id;
+      const state = session.data.state ?? { activeQuestionId: null, activeTeil: null, activeView: 'fragen' as const };
+      if (!state.activeQuestionId) {
+        state.activeQuestionId = normalised.id;
+        state.activeTeil = normalised.teil ?? teilNumber;
+        session.data.state = state;
+        if (session.metadata) {
+          session.metadata.activeQuestionId = normalised.id;
+        }
       }
 
       session.data.generation = {

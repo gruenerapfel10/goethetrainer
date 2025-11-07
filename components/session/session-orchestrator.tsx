@@ -21,7 +21,8 @@ import { QuestionModuleId } from '@/lib/questions/modules/types';
 // Import question components
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
-import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import { SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
+import '@/lib/sessions/configs';
 
 export function SessionOrchestrator() {
   const params = useParams();
@@ -84,42 +85,77 @@ export function SessionOrchestrator() {
     };
   }, [sessionId, activeSession?.id, initializeSession]);
 
+  const sessionLayout = useMemo(() => {
+    try {
+      return getSessionLayout(sessionType as SessionTypeEnum);
+    } catch (layoutError) {
+      console.error('Failed to resolve session layout for session type', sessionType, layoutError);
+      return [];
+    }
+  }, [sessionType]);
+
+  const expectedTeilCount = sessionLayout.length > 0 ? sessionLayout.length : 1;
+  const teilLabels = useMemo(() => {
+    return sessionLayout.reduce<Record<number, string>>((acc, entry, index) => {
+      acc[index + 1] = entry.label ?? `Teil ${index + 1}`;
+      return acc;
+    }, {});
+  }, [sessionLayout]);
+
   const normaliseTeil = (value?: number | null) =>
     typeof value === 'number' && !Number.isNaN(value) ? value : 1;
 
-  const teilSummaries = useMemo(
-    () =>
-      Array.from(
-        sessionQuestions.reduce((acc, question) => {
-          const teilNumber = normaliseTeil(question.teil);
-          const entry = acc.get(teilNumber) ?? { questions: [] as typeof sessionQuestions, state: 'pending' as 'pending' | 'active' | 'completed' };
+  const teilSummaries = useMemo(() => {
+    const summaryMap = sessionQuestions.reduce(
+      (acc, question) => {
+        const teilNumber = normaliseTeil(question.teil);
+        const entry =
+          acc.get(teilNumber) ??
+          ({
+            questions: [] as typeof sessionQuestions,
+            state: 'pending' as 'pending' | 'active' | 'completed',
+          });
 
-          entry.questions.push(question);
-          if (question.teilState === 'active') {
-            entry.state = 'active';
-          } else if (question.teilState === 'completed' && entry.state !== 'active') {
-            entry.state = 'completed';
-          }
+        entry.questions.push(question);
+        if (question.teilState === 'active') {
+          entry.state = 'active';
+        } else if (question.teilState === 'completed' && entry.state !== 'active') {
+          entry.state = 'completed';
+        }
 
-          acc.set(teilNumber, entry);
-          return acc;
-        }, new Map<number, { questions: typeof sessionQuestions; state: 'pending' | 'active' | 'completed' }>())
-      )
-        .sort(([a], [b]) => a - b)
-        .map(([teilNumber, entry]) => ({
-          teilNumber,
-          questions: entry.questions,
-          state: entry.state,
-        })),
-    [sessionQuestions]
-  );
+        acc.set(teilNumber, entry);
+        return acc;
+      },
+      new Map<number, { questions: typeof sessionQuestions; state: 'pending' | 'active' | 'completed' }>()
+    );
+
+    if (sessionLayout.length > 0) {
+      sessionLayout.forEach((_, index) => {
+        const teilNumber = index + 1;
+        if (!summaryMap.has(teilNumber)) {
+          summaryMap.set(teilNumber, {
+            questions: [] as typeof sessionQuestions,
+            state: 'pending',
+          });
+        }
+      });
+    }
+
+    return Array.from(summaryMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([teilNumber, entry]) => ({
+        teilNumber,
+        questions: entry.questions,
+        state: entry.state,
+      }));
+  }, [sessionQuestions, sessionLayout]);
 
   const activeTeilEntry =
     teilSummaries.find(entry => entry.state === 'active') ?? teilSummaries[0];
   const activeTeilNumber = activeTeilEntry?.teilNumber ?? 1;
   const activeTeilQuestions = activeTeilEntry?.questions ?? [];
   const teilNumbers = teilSummaries.map(entry => entry.teilNumber);
-  const teilCount = teilSummaries.length;
+  const teilCount = Math.max(expectedTeilCount, teilSummaries.length);
   const activeTeilIndex = teilNumbers.indexOf(activeTeilNumber);
   const nextTeilNumber =
     activeTeilIndex >= 0 && activeTeilIndex < teilNumbers.length - 1
@@ -288,6 +324,7 @@ export function SessionOrchestrator() {
           showBackButton={!!previousTeilNumber}
           totalTeils={teilCount}
           generatedTeils={generatedTeils}
+          teilLabels={teilLabels}
           allQuestions={sessionQuestions}
           onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
           isSubmitting={isSubmitting || isNavigating}

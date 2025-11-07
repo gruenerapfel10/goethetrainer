@@ -74,6 +74,7 @@ export interface Question {
     id: string;
     options?: string[];
     correctAnswer?: string;
+    correctOptionId?: string; // Alternative to correctAnswer for multiple choice gaps
   }>; // For GAP_TEXT_GAP_TEXT_MULTIPLE_CHOICE and GAP_TEXT_MATCHING
   
   sentences?: Array<{

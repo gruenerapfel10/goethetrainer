@@ -17,8 +17,9 @@ import {
 registerDefaultQuestionModules();
 
 // Backwards compatibility alias.
-export { QuestionModuleId as QuestionTypeName } from '@/lib/questions/modules/types';
-export { QuestionModuleId, QuestionModule } from '@/lib/questions/modules/types';
+export type { QuestionModuleId as QuestionTypeName } from '@/lib/questions/modules/types';
+export { QuestionModuleId } from '@/lib/questions/modules/types';
+export type { QuestionModule } from '@/lib/questions/modules/types';
 
 export function registerQuestion(metadata: QuestionModule): void {
   registerQuestionModule(metadata);
@@ -38,4 +39,3 @@ export function runQuestionModuleTask(
 ): Promise<QuestionModuleGenerateResult & { moduleId: QuestionModuleId }> {
   return executeQuestionModuleTask(task, options);
 }
-

@@ -49,6 +49,9 @@ export function MultipleChoice({
   const isExampleQuestion = Boolean(question.isExample && hasGaps);
   const zeroBasedQuestionNumber =
     typeof questionNumber === 'number' ? Math.max(0, questionNumber - 1) : null;
+  const teilLabel =
+    question.layoutLabel ??
+    (typeof question.teil === 'number' ? `Teil ${question.teil}` : null);
 
   const deriveInitialSelection = () => {
     const answer = question.answer as unknown;
@@ -179,6 +182,15 @@ export function MultipleChoice({
               })}
             </select>
           );
+        } else {
+          result.push(
+            <span
+              key={i}
+              className="inline-block mx-1 px-3 py-1 rounded-sm border-b-2 border-dashed border-gray-300 min-w-[120px] text-center text-gray-500"
+            >
+              {`[${gapId}]`}
+            </span>
+          );
         }
       }
     }
@@ -200,7 +212,7 @@ export function MultipleChoice({
   const getPartNumber = () => {
     // Extract part number from prompt if it contains "Teil"
     const match = question.prompt?.match(/Teil\s+(\d+)/);
-    return match ? match[1] : questionNumber.toString();
+    return match ? match[1] : (zeroBasedQuestionNumber ?? 0).toString();
   };
 
   return (
@@ -210,7 +222,7 @@ export function MultipleChoice({
         <div className="flex items-center justify-between text-sm text-gray-600">
           <div className="flex items-center gap-4">
             <span className="font-semibold text-lg">
-              Teil 1
+              {teilLabel ?? 'Teil'}
             </span>
           </div>
         </div>
@@ -298,7 +310,8 @@ export function MultipleChoice({
                           )}
                         >
                           <input
-                            type="checkbox"
+                            type="radio"
+                            name={`${question.id}-${gap.id}`}
                             checked={isSelected}
                             onChange={() => !isSubmitted && handleSelectGapOption(gap.id, optionId)}
                             disabled={isSubmitted || isExampleQuestion}
@@ -328,7 +341,7 @@ export function MultipleChoice({
             <div className="flex gap-6">
               {/* Question number */}
               <div className="font-bold text-lg min-w-[30px]">
-                {(zeroBasedQuestionNumber ?? qIndex).toString()}
+                {(zeroBasedQuestionNumber ?? 0).toString()}
               </div>
 
               {/* Options grid with Beispiel label if needed */}
@@ -358,7 +371,8 @@ export function MultipleChoice({
                       )}
                     >
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name={question.id}
                         checked={isSelected}
                         onChange={() => !isSubmitted && handleSelectOption(option.id)}
                         disabled={isSubmitted || isExampleQuestion}

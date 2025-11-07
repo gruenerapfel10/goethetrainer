@@ -1,10 +1,11 @@
 import { ToolName } from '@/lib/ai/tools/tool-registry';
 import { FeatureName } from '@/lib/ai/features/feature-registry';
 import { ModelId } from '@/lib/ai/model-registry';
+import { AgentType, type AgentConfig } from './types';
 
-export const goetheAgentConfig = {
+export const goetheAgentConfig: AgentConfig = {
   // Agent type identifier
-  agentType: 'goethe-language-agent' as const,
+  agentType: AgentType.GOETHE_AGENT,
   // Agent metadata
   metadata: {
     displayName: 'Goethe Agent',

@@ -1,5 +1,8 @@
 import { Question, QuestionResult, UserAnswer } from './question-types';
-import type { QuestionMetadata } from './question-registry';
+
+interface QuestionMetadata {
+  defaultPoints?: number;
+}
 
 interface AIMarkingContext {
   question: Question;

@@ -392,18 +392,14 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         };
       }
 
-      const existing = pendingUpdateRef.current;
       const mergedAnswers = {
         ...(payload.answers ?? {}),
-        ...(existing?.answers ?? {}),
       };
       const mergedData = {
         ...(payload.data ?? {}),
-        ...(existing?.data ?? {}),
       };
       const mergedMetadata = {
         ...(payload.metadata ?? {}),
-        ...(existing?.metadata ?? {}),
       };
 
       pendingUpdateRef.current = {
@@ -413,8 +409,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           Object.keys(mergedMetadata).length > 0
             ? { ...mergedMetadata, lastUpdatedAt: new Date().toISOString() }
             : undefined,
-        status: existing?.status ?? payload.status,
-        duration: existing?.duration ?? payload.duration,
+        status: payload.status as 'active' | 'completed' | 'abandoned',
+        duration: payload.duration,
       };
 
       console.error('Failed to persist session', err);
@@ -488,7 +484,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       return;
     }
 
-    const nextState = {
+    const nextState: Record<string, any> = {
       ...(session.data?.state ?? {}),
     };
 
@@ -511,7 +507,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       },
       data: {
         ...session.data,
-        state: nextState,
+        state: nextState as any,
       },
     };
 
@@ -1346,35 +1342,11 @@ export function useLearningSession(): LearningSessionContextValue {
   }
   return context;
 }
-function resolveInputType(question: Question): QuestionInputType {
-  return (
-    (question.inputType as QuestionInputType | undefined) ??
-    (question.answerType as QuestionInputType | undefined) ??
-    QuestionInputType.SHORT_TEXT
-  );
-}
-
 function normaliseAnswerForQuestion(
   question: Question,
   value: AnswerValue | null | undefined
 ): AnswerValue | null {
-  const inputType = resolveInputType(question);
-
-  if (hasInputDefinition(inputType)) {
-    const definition = getInputDefinition(inputType);
-
-    if (typeof definition.normalise === 'function') {
-      const transformed = definition.normalise(value, question);
-      if (transformed !== undefined) {
-        return transformed;
-      }
-    }
-
-    const parsed = definition.answerSchema.safeParse(value);
-    if (parsed.success) {
-      return parsed.data ?? null;
-    }
-  }
-
+  // Simple normalization without legacy input registry
+  // The module system handles specialized answer normalization
   return defaultNormaliseAnswer(value);
 }

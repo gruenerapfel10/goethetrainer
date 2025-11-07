@@ -9,8 +9,6 @@ import {
   QuestionInputType,
 } from '@/lib/sessions/questions/question-types';
 import { generateSourceWithGaps } from '@/lib/sessions/questions/source-generator';
-import { multipleChoiceConfig } from '@/lib/sessions/questions/configs/gap-text-multiple-choice.config';
-import { multipleChoiceStandardConfig } from '@/lib/sessions/questions/configs/multiple-choice-standard.config';
 import type {
   Question,
   QuestionResult,
@@ -71,32 +69,53 @@ function resolveQuestionType(sessionType: SessionTypeEnum): QuestionType {
 
 function resolvePointsPerQuestion(
   index: number,
-  sourceConfig: MCQSourceConfig,
-  maxPoints: number
+  sourceConfig: MCQSourceConfig
 ): number {
   if (sourceConfig.type === 'gapped_text') {
-    if (index === 0) {
-      return 0; // Beispielfrage
-    }
-    const effectiveCount = Math.max(sourceConfig.gapCount - 1, 1);
-    return maxPoints / effectiveCount;
+    return index === 0 ? 0 : 1;
   }
 
-  return maxPoints;
+  return 1;
 }
 
-function normaliseGapAnswer(value: unknown): Record<string, string> | null {
+function normaliseGapAnswer(
+  value: unknown,
+  question?: Question
+): Record<string, string> | null {
   if (value === null || value === undefined) {
     return null;
   }
   if (typeof value === 'string') {
-    return { GAP_0: value };
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const fallbackId =
+      question?.gaps?.[0]?.id ??
+      (Array.isArray(question?.gaps) && question.gaps.length > 0
+        ? question.gaps[0]?.id
+        : null) ??
+      'GAP_0';
+    return { [fallbackId]: trimmed };
   }
   if (typeof value === 'object') {
     const result: Record<string, string> = {};
+    const allowedIds = new Set(
+      (question?.gaps ?? [])
+        .map(gap => gap.id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    );
+
     Object.entries(value as Record<string, unknown>).forEach(([key, raw]) => {
-      if (typeof raw === 'string' && raw.trim().length > 0) {
-        result[key] = raw.trim();
+      if (typeof raw !== 'string') {
+        return;
+      }
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        return;
+      }
+      if (allowedIds.size === 0 || allowedIds.has(key)) {
+        result[key] = trimmed;
       }
     });
     return Object.keys(result).length > 0 ? result : null;
@@ -150,19 +169,20 @@ async function markQuestion(
       }
     });
 
-    const ratio = correctCount / gaps.length;
+    const totalGaps = gaps.length || 1;
+    const allCorrect = correctCount === totalGaps;
 
     return {
       questionId: question.id,
       question,
       userAnswer,
-      score: Math.round(basePoints * ratio),
+      score: allCorrect ? basePoints : 0,
       maxScore: basePoints,
-      isCorrect: correctCount === gaps.length,
+      isCorrect: allCorrect,
       feedback:
-        correctCount === gaps.length
+        allCorrect
           ? 'Alle Lücken korrekt ausgefüllt.'
-          : `Du hast ${correctCount} von ${gaps.length} Lücken korrekt ausgefüllt.`,
+          : `Du hast ${correctCount} von ${totalGaps} Lücken korrekt ausgefüllt.`,
       markedBy: 'automatic',
     };
   }
@@ -190,19 +210,30 @@ async function generateStandardMCQ(
   difficulty: QuestionDifficulty,
   questionCount: number
 ): Promise<Question[]> {
-  const config = multipleChoiceStandardConfig;
-  const { aiGeneration, sessionGenerationSchema } = config as any;
-  const model = anthropic(aiGeneration.modelId);
-  const userPrompt =
-    aiGeneration.sessionUserPrompt?.replace('{{count}}', String(questionCount)) ??
-    `Generate a German reading passage with ${questionCount} comprehension questions.`;
+  const model = anthropic('claude-opus-4-1-20250805');
+  const userPrompt = `Generate a German reading passage with ${questionCount} comprehension questions. Return JSON with theme, title, subtitle, context, and questions array.`;
+
+  const generationSchema = z.object({
+    theme: z.string(),
+    title: z.string(),
+    subtitle: z.string(),
+    context: z.string(),
+    questions: z.array(
+      z.object({
+        prompt: z.string(),
+        options: z.array(z.object({ id: z.string(), text: z.string() })),
+        correctOptionId: z.string(),
+        explanation: z.string(),
+      })
+    ),
+  });
 
   const result = await generateObject({
     model,
-    schema: sessionGenerationSchema,
-    system: aiGeneration.sessionSystemPrompt || aiGeneration.systemPrompt,
+    schema: generationSchema,
+    system: 'You are a German language expert creating reading comprehension questions.',
     prompt: userPrompt,
-    temperature: aiGeneration.temperature,
+    temperature: 0.7,
   });
 
   const data = result.object as any;
@@ -242,9 +273,7 @@ async function generateGappedMCQ(
     },
   });
 
-  const config = multipleChoiceConfig as any;
-  const { aiGeneration } = config;
-  const model = anthropic(aiGeneration.modelId);
+  const model = anthropic('claude-opus-4-1-20250805');
 
   const optionsSchema = z.object({
     options: z
@@ -308,7 +337,7 @@ Return as JSON with id (0-${sourceConfig.optionsPerGap - 1}) and text.`;
           correctOptionId: result.object.correctOptionId,
         },
       ],
-    } as Question;
+    } as any;
   });
 
   return Promise.all(questionPromises);
@@ -355,7 +384,7 @@ export const multipleChoiceModule: QuestionModule<
       return {
         questions: questions.slice(0, questionCount).map((question, index) => ({
           ...question,
-          points: resolvePointsPerQuestion(index, sourceConfig, context.questionCount),
+          points: resolvePointsPerQuestion(index, sourceConfig),
         })),
       };
     }
@@ -374,7 +403,7 @@ export const multipleChoiceModule: QuestionModule<
             duration: sourceConfig.durationSeconds,
             url: '', // Placeholder until audio generation implemented.
           },
-          points: resolvePointsPerQuestion(index, sourceConfig, context.questionCount),
+          points: resolvePointsPerQuestion(index, sourceConfig),
         })),
         metadata: {
           audioGenerationPending: true,
@@ -391,13 +420,13 @@ export const multipleChoiceModule: QuestionModule<
     return {
       questions: questions.map(question => ({
         ...question,
-        points: context.questionCount > 0 ? 1 : question.points,
+        points: 1,
       })),
     };
   },
   normaliseAnswer(value, question) {
     if (question.gaps && question.gaps.length > 0) {
-      return normaliseGapAnswer(value);
+      return normaliseGapAnswer(value, question);
     }
     return normaliseSingleSelection(value);
   },

@@ -62,7 +62,7 @@ interface SourceWithGaps {
  * Pass 1: Generate raw source material with diverse themes
  */
 export async function generateRawSource(
-  difficulty: QuestionDifficulty = 'intermediate',
+  difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   overrides?: SessionSourceOptions['raw']
 ): Promise<z.infer<typeof RawSourceSchema>> {
   const selectedTheme = overrides?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
@@ -228,7 +228,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
  * Complete two-pass source generation
  */
 export async function generateSourceWithGaps(
-  difficulty: QuestionDifficulty = 'intermediate',
+  difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   options?: SessionSourceOptions
 ): Promise<SourceWithGaps> {
   // Pass 1: Generate raw source

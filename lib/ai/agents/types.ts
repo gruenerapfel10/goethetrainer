@@ -21,7 +21,7 @@ export interface SuggestedAction {
 // Agent configuration interface
 export interface AgentConfig {
   // Agent type identifier
-  agentType: 'general-bedrock-agent';
+  agentType: AgentType;
   // Agent metadata
   metadata: {
     displayName: string;
@@ -34,7 +34,7 @@ export interface AgentConfig {
   };
   tools: ToolName[]; // All tools for this agent
   features: FeatureName[]; // User-facing UI features
-  supportsFileAttachments: boolean; // Whether this agent supports file attachments
+  supportsFileAttachments?: boolean; // Whether this agent supports file attachments
   suggestedActions: SuggestedAction[]; // Suggested actions for this agent
   model: {
     contextWindow: number;

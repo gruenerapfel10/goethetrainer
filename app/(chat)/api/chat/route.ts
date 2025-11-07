@@ -7,6 +7,30 @@ import { cleanupOrphanedToolCalls, cleanupEmptyMessages } from '@/lib/utils/mess
 import { getFirebaseFileContent } from '@/lib/utils/firebase-content';
 import type { FileSearchResult } from '@/components/chat-header';
 import { getUserLocale } from '@/services/locale';
+import type { UIMessage } from 'ai';
+import type { AgentFeatures, AgentTools } from '@/contexts/chat-context';
+
+type MessagePart = UIMessage['parts'] extends Array<infer P> ? P : never;
+
+interface FileAttachment {
+  url: string;
+  name: string;
+  contentType: string;
+  size?: number;
+  originalS3Url?: string;
+}
+
+interface StreamRequestPayload {
+  messages: UIMessage[];
+  id: string;
+  selectedChatModel: string;
+  selectedFiles: FileSearchResult[];
+  systemQueue: string[] | null;
+  attachments: FileAttachment[];
+  agentTools: AgentTools;
+  agentFeatures: AgentFeatures;
+  urlMapping: Map<string, string>;
+}
 
 export const maxDuration = 60;
 
@@ -20,59 +44,138 @@ export async function POST(request: Request) {
       return new Response('Invalid request format', { status: 400 });
     }
     
-    let attachments: any[] = [];
+    let attachments: FileAttachment[] = [];
     
     // Check if messages have attachments in parts
     if (json.messages && json.messages.length > 0) {
-      console.log(`[api/chat] Processing ${json.messages.length} messages`);
-      const lastMessage = json.messages[json.messages.length - 1];
+      const rawMessages = json.messages as UIMessage[];
+      console.log(`[api/chat] Processing ${rawMessages.length} messages`);
+      const lastMessage = rawMessages[rawMessages.length - 1];
       console.log(`[api/chat] Last message role: ${lastMessage.role}, parts count: ${Array.isArray(lastMessage.parts) ? lastMessage.parts.length : 'no parts'}`);
       
       if (lastMessage.role === 'user' && Array.isArray(lastMessage.parts)) {
         // Filter out null/undefined parts and only get file parts with valid URLs
         const fileParts = lastMessage.parts
-          .filter((part: any) => part && part.type === 'file' && part.url)
-          .map((part: any) => ({
-            url: part.url,
-            name: part.filename || part.name || 'file',
-            contentType: part.mediaType || part.contentType || 'application/octet-stream',
-            size: part.size
-          }));
+          .filter((part): part is MessagePart & { url: string } => Boolean(part && (part as any).type === 'file' && typeof (part as any).url === 'string'))
+          .map((part): FileAttachment => {
+            const partData = part as Record<string, unknown>;
+            const name =
+              typeof partData.filename === 'string'
+                ? partData.filename
+                : typeof partData.name === 'string'
+                ? partData.name
+                : 'file';
+            const contentType =
+              typeof partData.mediaType === 'string'
+                ? partData.mediaType
+                : typeof partData.contentType === 'string'
+                ? partData.contentType
+                : 'application/octet-stream';
+            const size = typeof partData.size === 'number' ? partData.size : undefined;
+            return {
+              url: part.url,
+              name,
+              contentType,
+              size,
+            };
+          });
         
         console.log(`[api/chat] Found ${fileParts.length} file attachments`);
         if (fileParts.length > 0) {
-          console.log('[api/chat] File attachments:', fileParts.map(f => `${f.name} (${f.contentType})`));
+          console.log(
+            '[api/chat] File attachments:',
+            fileParts.map((f: FileAttachment) => `${f.name} (${f.contentType})`)
+          );
         }
         
         attachments = fileParts;
         
         // Clean up message parts to remove null/undefined entries
-        const cleanParts = lastMessage.parts.filter((part: any) => part !== null && part !== undefined);
+        const cleanParts = lastMessage.parts.filter(
+          (part: MessagePart | null | undefined): part is MessagePart =>
+            part !== null && part !== undefined
+        );
         console.log(`[api/chat] Cleaned ${lastMessage.parts.length} parts to ${cleanParts.length} (removed ${lastMessage.parts.length - cleanParts.length})`);
         lastMessage.parts = cleanParts;
       }
     }
     
-    const requestData = {
-      messages: json.messages,
-      id: json.data.id,
-      selectedChatModel: json.data.selectedChatModel,
-      selectedFiles: json.data.selectedFiles,
-      systemQueue: json.data.systemQueue,
-      attachments: json.data.attachments || attachments,
-      agentTools: json.data.agentTools,
-      agentFeatures: json.data.agentFeatures,
-      urlMapping: new Map(),
+    const normaliseAttachment = (raw: unknown): FileAttachment | null => {
+      if (!raw || typeof raw !== 'object') {
+        return null;
+      }
+      const candidate = raw as Record<string, unknown>;
+      const url = typeof candidate.url === 'string' ? candidate.url : undefined;
+      if (!url) {
+        return null;
+      }
+      const name =
+        typeof candidate.name === 'string'
+          ? candidate.name
+          : typeof candidate.filename === 'string'
+          ? candidate.filename
+          : 'file';
+      const contentType =
+        typeof candidate.contentType === 'string'
+          ? candidate.contentType
+          : typeof candidate.mediaType === 'string'
+          ? candidate.mediaType
+          : 'application/octet-stream';
+      const size = typeof candidate.size === 'number' ? candidate.size : undefined;
+      return {
+        url,
+        name,
+        contentType,
+        size,
+      };
+    };
+
+    const normaliseToggleMap = (value: unknown): AgentTools => {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        return Object.entries(value as Record<string, unknown>).reduce<AgentTools>(
+          (acc, [key, val]) => {
+            if (val && typeof val === 'object' && 'active' in val) {
+              acc[key] = {
+                active: Boolean((val as Record<string, unknown>).active),
+                metadata: (val as Record<string, unknown>).metadata,
+              };
+            }
+            return acc;
+          },
+          {}
+        );
+      }
+      return {};
+    };
+
+    let payloadAttachments: FileAttachment[] = [];
+    if (Array.isArray(json.data.attachments)) {
+      payloadAttachments = (json.data.attachments as unknown[])
+        .map(normaliseAttachment)
+        .filter((attachment): attachment is FileAttachment => attachment !== null);
+    }
+
+    const requestData: StreamRequestPayload = {
+      messages: Array.isArray(json.messages) ? (json.messages as UIMessage[]) : [],
+      id: String(json.data.id ?? ''),
+      selectedChatModel: String(json.data.selectedChatModel ?? ''),
+      selectedFiles: Array.isArray(json.data.selectedFiles) ? (json.data.selectedFiles as FileSearchResult[]) : [],
+      systemQueue: Array.isArray(json.data.systemQueue) ? json.data.systemQueue : null,
+      attachments: payloadAttachments.length > 0 ? payloadAttachments : attachments,
+      agentTools: normaliseToggleMap(json.data.agentTools),
+      agentFeatures: normaliseToggleMap(json.data.agentFeatures) as AgentFeatures,
+      urlMapping: new Map<string, string>(),
     };
     
     // Convert S3 URLs to presigned URLs for AI model access
     // Also validate file availability to prevent 404 errors
     
     if (requestData.attachments && requestData.attachments.length > 0) {
-      const validatedAttachments: any[] = [];
+      const validatedAttachments: FileAttachment[] = [];
       const failedFiles: string[] = [];
       
-      for (const attachment of requestData.attachments) {
+      const attachmentsToValidate: FileAttachment[] = requestData.attachments;
+      for (const attachment of attachmentsToValidate) {
         let fileUrl = attachment.url;
         if (!fileUrl) continue;
         let isValid = true;
@@ -134,8 +237,8 @@ export async function POST(request: Request) {
       requestData.attachments = validatedAttachments;
       
       // Create mapping of original S3 URLs to presigned URLs for message part updates
-      const urlMapping = new Map();
-      requestData.attachments.forEach((attachment: any, index: number) => {
+      const urlMapping = new Map<string, string>();
+      requestData.attachments.forEach((attachment: FileAttachment) => {
         if (attachment.originalS3Url && attachment.url !== attachment.originalS3Url) {
           urlMapping.set(attachment.originalS3Url, attachment.url);
         }
@@ -155,8 +258,8 @@ export async function POST(request: Request) {
       return new Response('Unauthorized', { status: 401 });
     }
 
-    if (!Array.isArray(messages)) {
-      return new Response('Messages must be an array', { status: 400 });
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return new Response('Messages must be an array with at least one entry', { status: 400 });
     }
 
     const userMessage = messages[messages.length - 1];
@@ -185,7 +288,7 @@ export async function POST(request: Request) {
     const allMessages = [...contextMessages, userMessage];
 
     const cleanedMessages = cleanupOrphanedToolCalls(allMessages);
-    let finalMessages = cleanupEmptyMessages(cleanedMessages);
+    let finalMessages = cleanupEmptyMessages(cleanedMessages) as UIMessage[];
     
     // Log messages before processing
     console.log(`[api/chat] Processing ${finalMessages.length} messages`);
@@ -199,13 +302,13 @@ export async function POST(request: Request) {
     }
 
     const processedMessages = await Promise.all(
-      finalMessages.map(async (message) => {
+      finalMessages.map(async (message: UIMessage) => {
         if (!message.parts || !Array.isArray(message.parts)) {
           return message;
         }
 
         const processedParts = await Promise.all(
-          message.parts.map(async (part) => {
+          message.parts.map(async (part: MessagePart) => {
             // Handle file parts
             if (part.type === 'file' && part.url) {
               const filename = part.filename || 'unknown';
@@ -214,14 +317,15 @@ export async function POST(request: Request) {
               // For images, keep them as file parts for proper AI SDK handling
               if (mediaType.startsWith('image/')) {
                 // Ensure mediaType is set correctly for images
-                const ext = filename.split('.').pop()?.toLowerCase();
-                const correctMediaType = {
+                const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+                const imageMediaTypeMap: Record<string, string> = {
                   'png': 'image/png',
                   'jpg': 'image/jpeg',
                   'jpeg': 'image/jpeg',
                   'gif': 'image/gif',
-                  'webp': 'image/webp'
-                }[ext as keyof typeof correctMediaType] || mediaType;
+                  'webp': 'image/webp',
+                };
+                const correctMediaType = imageMediaTypeMap[ext] ?? mediaType;
                 
                 // Convert S3 URLs to presigned URLs for images
                 let finalUrl = part.url;
@@ -261,13 +365,15 @@ export async function POST(request: Request) {
               
               if (isSupportedDocument) {
                 // Ensure mediaType is correctly set for documents
-                const correctedMediaType = {
-                  'pdf': 'application/pdf',
-                  'txt': 'text/plain',
-                  'md': 'text/markdown',
-                  'markdown': 'text/markdown',
-                  'json': 'application/json'
-                }[filename.split('.').pop()?.toLowerCase() as keyof typeof correctedMediaType] || mediaType;
+              const documentMediaTypeMap: Record<string, string> = {
+                'pdf': 'application/pdf',
+                'txt': 'text/plain',
+                'md': 'text/markdown',
+                'markdown': 'text/markdown',
+                'json': 'application/json',
+              };
+              const correctedMediaType =
+                documentMediaTypeMap[filename.split('.').pop()?.toLowerCase() ?? ''] ?? mediaType;
                 
                 console.log(`[api/chat] Passing document as file part: ${filename} (${correctedMediaType})`);
                 
@@ -289,7 +395,9 @@ export async function POST(request: Request) {
         );
 
         // Filter out null parts (failed file processing)
-        const validParts = processedParts.filter(part => part !== null);
+        const validParts = processedParts.filter(
+          (part): part is MessagePart => part !== null
+        );
         
         return {
           ...message,

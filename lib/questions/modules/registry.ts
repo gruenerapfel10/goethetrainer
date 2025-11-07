@@ -73,10 +73,6 @@ export async function executeQuestionModuleTask(
     moduleLabel: module.label,
     renderConfig: deepMerge({}, module.defaults.render, task.renderOverrides ?? {}),
     scoring: deepMerge({}, module.defaults.scoring, task.scoringOverrides ?? {}),
-    metadata: {
-      ...(question.metadata ?? {}),
-      ...(task.metadata ?? {}),
-    },
     layoutId: task.id,
     layoutLabel: task.label ?? task.id,
   }));

@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
-import { QuestionTimeline } from './QuestionTimeline';
+// import { QuestionTimeline } from './QuestionTimeline'; // TODO: Re-implement question timeline feature
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
 import type { Question as SessionQuestionType } from '@/lib/sessions/types';
 
@@ -23,6 +23,7 @@ interface AllQuestionsViewProps {
   showBackButton?: boolean;
   totalTeils?: number;
   generatedTeils?: Set<number>;
+  teilLabels?: Record<number, string>;
   onTeilNavigate?: (teilNumber: number) => void;
   allQuestions?: MCQuestion[];
   onAnswerChange?: (questionId: string, answer: string) => void;
@@ -41,6 +42,7 @@ export function AllQuestionsView({
   showBackButton = false,
   totalTeils = 1,
   generatedTeils = new Set([1]),
+  teilLabels,
   onTeilNavigate,
   allQuestions,
   onAnswerChange,
@@ -85,8 +87,30 @@ export function AllQuestionsView({
       const existing = accumulatedAnswers?.[question.id];
       if (typeof existing === 'string') {
         next[question.id] = existing;
+      } else if (
+        existing &&
+        typeof existing === 'object' &&
+        !Array.isArray(existing)
+      ) {
+        const firstValue = Object.values(existing as Record<string, unknown>).find(
+          value => typeof value === 'string' && value.trim().length > 0
+        );
+        if (typeof firstValue === 'string') {
+          next[question.id] = firstValue;
+        }
       } else if (typeof question.answer === 'string') {
         next[question.id] = question.answer as string;
+      } else if (
+        question.answer &&
+        typeof question.answer === 'object' &&
+        !Array.isArray(question.answer)
+      ) {
+        const firstValue = Object.values(question.answer as Record<string, unknown>).find(
+          value => typeof value === 'string' && value.trim().length > 0
+        );
+        if (typeof firstValue === 'string') {
+          next[question.id] = firstValue;
+        }
       } else if (question.isExample && question.exampleAnswer) {
         next[question.id] = question.exampleAnswer;
       }
@@ -119,10 +143,14 @@ export function AllQuestionsView({
   // Derive Teil information from actual questions
   const timelineQuestions = allQuestions && allQuestions.length > 0 ? allQuestions : questions;
   const teilNumber = (questions[0] as any)?.teil || 1;
-  const teilLabel = questions[0]?.layoutLabel ?? `Teil ${teilNumber}`;
+  const teilLabel =
+    teilLabels?.[teilNumber] ??
+    questions[0]?.layoutLabel ??
+    `Teil ${teilNumber}`;
   const teils = new Set(timelineQuestions.map(q => (q as any).teil || 1));
   const derivedTotalTeils = teils.size;
-  const actualTotalTeils = totalTeils || derivedTotalTeils;
+  const actualTotalTeils = Math.max(totalTeils, derivedTotalTeils);
+  const teilNumbers = Array.from({ length: actualTotalTeils }, (_, index) => index + 1);
 
   // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
@@ -183,13 +211,44 @@ export function AllQuestionsView({
       </button>
 
       {/* Teil Navigation */}
-      <QuestionTimeline
+      <div className="absolute top-6 right-6 z-10 flex gap-2 border-b border-border">
+        {teilNumbers.map(number => {
+          const label = teilLabels?.[number] ?? `Teil ${number}`;
+          const isCurrent = number === teilNumber;
+          const isAvailable = generatedTeils.has(number) || number === teilNumber;
+
+          return (
+            <button
+              key={number}
+              type="button"
+              onClick={() => {
+                if (!isCurrent && isAvailable && !isSubmitting) {
+                  onTeilNavigate?.(number);
+                }
+              }}
+              disabled={!isAvailable || isSubmitting}
+              className={cn(
+                'px-4 py-2 text-sm font-medium transition-colors',
+                isCurrent
+                  ? 'text-foreground border-b-2 border-primary -mb-px'
+                  : 'text-muted-foreground hover:text-foreground',
+                (!isAvailable || isSubmitting) && 'opacity-40 cursor-not-allowed'
+              )}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Teil Navigation - TODO: Re-implement question timeline feature */}
+      {/* <QuestionTimeline
         questions={timelineQuestions}
         totalTeils={actualTotalTeils}
         currentTeilNumber={teilNumber}
         generatedTeils={generatedTeils}
         onTeilNavigate={onTeilNavigate}
-      />
+      /> */}
 
       <div
         className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar"

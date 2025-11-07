@@ -2,7 +2,7 @@ import { generateUUID } from '@/lib/utils';
 import type { Session, AnswerValue } from './types';
 import type { Question } from './questions/question-types';
 import { ensureSessionCollections } from './session-store';
-import { QuestionInputType } from './inputs';
+import { QuestionInputType } from './inputs/types';
 
 export function hasAnswerValue(value: AnswerValue | null | undefined): boolean {
   if (value === null || value === undefined) {

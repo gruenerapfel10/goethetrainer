@@ -9,6 +9,19 @@ import type {
 } from './types';
 import { sanitizeForFirestore } from './utils';
 
+const SESSION_TYPES: SessionType[] = ['reading', 'listening', 'writing', 'speaking'];
+
+const createEmptyAnalytics = (): SessionAnalytics =>
+  SESSION_TYPES.reduce((acc, type) => {
+    acc[type] = {
+      count: 0,
+      totalDuration: 0,
+      averageDuration: 0,
+      completionRate: 0,
+    };
+    return acc;
+  }, {} as SessionAnalytics);
+
 const SESSIONS_COLLECTION = 'sessions';
 
 // Save a new session
@@ -228,10 +241,9 @@ export async function getSessionAnalytics(
       } as Session;
     });
 
-    const analytics: SessionAnalytics = {};
-    const types: SessionType[] = ['reading', 'listening', 'writing', 'speaking'];
+    const analytics: SessionAnalytics = createEmptyAnalytics();
 
-    for (const type of types) {
+    for (const type of SESSION_TYPES) {
       const typeSessions = sessions.filter(s => s.type === type);
       const completed = typeSessions.filter(s => s.status === 'completed');
       const totalDuration = typeSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
@@ -247,7 +259,7 @@ export async function getSessionAnalytics(
     return analytics;
   } catch (error) {
     console.error('Error getting session analytics:', error);
-    return {};
+    return createEmptyAnalytics();
   }
 }
 
