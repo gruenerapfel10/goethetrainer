@@ -1,5 +1,4 @@
 import { generateObject } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { QuestionModuleId, type QuestionModule } from './types';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
@@ -14,6 +13,8 @@ import type {
   QuestionResult,
   UserAnswer,
 } from '@/lib/sessions/questions/question-types';
+import { ModelId } from '@/lib/ai/model-registry';
+import { customModel } from '@/lib/ai/models';
 
 type MCQAnswer = string | Record<string, string> | null;
 
@@ -45,6 +46,7 @@ interface GappedSourceConfig extends QuestionModuleSourceConfig {
   type: 'gapped_text';
   gapCount: number;
   optionsPerGap: number;
+  optionStyle?: 'word' | 'statement';
 }
 
 interface AudioGappedSourceConfig extends QuestionModuleSourceConfig {
@@ -210,7 +212,7 @@ async function generateStandardMCQ(
   difficulty: QuestionDifficulty,
   questionCount: number
 ): Promise<Question[]> {
-  const model = anthropic('claude-opus-4-1-20250805');
+  const model = customModel(DEFAULT_MODEL);
   const userPrompt = `Generate a German reading passage with ${questionCount} comprehension questions. Return JSON with theme, title, subtitle, context, and questions array.`;
 
   const generationSchema = z.object({
@@ -228,13 +230,15 @@ async function generateStandardMCQ(
     ),
   });
 
-  const result = await generateObject({
-    model,
-    schema: generationSchema,
-    system: 'You are a German language expert creating reading comprehension questions.',
-    prompt: userPrompt,
-    temperature: 0.7,
-  });
+  const result = await callWithRetry(() =>
+    generateObject({
+      model,
+      schema: generationSchema,
+      system: 'You are a German language expert creating reading comprehension questions.',
+      prompt: userPrompt,
+      temperature: 0.7,
+    })
+  );
 
   const data = result.object as any;
   const questions = data.questions.slice(0, questionCount);
@@ -273,7 +277,7 @@ async function generateGappedMCQ(
     },
   });
 
-  const model = anthropic('claude-opus-4-1-20250805');
+  const model = customModel(DEFAULT_MODEL);
 
   const optionsSchema = z.object({
     options: z
@@ -291,23 +295,30 @@ async function generateGappedMCQ(
   const questionType = resolveQuestionType(sessionType);
 
   const questionPromises = gaps.map(async (gap, index) => {
+    const styleHint =
+      sourceConfig.optionStyle === 'statement'
+        ? 'Each option must be a full German sentence (12-20 words) that could plausibly fit as a complete statement. Avoid repeating the same beginning for each sentence.'
+        : 'Each option should be a single word or short phrase (1-3 words) that could fit into the sentence.';
+
     const gapPrompt = `Generate ${sourceConfig.optionsPerGap} multiple choice options for this gap fill exercise.
 
 Gap number: ${gap.gapNumber}
 Correct answer: "${gap.removedWord}"
 Context: ${sourceWithGaps.gappedContext}
 
-Create plausible options where one is the correct answer "${gap.removedWord}".
-Return as JSON with id (0-${sourceConfig.optionsPerGap - 1}) and text.`;
+${styleHint}
+Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] and "correctOptionId".`;
 
-    const result = await generateObject({
-      model,
-      schema: optionsSchema,
-      system:
-        'You are a German language expert creating multiple choice options for gap fill exercises.',
-      prompt: gapPrompt,
-      temperature: 0.7,
-    });
+    const result = await callWithRetry(() =>
+      generateObject({
+        model,
+        schema: optionsSchema,
+        system:
+          'You are a German language expert creating Goethe C1 gap fill options.',
+        prompt: gapPrompt,
+        temperature: 0.7,
+      })
+    );
 
     const points = index === 0 ? 0 : 1;
 
@@ -434,3 +445,22 @@ export const multipleChoiceModule: QuestionModule<
     return markQuestion(question, answer, userAnswer);
   },
 };
+const DEFAULT_MODEL = ModelId.CLAUDE_HAIKU_4_5;
+const RETRY_ATTEMPTS = 3;
+const RETRY_DELAY_MS = 1_200;
+
+async function callWithRetry<T>(operation: () => Promise<T>): Promise<T> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await operation();
+    } catch (error) {
+      attempt += 1;
+      if (attempt >= RETRY_ATTEMPTS) {
+        throw error;
+      }
+      const delay = RETRY_DELAY_MS * attempt;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}

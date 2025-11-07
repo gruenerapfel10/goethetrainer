@@ -86,11 +86,13 @@ export interface Question {
     id: string;
     label: string;
     content: string;
+    role?: string;
   }>; // For STATEMENT_MATCHING
   
   statements?: Array<{
     id: string;
     text: string;
+    number?: number;
   }>; // For STATEMENT_MATCHING
   
   correctMatches?: Record<string, string>; // For GAP_TEXT_MATCHING and STATEMENT_MATCHING

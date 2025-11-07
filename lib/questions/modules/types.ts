@@ -10,6 +10,7 @@ export enum QuestionModuleId {
   MULTIPLE_CHOICE = 'multiple_choice',
   WRITTEN_RESPONSE = 'written_response',
   TRUE_FALSE = 'true_false',
+  STATEMENT_MATCH = 'statement_match',
   AUDIO_RESPONSE = 'audio_response',
   // Future modules can be appended here.
 }
@@ -48,7 +49,7 @@ export interface QuestionModulePromptConfig {
 }
 
 export interface QuestionModuleRenderConfig {
-  layout?: 'horizontal' | 'vertical' | 'single_column' | 'grid';
+  layout?: 'horizontal' | 'vertical' | 'single_column' | 'grid' | 'statement_match' | 'single_statement';
   showSourceToggle?: boolean;
   showAudioControls?: boolean;
   [key: string]: unknown;
@@ -131,4 +132,3 @@ export interface QuestionModuleTask<
   scoringOverrides?: Partial<ScoringPolicy>;
   metadata?: Record<string, unknown>;
 }
-

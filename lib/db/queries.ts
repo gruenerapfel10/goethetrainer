@@ -49,6 +49,14 @@ export interface Vote {
   createdAt: Date;
 }
 
+export interface ReadingListEntry {
+  id: string;
+  userId: string;
+  text: string;
+  translation: string;
+  createdAt: Date;
+}
+
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     const normalizedEmail = email.toLowerCase().trim();
@@ -168,6 +176,122 @@ export async function deleteChatById({ id }: { id: string }) {
     return { id };
   } catch (error) {
     console.error('Failed to delete chat by id from Firestore');
+    throw error;
+  }
+}
+
+export async function addReadingListEntry({
+  userId,
+  text,
+  translation,
+}: {
+  userId: string;
+  text: string;
+  translation: string;
+}): Promise<ReadingListEntry> {
+  try {
+    const now = Timestamp.now();
+    const docRef = adminDb.collection('readingList').doc();
+    await docRef.set({
+      userId,
+      text,
+      translation,
+      createdAt: now,
+    });
+
+    return {
+      id: docRef.id,
+      userId,
+      text,
+      translation,
+      createdAt: now.toDate(),
+    };
+  } catch (error) {
+    console.error('Failed to add reading list entry:', error);
+    throw error;
+  }
+}
+
+export async function getReadingListEntries({
+  userId,
+  limit = 25,
+  cursor,
+  search,
+}: {
+  userId: string;
+  limit?: number;
+  cursor?: string | null;
+  search?: string | null;
+}): Promise<{ items: ReadingListEntry[]; nextCursor: string | null }> {
+  try {
+    const fetchLimit = search ? limit * 3 + 1 : limit + 1;
+    let query = adminDb
+      .collection('readingList')
+      .where('userId', '==', userId)
+      .orderBy('createdAt', 'desc')
+      .limit(fetchLimit);
+
+    if (cursor) {
+      query = query.startAfter(Timestamp.fromMillis(Date.parse(cursor)));
+    }
+
+    const snapshot = await query.get();
+    const rawItems: ReadingListEntry[] = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        userId: data.userId,
+        text: data.text,
+        translation: data.translation,
+        createdAt: (data.createdAt as Timestamp).toDate(),
+      };
+    });
+
+    const normalizedSearch = search?.trim().toLowerCase();
+    const filtered = normalizedSearch
+      ? rawItems.filter(entry =>
+          entry.text.toLowerCase().includes(normalizedSearch) ||
+          entry.translation.toLowerCase().includes(normalizedSearch)
+        )
+      : rawItems;
+
+    const limitedItems = filtered.slice(0, limit);
+    const hasMore = filtered.length > limit;
+    const nextCursor =
+      hasMore && limitedItems.length > 0
+        ? limitedItems[limitedItems.length - 1].createdAt.toISOString()
+        : null;
+
+    return {
+      items: limitedItems,
+      nextCursor,
+    };
+  } catch (error) {
+    console.error('Failed to fetch reading list entries:', error);
+    throw error;
+  }
+}
+
+export async function deleteReadingListEntry({
+  userId,
+  entryId,
+}: {
+  userId: string;
+  entryId: string;
+}): Promise<void> {
+  try {
+    const docRef = adminDb.collection('readingList').doc(entryId);
+    const snapshot = await docRef.get();
+    if (!snapshot.exists) {
+      throw new Error('Entry not found');
+    }
+    const data = snapshot.data();
+    if (data?.userId !== userId) {
+      throw new Error('Not authorized to delete this entry');
+    }
+    await docRef.delete();
+  } catch (error) {
+    console.error('Failed to delete reading list entry:', error);
     throw error;
   }
 }

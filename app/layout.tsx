@@ -5,6 +5,7 @@ import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { DeepResearchProvider } from '@/lib/deep-research-context';
+import { GlobalContextMenuProvider } from '@/components/context/global-context-menu-provider';
 
 import './globals.css';
 import { getLocale, getMessages } from 'next-intl/server';
@@ -32,7 +33,9 @@ export default async function RootLayout({
               <Toaster />
               <NotificationInitializer />
               <DeepResearchProvider>
-                {children}
+                <GlobalContextMenuProvider>
+                  {children}
+                </GlobalContextMenuProvider>
               </DeepResearchProvider>
             </ThemeProvider>
           </SessionProvider>

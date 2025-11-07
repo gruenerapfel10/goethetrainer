@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useLearningSession, QuestionStatus } from '@/lib/sessions/learning-session-context';
 import { useSessionPage } from '@/lib/sessions/session-page-context';
@@ -21,6 +21,8 @@ import { QuestionModuleId } from '@/lib/questions/modules/types';
 // Import question components
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
+import { StatementMatchView } from '@/components/questions/StatementMatch/StatementMatchView';
+import { ReadingSingleModuleView } from '@/components/questions/ReadingSingleModuleView';
 import { SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
 import '@/lib/sessions/configs';
 
@@ -181,7 +183,7 @@ export function SessionOrchestrator() {
             question =>
               question.id && question.answer !== undefined && question.answer !== null
           )
-          .map(question => [question.id as string, String(question.answer)])
+          .map(question => [question.id as string, question.answer as AnswerValue])
       ),
     [sessionQuestions]
   );
@@ -209,6 +211,63 @@ export function SessionOrchestrator() {
     totalLoadedQuestions,
     isGeneratingQuestions,
   ]);
+
+  const handleTeilCompletion = useCallback(
+    async () => {
+      if (isNavigating || latestResults) {
+        return;
+      }
+
+      setIsNavigating(true);
+      try {
+        const payload = Object.fromEntries(
+          activeTeilQuestions.map(question => [
+            question.id,
+            (question.answer ?? null) as AnswerValue,
+          ])
+        );
+
+        await submitTeilAnswers(payload, activeTeilNumber);
+
+        if (nextTeilNumber) {
+          activateTeil(nextTeilNumber);
+          setPendingTeilUnlock(false);
+          setIsNavigating(false);
+          return;
+        }
+
+        const expectedTotal = generationState?.total ?? totalLoadedQuestions;
+        if (isGeneratingQuestions || totalLoadedQuestions < expectedTotal) {
+          setPendingTeilUnlock(true);
+          setIsNavigating(false);
+          return;
+        }
+
+        const completion = await completeQuestions();
+        if (completion) {
+          await endSession('completed');
+          setPendingTeilUnlock(false);
+        }
+      } finally {
+        setIsNavigating(false);
+      }
+    },
+    [
+      activeTeilQuestions,
+      activeTeilNumber,
+      nextTeilNumber,
+      isNavigating,
+      latestResults,
+      submitTeilAnswers,
+      activateTeil,
+      setPendingTeilUnlock,
+      generationState?.total,
+      totalLoadedQuestions,
+      isGeneratingQuestions,
+      completeQuestions,
+      endSession,
+    ]
+  );
 
   // Reset state when question changes
   useEffect(() => {
@@ -306,68 +365,130 @@ export function SessionOrchestrator() {
       sessionType === SessionTypeEnum.READING &&
       activeTeilQuestions.length > 0
     ) {
-      return (
-        <AllQuestionsView
-          key={`teil-${activeTeilNumber}`}
-          questions={activeTeilQuestions}
-          showA4Format={showA4Format}
-          isLastTeil={isLastTeil}
-          accumulatedAnswers={accumulatedAnswers}
-          onBack={
-            previousTeilNumber
-              ? () => {
-                  if (isNavigating) return;
-                  activateTeil(previousTeilNumber);
-                }
-              : undefined
-          }
-          showBackButton={!!previousTeilNumber}
-          totalTeils={teilCount}
-          generatedTeils={generatedTeils}
-          teilLabels={teilLabels}
-          allQuestions={sessionQuestions}
-          onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
-          isSubmitting={isSubmitting || isNavigating}
-          activeView={activeView}
-          onActiveViewChange={setActiveView}
-          onTeilNavigate={teil => {
-            if (isNavigating) return;
-            activateTeil(teil);
-          }}
-          onSubmit={async answers => {
-            if (isNavigating || latestResults) return;
-            setIsNavigating(true);
-            try {
-              await submitTeilAnswers(answers, activeTeilNumber);
+      const teilModuleId =
+        (activeTeilQuestions[0].moduleId ??
+          activeTeilQuestions[0].registryType ??
+          QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
 
-              if (nextTeilNumber) {
-                activateTeil(nextTeilNumber);
-                setPendingTeilUnlock(false);
-                setIsNavigating(false);
-                return;
-              }
+      if (teilModuleId === QuestionModuleId.STATEMENT_MATCH) {
+        const primaryQuestion = activeTeilQuestions[0];
+        const statementAnswer =
+          (primaryQuestion.answer && typeof primaryQuestion.answer === 'object'
+            ? (primaryQuestion.answer as Record<string, string>)
+            : {}) ?? {};
+        const statements = primaryQuestion.statements ?? [];
+        const canSubmit = statements.every(statement => statementAnswer[statement.id]);
 
-              const expectedTotal = generationState?.total ?? totalLoadedQuestions;
-              if (
-                isGeneratingQuestions ||
-                totalLoadedQuestions < expectedTotal
-              ) {
-                setPendingTeilUnlock(true);
-                setIsNavigating(false);
-                return;
-              }
-
-              const completion = await completeQuestions();
-              if (completion) {
-                await endSession('completed');
-                setPendingTeilUnlock(false);
-              }
-            } finally {
-              setIsNavigating(false);
+        return (
+          <StatementMatchView
+            question={primaryQuestion}
+            value={primaryQuestion.answer as AnswerValue}
+            onAnswer={record => setQuestionAnswer(primaryQuestion.id, record)}
+            teilNumber={activeTeilNumber}
+            teilLabel={teilLabels[activeTeilNumber] ?? `Teil ${activeTeilNumber}`}
+            teilLabels={teilLabels}
+            totalTeils={teilCount}
+            generatedTeils={generatedTeils}
+            onTeilNavigate={teil => {
+              if (isNavigating) return;
+              activateTeil(teil);
+            }}
+            onBack={
+              previousTeilNumber
+                ? () => {
+                    if (isNavigating) return;
+                    activateTeil(previousTeilNumber);
+                  }
+                : undefined
             }
-          }}
-        />
-      );
+            showBackButton={!!previousTeilNumber}
+            isSubmitting={isSubmitting || isNavigating}
+            isLastTeil={isLastTeil}
+            canSubmit={canSubmit}
+            onSubmit={() => handleTeilCompletion()}
+            activeView={activeView}
+            onActiveViewChange={setActiveView}
+          />
+        );
+      }
+
+      if (teilModuleId === QuestionModuleId.MULTIPLE_CHOICE) {
+        return (
+          <AllQuestionsView
+            key={`teil-${activeTeilNumber}`}
+            questions={activeTeilQuestions}
+            showA4Format={showA4Format}
+            isLastTeil={isLastTeil}
+            accumulatedAnswers={accumulatedAnswers}
+            onBack={
+              previousTeilNumber
+                ? () => {
+                    if (isNavigating) return;
+                    activateTeil(previousTeilNumber);
+                  }
+                : undefined
+            }
+            showBackButton={!!previousTeilNumber}
+            totalTeils={teilCount}
+            generatedTeils={generatedTeils}
+            teilLabels={teilLabels}
+            allQuestions={sessionQuestions}
+            onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
+            isSubmitting={isSubmitting || isNavigating}
+            activeView={activeView}
+            onActiveViewChange={setActiveView}
+            onTeilNavigate={teil => {
+              if (isNavigating) return;
+              activateTeil(teil);
+            }}
+            onSubmit={() => handleTeilCompletion()}
+          />
+        );
+      }
+
+      const InputComponent = resolveModuleComponent(teilModuleId);
+      const teilLabel = teilLabels[activeTeilNumber] ?? `Teil ${activeTeilNumber}`;
+      const canSubmit = activeTeilQuestions.every(question => question.answered);
+
+      if (InputComponent) {
+        const primaryQuestion = activeTeilQuestions[0];
+        return (
+          <ReadingSingleModuleView
+            teilNumber={activeTeilNumber}
+            teilLabel={teilLabel}
+            teilLabels={teilLabels}
+            totalTeils={teilCount}
+            generatedTeils={generatedTeils}
+            onTeilNavigate={teil => {
+              if (isNavigating) return;
+              activateTeil(teil);
+            }}
+            onBack={
+              previousTeilNumber
+                ? () => {
+                    if (isNavigating) return;
+                    activateTeil(previousTeilNumber);
+                  }
+                : undefined
+            }
+            showBackButton={!!previousTeilNumber}
+            isSubmitting={isSubmitting || isNavigating}
+            isLastTeil={isLastTeil}
+            canSubmit={canSubmit}
+            onSubmit={() => handleTeilCompletion()}
+            activeView={activeView}
+            onActiveViewChange={setActiveView}
+          >
+            <InputComponent
+              question={primaryQuestion}
+              value={(primaryQuestion.answer ?? null) as AnswerValue}
+              onChange={value => setQuestionAnswer(primaryQuestion.id, value)}
+              feedback={primaryQuestion.result ?? null}
+              position={{ current: 1, total: 1 }}
+            />
+          </ReadingSingleModuleView>
+        );
+      }
     }
 
     // Single question display for other cases

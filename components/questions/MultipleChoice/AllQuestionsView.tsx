@@ -6,7 +6,7 @@ import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 // import { QuestionTimeline } from './QuestionTimeline'; // TODO: Re-implement question timeline feature
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
-import type { Question as SessionQuestionType } from '@/lib/sessions/types';
+import type { Question as SessionQuestionType, AnswerValue } from '@/lib/sessions/types';
 
 type MCQuestion = SessionQuestionType & {
   status?: QuestionStatus;
@@ -15,10 +15,10 @@ type MCQuestion = SessionQuestionType & {
 
 interface AllQuestionsViewProps {
   questions: MCQuestion[];
-  onSubmit: (answers: Record<string, string>) => Promise<void> | void;
+  onSubmit: () => Promise<void> | void;
   showA4Format?: boolean;
   isLastTeil?: boolean;
-  accumulatedAnswers?: Record<string, string | string[] | boolean>;
+  accumulatedAnswers?: Record<string, AnswerValue>;
   onBack?: () => void;
   showBackButton?: boolean;
   totalTeils?: number;
@@ -130,7 +130,7 @@ export function AllQuestionsView({
 
   const handleSubmit = async () => {
     try {
-      await onSubmit(selectedAnswers);
+      await onSubmit();
     } catch (error) {
       console.error('Failed to submit answers:', error);
     }
@@ -138,7 +138,7 @@ export function AllQuestionsView({
 
   const requiredAnswered = questions
     .filter(q => !q.isExample)
-    .every(q => selectedAnswers[q.id]);
+    .every(q => q.answered || Boolean(selectedAnswers[q.id]));
 
   // Derive Teil information from actual questions
   const timelineQuestions = allQuestions && allQuestions.length > 0 ? allQuestions : questions;
@@ -152,11 +152,13 @@ export function AllQuestionsView({
   const actualTotalTeils = Math.max(totalTeils, derivedTotalTeils);
   const teilNumbers = Array.from({ length: actualTotalTeils }, (_, index) => index + 1);
 
-  // Check if this is MULTIPLE_CHOICE (Teil 2) or GAP_TEXT (Teil 1)
-  const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
-  const layoutVariant = questions[0]?.layoutVariant ?? null;
-  const isSingleLineVariant = layoutVariant === 'single_line';
-  const isColumnLayout = isMultipleChoice || isSingleLineVariant;
+  const renderLayout =
+    (questions[0]?.renderConfig as any)?.layout ??
+    questions[0]?.layoutVariant ??
+    'vertical';
+  const isHorizontalLayout = renderLayout === 'horizontal';
+  const isSingleStatementLayout = renderLayout === 'single_statement';
+  const useColumnLayout = !isHorizontalLayout;
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -282,8 +284,9 @@ export function AllQuestionsView({
                       {/* Options - horizontal for GAP_TEXT, vertical for MULTIPLE_CHOICE */}
                       <div
                         className={cn(
-                          "flex flex-1",
-                          isColumnLayout ? "flex-col gap-3" : "gap-6 flex-nowrap"
+                          'flex flex-1',
+                          isHorizontalLayout && 'flex-row gap-8 flex-wrap items-center',
+                          !isHorizontalLayout && 'flex-col gap-3'
                         )}
                       >
                         {question.options?.map((option, index) => {
@@ -298,7 +301,7 @@ export function AllQuestionsView({
                               key={option.id}
                               className={cn(
                                 "relative",
-                                isColumnLayout ? "w-full" : "flex-1 min-w-0"
+                                isHorizontalLayout ? "min-w-[140px]" : "w-full"
                               )}
                             >
                               {isFirstOption && isExample && (
@@ -306,8 +309,9 @@ export function AllQuestionsView({
                               )}
                               <div
                                 className={cn(
-                                  "flex gap-2 transition-colors p-2 -m-2",
-                                  isColumnLayout ? 'items-start' : 'items-center',
+                                  'flex gap-2 transition-colors',
+                                  isHorizontalLayout ? 'items-center p-2 -m-2' : 'items-start p-2 -m-2',
+                                  isSingleStatementLayout && 'w-full border-b border-border/60 p-0 pb-2 mb-1',
                                   !isExample && !isSubmitting
                                     ? 'cursor-pointer hover:bg-muted rounded-md'
                                     : 'cursor-default text-muted-foreground'
@@ -321,7 +325,13 @@ export function AllQuestionsView({
                                   disabled={isSubmitting || isExample}
                                   isExample={isExample}
                                 />
-                                <span className="text-sm break-words hyphens-auto" lang="de">
+                                <span
+                                  className={cn(
+                                    'text-sm break-words hyphens-auto',
+                                    isSingleStatementLayout && 'text-base leading-relaxed'
+                                  )}
+                                  lang="de"
+                                >
                                   {option.text}
                                 </span>
                               </div>

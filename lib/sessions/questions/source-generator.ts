@@ -1,8 +1,9 @@
 import { generateObject } from 'ai';
-import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { QuestionDifficulty } from './question-types';
 import type { SessionSourceOptions } from '../session-registry';
+import { ModelId } from '@/lib/ai/model-registry';
+import { customModel } from '@/lib/ai/models';
 
 export const maxDuration = 30;
 
@@ -67,7 +68,7 @@ export async function generateRawSource(
 ): Promise<z.infer<typeof RawSourceSchema>> {
   const selectedTheme = overrides?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
 
-  const model = anthropic('claude-haiku-4-5-20251001');
+  const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
 
   const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
 
@@ -121,7 +122,7 @@ export async function identifyGapsInSource(
   source: z.infer<typeof RawSourceSchema>,
   overrides?: SessionSourceOptions['gaps']
 ): Promise<SourceWithGaps> {
-  const model = anthropic('claude-haiku-4-5-20251001');
+  const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
   const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
 
   const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.

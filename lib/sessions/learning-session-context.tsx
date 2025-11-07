@@ -26,6 +26,7 @@ import {
   getSupportedModules as getSupportedModulesFromRegistry,
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import { getQuestionModule } from '@/lib/questions/modules';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -1346,7 +1347,18 @@ function normaliseAnswerForQuestion(
   question: Question,
   value: AnswerValue | null | undefined
 ): AnswerValue | null {
-  // Simple normalization without legacy input registry
-  // The module system handles specialized answer normalization
-  return defaultNormaliseAnswer(value);
+  if (value === undefined) {
+    return null;
+  }
+
+  try {
+    const moduleId = (question.moduleId ??
+      question.registryType ??
+      QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
+    const module = getQuestionModule(moduleId);
+    return module.normaliseAnswer(value, question) as AnswerValue | null;
+  } catch (error) {
+    console.warn('Failed to normalise answer for question', question.id, error);
+    return defaultNormaliseAnswer(value);
+  }
 }

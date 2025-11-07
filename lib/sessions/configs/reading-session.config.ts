@@ -126,6 +126,7 @@ export const readingSessionConfig: SessionConfig = {
   // Supported question modules for reading sessions
   supportedModules: [
     QuestionModuleId.MULTIPLE_CHOICE,
+    QuestionModuleId.STATEMENT_MATCH,
   ],
 
   // Fixed layout for reading sessions (Goethe C1 exam structure)
@@ -142,6 +143,7 @@ export const readingSessionConfig: SessionConfig = {
         type: 'gapped_text',
         gapCount: 8,
         optionsPerGap: 3,
+        optionStyle: 'word',
       },
       renderOverrides: {
         layout: 'horizontal',
@@ -177,16 +179,41 @@ export const readingSessionConfig: SessionConfig = {
       moduleId: QuestionModuleId.MULTIPLE_CHOICE,
       questionCount: 11,
       renderOverrides: {
-        layout: 'single_column',
+        layout: 'single_statement',
         showSourceToggle: true,
       },
       sourceOverrides: {
         type: 'gapped_text',
         gapCount: 11,
         optionsPerGap: 4,
+        optionStyle: 'statement',
       },
       scoringOverrides: {
         maxPoints: 11,
+        strategy: 'per_gap',
+      },
+    },
+    {
+      id: 'teil_4',
+      label: 'Teil 4',
+      moduleId: QuestionModuleId.STATEMENT_MATCH,
+      questionCount: 1,
+      renderOverrides: {
+        layout: 'statement_match',
+        showSourceToggle: true,
+      },
+      sourceOverrides: {
+        type: 'statement_matching',
+        authorCount: 3,
+        statementCount: 7,
+        unmatchedCount: 2,
+        startingStatementNumber: 24,
+        workingTimeMinutes: 15,
+        theme: 'Digitale Gesellschaft',
+        topicHint: 'Privatsphäre, Sicherheit und Datenethik',
+      },
+      scoringOverrides: {
+        maxPoints: 7,
         strategy: 'per_gap',
       },
     },

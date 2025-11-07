@@ -7,20 +7,24 @@ import { SidebarChat } from './sidebar-chat';
 import { Sidebar } from '@/components/ui/sidebar';
 import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ReadingListPanel } from '@/components/reading-list/ReadingListPanel';
 
 export function AppRightbar() {
   const { isOpen } = useRightSidebar();
   const [chatId, setChatId] = useState('');
+  const [activeTab, setActiveTab] = useState<'chat' | 'reading'>('chat');
 
   useEffect(() => {
     // Only generate a new chat ID when the sidebar opens
-    if (isOpen && !chatId) {
+    if (isOpen && activeTab === 'chat' && !chatId) {
       setChatId(generateUUID());
     }
-  }, [isOpen, chatId]);
+  }, [isOpen, chatId, activeTab]);
 
+  const shouldLoadChat = Boolean(isOpen && activeTab === 'chat' && chatId);
   const { data: chatData, error } = useSWR<{ messages: any[]; title?: string }>(
-    chatId && isOpen ? `/api/chat/${chatId}` : null,
+    shouldLoadChat ? `/api/chat/${chatId}` : null,
     fetcher,
     {
       revalidateOnFocus: false,
@@ -43,20 +47,48 @@ export function AppRightbar() {
         "flex-shrink-0"
       )}
     >
-      {isOpen && chatId && (
-        <div className="p-0 flex flex-col h-full overflow-hidden">
-          <SidebarChat
-            key={chatId}
-            id={chatId}
-            initialMessages={chatData?.messages || []}
-            selectedChatModel="gpt-4"
-            isReadonly={false}
-            isAdmin={false}
-            selectedVisibilityType="private"
-            onChatChange={setChatId}
-            chat={chatData?.title ? { title: chatData.title } : undefined}
-          />
-        </div>
+      {isOpen && (
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as 'chat' | 'reading')}
+          className="flex h-full flex-col overflow-hidden"
+        >
+          <div className="border-b border-border/60 px-4 py-3">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="chat">Chat</TabsTrigger>
+              <TabsTrigger value="reading">Reading List</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="chat" className="flex-1 overflow-hidden data-[state=inactive]:hidden">
+            {chatId ? (
+              <div className="h-full">
+                <SidebarChat
+                  key={chatId}
+                  id={chatId}
+                  initialMessages={chatData?.messages || []}
+                  selectedChatModel="gpt-4"
+                  isReadonly={false}
+                  isAdmin={false}
+                  selectedVisibilityType="private"
+                  onChatChange={setChatId}
+                  chat={chatData?.title ? { title: chatData.title } : undefined}
+                />
+              </div>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-muted-foreground px-4 text-center">
+                Chat is unavailable. Close and reopen the sidebar to start a new conversation.
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent
+            value="reading"
+            className="flex-1 overflow-hidden data-[state=inactive]:hidden"
+          >
+            <ReadingListPanel />
+          </TabsContent>
+        </Tabs>
       )}
     </Sidebar>
   );
