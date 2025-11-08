@@ -61,20 +61,62 @@ async function generateTeilQuestions(
     difficulty,
   });
 
-  return ensureQuestionIdentifiers(
-    rawQuestions.map((question: any, index: number) => ({
-      ...question,
-      answer: question.answer ?? null,
-      teil: teilNumber,
-      order: index,
-      registryType: layoutEntry.moduleId,
-      answered: !!question.answer,
-      inputType: question.inputType ?? question.answerType,
-      answerType: question.answerType ?? question.inputType,
-      layoutId: layoutEntry.id,
-      layoutLabel: layoutEntry.label,
-    }))
-  );
+  let questions = rawQuestions.map((question: any, index: number) => ({
+    ...question,
+    answer: question.answer ?? null,
+    teil: teilNumber,
+    order: index,
+    registryType: layoutEntry.moduleId,
+    answered: !!question.answer,
+    inputType: question.inputType ?? question.answerType,
+    answerType: question.answerType ?? question.inputType,
+    layoutId: layoutEntry.id,
+    layoutLabel: layoutEntry.label,
+  }));
+
+  const pointsOverride = layoutEntry.metadata?.points;
+  if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
+    const perQuestionValue = pointsOverride / Math.max(1, questions.length);
+    questions = questions.map(question => {
+      const next: Question = {
+        ...question,
+        points: questions.length === 1 ? pointsOverride : perQuestionValue,
+      };
+
+      if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
+        const rubricTotal = next.scoringRubric.reduce(
+          (sum, entry) => sum + (entry.maxPoints ?? 0),
+          0
+        );
+
+        if (rubricTotal > 0) {
+          const scale = pointsOverride / rubricTotal;
+          const scaledRubric = next.scoringRubric.map(entry => ({
+            ...entry,
+            maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
+          }));
+
+          const scaledTotal = scaledRubric.reduce(
+            (sum, entry) => sum + (entry.maxPoints ?? 0),
+            0
+          );
+          const delta = pointsOverride - scaledTotal;
+          if (scaledRubric.length > 0 && Math.abs(delta) >= 0.01) {
+            scaledRubric[0] = {
+              ...scaledRubric[0],
+              maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
+            };
+          }
+
+          next.scoringRubric = scaledRubric;
+        }
+      }
+
+      return next;
+    });
+  }
+
+  return ensureQuestionIdentifiers(questions);
 }
 
 

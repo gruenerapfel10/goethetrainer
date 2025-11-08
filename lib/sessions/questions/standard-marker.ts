@@ -24,12 +24,23 @@ const AI_MARKING_MODEL = customModel(ModelId.CLAUDE_HAIKU_4_5);
 
 const MarkingDecisionSchema = z.object({
   summary: z.string(),
+  nextStep: z.string(),
   criteria: z
     .array(
       z.object({
         id: z.string(),
         awardedPoints: z.number(),
         reasoning: z.string(),
+        decisions: z
+          .array(
+            z.object({
+              markNumber: z.number().int().min(1),
+              source: z.string(),
+              justification: z.string(),
+              outcome: z.enum(['award', 'reject']),
+            })
+          )
+          .nonempty(),
       })
     )
     .nonempty(),
@@ -125,9 +136,9 @@ function buildSourceSummary(question: Question): string {
   return parts.join('\n\n');
 }
 
-function clampHalfPoints(value: number, maxPoints: number) {
+function clampIntegerPoints(value: number, maxPoints: number) {
   if (!Number.isFinite(value)) return 0;
-  const rounded = Math.round(value * 2) / 2;
+  const rounded = Math.round(value);
   return Math.min(maxPoints, Math.max(0, rounded));
 }
 
@@ -151,7 +162,15 @@ function buildFeedback({
       const descriptor = rubricMap.get(decision.id);
       const label = descriptor?.label ?? decision.id;
       const maxPoints = descriptor?.maxPoints ?? 0;
-      return `${label}: ${decision.awardedPoints}/${maxPoints} – ${decision.reasoning}`;
+      const decisionsBlock = decision.decisions
+        ?.map(entry => {
+          const status = entry.outcome === 'award' ? '✔︎' : '✘';
+          return `    ${status} Mark ${entry.markNumber}: „${entry.source}“ — ${entry.justification}`;
+        })
+        .join('\n');
+      return `${label}: ${decision.awardedPoints}/${maxPoints} – ${decision.reasoning}${
+        decisionsBlock ? `\n${decisionsBlock}` : ''
+      }`;
     })
     .join('\n');
 
@@ -161,6 +180,22 @@ function buildFeedback({
       : '';
 
   return `${summary}\n\n${details}${languageBlock}`;
+}
+
+function deriveHeuristicNextStep(answerText: string, question: Question): string {
+  const trimmed = answerText.trim();
+  const minWords = question.scoringCriteria?.rubric?.minimum_words ?? question.wordGuide?.min ?? 50;
+  const wordCount = trimmed ? trimmed.split(/\s+/).filter(Boolean).length : 0;
+
+  if (wordCount === 0) {
+    return 'Schreibe zunächst einen vollständigen Text mit eigenen Inhalten statt nur Stichpunkten.';
+  }
+
+  if (wordCount < minWords) {
+    return `Erweitere den Text auf mindestens ${minWords} Wörter und belege deine Aussagen mit Beispielen.`;
+  }
+
+  return 'Konzentriere dich als Nächstes auf eine klare Struktur mit Einleitung, Hauptteil und Schluss.';
 }
 
 async function tryAIMarking({
@@ -175,6 +210,10 @@ async function tryAIMarking({
   basePoints: number;
 }): Promise<QuestionResult | null> {
   const rubric = resolveRubric(question, basePoints);
+  const rubricWeights = new Map(
+    rubric?.map(criterion => [criterion.id, criterion.maxPoints ?? 0]) ?? []
+  );
+  const rubricMeta = new Map(rubric?.map(criterion => [criterion.id, criterion]) ?? []);
   const maxScore =
     rubric?.reduce((sum, criterion) => sum + (criterion.maxPoints ?? 0), 0) || basePoints;
   const minWords = question.scoringCriteria?.rubric?.minimum_words ?? question.wordGuide?.min ?? 50;
@@ -184,8 +223,12 @@ async function tryAIMarking({
 
   const systemPrompt = `Du bist erfahrener Prüfer für das Goethe-Zertifikat C1 (Schreiben).
 Bewerte Texte ausschließlich anhand der vorgegebenen Kriterien.
-Antworte strikt im JSON-Format des Schemas. Verwende Halbpunkte (0.5) wenn nötig.
-Vergib nie mehr Punkte als erlaubt und beschreibe kurz die Begründung.`;
+Arbeite wie auf dem offiziellen Bewertungsbogen:
+- Jede Marke (ein Punkt) muss einzeln mit Quelle und Begründung dokumentiert werden, bevor du sie vergibst oder verweigerst.
+- Verwende ausschließlich ganze Punkte, keine Bruchteile.
+- Beziehe dich bei jeder Entscheidung auf wörtliche Textstellen oder eindeutige Paraphrasen aus der Antwort.
+- Formuliere zusätzlich ein einziges, sofort umsetzbares „nextStep“-Statement (max. 200 Zeichen), das den einfachsten Weg beschreibt, um die Punktzahl zu verbessern.
+Antworte strikt im JSON-Format des Schemas.`;
 
   const promptSections = [
     `Maximale Punktzahl: ${maxScore}`,
@@ -196,7 +239,7 @@ Vergib nie mehr Punkte als erlaubt und beschreibe kurz die Begründung.`;
     `Wortvorgabe: mindestens ${minWords} Wörter, ideal ${targetWords} Wörter.`,
     `Aufgabenbeschreibung:\n${question.prompt}\n\n${buildSourceSummary(question)}`,
     `Antwort des Kandidaten (${detectedWordCount} Wörter):\n"""${answerText.replace(/"""/g, '\"\"\"')}"""`,
-    'Erstelle das Bewertungsobjekt. Die IDs der Kriterien müssen exakt den Rubrik-IDs entsprechen.',
+    'Erstelle das Bewertungsobjekt. Die IDs der Kriterien müssen exakt den Rubrik-IDs entsprechen. Für jede Marke musst du einen "decisions"-Eintrag mit Quelle, Begründung und Ausgang (award/reject) liefern.',
   ]
     .filter(Boolean)
     .join('\n\n');
@@ -209,18 +252,37 @@ Vergib nie mehr Punkte als erlaubt und beschreibe kurz die Begründung.`;
     prompt: promptSections,
   });
 
-  const rubricMap = new Map(
-    rubric?.map(criterion => [criterion.id, criterion.maxPoints ?? 0]) ?? []
-  );
-
   const totalScore = decision.object.criteria.reduce((sum, criterion) => {
-    const max = rubricMap.get(criterion.id) ?? 0;
-    return sum + clampHalfPoints(criterion.awardedPoints, max);
+    const max = rubricWeights.get(criterion.id) ?? 0;
+    return sum + clampIntegerPoints(criterion.awardedPoints, max);
   }, 0);
 
-  const finalScore = clampHalfPoints(totalScore, maxScore);
+  const finalScore = clampIntegerPoints(totalScore, maxScore);
   const maxPoints = maxScore || basePoints;
   const isCorrect = finalScore >= maxPoints * 0.7;
+
+  const breakdown = {
+    summary: decision.object.summary,
+    nextStep: decision.object.nextStep,
+    detectedWordCount: decision.object.detectedWordCount,
+    criteria: decision.object.criteria.map(criterion => {
+      const descriptor = rubricMeta.get(criterion.id);
+      const maxPoints = rubricWeights.get(criterion.id) ?? criterion.awardedPoints;
+      return {
+        id: criterion.id,
+        label: descriptor?.label ?? criterion.id,
+        awardedPoints: clampIntegerPoints(criterion.awardedPoints, maxPoints),
+        maxPoints,
+        reasoning: criterion.reasoning,
+        decisions: criterion.decisions.map(entry => ({
+          markNumber: entry.markNumber,
+          source: entry.source,
+          justification: entry.justification,
+          outcome: entry.outcome,
+        })),
+      };
+    }),
+  };
 
   return {
     questionId: question.id,
@@ -243,6 +305,7 @@ Vergib nie mehr Punkte als erlaubt und beschreibe kurz die Begründung.`;
       languageNotes: decision.object.languageNotes,
     }),
     markedBy: 'ai',
+    breakdown,
   };
 }
 
@@ -294,6 +357,21 @@ function markWithHeuristics({
     feedbackSegments.push('Die Antwort entspricht nicht exakt der erwarteten Lösung.');
   }
 
+  const breakdown = {
+    summary: 'Automatische heuristische Bewertung',
+    nextStep: deriveHeuristicNextStep(answerText, question),
+    criteria: [
+      {
+        id: 'aggregate',
+        label: 'Gesamtscore',
+        awardedPoints: finalScore,
+        maxPoints: basePoints,
+        reasoning: feedbackSegments.join(' '),
+        decisions: [],
+      },
+    ],
+  };
+
   return {
     questionId: question.id,
     question,
@@ -303,6 +381,7 @@ function markWithHeuristics({
     isCorrect,
     feedback: feedbackSegments.join(' '),
     markedBy: 'ai',
+    breakdown,
   };
 }
 

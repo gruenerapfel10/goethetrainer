@@ -33,6 +33,9 @@ export const writingSessionConfig: SessionConfig = {
       label: 'Teil 1',
       moduleId: QuestionModuleId.WRITTEN_RESPONSE,
       questionCount: 1,
+      metadata: {
+        points: 10,
+      },
       renderOverrides: {
         layout: 'writing',
         showSourceToggle: true,
@@ -53,6 +56,9 @@ export const writingSessionConfig: SessionConfig = {
       label: 'Teil 2',
       moduleId: QuestionModuleId.WRITTEN_RESPONSE,
       questionCount: 1,
+      metadata: {
+        points: 15,
+      },
       renderOverrides: {
         layout: 'writing',
         showSourceToggle: true,

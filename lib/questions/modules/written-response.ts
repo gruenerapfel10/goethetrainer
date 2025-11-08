@@ -50,31 +50,36 @@ const DEFAULT_WRITING_RUBRIC = [
     id: 'content',
     label: 'Inhalt & Aufgabenbezug',
     description: 'Alle Stichpunkte werden adressiert, klare Argumentation, kohärente Beispiele.',
-    maxPoints: 6,
+    maxPoints: 10,
     guidance: 'Bewerte, ob die Antwort sämtliche Aufgabenbestandteile abdeckt und relevante Details bietet.',
   },
   {
     id: 'structure',
     label: 'Aufbau & Kohäsion',
     description: 'Logische Gliederung (Einleitung, Hauptteil, Schluss), sinnvolle Absätze, Verknüpfungen.',
-    maxPoints: 4,
+    maxPoints: 5,
     guidance: 'Achte auf Übergänge, rote Faden und angemessene Länge der Abschnitte.',
   },
   {
     id: 'language',
     label: 'Sprache & Grammatik',
     description: 'Korrekte Grammatik, differenzierter Wortschatz, passende Register.',
-    maxPoints: 3,
+    maxPoints: 6,
     guidance: 'Gewichte Fehler nach Schweregrad; wiederholte Fehler reduzieren Punkte.',
   },
   {
     id: 'register',
     label: 'Register & Format',
     description: 'Adressatengerechter Ton, passende Einleitungen/Schlussformeln, ggf. formale Elemente.',
-    maxPoints: 2,
+    maxPoints: 4,
     guidance: 'Prüfe, ob der Text als Leserbrief bzw. Stellungnahme glaubwürdig wirkt.',
   },
 ] as const;
+
+const DEFAULT_RUBRIC_TOTAL = DEFAULT_WRITING_RUBRIC.reduce(
+  (sum, entry) => sum + entry.maxPoints,
+  0
+);
 
 const WritingPromptSchema = z.object({
   theme: z.string(),
@@ -178,7 +183,7 @@ Liefere JSON entsprechend dem Schema.`;
       },
       keywords: data.keywords ?? [],
     },
-    points: 15,
+    points: DEFAULT_RUBRIC_TOTAL,
     moduleId: QuestionModuleId.WRITTEN_RESPONSE,
     moduleLabel: 'Schreiben',
     presentation: {

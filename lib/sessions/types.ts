@@ -86,6 +86,27 @@ export type Question = SessionQuestion;
 export type QuestionResult = SessionQuestionResult;
 export type AnswerValue = UserAnswer['answer'] | null;
 
+export interface TeilBreakdownEntry {
+  teilNumber: number;
+  label: string;
+  questionCount: number;
+  correctAnswers: number;
+  score: number;
+  maxScore: number;
+  percentage: number;
+}
+
+export interface ModuleBreakdownEntry {
+  module: SessionType;
+  label: string;
+  rawScore: number;
+  rawMaxScore: number;
+  scaledScore: number;
+  scaledMaxScore: number;
+  percentage: number;
+  questionCount: number;
+}
+
 export interface UpdateSessionInput {
   data?: Partial<SessionData>;
   metadata?: Partial<SessionMetadata>;
@@ -112,5 +133,7 @@ export interface CompletionSummary {
     maxScore: number;
     percentage: number;
     pendingManualReview: number;
+    teilBreakdown: TeilBreakdownEntry[];
+    moduleBreakdown: ModuleBreakdownEntry[];
   };
 }

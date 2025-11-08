@@ -339,6 +339,7 @@ export function SessionOrchestrator() {
           <SessionResultsView
             results={latestResults.results}
             summary={latestResults.summary}
+            sessionType={sessionType}
             onClose={() => {
               clearResults();
               router.replace(`/${sessionType}`);

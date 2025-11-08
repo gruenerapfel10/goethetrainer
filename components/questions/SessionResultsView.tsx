@@ -1,8 +1,9 @@
 'use client';
 
 import { QuestionResult } from '@/lib/sessions/questions/question-types';
-import { CheckCircle2, XCircle, Award, Target, Clock } from 'lucide-react';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import { cn } from '@/lib/utils';
+import { Award, CheckCircle2, ChevronLeft, Circle, XCircle } from 'lucide-react';
 
 interface SessionResultsViewProps {
   results: QuestionResult[];
@@ -15,248 +16,317 @@ interface SessionResultsViewProps {
     maxScore: number;
     percentage: number;
     pendingManualReview?: number;
+    teilBreakdown?: Array<{
+      teilNumber: number;
+      label: string;
+      questionCount: number;
+      correctAnswers: number;
+      score: number;
+      maxScore: number;
+      percentage: number;
+    }>;
+    moduleBreakdown?: Array<{
+      module: string;
+      label: string;
+      rawScore: number;
+      rawMaxScore: number;
+      scaledScore: number;
+      scaledMaxScore: number;
+      percentage: number;
+      questionCount: number;
+    }>;
   };
+  sessionType: SessionTypeEnum;
   onClose?: () => void;
 }
 
-export function SessionResultsView({ results, summary, onClose }: SessionResultsViewProps) {
-  const getGradeColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-green-600 dark:text-green-400';
-    if (percentage >= 75) return 'text-blue-600 dark:text-blue-400';
-    if (percentage >= 60) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
-  };
+const MODULE_ORDER: SessionTypeEnum[] = [
+  SessionTypeEnum.READING,
+  SessionTypeEnum.LISTENING,
+  SessionTypeEnum.WRITING,
+  SessionTypeEnum.SPEAKING,
+];
 
-  const getGradeLabel = (percentage: number) => {
-    if (percentage >= 90) return 'Ausgezeichnet!';
-    if (percentage >= 75) return 'Sehr gut!';
-    if (percentage >= 60) return 'Gut';
-    if (percentage >= 50) return 'Bestanden';
-    return 'Nicht bestanden';
-  };
+const MODULE_LABELS: Record<SessionTypeEnum, string> = {
+  [SessionTypeEnum.READING]: 'Lesen',
+  [SessionTypeEnum.LISTENING]: 'Hören',
+  [SessionTypeEnum.WRITING]: 'Schreiben',
+  [SessionTypeEnum.SPEAKING]: 'Sprechen',
+};
 
-  // Group results by Teil if available
-  const groupedResults = results.reduce((acc, result) => {
-    const teil = (result.question as any).teil || 0;
-    if (!acc[teil]) {
-      acc[teil] = [];
-    }
-    acc[teil].push(result);
-    return acc;
-  }, {} as Record<number, QuestionResult[]>);
+const LEVEL_BADGE = 'GOETHE-ZERTIFIKAT C1';
 
-  const teilNumbers = Object.keys(groupedResults).map(Number).sort();
-  const hasTeilStructure = teilNumbers.length > 1 || (teilNumbers.length === 1 && teilNumbers[0] !== 0);
+const GRADE_BANDS = [
+  { min: 90, label: 'sehr gut', color: 'text-green-700' },
+  { min: 80, label: 'gut', color: 'text-emerald-600' },
+  { min: 70, label: 'befriedigend', color: 'text-blue-600' },
+  { min: 60, label: 'ausreichend', color: 'text-yellow-600' },
+  { min: 0, label: 'nicht bestanden', color: 'text-red-600' },
+];
 
-  // Calculate per-Teil stats
-  const getTeilStats = (teilResults: QuestionResult[]) => {
-    const correct = teilResults.filter(r => r.isCorrect).length;
-    const total = teilResults.length;
-    const score = teilResults.reduce((sum, r) => sum + r.score, 0);
-    const maxScore = teilResults.reduce((sum, r) => sum + r.maxScore, 0);
-    const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-    return { correct, total, score, maxScore, percentage };
-  };
+function resolveGradeInfo(percentage: number) {
+  return GRADE_BANDS.find(band => percentage >= band.min) ?? GRADE_BANDS[GRADE_BANDS.length - 1];
+}
+
+export function SessionResultsView({ results, summary, sessionType, onClose }: SessionResultsViewProps) {
+  const moduleRows = MODULE_ORDER.map(module => {
+    const row = summary.moduleBreakdown?.find(entry => entry.module === module);
+    return (
+      row ?? {
+        module,
+        label: MODULE_LABELS[module],
+        rawScore: 0,
+        rawMaxScore: 0,
+        scaledScore: 0,
+        scaledMaxScore: 25,
+        percentage: 0,
+        questionCount: 0,
+      }
+    );
+  });
+
+  const activeModules = moduleRows.filter(entry => entry.questionCount > 0);
+  const overallScaledScore = activeModules.reduce((sum, entry) => sum + entry.scaledScore, 0);
+  const overallScaledMax = activeModules.reduce((sum, entry) => sum + entry.scaledMaxScore, 0);
+  const overallPercentage =
+    overallScaledMax > 0 ? Math.round((overallScaledScore / overallScaledMax) * 100) : summary.percentage;
+  const gradeInfo = resolveGradeInfo(overallPercentage);
+
+  const issuedAt = new Date();
+  const teilBreakdown = summary.teilBreakdown ?? [];
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Testergebnis</h1>
-          <p className="text-muted-foreground">Hier ist dein Ergebnis</p>
-        </div>
-
-        {/* Summary Card */}
-        <div className="bg-card border rounded-lg p-8 space-y-6">
-          {/* Score Circle */}
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative w-48 h-48">
-              <svg className="w-48 h-48 transform -rotate-90">
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="12"
-                  fill="none"
-                  className="text-muted"
-                />
-                <circle
-                  cx="96"
-                  cy="96"
-                  r="88"
-                  stroke="currentColor"
-                  strokeWidth="12"
-                  fill="none"
-                  strokeDasharray={`${2 * Math.PI * 88}`}
-                  strokeDashoffset={`${2 * Math.PI * 88 * (1 - summary.percentage / 100)}`}
-                  className={cn("transition-all duration-1000", getGradeColor(summary.percentage))}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className={cn("text-5xl font-bold", getGradeColor(summary.percentage))}>
-                  {summary.percentage}%
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  {getGradeLabel(summary.percentage)}
-                </div>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-6 w-full mt-6">
-              <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
-                <div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    {summary.correctAnswers}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Richtig</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
-                <div>
-                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {summary.incorrectAnswers}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Falsch</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                <Target className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                <div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {summary.totalScore}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Punkte</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                <Award className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-                <div>
-                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {summary.maxScore}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Max. Punkte</div>
-                </div>
-              </div>
-            </div>
-
-            {summary.pendingManualReview && summary.pendingManualReview > 0 && (
-              <div className="text-sm text-muted-foreground text-center">
-                {summary.pendingManualReview} Antwort(en) werden noch manuell bewertet.
-              </div>
-            )}
+    <div className="w-full h-full overflow-y-auto bg-muted/30 py-8 px-4">
+      <div className="relative mx-auto max-w-5xl bg-white dark:bg-background border border-muted shadow-sm">
+        <div className="border-b px-10 py-6 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">GOETHE-INSTITUT</p>
+            <h1 className="text-2xl font-bold tracking-wide">{LEVEL_BADGE}</h1>
+            <p className="text-xs text-muted-foreground mt-1">Modul: {MODULE_LABELS[sessionType]}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Ausstellungsdatum</p>
+            <p className="text-sm font-semibold">
+              {issuedAt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </p>
           </div>
         </div>
 
-        {/* Detailed Results */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Detaillierte Ergebnisse</h2>
+        <div className="px-10 py-8 space-y-10">
+          <div className="grid gap-6 md:grid-cols-3">
+            <div className="md:col-span-2">
+              <h2 className="text-sm font-semibold tracking-wide text-muted-foreground">ERGEBNISSE</h2>
+              <div className="mt-3 border">
+                <div className="grid grid-cols-4 text-xs uppercase text-muted-foreground bg-muted/40 px-4 py-2">
+                  <span>Teilbereich</span>
+                  <span className="text-right">Erreicht</span>
+                  <span className="text-right">Max.</span>
+                  <span className="text-right">%</span>
+                </div>
+                {moduleRows.map(row => (
+                  <div
+                    key={row.module}
+                    className={cn(
+                      'grid grid-cols-4 px-4 py-2 text-sm border-t',
+                      row.module === sessionType
+                        ? 'bg-emerald-50/60 dark:bg-emerald-950/10 font-semibold'
+                        : 'bg-transparent text-muted-foreground'
+                    )}
+                  >
+                    <span>{row.label}</span>
+                    <span className="text-right">{row.scaledScore}</span>
+                    <span className="text-right">{row.scaledMaxScore}</span>
+                    <span className="text-right">{row.percentage}%</span>
+                  </div>
+                ))}
+                <div className="grid grid-cols-4 px-4 py-3 text-sm font-semibold border-t bg-muted/30">
+                  <span>Gesamtpunkte</span>
+                  <span className="text-right">{overallScaledScore}</span>
+                  <span className="text-right">{overallScaledMax || summary.maxScore}</span>
+                  <span className="text-right">{overallPercentage}%</span>
+                </div>
+              </div>
+            </div>
+            <div className="border px-4 py-6 flex flex-col items-center justify-center text-center gap-2">
+              <Award className="w-10 h-10 text-emerald-600" />
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Prädikat</p>
+              <p className={cn('text-2xl font-bold tracking-wide', gradeInfo.color)}>
+                {gradeInfo.label}
+              </p>
+              <p className="text-sm text-muted-foreground">{overallPercentage}%</p>
+            </div>
+          </div>
 
-          <div className="space-y-3">
-            {results.map((result, index) => {
-              const isManualReview = result.markedBy === 'manual';
-              const isCorrect = !isManualReview && result.isCorrect;
-              const userAnswerOption = result.question.options?.find(
-                opt => opt.id === result.userAnswer.answer
-              );
-              const correctOption = result.question.options?.find(
-                opt => opt.id === result.question.correctOptionId || opt.isCorrect
-              );
+          {teilBreakdown.length > 0 && (
+            <div>
+              <h2 className="text-sm font-semibold tracking-wide text-muted-foreground mb-3">
+                Teil-Analyse
+              </h2>
+              <div className="flex flex-col gap-3">
+                {teilBreakdown.map(teil => (
+                  <div key={`${teil.teilNumber}-${teil.label}`} className="border px-4 py-3">
+                    <div className="flex items-center justify-between text-base font-semibold">
+                      <span>{teil.label}</span>
+                      <span>{teil.score}/{teil.maxScore} Punkte</span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground flex justify-between">
+                      <span>{teil.correctAnswers}/{teil.questionCount} richtig</span>
+                      <span>{teil.percentage}%</span>
+                    </div>
+                    <div className="mt-2 h-1.5 bg-muted rounded">
+                      <div
+                        className="h-full bg-emerald-500 rounded"
+                        style={{ width: `${Math.min(100, teil.percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-              return (
-                <div
-                  key={result.questionId}
-                  className={cn(
-                    "border rounded-lg p-4 space-y-2",
-                    isManualReview
-                      ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
-                      : isCorrect
-                        ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                        : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1">
-                      {isManualReview ? (
-                        <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                      ) : isCorrect ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1 space-y-2">
-                        <div className="font-medium">
-                          Frage {index + 1}
-                          {result.question.prompt && (
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              {result.question.prompt}
-                            </span>
-                          )}
-                        </div>
+          {summary.teilBreakdown?.map(teil => {
+            const teilResults = results.filter(result => {
+              const label =
+                result.question.layoutLabel ??
+                (typeof result.question.teil === 'number' ? `Teil ${result.question.teil}` : undefined);
+              return label === teil.label;
+            });
 
-                        {userAnswerOption && (
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Deine Antwort: </span>
-                            <span
-                              className={
-                                isManualReview
-                                  ? "text-foreground"
-                                  : isCorrect
-                                    ? "text-foreground"
-                                    : "text-red-600 dark:text-red-400 line-through"
-                              }
+            if (teilResults.length === 0) {
+              return null;
+            }
+            const nextStep =
+              teilResults.find(result => result.breakdown?.nextStep)?.breakdown?.nextStep ?? null;
+
+            const criterionMap = new Map<
+              string,
+              {
+                label: string;
+                awarded: number;
+                max: number;
+                marks: number;
+              }
+            >();
+
+            const markRows: Array<{
+              criterion: string;
+              mark: number;
+              source: string;
+              text: string;
+              outcome: 'award' | 'reject';
+            }> = [];
+
+            teilResults.forEach(result => {
+              result.breakdown?.criteria?.forEach(criterion => {
+                const existing = criterionMap.get(criterion.id) ?? {
+                  label: criterion.label ?? criterion.id,
+                  awarded: 0,
+                  max: 0,
+                  marks: 0,
+                };
+                existing.awarded += criterion.awardedPoints;
+                existing.max += criterion.maxPoints;
+                existing.marks += criterion.decisions?.length ?? 0;
+                criterionMap.set(criterion.id, existing);
+
+                criterion.decisions
+                  ?.sort((a, b) => a.markNumber - b.markNumber)
+                  .forEach(decision => {
+                    markRows.push({
+                      criterion: criterion.label ?? criterion.id,
+                      mark: decision.markNumber,
+                      source: decision.source,
+                      text: decision.justification,
+                      outcome: decision.outcome,
+                    });
+                  });
+              });
+            });
+
+            return (
+              <div key={teil.label} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold tracking-tight">{teil.label}</h3>
+                  <p className="text-base font-semibold">
+                    {teil.score} / {teil.maxScore} Punkte
+                  </p>
+                </div>
+
+                {nextStep && (
+                  <div className="border-l-4 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-900/10 px-3 py-2 text-xs text-emerald-900 dark:text-emerald-200">
+                    <span className="font-semibold uppercase tracking-wide mr-2">Nächster Schritt:</span>
+                    {nextStep}
+                  </div>
+                )}
+
+                {Array.from(criterionMap.keys()).map(criterionId => {
+                  const definition = criterionMap.get(criterionId);
+                  const criterionMarks = markRows.filter(entry => entry.criterion === definition?.label);
+                  if (!definition || criterionMarks.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <div key={`${teil.label}-${criterionId}`} className="space-y-1 overflow-x-auto border rounded-md">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-left text-muted-foreground bg-muted/20 uppercase tracking-wide text-[11px]">
+                            <th className="px-2 py-2 w-24">
+                              {definition.label}
+                            </th>
+                            <th className="px-2 py-2 text-right">
+                              {definition.awarded} / {definition.max} Punkte
+                            </th>
+                            <th className="px-2 py-2 text-center" colSpan={2}>
+                              {definition.marks} Marken
+                            </th>
+                          </tr>
+                          <tr className="text-left text-muted-foreground bg-muted/30 uppercase tracking-wide text-[11px]">
+                            <th className="px-2 py-2">Marke</th>
+                            <th className="px-2 py-2">Quelle</th>
+                            <th className="px-2 py-2" colSpan={2}>Entscheidung</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {criterionMarks.map((entry, idx) => (
+                            <tr
+                              key={`${teil.label}-${criterionId}-mark-${idx}`}
+                              className={cn(
+                                'border-t',
+                                entry.outcome === 'award'
+                                  ? 'bg-emerald-50/70 dark:bg-emerald-900/20'
+                                  : 'bg-red-50/70 dark:bg-red-900/20'
+                              )}
                             >
-                              {userAnswerOption.text}
-                            </span>
-                          </div>
-                        )}
-
-                        {!isManualReview && !isCorrect && correctOption && (
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Richtige Antwort: </span>
-                            <span className="text-green-600 dark:text-green-400 font-medium">
-                              {correctOption.text}
-                            </span>
-                          </div>
-                        )}
-
-                        {result.feedback && (
-                          <div className="text-sm text-muted-foreground italic">
-                            {result.feedback}
-                          </div>
-                        )}
-                      </div>
+                              <td className="px-2 py-2 font-semibold">Mark {entry.mark}</td>
+                              <td className="px-2 py-2 text-muted-foreground">„{entry.source}“</td>
+                              <td className="px-2 py-2" colSpan={2}>
+                                {entry.text}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
+                  );
+                })}
+              </div>
+            );
+          })}
 
-                    <div className="text-sm font-medium">
-                      {result.score}/{result.maxScore} Punkte
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          {onClose && (
+            <div className="flex justify-end">
+              <button
+                onClick={onClose}
+                className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 border border-muted hover:bg-muted/50 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Zurück zur Übersicht
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* Actions */}
-        {onClose && (
-          <div className="flex justify-center pt-4">
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-            >
-              Schließen
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

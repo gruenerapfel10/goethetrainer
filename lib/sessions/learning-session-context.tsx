@@ -27,6 +27,7 @@ import {
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
 import { getQuestionModule } from '@/lib/questions/modules';
+import { buildQuestionSessionSummary } from './question-manager';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -686,6 +687,25 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       const questions = Array.isArray(session.data?.questions)
         ? (session.data.questions as Question[])
         : [];
+      const serverResults = Array.isArray(session.data?.results)
+        ? (session.data.results as QuestionResult[])
+        : [];
+      const shouldHydrateResults =
+        session.status === 'completed' && serverResults.length > 0;
+
+      const hydrateResults = () => {
+        if (shouldHydrateResults) {
+          setLatestResults(prev => {
+            if (prev) return prev;
+            return {
+              results: serverResults,
+              summary: buildQuestionSessionSummary(serverResults, questions),
+            };
+          });
+        } else if (!merge) {
+          setLatestResults(null);
+        }
+      };
 
       const derivedActiveView =
         session.metadata?.activeView === 'quelle' ? 'quelle' : 'fragen';
@@ -711,6 +731,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setActiveViewState(derivedActiveView);
         pendingAnswersRef.current = {};
         pendingUpdateRef.current = null;
+        hydrateResults();
         return;
       }
 
@@ -752,8 +773,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setActiveQuestionId(derivedActiveId);
         activeQuestionIdRef.current = derivedActiveId;
       }
+      hydrateResults();
     },
-    []
+    [setLatestResults]
   );
 
   const refreshSessionSnapshot = useCallback(
@@ -816,7 +838,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         });
 
         buildSessionState(session);
-        setLatestResults(null);
         if (session?.id) {
           if (session.data?.generation?.status !== 'completed') {
             startGenerationMonitor(session.id);
@@ -845,7 +866,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           cache: 'no-store',
         });
         buildSessionState(session);
-        setLatestResults(null);
         if (session?.id) {
           if (session.data?.generation?.status !== 'completed') {
             startGenerationMonitor(session.id);
@@ -868,7 +888,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const setQuestionAnswer = useCallback(
     (questionId: string, answerValue: AnswerValue) => {
       const session = activeSessionRef.current;
-      if (!session) {
+      if (!session || session.status === 'completed') {
         return;
       }
 
@@ -1060,6 +1080,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setError('No active session');
         return null;
       }
+      if (session.status === 'completed') {
+        setError('Diese Sitzung wurde bereits abgeschlossen.');
+        return null;
+      }
 
       setIsSubmitting(true);
       setError(null);
@@ -1111,7 +1135,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const submitTeilAnswers = useCallback(
     async (answers: Record<string, AnswerValue>) => {
       const session = activeSessionRef.current;
-      if (!session) {
+      if (!session || session.status === 'completed') {
         setError('No active session');
         return;
       }
@@ -1139,6 +1163,24 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     if (!session) {
       setError('No active session');
       return null;
+    }
+
+    if (session.status === 'completed') {
+      if (
+        !latestResults &&
+        Array.isArray(session.data?.results) &&
+        session.data.results.length > 0
+      ) {
+        const questions = Array.isArray(session.data?.questions)
+          ? (session.data.questions as Question[])
+          : [];
+        const results = session.data.results as QuestionResult[];
+        const summary = buildQuestionSessionSummary(results, questions);
+        const completion = { results, summary };
+        setLatestResults(completion);
+        return completion;
+      }
+      return latestResults;
     }
 
     setIsSubmitting(true);
@@ -1200,7 +1242,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       isCompletingRef.current = false;
       setIsSubmitting(false);
     }
-  }, [forceSave, syncActiveSessionQuestions]);
+  }, [forceSave, syncActiveSessionQuestions, latestResults]);
 
   const endSession = useCallback(
     async (status: 'completed' | 'abandoned' = 'completed') => {

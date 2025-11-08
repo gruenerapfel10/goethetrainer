@@ -176,6 +176,24 @@ export interface QuestionResult {
   isCorrect: boolean;
   feedback?: string;
   markedBy: 'manual' | 'ai' | 'automatic';
+  breakdown?: {
+    summary?: string;
+    nextStep?: string;
+    detectedWordCount?: number;
+    criteria?: Array<{
+      id: string;
+      label?: string;
+      awardedPoints: number;
+      maxPoints: number;
+      reasoning?: string;
+      decisions?: Array<{
+        markNumber: number;
+        outcome: 'award' | 'reject';
+        source: string;
+        justification: string;
+      }>;
+    }>;
+  };
 }
 
 // Backwards compatible alias while legacy code migrates.
