@@ -1,6 +1,6 @@
 import type { AnswerValue } from '@/lib/sessions/types';
 import type { SessionQuestion } from '@/lib/sessions/learning-session-context';
-import { ReadingSingleModuleView } from '@/components/questions/ReadingSingleModuleView';
+import { SessionBoard } from '@/components/questions/SessionBoard';
 import { StatementMatchQuestion } from './StatementMatchQuestion';
 import { StatementMatchSource } from './StatementMatchSource';
 
@@ -44,7 +44,7 @@ export function StatementMatchView({
   onActiveViewChange,
 }: StatementMatchViewProps) {
   return (
-    <ReadingSingleModuleView
+    <SessionBoard
       teilNumber={teilNumber}
       teilLabel={teilLabel}
       teilLabels={teilLabels}
@@ -59,15 +59,16 @@ export function StatementMatchView({
       onSubmit={onSubmit}
       activeView={activeView}
       onActiveViewChange={onActiveViewChange}
-      sourceContent={<StatementMatchSource question={question} />}
-    >
-      <StatementMatchQuestion
-        question={question}
-        value={value}
-        onAnswer={onAnswer}
-        isSubmitted={Boolean(question.result)}
-        feedback={question.result?.feedback}
-      />
-    </ReadingSingleModuleView>
+      frageContent={
+        <StatementMatchQuestion
+          question={question}
+          value={value}
+          onAnswer={onAnswer}
+          isSubmitted={Boolean(question.result)}
+          feedback={question.result?.feedback}
+        />
+      }
+      quelleContent={<StatementMatchSource question={question} />}
+    />
   );
 }

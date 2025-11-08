@@ -49,7 +49,14 @@ export interface QuestionModulePromptConfig {
 }
 
 export interface QuestionModuleRenderConfig {
-  layout?: 'horizontal' | 'vertical' | 'single_column' | 'grid' | 'statement_match' | 'single_statement';
+  layout?:
+    | 'horizontal'
+    | 'vertical'
+    | 'single_column'
+    | 'grid'
+    | 'statement_match'
+    | 'single_statement'
+    | 'writing';
   showSourceToggle?: boolean;
   showAudioControls?: boolean;
   [key: string]: unknown;

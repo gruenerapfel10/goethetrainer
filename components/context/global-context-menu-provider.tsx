@@ -169,7 +169,8 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     if (!menuState.text) {
       return;
     }
-    emitChatPromptRequest(menuState.text);
+    const quoted = `"${menuState.text}"`;
+    emitChatPromptRequest(quoted);
     closeMenu();
   }, [menuState.text, closeMenu]);
 

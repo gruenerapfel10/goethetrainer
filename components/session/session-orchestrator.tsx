@@ -22,8 +22,9 @@ import { QuestionModuleId } from '@/lib/questions/modules/types';
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { StatementMatchView } from '@/components/questions/StatementMatch/StatementMatchView';
-import { ReadingSingleModuleView } from '@/components/questions/ReadingSingleModuleView';
+import { WritingPromptView } from '@/components/questions/Writing/WritingPromptView';
 import { SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
+import { SessionBoard } from '@/components/questions/SessionBoard';
 import '@/lib/sessions/configs';
 
 export function SessionOrchestrator() {
@@ -175,7 +176,7 @@ export function SessionOrchestrator() {
     [sessionQuestions]
   );
   const totalLoadedQuestions = sessionQuestions.length;
-  const accumulatedAnswers = useMemo(
+  const accumulatedAnswers = useMemo<Record<string, string | string[] | boolean>>(
     () =>
       Object.fromEntries(
         sessionQuestions
@@ -183,7 +184,14 @@ export function SessionOrchestrator() {
             question =>
               question.id && question.answer !== undefined && question.answer !== null
           )
-          .map(question => [question.id as string, question.answer as AnswerValue])
+          .map(question => {
+            const value = question.answer as AnswerValue;
+            if (typeof value === 'string' || typeof value === 'boolean' || Array.isArray(value)) {
+              return [question.id as string, value];
+            }
+
+            return [question.id as string, ''];
+          })
       ),
     [sessionQuestions]
   );
@@ -361,10 +369,7 @@ export function SessionOrchestrator() {
       );
     }
 
-    if (
-      sessionType === SessionTypeEnum.READING &&
-      activeTeilQuestions.length > 0
-    ) {
+    if (activeTeilQuestions.length > 0) {
       const teilModuleId =
         (activeTeilQuestions[0].moduleId ??
           activeTeilQuestions[0].registryType ??
@@ -431,7 +436,6 @@ export function SessionOrchestrator() {
             showBackButton={!!previousTeilNumber}
             totalTeils={teilCount}
             generatedTeils={generatedTeils}
-            teilLabels={teilLabels}
             allQuestions={sessionQuestions}
             onAnswerChange={(questionId, answer) => setQuestionAnswer(questionId, answer)}
             isSubmitting={isSubmitting || isNavigating}
@@ -446,14 +450,64 @@ export function SessionOrchestrator() {
         );
       }
 
+      if (teilModuleId === QuestionModuleId.WRITTEN_RESPONSE) {
+        const primaryQuestion = activeTeilQuestions[0];
+        const rawAnswer = primaryQuestion.answer;
+        const answered = Boolean(
+          typeof rawAnswer === 'string'
+            ? rawAnswer.trim().length > 0
+            : rawAnswer && typeof rawAnswer === 'object'
+              ? Object.values(rawAnswer as Record<string, string>)
+                  .some(value => typeof value === 'string' && value.trim().length > 0)
+              : false
+        );
+
+        return (
+          <WritingPromptView
+            question={primaryQuestion}
+            onAnswer={text => setQuestionAnswer(primaryQuestion.id, text)}
+            teilNumber={activeTeilNumber}
+            teilLabel={teilLabels[activeTeilNumber] ?? `Teil ${activeTeilNumber}`}
+            teilLabels={teilLabels}
+            totalTeils={teilCount}
+            generatedTeils={generatedTeils}
+            onTeilNavigate={teil => {
+              if (isNavigating) return;
+              activateTeil(teil);
+            }}
+            showBackButton={!!previousTeilNumber}
+            onBack={
+              previousTeilNumber
+                ? () => {
+                    if (isNavigating) return;
+                    activateTeil(previousTeilNumber);
+                  }
+                : undefined
+            }
+            isSubmitting={isSubmitting || isNavigating}
+            isLastTeil={isLastTeil}
+            canSubmit={answered}
+            onSubmit={() => handleTeilCompletion()}
+            activeView={activeView}
+            onActiveViewChange={setActiveView}
+          />
+        );
+      }
+
       const InputComponent = resolveModuleComponent(teilModuleId);
       const teilLabel = teilLabels[activeTeilNumber] ?? `Teil ${activeTeilNumber}`;
       const canSubmit = activeTeilQuestions.every(question => question.answered);
 
       if (InputComponent) {
         const primaryQuestion = activeTeilQuestions[0];
+        const quelleContent = primaryQuestion.context ? (
+          <div className="space-y-4 text-sm leading-relaxed whitespace-pre-wrap">
+            {primaryQuestion.context}
+          </div>
+        ) : undefined;
+
         return (
-          <ReadingSingleModuleView
+          <SessionBoard
             teilNumber={activeTeilNumber}
             teilLabel={teilLabel}
             teilLabels={teilLabels}
@@ -478,15 +532,18 @@ export function SessionOrchestrator() {
             onSubmit={() => handleTeilCompletion()}
             activeView={activeView}
             onActiveViewChange={setActiveView}
-          >
-            <InputComponent
-              question={primaryQuestion}
-              value={(primaryQuestion.answer ?? null) as AnswerValue}
-              onChange={value => setQuestionAnswer(primaryQuestion.id, value)}
-              feedback={primaryQuestion.result ?? null}
-              position={{ current: 1, total: 1 }}
-            />
-          </ReadingSingleModuleView>
+            frageContent={
+              <InputComponent
+                question={primaryQuestion}
+                value={(primaryQuestion.answer ?? null) as AnswerValue}
+                onChange={value => setQuestionAnswer(primaryQuestion.id, value)}
+                feedback={primaryQuestion.result ?? null}
+                position={{ current: 1, total: 1 }}
+              />
+            }
+            quelleContent={quelleContent}
+            showSourceToggle={Boolean(quelleContent)}
+          />
         );
       }
     }

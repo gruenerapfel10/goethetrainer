@@ -96,6 +96,35 @@ export interface Question {
   }>; // For STATEMENT_MATCHING
   
   correctMatches?: Record<string, string>; // For GAP_TEXT_MATCHING and STATEMENT_MATCHING
+
+  writingPrompt?: {
+    scenario?: string;
+    goal?: string;
+    audience?: string;
+    tone?: string;
+    tasks?: string[];
+  };
+
+  wordGuide?: {
+    min: number;
+    target?: number;
+    max?: number;
+  };
+
+  scoringRubric?: Array<{
+    id: string;
+    label: string;
+    description?: string;
+    maxPoints: number;
+    guidance?: string;
+  }>;
+
+  markingGuidelines?: string[];
+
+  sourceSections?: Array<{
+    title?: string;
+    body: string;
+  }>;
   
   // Metadata
   points: number;

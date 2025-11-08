@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
-interface ReadingSingleModuleViewProps {
+interface SessionBoardProps {
   teilNumber: number;
   teilLabel: string;
   teilLabels: Record<number, string>;
@@ -14,13 +14,14 @@ interface ReadingSingleModuleViewProps {
   isLastTeil?: boolean;
   canSubmit?: boolean;
   onSubmit: () => void;
-  children: ReactNode;
-  sourceContent?: ReactNode;
   activeView: 'fragen' | 'quelle';
   onActiveViewChange: (view: 'fragen' | 'quelle') => void;
+  frageContent: ReactNode;
+  quelleContent?: ReactNode;
+  showSourceToggle?: boolean;
 }
 
-export function ReadingSingleModuleView({
+export function SessionBoard({
   teilNumber,
   teilLabel,
   teilLabels,
@@ -33,42 +34,44 @@ export function ReadingSingleModuleView({
   isLastTeil = true,
   canSubmit = true,
   onSubmit,
-  children,
-  sourceContent,
   activeView,
   onActiveViewChange,
-}: ReadingSingleModuleViewProps) {
+  frageContent,
+  quelleContent,
+  showSourceToggle = true,
+}: SessionBoardProps) {
   const teilNumbers = Array.from({ length: totalTeils }, (_, index) => index + 1);
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
-      {/* Frage / Quelle Toggle */}
-      <div className="absolute top-6 left-6 flex gap-0 z-10 border-b border-border">
-        <button
-          onClick={() => onActiveViewChange('fragen')}
-          className={cn(
-            'px-4 py-2 font-medium transition-colors',
-            activeView === 'fragen'
-              ? 'text-foreground border-b-2 border-primary -mb-px'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Fragen
-        </button>
-        <button
-          onClick={() => onActiveViewChange('quelle')}
-          className={cn(
-            'px-4 py-2 font-medium transition-colors',
-            activeView === 'quelle'
-              ? 'text-foreground border-b-2 border-primary -mb-px'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Quelle
-        </button>
-      </div>
+      {showSourceToggle && (
+        <div className="absolute top-6 left-6 flex gap-0 z-10 border-b border-border">
+          <button
+            onClick={() => onActiveViewChange('fragen')}
+            className={cn(
+              'px-4 py-2 font-medium transition-colors',
+              activeView === 'fragen'
+                ? 'text-foreground border-b-2 border-primary -mb-px'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            Fragen
+          </button>
+          <button
+            onClick={() => onActiveViewChange('quelle')}
+            className={cn(
+              'px-4 py-2 font-medium transition-colors',
+              activeView === 'quelle'
+                ? 'text-foreground border-b-2 border-primary -mb-px'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            disabled={!quelleContent}
+          >
+            Quelle
+          </button>
+        </div>
+      )}
 
-      {/* Teil Navigation */}
       <div className="absolute top-6 right-6 z-10 flex gap-2 border-b border-border">
         {teilNumbers.map(number => {
           const label = teilLabels[number] ?? `Teil ${number}`;
@@ -99,7 +102,6 @@ export function ReadingSingleModuleView({
         })}
       </div>
 
-      {/* Back button */}
       {showBackButton && onBack && (
         <button
           onClick={onBack}
@@ -110,7 +112,6 @@ export function ReadingSingleModuleView({
         </button>
       )}
 
-      {/* Submit button */}
       <button
         onClick={onSubmit}
         disabled={isSubmitting || !canSubmit}
@@ -128,7 +129,7 @@ export function ReadingSingleModuleView({
             <div className="mb-10">
               <h2 className="text-base font-bold">{teilLabel}</h2>
             </div>
-            {activeView === 'fragen' ? children : sourceContent ?? children}
+            {activeView === 'fragen' || !showSourceToggle ? frageContent : quelleContent ?? frageContent}
           </div>
 
           <div className="text-primary-foreground p-6 flex justify-center items-center mt-auto">
