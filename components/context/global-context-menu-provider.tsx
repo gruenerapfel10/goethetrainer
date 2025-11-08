@@ -8,9 +8,11 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Languages, Loader2, X } from 'lucide-react';
+import { Languages, Loader2, X, Bookmark, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { emitReadingListUpdated } from '@/lib/reading-list/events';
+import { emitChatPromptRequest } from '@/lib/chat/events';
 
 interface MenuState {
   open: boolean;
@@ -29,12 +31,16 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const [isTranslating, setIsTranslating] = useState(false);
   const [translation, setTranslation] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const closeMenu = useCallback(() => {
     setMenuState(INITIAL_STATE);
-    setTranslation(null);
-    setError(null);
-    setIsTranslating(false);
+      setTranslation(null);
+      setError(null);
+      setIsTranslating(false);
+      setIsSaving(false);
+      setSaveMessage(null);
   }, []);
 
   useEffect(() => {
@@ -57,9 +63,11 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       const x = Math.min(event.clientX + offset, window.innerWidth - menuWidth - offset);
       const y = Math.min(event.clientY + offset, window.innerHeight - menuHeight - offset);
 
-      setTranslation(null);
-      setError(null);
-      setIsTranslating(false);
+    setTranslation(null);
+    setError(null);
+    setIsTranslating(false);
+    setIsSaving(false);
+    setSaveMessage(null);
 
       setMenuState({
         open: true,
@@ -123,6 +131,48 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       : menuState.text;
   }, [menuState.text]);
 
+  const handleSave = useCallback(async () => {
+    if (!menuState.text || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+    setSaveMessage(null);
+
+    try {
+      const response = await fetch('/api/reading-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: menuState.text, translation }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error ?? 'Failed to save entry.');
+      }
+
+      const data = await response.json();
+      if (data.translation) {
+        setTranslation(data.translation);
+      }
+      setSaveMessage('Saved to reading list');
+      emitReadingListUpdated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save entry.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [menuState.text, translation, isSaving]);
+
+  const handleAskAI = useCallback(() => {
+    if (!menuState.text) {
+      return;
+    }
+    emitChatPromptRequest(menuState.text);
+    closeMenu();
+  }, [menuState.text, closeMenu]);
+
   const menu = !menuState.open
     ? null
     : createPortal(
@@ -178,6 +228,45 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
                 ) : null}
               </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                className={cn(
+                  'flex w-full items-center gap-3 px-4 py-3 text-left transition border-t border-border/40',
+                  'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60'
+                )}
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                  <Bookmark className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Save to reading list</p>
+                  <p className="text-xs text-muted-foreground">
+                    Store this phrase with its translation.
+                  </p>
+                </div>
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-secondary-foreground" />
+                ) : null}
+              </button>
+              <button
+                type="button"
+                onClick={handleAskAI}
+                className={cn(
+                  'flex w-full items-center gap-3 px-4 py-3 text-left transition border-t border-border/40',
+                  'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60'
+                )}
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/5 text-primary">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Ask AI</p>
+                  <p className="text-xs text-muted-foreground">
+                    Paste the selection into the chat composer.
+                  </p>
+                </div>
+              </button>
             </div>
 
             {(translation || error) && (
@@ -193,6 +282,9 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
                 {error ? (
                   <p className="text-xs text-destructive">{error}</p>
                 ) : null}
+                {saveMessage ? (
+                  <p className="text-xs text-emerald-600">{saveMessage}</p>
+                ) : null}
               </div>
             )}
           </div>
@@ -207,3 +299,14 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     </>
   );
 }
+  const handleAskAI = useCallback(() => {
+    if (!menuState.text) {
+      return;
+    }
+    emitChatPromptRequest(menuState.text);
+    const quoted = `"${menuState.text}"`;
+    setSaveMessage(null);
+    setError(null);
+    setTranslation(null);
+    closeMenu();
+  }, [menuState.text, closeMenu]);

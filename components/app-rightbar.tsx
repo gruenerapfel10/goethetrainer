@@ -9,11 +9,13 @@ import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReadingListPanel } from '@/components/reading-list/ReadingListPanel';
+import { REQUEST_CHAT_PROMPT_EVENT, type ChatPromptEventDetail } from '@/lib/chat/events';
 
 export function AppRightbar() {
-  const { isOpen } = useRightSidebar();
+  const { isOpen, setOpen } = useRightSidebar();
   const [chatId, setChatId] = useState('');
   const [activeTab, setActiveTab] = useState<'chat' | 'reading'>('chat');
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
   useEffect(() => {
     // Only generate a new chat ID when the sidebar opens
@@ -21,6 +23,22 @@ export function AppRightbar() {
       setChatId(generateUUID());
     }
   }, [isOpen, chatId, activeTab]);
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<ChatPromptEventDetail>;
+      const text = custom.detail?.text;
+      if (!text) {
+        return;
+      }
+      setOpen(true);
+      setActiveTab('chat');
+      setPendingPrompt(text);
+    };
+
+    window.addEventListener(REQUEST_CHAT_PROMPT_EVENT, handler as EventListener);
+    return () => window.removeEventListener(REQUEST_CHAT_PROMPT_EVENT, handler as EventListener);
+  }, [setOpen]);
 
   const shouldLoadChat = Boolean(isOpen && activeTab === 'chat' && chatId);
   const { data: chatData, error } = useSWR<{ messages: any[]; title?: string }>(
@@ -73,6 +91,8 @@ export function AppRightbar() {
                   selectedVisibilityType="private"
                   onChatChange={setChatId}
                   chat={chatData?.title ? { title: chatData.title } : undefined}
+                  pendingPrompt={pendingPrompt}
+                  onPromptConsumed={() => setPendingPrompt(null)}
                 />
               </div>
             ) : (

@@ -15,6 +15,8 @@ export function SidebarChat({
   chat,
   selectedVisibilityType,
   onChatChange,
+  pendingPrompt,
+  onPromptConsumed,
 }: {
   id: string;
   initialMessages: Array<UIMessage>;
@@ -28,6 +30,8 @@ export function SidebarChat({
     customTitle?: string | null;
   };
   onChatChange?: (chatId: string) => void;
+  pendingPrompt?: string | null;
+  onPromptConsumed?: () => void;
 }) {
   return (
     <ChatProvider
@@ -43,6 +47,8 @@ export function SidebarChat({
         chat={chat}
         initialArtifacts={initialArtifacts}
         onChatChange={onChatChange}
+        pendingPrompt={pendingPrompt}
+        onPromptConsumed={onPromptConsumed}
       />
     </ChatProvider>
   );

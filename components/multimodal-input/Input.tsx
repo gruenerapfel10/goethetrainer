@@ -7,6 +7,7 @@ import { useChat, AttachmentStatus } from '@/contexts/chat-context';
 import { useMobileKeyboard } from '@/hooks/use-mobile-keyboard';
 import { useWindowSize } from 'usehooks-ts';
 import { CursorManager } from './cursor-manager';
+import { APPLY_CHAT_INPUT_EVENT, type ApplyChatInputDetail } from '@/lib/chat/events';
 
 export interface InputRef {
   focus: () => void;
@@ -224,3 +225,21 @@ export const Input = forwardRef<InputRef, InputProps>(({
 });
 
 Input.displayName = 'Input';
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<ApplyChatInputDetail>;
+      const newText = custom.detail?.text ?? '';
+      setInput(newText);
+      if (cursorManagerRef.current && editorRef.current) {
+        const fileMap = new Map<string, { url: string }>();
+        allFiles.forEach(fileName => fileMap.set(fileName, { url: '' }));
+        cursorManagerRef.current.syncHtmlFromText(newText, fileMap);
+        requestAnimationFrame(() => {
+          editorRef.current?.focus();
+        });
+      }
+    };
+
+    window.addEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
+    return () => window.removeEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
+  }, [setInput, allFiles]);

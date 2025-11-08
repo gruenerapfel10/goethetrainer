@@ -13,12 +13,15 @@ import { ArtifactInset } from './artifact-inset';
 import { useChat } from '@/contexts/chat-context';
 import { ArtifactsProvider, useArtifactsContext } from '@/contexts/artifacts-context';
 import { ChatSelector } from './chat-selector';
+import { emitApplyChatInput } from '@/lib/chat/events';
 
 function SidebarChatContentInner({
   selectedVisibilityType,
   isAdmin,
   chat,
   onChatChange,
+  pendingPrompt,
+  onPromptConsumed,
 }: {
   selectedVisibilityType: VisibilityType;
   isAdmin: boolean;
@@ -27,6 +30,8 @@ function SidebarChatContentInner({
     customTitle?: string | null;
   };
   onChatChange?: (chatId: string) => void;
+  pendingPrompt?: string | null;
+  onPromptConsumed?: () => void;
 }) {
   const router = useRouter();
   const {
@@ -35,6 +40,7 @@ function SidebarChatContentInner({
     agentTools,
     setAgentTools,
     isReadonly,
+    setInput,
   } = useChat();
   
   const { artifactsState } = useArtifactsContext();
@@ -106,6 +112,8 @@ export function SidebarChatContent({
   chat,
   initialArtifacts,
   onChatChange,
+  pendingPrompt,
+  onPromptConsumed,
 }: {
   selectedVisibilityType: VisibilityType;
   isAdmin: boolean;
@@ -115,6 +123,8 @@ export function SidebarChatContent({
   };
   initialArtifacts?: Record<string, any>;
   onChatChange?: (chatId: string) => void;
+  pendingPrompt?: string | null;
+  onPromptConsumed?: () => void;
 }) {
   return (
     <ArtifactsProvider initialArtifacts={initialArtifacts}>
@@ -123,7 +133,20 @@ export function SidebarChatContent({
         isAdmin={isAdmin}
         onChatChange={onChatChange}
         chat={chat}
+        pendingPrompt={pendingPrompt}
+        onPromptConsumed={onPromptConsumed}
       />
     </ArtifactsProvider>
   );
 }
+  useEffect(() => {
+    if (!pendingPrompt) {
+      return;
+    }
+    const quoted = `"${pendingPrompt}"`;
+    setInput(quoted);
+    emitApplyChatInput(quoted);
+    if (onPromptConsumed) {
+      onPromptConsumed();
+    }
+  }, [pendingPrompt, setInput, onPromptConsumed]);

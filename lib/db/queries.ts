@@ -57,6 +57,10 @@ export interface ReadingListEntry {
   createdAt: Date;
 }
 
+function readingListCollection(userId: string) {
+  return adminDb.collection('users').doc(userId).collection('readingList');
+}
+
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     const normalizedEmail = email.toLowerCase().trim();
@@ -191,9 +195,8 @@ export async function addReadingListEntry({
 }): Promise<ReadingListEntry> {
   try {
     const now = Timestamp.now();
-    const docRef = adminDb.collection('readingList').doc();
+    const docRef = readingListCollection(userId).doc();
     await docRef.set({
-      userId,
       text,
       translation,
       createdAt: now,
@@ -225,9 +228,7 @@ export async function getReadingListEntries({
 }): Promise<{ items: ReadingListEntry[]; nextCursor: string | null }> {
   try {
     const fetchLimit = search ? limit * 3 + 1 : limit + 1;
-    let query = adminDb
-      .collection('readingList')
-      .where('userId', '==', userId)
+    let query = readingListCollection(userId)
       .orderBy('createdAt', 'desc')
       .limit(fetchLimit);
 
@@ -240,7 +241,7 @@ export async function getReadingListEntries({
       const data = doc.data();
       return {
         id: doc.id,
-        userId: data.userId,
+        userId,
         text: data.text,
         translation: data.translation,
         createdAt: (data.createdAt as Timestamp).toDate(),
@@ -280,15 +281,7 @@ export async function deleteReadingListEntry({
   entryId: string;
 }): Promise<void> {
   try {
-    const docRef = adminDb.collection('readingList').doc(entryId);
-    const snapshot = await docRef.get();
-    if (!snapshot.exists) {
-      throw new Error('Entry not found');
-    }
-    const data = snapshot.data();
-    if (data?.userId !== userId) {
-      throw new Error('Not authorized to delete this entry');
-    }
+    const docRef = readingListCollection(userId).doc(entryId);
     await docRef.delete();
   } catch (error) {
     console.error('Failed to delete reading list entry:', error);
