@@ -102,6 +102,25 @@ export const Input = forwardRef<InputRef, InputProps>(({
     }
   }, [input, isFocused, allFiles]);
 
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const custom = event as CustomEvent<ApplyChatInputDetail>;
+      const newText = custom.detail?.text ?? '';
+      setInput(newText);
+      if (cursorManagerRef.current && editorRef.current) {
+        const fileMap = new Map<string, { url: string }>();
+        allFiles.forEach(fileName => fileMap.set(fileName, { url: '' }));
+        cursorManagerRef.current.syncHtmlFromText(newText, fileMap);
+        requestAnimationFrame(() => {
+          editorRef.current?.focus();
+        });
+      }
+    };
+
+    window.addEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
+    return () => window.removeEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
+  }, [setInput, allFiles]);
+
   // Text paste handler
   const handleTextPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     const hasFiles = Array.from(e.clipboardData.items).some(
@@ -225,21 +244,3 @@ export const Input = forwardRef<InputRef, InputProps>(({
 });
 
 Input.displayName = 'Input';
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const custom = event as CustomEvent<ApplyChatInputDetail>;
-      const newText = custom.detail?.text ?? '';
-      setInput(newText);
-      if (cursorManagerRef.current && editorRef.current) {
-        const fileMap = new Map<string, { url: string }>();
-        allFiles.forEach(fileName => fileMap.set(fileName, { url: '' }));
-        cursorManagerRef.current.syncHtmlFromText(newText, fileMap);
-        requestAnimationFrame(() => {
-          editorRef.current?.focus();
-        });
-      }
-    };
-
-    window.addEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
-    return () => window.removeEventListener(APPLY_CHAT_INPUT_EVENT, handler as EventListener);
-  }, [setInput, allFiles]);

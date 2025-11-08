@@ -42,6 +42,16 @@ function SidebarChatContentInner({
     isReadonly,
     setInput,
   } = useChat();
+
+  useEffect(() => {
+    if (!pendingPrompt) {
+      return;
+    }
+    const quoted = `"${pendingPrompt}"`;
+    setInput(quoted);
+    emitApplyChatInput(quoted);
+    onPromptConsumed?.();
+  }, [pendingPrompt, setInput, onPromptConsumed]);
   
   const { artifactsState } = useArtifactsContext();
   
@@ -139,14 +149,3 @@ export function SidebarChatContent({
     </ArtifactsProvider>
   );
 }
-  useEffect(() => {
-    if (!pendingPrompt) {
-      return;
-    }
-    const quoted = `"${pendingPrompt}"`;
-    setInput(quoted);
-    emitApplyChatInput(quoted);
-    if (onPromptConsumed) {
-      onPromptConsumed();
-    }
-  }, [pendingPrompt, setInput, onPromptConsumed]);

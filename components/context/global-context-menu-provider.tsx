@@ -299,14 +299,3 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     </>
   );
 }
-  const handleAskAI = useCallback(() => {
-    if (!menuState.text) {
-      return;
-    }
-    emitChatPromptRequest(menuState.text);
-    const quoted = `"${menuState.text}"`;
-    setSaveMessage(null);
-    setError(null);
-    setTranslation(null);
-    closeMenu();
-  }, [menuState.text, closeMenu]);
