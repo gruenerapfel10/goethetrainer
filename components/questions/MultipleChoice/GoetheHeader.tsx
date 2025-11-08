@@ -1,6 +1,11 @@
 'use client';
 
-export function GoetheHeader() {
+interface GoetheHeaderProps {
+  sectionLabel?: string;
+}
+
+export function GoetheHeader({ sectionLabel = 'LESEN' }: GoetheHeaderProps) {
+  const sectionText = sectionLabel.toUpperCase();
   return (
     <div className="w-96 mx-auto">
       {/* Exam Header */}
@@ -9,7 +14,7 @@ export function GoetheHeader() {
           <h1 className="text-xs font-bold text-secondary-foreground">GOETHE-ZERTIFIKAT C1</h1>
         </div>
         <div className="flex-1 bg-background py-1 px-3 flex items-center justify-start border-l border-border">
-          <h1 className="text-xs font-bold text-foreground">LESEN</h1>
+          <h1 className="text-xs font-bold text-foreground">{sectionText}</h1>
         </div>
       </div>
 

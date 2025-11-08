@@ -76,11 +76,15 @@ async function generateTeilQuestions(
 
   const pointsOverride = layoutEntry.metadata?.points;
   if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
-    const perQuestionValue = pointsOverride / Math.max(1, questions.length);
-    questions = questions.map(question => {
+    const totalPoints = Math.max(0, Math.round(pointsOverride));
+
+    const scoredQuestions = questions.filter(question => !question.isExample);
+    const scoredCount = scoredQuestions.length;
+
+    const scaleRubric = (question: Question, targetPoints: number): Question => {
       const next: Question = {
         ...question,
-        points: questions.length === 1 ? pointsOverride : perQuestionValue,
+        points: targetPoints,
       };
 
       if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
@@ -90,7 +94,7 @@ async function generateTeilQuestions(
         );
 
         if (rubricTotal > 0) {
-          const scale = pointsOverride / rubricTotal;
+          const scale = targetPoints / rubricTotal;
           const scaledRubric = next.scoringRubric.map(entry => ({
             ...entry,
             maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
@@ -100,8 +104,8 @@ async function generateTeilQuestions(
             (sum, entry) => sum + (entry.maxPoints ?? 0),
             0
           );
-          const delta = pointsOverride - scaledTotal;
-          if (scaledRubric.length > 0 && Math.abs(delta) >= 0.01) {
+          const delta = targetPoints - scaledTotal;
+          if (scaledRubric.length > 0 && delta !== 0) {
             scaledRubric[0] = {
               ...scaledRubric[0],
               maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
@@ -113,7 +117,31 @@ async function generateTeilQuestions(
       }
 
       return next;
-    });
+    };
+
+    if (scoredCount > 0) {
+      const basePointValue = Math.floor(totalPoints / scoredCount);
+      let remainder = totalPoints - basePointValue * scoredCount;
+
+      let scoredIndex = 0;
+      questions = questions.map(question => {
+        if (question.isExample) {
+          return scaleRubric(question, 0);
+        }
+
+        const extra = remainder > 0 ? 1 : 0;
+        if (extra > 0) {
+          remainder -= 1;
+        }
+
+        const targetPoints = basePointValue + extra;
+        const scaled = scaleRubric(question, targetPoints);
+        scoredIndex += 1;
+        return scaled;
+      });
+    } else {
+      questions = questions.map(question => scaleRubric(question, totalPoints));
+    }
   }
 
   return ensureQuestionIdentifiers(questions);

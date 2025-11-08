@@ -26,7 +26,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head />
-      <body className="min-h-screen overflow-hidden">
+      <body className="min-h-screen">
         <NextIntlClientProvider messages={messages}>
           <SessionProvider>
             <ThemeProvider themes={themes} attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>

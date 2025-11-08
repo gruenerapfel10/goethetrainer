@@ -44,8 +44,125 @@ const GapIdentificationSchema = z.object({
   gappedText: z.string().describe('The modified text with [GAP_1] [GAP_2] etc placeholders'),
 });
 
+const GAP_WORD_REGEX = /\b[\p{L}][\p{L}\-]{3,}\b/gu;
+const GAP_PLACEHOLDER_REGEX = /\[(?:GAP|Gap|gap)[\s_\-]?(\d+)\]/g;
+
+function normaliseGapPlaceholders(text: string): string {
+  let normalised = text.replace(GAP_PLACEHOLDER_REGEX, (_match, num) => `[GAP_${num}]`);
+  normalised = normalised.replace(/\(GAP_(\d+)\)/g, '[GAP_$1]');
+  normalised = normalised.replace(/\[\[(GAP_\d+)\]\]/g, '[$1]');
+  return normalised;
+}
+
+function coerceGapEntries(value: unknown): GapEntryRecord[] | null {
+  if (Array.isArray(value)) {
+    return value as GapEntryRecord[];
+  }
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed as GapEntryRecord[];
+      }
+    } catch (error) {
+      console.warn('Failed to parse gap string payload:', error);
+    }
+  }
+  return null;
+}
+
+function hasAllGapPlaceholders(text: string, requiredCount: number): boolean {
+  return Array.from({ length: requiredCount }, (_, index) => `GAP_${index + 1}`)
+    .every(marker => text.includes(`[${marker}]`));
+}
+
+function buildGapExampleBlock(requiredCount: number): string {
+  const gapEntries = Array.from({ length: requiredCount }, (_, index) => {
+    const gapNumber = index + 1;
+    return `    { "gapNumber": ${gapNumber}, "position": ${gapNumber * 45}, "removedWord": "Beispielwort${gapNumber}", "context": "Kontext um Beispielwort${gapNumber}" }`;
+  }).join(',\n');
+
+  const placeholderSentence = Array.from({ length: requiredCount }, (_, index) => `Satz${index + 1} [GAP_${index + 1}]`)
+    .join('. ');
+
+  return `Beispiel (${requiredCount} Lücken):\n{\n  "gaps": [\n${gapEntries}\n  ],\n  "gappedText": "${placeholderSentence}."\n}\nNutze exakt das Format [GAP_n] mit Großbuchstaben und Unterstrich. Alle ${requiredCount} Platzhalter müssen im Text stehen.`;
+}
+
+function generateDeterministicGaps(
+  source: z.infer<typeof RawSourceSchema>,
+  requiredCount: number
+): SourceWithGaps | null {
+  const text = source.context;
+  const matches = Array.from(text.matchAll(GAP_WORD_REGEX));
+  if (matches.length === 0) {
+    return null;
+  }
+
+  const selections: Array<{ match: RegExpMatchArray; index: number }> = [];
+  const step = Math.max(1, Math.floor(matches.length / requiredCount));
+  let currentIndex = 0;
+
+  for (let gap = 0; gap < requiredCount; gap += 1) {
+    const target = Math.min(matches.length - 1, currentIndex);
+    const match = matches[target];
+    if (!match || match.index === undefined) {
+      break;
+    }
+    selections.push({ match, index: target });
+    currentIndex += step;
+  }
+
+  if (selections.length < requiredCount) {
+    const additional = matches.filter((_match, idx) => !selections.some(sel => sel.index === idx));
+    for (const extra of additional) {
+      if (selections.length >= requiredCount) {
+        break;
+      }
+      selections.push({ match: extra, index: matches.indexOf(extra) });
+    }
+  }
+
+  if (selections.length < requiredCount) {
+    console.warn('Deterministic gap generation found insufficient tokens.');
+    return null;
+  }
+
+  selections.sort((a, b) => (a.match.index ?? 0) - (b.match.index ?? 0));
+
+  let cursor = 0;
+  const pieces: string[] = [];
+  const gapEntries: SourceWithGaps['gaps'] = [];
+
+  selections.slice(0, requiredCount).forEach((selection, idx) => {
+    const { match } = selection;
+    const start = match.index ?? 0;
+    const value = match[0];
+    pieces.push(text.slice(cursor, start));
+    pieces.push(`[GAP_${idx + 1}]`);
+    cursor = start + value.length;
+
+    gapEntries.push({
+      gapNumber: idx + 1,
+      removedWord: value,
+    });
+  });
+
+  pieces.push(text.slice(cursor));
+  const gappedContext = pieces.join('');
+
+  return {
+    theme: source.theme,
+    title: source.title,
+    subtitle: source.subtitle,
+    rawContext: source.context,
+    gappedContext,
+    gaps: gapEntries,
+  };
+}
+
+
 const REQUIRED_GAP_COUNT = 9;
-const MAX_GAP_ATTEMPTS = 4;
+const MAX_GAP_ATTEMPTS = 2;
 
 interface SourceWithGaps {
   theme: string;
@@ -57,6 +174,13 @@ interface SourceWithGaps {
     gapNumber: number;
     removedWord: string;
   }>;
+}
+
+interface GapEntryRecord {
+  gapNumber: number;
+  position: number;
+  removedWord: string;
+  context: string;
 }
 
 /**
@@ -125,7 +249,7 @@ export async function identifyGapsInSource(
   const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
   const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
 
-  const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
+const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
 
 Your task: Identify EXACTLY ${requiredCount} strategically placed gaps in the provided German text.
 
@@ -144,8 +268,9 @@ Requirements:
 4. The gaps array MUST have exactly ${requiredCount} elements
 
 Return ALL ${requiredCount} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${requiredCount} is the last gap.`;
+  const exampleBlock = buildGapExampleBlock(requiredCount);
 
-  const buildUserPrompt = (attempt: number) => (overrides?.userPrompt ??
+const buildUserPrompt = (attempt: number) => (overrides?.userPrompt ??
 `Identify and return EXACTLY ${requiredCount} gaps in this German text. ALL ${requiredCount} GAPS MUST BE RETURNED.
 
 Theme: ${source.theme}
@@ -171,31 +296,30 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
         schema: GapIdentificationSchema,
         schemaName: 'gap_identification',
         schemaDescription: 'Identifies gaps in German text for C1 level exercises',
-        system: (overrides?.systemPrompt ?? baseSystemPrompt).replace('{{requiredCount}}', requiredCount.toString()),
+        system: `${(overrides?.systemPrompt ?? baseSystemPrompt).replace('{{requiredCount}}', requiredCount.toString())}\n\n${exampleBlock}`,
         prompt: buildUserPrompt(attempt),
         temperature: 0.4,
       });
 
-      const { gaps, gappedText } = result.object;
+      const parsedGaps = coerceGapEntries(result.object.gaps);
+      const gappedText = typeof result.object.gappedText === 'string' ? result.object.gappedText : '';
+      const normalisedGappedText = normaliseGapPlaceholders(gappedText);
 
-      if (!Array.isArray(gaps) || gaps.length !== requiredCount) {
-        throw new Error(`Expected ${requiredCount} gaps but received ${gaps?.length ?? 0}`);
+      if (!parsedGaps || parsedGaps.length !== requiredCount) {
+        throw new Error(`Expected ${requiredCount} gaps but received ${parsedGaps?.length ?? 0}`);
       }
 
-      const requiredPlaceholdersPresent = Array.from({ length: requiredCount }, (_, index) => `GAP_${index + 1}`)
-        .every(marker => gappedText.includes(`[${marker}]`));
-
-      if (!requiredPlaceholdersPresent) {
+      if (!hasAllGapPlaceholders(normalisedGappedText, requiredCount)) {
         throw new Error('Gapped text does not contain all required placeholders');
       }
 
-      const sanitizedGappedText = gappedText.replace(/\[(GAP_\d+)\]\]/g, '[$1]');
+      const sanitizedGappedText = normalisedGappedText.replace(/\[(GAP_\d+)\]\]/g, '[$1]');
 
-      gaps.sort((a, b) => a.gapNumber - b.gapNumber);
+      parsedGaps.sort((a, b) => a.gapNumber - b.gapNumber);
 
       console.log('\n**** PASS 2: GAP IDENTIFICATION ****');
       console.log(`Total gaps identified: ${gaps.length}`);
-      gaps.forEach(gap => {
+      parsedGaps.forEach(gap => {
         console.log(`  Gap ${gap.gapNumber}: "${gap.removedWord}" at position ${gap.position}`);
       });
       console.log(`\nGapped Text:\n${sanitizedGappedText}\n`);
@@ -206,7 +330,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
         subtitle: source.subtitle,
         rawContext: source.context,
         gappedContext: sanitizedGappedText,
-        gaps: gaps.map(gap => ({
+        gaps: parsedGaps.map(gap => ({
           gapNumber: gap.gapNumber,
           removedWord: gap.removedWord,
         })),
@@ -218,6 +342,11 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
   }
 
   console.error('Error identifying gaps after retries:', lastError);
+  const fallback = generateDeterministicGaps(source, requiredCount);
+  if (fallback) {
+    console.warn('Falling back to deterministic gap selection.');
+    return fallback;
+  }
   throw new Error(
     `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts: ${
       lastError instanceof Error ? lastError.message : String(lastError)

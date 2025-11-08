@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="50" height="50" viewBox="0 0 50 50">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_18" data-name="Rectangle 18" width="11.158" height="20" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <g id="back_to_top_button" data-name="back to top button" transform="translate(-1550 -6521)">
+    <rect id="Back_to_top" data-name="Back to top" width="50" height="50" transform="translate(1550 6521)" fill="#294bc4"/>
+    <g id="Up" transform="translate(1565 6551.158) rotate(-90)">
+      <g id="Group_52" data-name="Group 52" clip-path="url(#clip-path)">
+        <path id="Path_69" data-name="Path 69" d="M1.158,20a1.159,1.159,0,0,1-.819-1.977L8.362,10,.339,1.976A1.158,1.158,0,0,1,1.977.339L10.818,9.18a1.157,1.157,0,0,1,0,1.638L1.977,19.66a1.152,1.152,0,0,1-.819.34" transform="translate(0 0)" fill="#fff"/>
+      </g>
+    </g>
+  </g>
+</svg>

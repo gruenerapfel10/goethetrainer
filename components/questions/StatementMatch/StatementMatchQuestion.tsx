@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { GoetheHeader } from '@/components/questions/MultipleChoice/GoetheHeader';
 import type { SessionQuestion } from '@/lib/sessions/learning-session-context';
 import type { AnswerValue } from '@/lib/sessions/types';
 
@@ -51,11 +50,7 @@ export function StatementMatchQuestion({
   };
 
   return (
-    <div className="space-y-8 text-gray-900 text-sm leading-relaxed">
-      <div className="flex justify-center">
-        <GoetheHeader />
-      </div>
-
+    <div className="space-y-8 text-foreground text-sm leading-relaxed">
       <div className="flex justify-between font-semibold">
         <span>{question.layoutLabel ?? 'Teil 4'}</span>
         <span>Vorgeschlagene Arbeitszeit: {workingTime} Minuten</span>
@@ -76,12 +71,12 @@ export function StatementMatchQuestion({
           </div>
           <p>{presentation.example.statement}</p>
           {presentation.example.explanation && (
-            <p className="text-xs text-gray-600">{presentation.example.explanation}</p>
+            <p className="text-xs text-muted-foreground">{presentation.example.explanation}</p>
           )}
         </div>
       )}
 
-      <div className="space-y-3 border-t border-gray-300 pt-4">
+      <div className="space-y-3 pt-4">
         {statements.map(statement => {
           const selected = currentSelections[statement.id] ?? '';
           const expected = correctMatches[statement.id];
@@ -92,8 +87,8 @@ export function StatementMatchQuestion({
             <div
               key={statement.id}
               className={cn(
-                'flex items-start gap-4 py-2',
-                isCorrect && 'text-green-700',
+                'flex items-start gap-4 py-3 border-b border-border/70 last:border-b-0',
+                isCorrect && 'text-emerald-600',
                 isIncorrect && 'text-red-600'
               )}
             >
@@ -115,12 +110,12 @@ export function StatementMatchQuestion({
                       onClick={() => handleSelect(statement.id, optionId)}
                       disabled={isSubmitted}
                       className={cn(
-                        'px-3 py-1 border border-gray-500 text-sm font-semibold',
-                        !isSubmitted && isSelected && 'bg-gray-900 text-white border-gray-900',
-                        !isSubmitted && !isSelected && 'bg-white text-gray-800 hover:bg-gray-100',
-                        showCorrect && 'bg-green-600 text-white border-green-600',
+                        'px-3 py-1 border border-border text-sm font-semibold transition-colors',
+                        !isSubmitted && isSelected && 'bg-foreground text-background border-foreground',
+                        !isSubmitted && !isSelected && 'bg-background text-foreground hover:bg-muted',
+                        showCorrect && 'bg-emerald-600 text-white border-emerald-600',
                         showIncorrect && 'bg-red-500 text-white border-red-500',
-                        isSubmitted && !showCorrect && !showIncorrect && 'bg-white text-gray-500 border-gray-300 cursor-default'
+                        isSubmitted && !showCorrect && !showIncorrect && 'bg-background text-muted-foreground border-border cursor-default'
                       )}
                     >
                       {optionId}
@@ -134,7 +129,7 @@ export function StatementMatchQuestion({
       </div>
 
       {isSubmitted && feedback && (
-        <p className="text-xs text-gray-700">{feedback}</p>
+        <p className="text-xs text-muted-foreground">{feedback}</p>
       )}
     </div>
   );

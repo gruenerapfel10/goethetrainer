@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
 interface SessionBoardProps {
@@ -40,6 +41,7 @@ export function SessionBoard({
   quelleContent,
   showSourceToggle = true,
 }: SessionBoardProps) {
+  const { theme } = useTheme();
   const teilNumbers = Array.from({ length: totalTeils }, (_, index) => index + 1);
 
   return (
@@ -134,9 +136,9 @@ export function SessionBoard({
 
           <div className="text-primary-foreground p-6 flex justify-center items-center mt-auto">
             <img
-              src="/goethe-logo.png"
+              src={theme === 'dark' ? '/logo_dark.png' : '/logo.png'}
               alt="Goethe-Institut"
-              className="h-12 w-auto dark:invert"
+              className="h-12 w-auto"
             />
           </div>
         </div>

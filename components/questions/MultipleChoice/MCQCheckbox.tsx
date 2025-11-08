@@ -38,32 +38,22 @@ export function MCQCheckbox({
   // Default styling
   const baseClasses = cn(
     sizeClasses[size],
-    'flex items-center justify-center flex-shrink-0',
-    'font-bold text-xs font-mono transition-all',
-    'border-foreground bg-background',
+    'flex items-center justify-center flex-shrink-0 rounded-[4px]',
+    'font-bold text-xs font-mono transition-all duration-150',
+    checked ? 'bg-primary text-primary-foreground border border-transparent' : 'bg-background text-foreground border border-border',
     !display && 'cursor-pointer',
     display && 'cursor-default',
+    !display && !checked && 'hover:bg-muted',
+    disabled && !isExample && 'cursor-not-allowed opacity-60',
+    isExample && 'opacity-50',
     className
   );
-
-  const borderStyle = { borderWidth: '0.5px' };
-
-  // Interactive styling (when not in display mode)
-  const interactiveClasses = cn(
-    !display && !checked && 'hover:bg-primary',
-    !display && checked && 'border-primary',
-    disabled && !isExample && 'cursor-not-allowed opacity-60',
-    isExample && 'opacity-50'
-  );
-
-  const finalClasses = cn(baseClasses, !display && interactiveClasses);
 
   return (
     <button
       onClick={!display ? onChange : undefined}
       disabled={display || disabled || isExample}
-      className={finalClasses}
-      style={borderStyle}
+      className={baseClasses}
       type="button"
     >
       {showContent && (

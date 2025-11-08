@@ -7,6 +7,7 @@ import type {
   TeilBreakdownEntry,
 } from './types';
 import { SessionTypeEnum } from './session-registry';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export interface QuestionManagerState {
   questions: Question[];
@@ -75,32 +76,84 @@ const MODULE_LABELS: Record<SessionTypeEnum, string> = {
   [SessionTypeEnum.SPEAKING]: 'Sprechen',
 };
 
+function isStatementMatchQuestion(question: Question): boolean {
+  const moduleId = (question.moduleId ?? question.registryType) as QuestionModuleId | undefined;
+  return moduleId === QuestionModuleId.STATEMENT_MATCH;
+}
+
+function getUnitCount(question: Question): number {
+  if (isStatementMatchQuestion(question)) {
+    const statementCount = question.statements?.length ?? 0;
+    if (statementCount > 0) {
+      return statementCount;
+    }
+    if (typeof question.points === 'number' && question.points > 0) {
+      return Math.round(question.points);
+    }
+  }
+  return 1;
+}
+
+function hasAnswer(value: unknown): boolean {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'string') return value.trim().length > 0;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+  return true;
+}
+
 export function buildQuestionSessionSummary(
   results: QuestionResult[],
   questions: Question[]
 ): QuestionSessionSummary {
-  const totalQuestions = questions.length;
-  const answeredQuestions = results.filter(result => {
-    const value = result.userAnswer.answer;
-    if (Array.isArray(value)) {
-      return value.length > 0;
-    }
-    return value !== '' && value !== null && value !== undefined;
-  }).length;
-
   const totalScore = results.reduce((sum, result) => sum + result.score, 0);
   const maxScore = questions.reduce((sum, question) => sum + (question.points ?? 0), 0);
 
-  const correctAnswers = results.filter(result => result.isCorrect).length;
+let totalUnits = 0;
+let answeredUnits = 0;
+let correctUnits = 0;
+let incorrectUnits = 0;
+
+results.forEach(result => {
+  const question = questions.find(q => q.id === result.questionId);
+  if (!question) {
+    return;
+  }
+  const units = getUnitCount(question);
+  const isStatementMatch = isStatementMatchQuestion(question);
+  const correct = isStatementMatch
+    ? Math.max(0, Math.min(units, Math.round(result.score ?? 0)))
+    : result.isCorrect
+      ? units
+      : 0;
+  const incorrectContribution = isStatementMatch
+    ? Math.max(0, units - correct)
+    : !result.isCorrect && result.markedBy !== 'manual'
+      ? units
+      : 0;
+
+  totalUnits += units;
+  answeredUnits += hasAnswer(result.userAnswer.answer) ? units : 0;
+  correctUnits += correct;
+  incorrectUnits += incorrectContribution;
+});
+
+  if (totalUnits === 0) {
+    totalUnits = questions.length || 0;
+    answeredUnits = results.filter(result => hasAnswer(result.userAnswer.answer)).length;
+    correctUnits = results.filter(result => result.isCorrect).length;
+    incorrectUnits = results.filter(result => !result.isCorrect && result.markedBy !== 'manual').length;
+  }
+
+  const totalQuestions = totalUnits;
+  const answeredQuestions = answeredUnits;
+  const unansweredQuestions = Math.max(0, totalUnits - answeredUnits);
+  const correctAnswers = correctUnits;
   const pendingManualReview = results.filter(result => result.markedBy === 'manual').length;
-  const incorrectAnswers = results.filter(
-    result => !result.isCorrect && result.markedBy !== 'manual'
-  ).length;
+  const incorrectAnswers = incorrectUnits;
 
   const aiMarkedCount = results.filter(result => result.markedBy === 'ai').length;
   const automaticMarkedCount = results.filter(result => result.markedBy === 'automatic').length;
-
-  const unansweredQuestions = totalQuestions - answeredQuestions;
   const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
 
   const questionById = new Map(questions.map(question => [question.id, question]));
@@ -147,13 +200,19 @@ export function buildQuestionSessionSummary(
         maxScore: 0,
       };
 
+    const units = getUnitCount(question);
+    const isStatementMatch = isStatementMatchQuestion(question);
+    const correctUnitContribution = isStatementMatch
+      ? Math.max(0, Math.min(units, Math.round(result.score ?? 0)))
+      : result.isCorrect
+        ? units
+        : 0;
+
     teilEntry.label = teilLabel;
-    teilEntry.questionCount += 1;
+    teilEntry.questionCount += units;
     teilEntry.maxScore += question.points ?? 0;
     teilEntry.score += result.score;
-    if (result.isCorrect) {
-      teilEntry.correctAnswers += 1;
-    }
+    teilEntry.correctAnswers += correctUnitContribution;
     teilBuckets.set(teilNumber, teilEntry);
 
     const module =
@@ -171,7 +230,7 @@ export function buildQuestionSessionSummary(
     moduleEntry.label = moduleLabel;
     moduleEntry.rawScore += result.score;
     moduleEntry.rawMaxScore += question.points ?? 0;
-    moduleEntry.questionCount += 1;
+    moduleEntry.questionCount += units;
     moduleBuckets.set(module, moduleEntry);
   });
 

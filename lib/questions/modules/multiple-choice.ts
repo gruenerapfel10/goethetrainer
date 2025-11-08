@@ -6,6 +6,7 @@ import {
   QuestionDifficulty,
   QuestionType,
   QuestionInputType,
+  type AudioPlaybackPolicy,
 } from '@/lib/sessions/questions/question-types';
 import { generateSourceWithGaps } from '@/lib/sessions/questions/source-generator';
 import type {
@@ -55,8 +56,33 @@ interface AudioGappedSourceConfig extends QuestionModuleSourceConfig {
   durationSeconds: number;
   optionsPerGap: number;
 }
+interface AudioPassageSourceConfig extends QuestionModuleSourceConfig {
+  type: 'audio_passage';
+  scenario?: string;
+  listeningMode?: string;
+  teilLabel?: string;
+  includeExample?: boolean;
+  questionCount?: number;
+  optionsPerQuestion: number;
+  playback?: AudioPlaybackPolicy;
+  audioAsset?: {
+    url?: string;
+    title?: string;
+    description?: string;
+    durationSeconds?: number;
+  };
+  styleHint?: string;
+  prompts?: {
+    instructions?: string;
+    exampleSummary?: string;
+  };
+}
 
-type MCQSourceConfig = TextSourceConfig | GappedSourceConfig | AudioGappedSourceConfig;
+type MCQSourceConfig =
+  | TextSourceConfig
+  | GappedSourceConfig
+  | AudioGappedSourceConfig
+  | AudioPassageSourceConfig;
 
 function resolveQuestionType(sessionType: SessionTypeEnum): QuestionType {
   switch (sessionType) {
@@ -130,6 +156,17 @@ function normaliseSingleSelection(value: unknown): string | null {
     return value.trim();
   }
   return null;
+}
+
+function withDefaultPlayback(config?: AudioPlaybackPolicy): AudioPlaybackPolicy {
+  return {
+    maxPlays: config?.maxPlays,
+    allowPause: config?.allowPause ?? true,
+    allowSeek: config?.allowSeek ?? config?.allowScrubbing ?? true,
+    allowScrubbing: config?.allowScrubbing ?? config?.allowSeek ?? true,
+    allowRestart: config?.allowRestart ?? true,
+    allowSpeedChange: config?.allowSpeedChange ?? true,
+  };
 }
 
 function mapToUserAnswer(
@@ -255,8 +292,13 @@ async function generateStandardMCQ(
     title: data.title,
     subtitle: data.subtitle,
     theme: data.theme,
-    options: q.options,
-    correctOptionId: q.correctOptionId,
+    ...(() => {
+      const normalised = normaliseGeneratedOptions(q.options, q.correctOptionId);
+      return {
+        options: normalised.options,
+        correctOptionId: normalised.correctOptionId,
+      };
+    })(),
     explanation: q.explanation,
     points: 1,
     moduleId: QuestionModuleId.MULTIPLE_CHOICE,
@@ -320,6 +362,7 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
       })
     );
 
+    const normalised = normaliseGeneratedOptions(result.object.options, result.object.correctOptionId);
     const points = index === 0 ? 0 : 1;
 
     return {
@@ -333,25 +376,139 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
       title: sourceWithGaps.title,
       subtitle: sourceWithGaps.subtitle,
       theme: sourceWithGaps.theme,
-      options: result.object.options,
-      correctOptionId: result.object.correctOptionId,
+      options: normalised.options,
+      correctOptionId: normalised.correctOptionId,
       explanation: `Das richtige Wort ist "${gap.removedWord}".`,
       isExample: index === 0,
-      exampleAnswer: index === 0 ? result.object.correctOptionId : undefined,
+      exampleAnswer: index === 0 ? normalised.correctOptionId : undefined,
       points,
       moduleId: QuestionModuleId.MULTIPLE_CHOICE,
       moduleLabel: 'Multiple Choice',
       gaps: [
         {
           id: `GAP_${gap.gapNumber}`,
-          options: result.object.options.map((option: any) => option.id),
-          correctOptionId: result.object.correctOptionId,
+          options: normalised.options.map(option => ({ id: option.id, text: option.text })),
+          correctOptionId: normalised.correctOptionId,
         },
       ],
     } as any;
   });
 
   return Promise.all(questionPromises);
+}
+
+async function generateAudioPassageMCQ(
+  sessionType: SessionTypeEnum,
+  difficulty: QuestionDifficulty,
+  questionCount: number,
+  sourceConfig: AudioPassageSourceConfig
+): Promise<Question[]> {
+  const requiredQuestions = Math.max(questionCount, 1) + (sourceConfig.includeExample ? 1 : 0);
+  const model = customModel(DEFAULT_MODEL);
+  const schema = z.object({
+    theme: z.string(),
+    title: z.string(),
+    description: z.string(),
+    transcript: z.string(),
+    segments: z
+      .array(
+        z.object({
+          timestamp: z.string(),
+          summary: z.string(),
+        })
+      )
+      .max(8)
+      .optional(),
+    questions: z.array(
+      z.object({
+        prompt: z.string(),
+        options: z
+          .array(
+            z.object({
+              id: z.string(),
+              text: z.string(),
+            })
+          )
+          .length(sourceConfig.optionsPerQuestion),
+        correctOptionId: z.string(),
+        explanation: z.string().optional(),
+      })
+    ),
+  });
+
+  const listeningMode = sourceConfig.listeningMode ?? 'Podcastgespräch';
+  const scenario = sourceConfig.scenario ?? 'aktuelles Gespräch über Gesellschaft und Kultur';
+  const styleHint = sourceConfig.styleHint ?? 'Fragen sollen präzise Aussagen prüfen und zwischen ähnlichen Optionen differenzieren.';
+  const teilLabel = sourceConfig.teilLabel ?? 'Teil';
+
+  const prompt = `Erstelle für das Goethe-Zertifikat C1 (${teilLabel}) einen Hörtext im Format ${listeningMode}.
+
+Thema: ${scenario}
+Schwierigkeitsgrad: ${difficulty}
+Anzahl Fragen: ${requiredQuestions}
+Antwortoptionen pro Frage: ${sourceConfig.optionsPerQuestion}
+
+Liefere:
+1. Eine kurze Beschreibung (max. 30 Wörter)
+2. Ein vollständiges Transkript (250-320 Wörter)
+3. ${requiredQuestions} Fragen mit Antwortoptionen (${styleHint})
+
+Die Fragen sollen abwechslungsreich sein (Detail, Meinung, Motivation etc.) und klar Bezug auf das Transkript nehmen.`;
+
+  const result = await callWithRetry(() =>
+    generateObject({
+      model,
+      schema,
+      system:
+        'Du bist ein Prüfer des Goethe-Instituts und entwirfst authentische Hörverstehensprüfungen auf C1-Niveau.',
+      prompt,
+      temperature: 0.65,
+    })
+  );
+
+  if (!Array.isArray(result.object.questions) || result.object.questions.length < requiredQuestions) {
+    throw new Error('Audio generator returned zu wenige Fragen');
+  }
+
+  const playback = withDefaultPlayback(sourceConfig.playback);
+  const audioSource = {
+    title: sourceConfig.audioAsset?.title ?? result.object.title,
+    description: sourceConfig.audioAsset?.description ?? result.object.description,
+    url: sourceConfig.audioAsset?.url ?? '/audio/listening-teil-1.wav',
+    durationSeconds: sourceConfig.audioAsset?.durationSeconds ?? 360,
+    transcript: result.object.transcript,
+    segments: result.object.segments,
+    status: sourceConfig.audioAsset?.url ? 'ready' : 'pending',
+    playback,
+  };
+
+  const questionType = resolveQuestionType(sessionType);
+
+  return result.object.questions.slice(0, requiredQuestions).map((entry, index) => {
+    const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
+    const isExample = Boolean(sourceConfig.includeExample && index === 0);
+
+    return {
+      id: `${questionType}-audio-${Date.now()}-${index}`,
+      type: questionType,
+      sessionType,
+      difficulty,
+      inputType: QuestionInputType.MULTIPLE_CHOICE,
+      prompt: entry.prompt,
+      context: result.object.transcript,
+      title: result.object.title,
+      subtitle: result.object.description,
+      theme: result.object.theme,
+      options: normalised.options,
+      correctOptionId: normalised.correctOptionId,
+      explanation: entry.explanation,
+      points: 1,
+      audioSource,
+      isExample,
+      exampleAnswer: isExample ? normalised.correctOptionId : undefined,
+      instructions: sourceConfig.prompts?.instructions,
+    };
+  });
 }
 
 export const multipleChoiceModule: QuestionModule<
@@ -396,6 +553,28 @@ export const multipleChoiceModule: QuestionModule<
         questions: questions.slice(0, questionCount).map((question, index) => ({
           ...question,
           points: resolvePointsPerQuestion(index, sourceConfig),
+        })),
+      };
+    }
+
+    if (sourceConfig.type === 'audio_passage') {
+      const targetCount =
+        questionCount ||
+        sourceConfig.questionCount ||
+        DEFAULT_AUDIO_QUESTION_COUNT;
+      const includeExample = sourceConfig.includeExample ?? true;
+      const requiredCount = includeExample ? targetCount + 1 : targetCount;
+      const questions = await generateAudioPassageMCQ(
+        sessionType,
+        difficulty,
+        targetCount,
+        sourceConfig
+      );
+
+      return {
+        questions: questions.slice(0, requiredCount).map((question, index) => ({
+          ...question,
+          points: includeExample && index === 0 ? 0 : 1,
         })),
       };
     }
@@ -448,6 +627,53 @@ export const multipleChoiceModule: QuestionModule<
 const DEFAULT_MODEL = ModelId.CLAUDE_HAIKU_4_5;
 const RETRY_ATTEMPTS = 3;
 const RETRY_DELAY_MS = 1_200;
+const DEFAULT_AUDIO_QUESTION_COUNT = 6;
+const OPTION_ID_ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
+
+interface NormalisedOptionsResult {
+  options: Array<{ id: string; text: string }>;
+  correctOptionId: string;
+}
+
+function normaliseGeneratedOptions(
+  rawOptions: Array<{ id?: string; text?: string }> | undefined,
+  rawCorrectId?: string
+): NormalisedOptionsResult {
+  const fallbackOptions = rawOptions?.length ? rawOptions : [];
+  const prepared = fallbackOptions.map((option, index) => {
+    const id = option.id ?? `opt_${index}`;
+    const text = option.text ?? id;
+    return {
+      id,
+      text,
+      isCorrect: rawCorrectId ? rawCorrectId === id : false,
+    };
+  });
+
+  if (!prepared.some(option => option.isCorrect) && prepared.length > 0) {
+    prepared[0].isCorrect = true;
+  }
+
+  const shuffled = prepared
+    .map(option => ({ ...option, sortKey: Math.random() }))
+    .sort((a, b) => a.sortKey - b.sortKey);
+
+  const remapped = shuffled.map((option, index) => {
+    const optionId = OPTION_ID_ALPHABET[index] ?? `opt_${index}`;
+    return {
+      id: optionId,
+      text: option.text,
+      isCorrect: option.isCorrect,
+    };
+  });
+
+  const correctOption = remapped.find(option => option.isCorrect) ?? remapped[0];
+
+  return {
+    options: remapped.map(({ id, text }) => ({ id, text })),
+    correctOptionId: correctOption?.id ?? 'a',
+  };
+}
 
 async function callWithRetry<T>(operation: () => Promise<T>): Promise<T> {
   let attempt = 0;

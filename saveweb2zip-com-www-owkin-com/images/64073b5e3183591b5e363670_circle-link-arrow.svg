@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+  <g id="Circle_Link_Arrow" data-name="Circle Link Arrow" transform="translate(-1453 -4465)">
+    <path id="Arrow_Circle" data-name="Arrow Circle" d="M14,1.3A12.7,12.7,0,0,0,5.02,22.98,12.7,12.7,0,1,0,22.98,5.02,12.617,12.617,0,0,0,14,1.3M14,0A14,14,0,1,1,0,14,14,14,0,0,1,14,0Z" transform="translate(1453 4465)"/>
+    <g id="Arrow" transform="translate(1460.66 4474.015)">
+      <path id="Path_76" data-name="Path 76" d="M5445.171,4480.391l-1-.833,3.746-4.49-3.756-4.726,1.018-.809,4.415,5.554Z" transform="translate(-5437.5 -4469.938)"/>
+      <path id="Line_3" data-name="Line 3" d="M11,.65H0V-.65H11Z" transform="translate(0 5)"/>
+    </g>
+  </g>
+</svg>

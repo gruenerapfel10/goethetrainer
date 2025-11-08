@@ -1,9 +1,11 @@
 'use client';
 
-import { QuestionResult } from '@/lib/sessions/questions/question-types';
+import Image from 'next/image';
+import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import { cn } from '@/lib/utils';
-import { Award, CheckCircle2, ChevronLeft, Circle, XCircle } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, Circle, XCircle } from 'lucide-react';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 interface SessionResultsViewProps {
   results: QuestionResult[];
@@ -95,8 +97,80 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
   const issuedAt = new Date();
   const teilBreakdown = summary.teilBreakdown ?? [];
 
+  const formatAnswer = (question: QuestionResult['question'], value: unknown) => {
+    if (value === null || value === undefined) {
+      return '–';
+    }
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return Object.values(value as Record<string, string>)
+        .map(entry => entry || '–')
+        .join(', ');
+    }
+
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(', ') : '–';
+    }
+
+    if (typeof value === 'boolean') {
+      return value ? 'Ja' : 'Nein';
+    }
+
+    if (typeof value === 'string' && question.options?.length) {
+      const optionIndex = question.options.findIndex(option => option.id === value);
+      if (optionIndex >= 0) {
+        const letter = String.fromCharCode(65 + optionIndex);
+        return `${letter}) ${question.options[optionIndex].text}`;
+      }
+    }
+
+    return String(value);
+  };
+
+  const resolveCorrectAnswer = (question: QuestionResult['question']) => {
+    if (question.correctOptionId) {
+      const optionIndex = question.options?.findIndex(option => option.id === question.correctOptionId) ?? -1;
+      if (optionIndex >= 0 && question.options) {
+        const letter = String.fromCharCode(65 + optionIndex);
+        return `${letter}) ${question.options[optionIndex].text}`;
+      }
+      return question.correctOptionId;
+    }
+    if (Array.isArray(question.correctAnswer)) {
+      return question.correctAnswer.join(', ');
+    }
+    if (typeof question.correctAnswer === 'object' && question.correctAnswer !== null) {
+      return Object.values(question.correctAnswer as Record<string, string>).join(', ');
+    }
+    if (typeof question.correctAnswer === 'string') {
+      return question.correctAnswer;
+    }
+    return '–';
+  };
+
+  const isStatementMatchQuestion = (question: QuestionResult['question']) => {
+    const moduleId = (question.moduleId ?? question.registryType) as QuestionModuleId | undefined;
+    return moduleId === QuestionModuleId.STATEMENT_MATCH;
+  };
+
+  const resolveStatementOptionLabel = (
+    question: QuestionResult['question'],
+    optionId?: string | null
+  ) => {
+    if (!optionId) {
+      return '–';
+    }
+    if (optionId === '0') {
+      return '0';
+    }
+    const option = question.options?.find(
+      entry => entry.id === optionId || entry.text === optionId
+    );
+    return option?.text ?? optionId;
+  };
+
   return (
-    <div className="w-full h-full overflow-y-auto bg-muted/30 py-8 px-4">
+    <div className="w-full h-full overflow-y-auto py-8 px-4">
       <div className="relative mx-auto max-w-5xl bg-white dark:bg-background border border-muted shadow-sm">
         <div className="border-b px-10 py-6 flex items-center justify-between">
           <div>
@@ -147,13 +221,39 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
                 </div>
               </div>
             </div>
-            <div className="border px-4 py-6 flex flex-col items-center justify-center text-center gap-2">
-              <Award className="w-10 h-10 text-emerald-600" />
-              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Prädikat</p>
-              <p className={cn('text-2xl font-bold tracking-wide', gradeInfo.color)}>
+            <div className="relative overflow-hidden border border-primary px-4 py-6 flex flex-col items-center justify-center text-center gap-3 bg-primary text-primary-foreground">
+              <div className="absolute inset-0 pointer-events-none opacity-15">
+                <div className="grid grid-cols-12 gap-x-1.5 gap-y-1 w-full h-full">
+                  {Array.from({ length: 120 }).map((_, index) => (
+                    <div
+                      key={`logo-tile-${index}`}
+                      className="flex items-center justify-center"
+                    >
+                      <Image
+                        src="/logo_dark.png"
+                        alt="Faust Logo"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 object-contain dark:hidden"
+                      />
+                      <Image
+                        src="/logo.png"
+                        alt="Faust Logo"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 object-contain hidden dark:block"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <p className="text-xs uppercase tracking-[0.3em] text-primary-foreground/80 relative z-10">Prädikat</p>
+              <p className="text-6xl font-black text-primary-foreground leading-none relative z-10">
+                {overallPercentage}%
+              </p>
+              <p className={cn('text-2xl font-bold tracking-wide relative z-10', gradeInfo.color === 'text-red-600' ? 'text-primary-foreground' : 'text-primary-foreground') }>
                 {gradeInfo.label}
               </p>
-              <p className="text-sm text-muted-foreground">{overallPercentage}%</p>
             </div>
           </div>
 
@@ -244,7 +344,9 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
               });
             });
 
-            return (
+            const renderedCriteria: string[] = [];
+
+            const teilSection = (
               <div key={teil.label} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-bold tracking-tight">{teil.label}</h3>
@@ -266,6 +368,7 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
                   if (!definition || criterionMarks.length === 0) {
                     return null;
                   }
+                  renderedCriteria.push(criterionId);
 
                   return (
                     <div key={`${teil.label}-${criterionId}`} className="space-y-1 overflow-x-auto border rounded-md">
@@ -311,8 +414,103 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
                     </div>
                   );
                 })}
+
+                {renderedCriteria.length === 0 && teilResults.length > 0 && (
+                  <div className="overflow-x-auto border rounded-md">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-left text-muted-foreground bg-muted/30 uppercase tracking-wide text-[11px]">
+                          <th className="px-2 py-2 w-12">Nr.</th>
+                          <th className="px-2 py-2">Aufgabe</th>
+                          <th className="px-2 py-2">Antwort</th>
+                          <th className="px-2 py-2">Korrekt</th>
+                          <th className="px-2 py-2 text-right">Punkte</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          let rowIndex = 0;
+                          return teilResults.flatMap(result => {
+                            const question = result.question;
+                            const isStatementMatch = isStatementMatchQuestion(question);
+
+                            if (isStatementMatch && Array.isArray(question.statements)) {
+                              const selections =
+                                result.userAnswer.answer &&
+                                typeof result.userAnswer.answer === 'object' &&
+                                !Array.isArray(result.userAnswer.answer)
+                                  ? (result.userAnswer.answer as Record<string, string>)
+                                  : {};
+
+                              return question.statements.map(statement => {
+                                const userSelection = selections[statement.id];
+                                const correctSelection = question.correctMatches?.[statement.id];
+                                const isCorrect = userSelection === correctSelection;
+                                rowIndex += 1;
+
+                                return (
+                                  <tr
+                                    key={`${question.id}-${statement.id}`}
+                                    className={cn(
+                                      'border-t text-sm',
+                                      isCorrect
+                                        ? 'bg-emerald-50/70 dark:bg-emerald-900/20'
+                                        : 'bg-red-50/70 dark:bg-red-900/10'
+                                    )}
+                                  >
+                                    <td className="px-2 py-2 font-semibold">{rowIndex}</td>
+                                    <td className="px-2 py-2 text-xs leading-snug">{statement.text}</td>
+                                    <td className="px-2 py-2 font-medium">
+                                      {resolveStatementOptionLabel(question, userSelection)}
+                                    </td>
+                                    <td className="px-2 py-2 text-muted-foreground">
+                                      {resolveStatementOptionLabel(question, correctSelection)}
+                                    </td>
+                                    <td className="px-2 py-2 text-right font-semibold">
+                                      {isCorrect ? '1 / 1' : '0 / 1'}
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                            }
+
+                            rowIndex += 1;
+                            const userAnswer = formatAnswer(question, result.userAnswer.answer);
+                            const correctAnswer = resolveCorrectAnswer(question);
+
+                            return [
+                              (
+                                <tr
+                                  key={`${question.id}-row`}
+                                  className={cn(
+                                    'border-t text-sm',
+                                    result.isCorrect
+                                      ? 'bg-emerald-50/70 dark:bg-emerald-900/20'
+                                      : 'bg-red-50/70 dark:bg-red-900/10'
+                                  )}
+                                >
+                                  <td className="px-2 py-2 font-semibold">{rowIndex}</td>
+                                  <td className="px-2 py-2 text-xs leading-snug">
+                                    {question.prompt || 'Aufgabe'}
+                                  </td>
+                                  <td className="px-2 py-2 font-medium">{userAnswer}</td>
+                                  <td className="px-2 py-2 text-muted-foreground">{correctAnswer}</td>
+                                  <td className="px-2 py-2 text-right font-semibold">
+                                    {result.score} / {result.maxScore}
+                                  </td>
+                                </tr>
+                              ),
+                            ];
+                          });
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             );
+
+            return teilSection;
           })}
 
           {onClose && (

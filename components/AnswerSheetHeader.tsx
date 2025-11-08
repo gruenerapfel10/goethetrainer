@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTheme } from 'next-themes';
 
 // Data Matrix style barcode component
 const BarcodeDots: React.FC<{ width?: number; height?: number }> = ({ width = 200, height = 100 }) => {
@@ -51,6 +52,7 @@ interface AnswerSheetHeaderProps {
 }
 
 export const AnswerSheetHeader: React.FC<AnswerSheetHeaderProps> = ({ className = '' }) => {
+  const { theme } = useTheme();
   return (
     <div className={`relative z-10 flex items-center justify-center gap-8 mb-4 flex-shrink-0 ${className}`}>
       {/* Left - Barcode */}
@@ -76,9 +78,9 @@ export const AnswerSheetHeader: React.FC<AnswerSheetHeaderProps> = ({ className 
       {/* Right - Goethe Institut Logo */}
       <div className="flex items-center gap-2">
         <img
-          src="/goethe-logo.png"
+          src={theme === 'dark' ? '/logo_dark.png' : '/logo.png'}
           alt="Goethe Institut"
-          className="h-16 object-contain dark:invert"
+          className="h-16 object-contain"
         />
       </div>
     </div>

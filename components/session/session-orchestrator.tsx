@@ -334,7 +334,7 @@ export function SessionOrchestrator() {
   // Render question based on type
   if (latestResults) {
     return (
-      <div className="p-6 h-full overflow-hidden">
+      <div className="h-full overflow-hidden">
         <div className="h-full overflow-y-auto">
           <SessionResultsView
             results={latestResults.results}

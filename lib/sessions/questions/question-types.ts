@@ -39,6 +39,33 @@ export interface QuestionOption {
   isCorrect?: boolean;
 }
 
+export interface AudioPlaybackPolicy {
+  maxPlays?: number;
+  allowPause?: boolean;
+  allowSeek?: boolean;
+  allowScrubbing?: boolean;
+  allowRestart?: boolean;
+  allowSpeedChange?: boolean;
+}
+
+export interface AudioSourceSegment {
+  timestamp: string;
+  summary: string;
+}
+
+export interface AudioSourceDefinition {
+  id?: string;
+  title?: string;
+  description?: string;
+  url: string;
+  durationSeconds?: number;
+  transcript?: string;
+  transcriptLanguage?: string;
+  segments?: AudioSourceSegment[];
+  status?: 'ready' | 'processing' | 'pending' | 'error';
+  playback?: AudioPlaybackPolicy;
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -68,6 +95,8 @@ export interface Question {
   instructions?: string; // Task instructions
   workingTime?: string; // Suggested working time (e.g., "10 Minuten")
   theme?: string;
+  audioSource?: AudioSourceDefinition;
+  auxiliaryAudioSources?: AudioSourceDefinition[];
 
   // Goethe C1 specific fields
   gaps?: Array<{

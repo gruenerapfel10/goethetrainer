@@ -8,6 +8,8 @@ import { GoetheHeader } from './GoetheHeader';
 import { QuestionStatus } from '@/lib/sessions/learning-session-context';
 import type { Question as SessionQuestionType } from '@/lib/sessions/types';
 import { SessionBoard } from '@/components/questions/SessionBoard';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import { AudioSourcePlayer } from '@/components/questions/media/AudioSourcePlayer';
 
  type MCQuestion = SessionQuestionType & {
    status?: QuestionStatus;
@@ -50,6 +52,19 @@ import { SessionBoard } from '@/components/questions/SessionBoard';
    onActiveViewChange,
  }: AllQuestionsViewProps) {
    const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
+  const primaryQuestion = questions[0];
+  const renderConfig = (primaryQuestion?.renderConfig ?? {}) as Record<string, any>;
+  const sessionType = primaryQuestion?.sessionType ?? SessionTypeEnum.READING;
+  const isListening = sessionType === SessionTypeEnum.LISTENING;
+   const sectionLabel = renderConfig.sectionLabel ?? (sessionType === SessionTypeEnum.LISTENING ? 'HÖREN' : 'LESEN');
+   const workingTime = renderConfig.workingTime ?? primaryQuestion?.workingTime ?? '10 Minuten';
+   const defaultReadingSummary = 'Sie lesen einen Artikel. Wählen Sie für jede Aufgabe die passende Lösung.';
+   const defaultListeningSummary = 'Sie hören einen Hörtext. Treffen Sie für jede Aussage die richtige Entscheidung.';
+   const sourceSummary = renderConfig.sourceSummary ?? (sessionType === SessionTypeEnum.LISTENING ? defaultListeningSummary : defaultReadingSummary);
+   const audioSource = primaryQuestion?.audioSource;
+   const showAudioSource = Boolean(audioSource && (renderConfig.showAudioControls ?? true));
+  const contextBody = isListening ? '' : primaryQuestion?.context ?? audioSource?.transcript ?? '';
+  const hasGapMarkers = Boolean(!isListening && primaryQuestion?.context && /\[GAP_\d+\]/.test(primaryQuestion.context));
    const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
    const globalOrder = useMemo(() => {
      if (!allQuestions || allQuestions.length === 0) {
@@ -127,145 +142,172 @@ import { SessionBoard } from '@/components/questions/SessionBoard';
      {} as Record<number, string>
    );
  
-   const isMultipleChoice = (questions[0] as any)?.registryType === 'multiple_choice' || false;
    const layoutVariant = questions[0]?.layoutVariant ?? null;
-   const isSingleStatementLayout = layoutVariant === 'single_statement';
-   const isHorizontalLayout = layoutVariant === 'horizontal' || (!layoutVariant && isMultipleChoice);
+   const renderLayout = (questions[0]?.renderConfig as { layout?: string } | undefined)?.layout ?? layoutVariant;
+   const isSingleStatementLayout = renderLayout === 'single_statement';
+   const isHorizontalLayout = renderLayout === 'horizontal';
  
-   const fragenContent = (
-     <div className="space-y-10">
-       <GoetheHeader />
-       {questions.map((question, qIndex) => (
-         <div key={`q-${qIndex}-${question.id}`} className="overflow-visible">
-           <div className="flex gap-3 items-start overflow-visible">
-             <div className="font-bold text-sm min-w-[30px] flex-shrink-0">
-               {(globalOrder.get(question.id) ?? qIndex).toString()}
-             </div>
-             <div
-               className={cn(
-                 'flex flex-1',
-                 isHorizontalLayout ? 'flex-row gap-8 flex-wrap items-center' : 'flex-col gap-3'
-               )}
-             >
-               {question.options?.map((option, index) => {
-                 const optionLetter = String.fromCharCode(97 + index);
-                 const isExample = question.isExample === true;
-                 const isSelected =
-                   selectedAnswers[question.id] === option.id ||
-                   (isExample && question.exampleAnswer === option.id);
-                 const isFirstOption = index === 0;
- 
-                 return (
-                   <div
-                     key={option.id}
-                     className={cn(
-                       'relative',
-                       isHorizontalLayout ? 'min-w-[140px]' : 'w-full'
-                     )}
-                   >
-                     {isFirstOption && isExample && (
-                       <div className="font-bold text-base absolute -top-8 left-0">Beispiel:</div>
-                     )}
-                     <div
-                       className={cn(
-                         'flex gap-2 transition-colors',
-                         isHorizontalLayout ? 'items-center p-2 -m-2' : 'items-start p-2 -m-2',
-                         isSingleStatementLayout && 'w-full border-b border-border/60 p-0 pb-2 mb-1',
-                         !isExample && !isSubmitting
-                           ? 'cursor-pointer hover:bg-muted rounded-md'
-                           : 'cursor-default text-muted-foreground'
-                       )}
-                       onClick={() => handleSelectOption(question.id, option.id, isExample)}
-                     >
-                       <MCQCheckbox
-                         letter={optionLetter}
-                         checked={isSelected}
-                         onChange={() => handleSelectOption(question.id, option.id, isExample)}
-                         disabled={isSubmitting || isExample}
-                         isExample={isExample}
-                       />
-                       <span
-                         className={cn(
-                           'text-sm break-words hyphens-auto',
-                           isSingleStatementLayout && 'text-base leading-relaxed'
-                         )}
-                         lang="de"
-                       >
-                         {option.text}
-                       </span>
-                     </div>
+  const fragenContent = (
+    <div className="space-y-10">
+      <GoetheHeader sectionLabel={sectionLabel} />
+       {questions.map((question, qIndex) => {
+         const optionLayout = question.renderConfig?.layout ?? renderLayout;
+         const isHorizontal = optionLayout === 'horizontal';
+         const isExample = question.isExample === true;
+
+         return (
+           <div
+             key={`q-${qIndex}-${question.id}`}
+             className="overflow-visible border-border/60 last:border-b-0 py-4"
+           >
+             <div className="grid grid-cols-[minmax(28px,40px)_1fr] gap-4">
+               <div className="font-bold text-sm text-right pt-1">
+                 {(globalOrder.get(question.id) ?? qIndex).toString()}
+               </div>
+               <div className="space-y-3">
+                 {isExample && (
+                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                     Beispiel
                    </div>
-                 );
-               })}
+                 )}
+                 <div
+                   className={cn(
+                     isHorizontal ? 'grid gap-4' : 'flex flex-col gap-2'
+                   )}
+                   style={isHorizontal ? {
+                     gridTemplateColumns: `repeat(${question.options?.length ?? 1}, minmax(0, 1fr))`
+                   } : undefined}
+                 >
+                   {question.options?.map((option, index) => {
+                     const optionLetter = String.fromCharCode(97 + index);
+                     const isSelected =
+                       selectedAnswers[question.id] === option.id ||
+                       (isExample && question.exampleAnswer === option.id);
+
+                     return (
+                       <div
+                         key={option.id}
+                         className={cn(
+                           'relative flex gap-2 items-start rounded-md',
+                           isHorizontal ? 'py-1 px-2' : 'p-2 -m-2',
+                           !isExample && !isSubmitting && 'cursor-pointer hover:bg-muted'
+                         )}
+                         onClick={(!isExample && !isSubmitting)
+                           ? () => handleSelectOption(question.id, option.id, isExample)
+                           : undefined}
+                       >
+                         <MCQCheckbox
+                           letter={optionLetter}
+                           checked={isSelected}
+                           onChange={() => handleSelectOption(question.id, option.id, isExample)}
+                           disabled={isSubmitting || isExample}
+                           isExample={isExample}
+                         />
+                         <span className="text-sm leading-snug" lang="de">
+                           {option.text}
+                         </span>
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
              </div>
            </div>
-         </div>
-       ))}
+         );
+       })}
      </div>
    );
  
-   const quelleContent = (
-     <div className="space-y-6">
-       {questions[0]?.context ? (
-         <>
-           <GoetheHeader />
-           <div className="flex items-start mb-8">
-             <h3 className="font-bold text-base">{teilLabel}</h3>
-             <span className="text-muted-foreground ml-20 font-normal text-base">
-               Vorgeschlagene Arbeitszeit: 10 Minuten
-             </span>
-           </div>
-           <p className="text-foreground mb-6 leading-relaxed font-normal text-sm" style={{ maxWidth: '40%' }}>
-             Sie lesen in einer Zeitung einen Artikel über ein Unternehmen in der Tourismusbranche. Wählen Sie für jede Lücke die richtige Lösung.
-           </p>
-           <div className="border border-foreground/40 p-8">
-             {questions[0]?.theme && (
-               <p className="text-xs font-bold text-muted-foreground mb-4 uppercase tracking-wide">
-                 {questions[0].theme}
-               </p>
-             )}
-             {questions[0]?.title && (
-               <h4 className="text-base font-bold mb-1 text-foreground text-center px-8">
-                 {questions[0].title}
-               </h4>
-             )}
-             {questions[0]?.subtitle && (
-               <p className="text-base font-bold mb-6 text-foreground text-center px-8">
-                 {questions[0].subtitle}
-               </p>
-             )}
-             <p className="leading-7 text-foreground text-sm" style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
-               {questions[0].context?.split(/(\[GAP_\d+\])/).map((part, idx) => {
-                 const match = part.match(/\[GAP_(\d+)\]/);
-                 if (match) {
-                   const gapNumber = match[1];
-                   const isExample = gapNumber === '0';
-                   return (
-                     <span
-                       key={idx}
-                       className="inline-block border border-foreground px-2 py-0 mx-1 text-foreground align-middle"
-                       style={{ lineHeight: '1.2' }}
-                     >
-                       {isExample ? (
-                         <span className="font-bold">Beispiel 0</span>
-                       ) : (
-                         <>
-                           <span className="font-bold">{gapNumber}</span> ...
-                         </>
-                       )}
-                     </span>
-                   );
-                 }
-                 return part;
-               })}
-             </p>
-           </div>
-         </>
-       ) : (
-         <p className="text-center text-muted-foreground py-12">Keine Quelle verfügbar</p>
-       )}
-     </div>
-   );
+  const renderContextBody = () => {
+    if (!contextBody) return null;
+    if (hasGapMarkers && primaryQuestion?.context) {
+      return (
+        <p className="leading-7 text-foreground text-sm" style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+          {primaryQuestion.context.split(/(\[GAP_\d+\])/).map((part, idx) => {
+            const match = part.match(/\[GAP_(\d+)\]/);
+            if (match) {
+              const gapNumber = match[1];
+              const isExample = gapNumber === '0';
+              return (
+                <span
+                  key={`${part}-${idx}`}
+                  className="inline-block border border-foreground px-2 py-0 mx-1 text-foreground align-middle"
+                  style={{ lineHeight: '1.2' }}
+                >
+                  {isExample ? (
+                    <span className="font-bold">Beispiel 0</span>
+                  ) : (
+                    <>
+                      <span className="font-bold">{gapNumber}</span> ...
+                    </>
+                  )}
+                </span>
+              );
+            }
+            return part;
+          })}
+        </p>
+      );
+    }
+    return (
+      <p className="leading-7 text-foreground text-sm" style={{ lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+        {contextBody}
+      </p>
+    );
+  };
+
+  const hasSourceContent = (!isListening && Boolean(contextBody)) || (showAudioSource && audioSource);
+  const quelleContent = (
+    <div className="space-y-6">
+      {hasSourceContent ? (
+        <>
+          <GoetheHeader sectionLabel={sectionLabel} />
+          <div className="flex items-start mb-8">
+            <h3 className="font-bold text-base">{teilLabel}</h3>
+            <span className="text-muted-foreground ml-20 font-normal text-base">
+              Vorgeschlagene Arbeitszeit: {workingTime}
+            </span>
+          </div>
+          {isListening ? (
+            showAudioSource && audioSource ? (
+              <AudioSourcePlayer source={audioSource} />
+            ) : (
+              <p className="text-center text-muted-foreground py-12">Audioquelle wird vorbereitet …</p>
+            )
+          ) : (
+            <>
+              <p className="text-foreground mb-6 leading-relaxed font-normal text-sm" style={{ maxWidth: '70%' }}>
+                {sourceSummary}
+              </p>
+              {contextBody && (
+                <div className="border border-foreground/40 p-8 space-y-4">
+                  {primaryQuestion?.theme && (
+                    <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">
+                      {primaryQuestion.theme}
+                    </p>
+                  )}
+                  {primaryQuestion?.title && (
+                    <h4 className="text-base font-bold text-foreground text-center px-8">
+                      {primaryQuestion.title}
+                    </h4>
+                  )}
+                  {primaryQuestion?.subtitle && (
+                    <p className="text-base font-bold text-foreground text-center px-8">
+                      {primaryQuestion.subtitle}
+                    </p>
+                  )}
+                  {renderContextBody()}
+                </div>
+              )}
+            </>
+          )}
+        </>
+      ) : (
+        <p className="text-center text-muted-foreground py-12">Keine Quelle verfügbar</p>
+      )}
+    </div>
+  );
+  const showSourceToggle = Boolean((renderConfig.showSourceToggle ?? hasSourceContent) && hasSourceContent);
  
    const canSubmitTeil = requiredAnswered;
  
@@ -287,7 +329,7 @@ import { SessionBoard } from '@/components/questions/SessionBoard';
        onActiveViewChange={setView}
        frageContent={fragenContent}
        quelleContent={quelleContent}
-       showSourceToggle={Boolean(questions[0]?.context)}
+       showSourceToggle={showSourceToggle}
      />
    );
  }
