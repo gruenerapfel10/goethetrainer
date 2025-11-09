@@ -141,13 +141,19 @@ async function fetchSessionInsights(sessionType: SessionTypeEnum): Promise<Sessi
       if (!summary && results.length > 0) {
         const totalScore = results.reduce((sum, r) => sum + (r.score || 0), 0);
         const maxScore = results.reduce((sum, r) => sum + (r.maxScore || 0), 0);
+        const correctAnswers = results.filter(r => r.isCorrect).length;
         summary = {
           totalQuestions: results.length,
           answeredQuestions: results.length,
-          correctAnswers: results.filter(r => r.isCorrect).length,
+          correctAnswers,
+          unansweredQuestions: 0,
+          incorrectAnswers: results.length - correctAnswers,
           totalScore,
           maxScore,
           percentage: maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0,
+          pendingManualReview: 0,
+          aiMarkedCount: 0,
+          automaticMarkedCount: results.length,
           teilBreakdown: [],
           moduleBreakdown: [],
         } as QuestionSessionSummary;
@@ -191,9 +197,14 @@ async function fetchSessionInsights(sessionType: SessionTypeEnum): Promise<Sessi
         totalQuestions: 0,
         answeredQuestions: 0,
         correctAnswers: 0,
+        unansweredQuestions: 0,
+        incorrectAnswers: 0,
         totalScore: 0,
         maxScore: 0,
         percentage: 0,
+        pendingManualReview: 0,
+        aiMarkedCount: 0,
+        automaticMarkedCount: 0,
         teilBreakdown: [],
         moduleBreakdown: [],
       } as QuestionSessionSummary,

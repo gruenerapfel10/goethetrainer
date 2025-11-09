@@ -3,8 +3,9 @@ import { deleteReadingListEntry } from '@/lib/db/queries';
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { entryId: string } }
+  { params }: { params: Promise<{ entryId: string }> }
 ) {
+  const { entryId } = await params;
   const session = await auth();
   if (!session?.user?.id) {
     return new Response('Unauthorized', { status: 401 });
@@ -13,7 +14,7 @@ export async function DELETE(
   try {
     await deleteReadingListEntry({
       userId: session.user.id,
-      entryId: params.entryId,
+      entryId,
     });
 
     return new Response(null, { status: 204 });
