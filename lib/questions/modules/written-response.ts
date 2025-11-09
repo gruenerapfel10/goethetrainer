@@ -13,11 +13,12 @@ import {
   type QuestionModulePromptConfig,
   type QuestionModuleRenderConfig,
   type QuestionModuleSourceConfig,
+  type ModelUsageRecord,
 } from './types';
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 import { markQuestionWithAI } from '@/lib/sessions/questions/standard-marker';
-import { getNewsTopicFromPool } from '@/lib/news/news-topic-pool';
+import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
 
 interface WritingPromptConfig extends QuestionModulePromptConfig {
   instructions?: string;
@@ -37,6 +38,7 @@ interface WritingSourceConfig extends QuestionModuleSourceConfig {
     min: number;
     target: number;
   };
+  teilLabel?: string;
 }
 
 interface WritingAnswerContext {
@@ -45,6 +47,19 @@ interface WritingAnswerContext {
 }
 
 const DEFAULT_MODEL = customModel(ModelId.CLAUDE_HAIKU_4_5);
+
+function mapNewsTopicToSourceReference(topic?: NewsTopic | null) {
+  if (!topic) {
+    return undefined;
+  }
+  return {
+    title: topic.headline,
+    summary: topic.summary,
+    url: topic.url,
+    provider: topic.source,
+    publishedAt: topic.publishedAt,
+  };
+}
 
 const DEFAULT_WRITING_RUBRIC = [
   {
@@ -113,18 +128,59 @@ function normaliseAnswer(value: unknown): string | null {
   return null;
 }
 
+function reportUsage(
+  recordUsage: ((record: ModelUsageRecord) => void) | undefined,
+  modelId: string,
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    outputTokens?: number;
+    inputTokens?: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  } | null
+): void {
+  if (!recordUsage || !usage) {
+    return;
+  }
+  const inputTokens =
+    usage.promptTokens ??
+    usage.inputTokens ??
+    usage.prompt_tokens ??
+    0;
+  const outputTokens =
+    usage.completionTokens ??
+    usage.outputTokens ??
+    usage.completion_tokens ??
+    0;
+  if (!inputTokens && !outputTokens) {
+    return;
+  }
+  recordUsage({
+    modelId,
+    inputTokens,
+    outputTokens,
+  });
+}
+
 async function generateWritingQuestion(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
   sourceConfig: WritingSourceConfig,
-  promptConfig: WritingPromptConfig
+  promptConfig: WritingPromptConfig,
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question> {
   const model = DEFAULT_MODEL;
-  const newsTopic = await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool(userId);
   const resolvedTheme =
     sourceConfig.contextTheme ??
     newsTopic?.theme ??
     'Arbeitswelt / Gesellschaft';
+  if (newsTopic) {
+    const suffix = sourceConfig.teilLabel ? ` (${sourceConfig.teilLabel})` : '';
+    console.log(`[NewsPool] Using headline${suffix}:`, newsTopic.headline);
+  }
 
   const newsContextBlock = newsTopic
     ? `Nutze folgenden aktuellen Nachrichtenimpuls als thematische Grundlage und verarbeite seine Kernaussagen glaubwürdig im Szenario:
@@ -157,6 +213,7 @@ Liefere JSON entsprechend dem Schema.`;
     prompt: userPrompt,
     temperature: 0.4,
   });
+  reportUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
 
   const data = result.object;
   const questionType = resolveQuestionType(sessionType);
@@ -213,6 +270,7 @@ Liefere JSON entsprechend dem Schema.`;
     points: DEFAULT_RUBRIC_TOTAL,
     moduleId: QuestionModuleId.WRITTEN_RESPONSE,
     moduleLabel: 'Schreiben',
+    sourceReference: mapNewsTopicToSourceReference(newsTopic),
     presentation: {
       referenceNotes: data.referenceNotes,
       closingRemark: data.closingRemark,
@@ -278,7 +336,9 @@ export const writtenResponseModule: QuestionModule<
       context.sessionType,
       context.difficulty,
       context.sourceConfig,
-      context.promptConfig
+      context.promptConfig,
+      context.userId,
+      context.recordUsage
     );
 
     return { questions: [question] };

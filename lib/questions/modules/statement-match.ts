@@ -15,10 +15,11 @@ import {
   type QuestionModulePromptConfig,
   type QuestionModuleRenderConfig,
   type QuestionModuleSourceConfig,
+  type ModelUsageRecord,
 } from './types';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
-import { getNewsTopicFromPool } from '@/lib/news/news-topic-pool';
+import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
 
 interface StatementMatchPromptConfig extends QuestionModulePromptConfig {
   instructions: string;
@@ -38,6 +39,7 @@ interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
   unmatchedCount?: number;
   startingStatementNumber?: number;
   workingTimeMinutes?: number;
+  teilLabel?: string;
 }
 
 type StatementMatchAnswer = Record<string, string> | null;
@@ -61,6 +63,19 @@ async function generateWithRetry<T>(operation: () => Promise<T>): Promise<T> {
       );
     }
   }
+}
+
+function mapNewsTopicToSourceReference(topic?: NewsTopic | null) {
+  if (!topic) {
+    return undefined;
+  }
+  return {
+    title: topic.headline,
+    summary: topic.summary,
+    url: topic.url,
+    provider: topic.source,
+    publishedAt: topic.publishedAt,
+  };
 }
 
 const StatementMatchSchema = z.object({
@@ -167,13 +182,50 @@ async function markStatementMatch(
   };
 }
 
+function reportUsage(
+  recordUsage: ((record: ModelUsageRecord) => void) | undefined,
+  modelId: string,
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    outputTokens?: number;
+    inputTokens?: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  } | null
+): void {
+  if (!recordUsage || !usage) {
+    return;
+  }
+  const inputTokens =
+    usage.promptTokens ??
+    usage.inputTokens ??
+    usage.prompt_tokens ??
+    0;
+  const outputTokens =
+    usage.completionTokens ??
+    usage.outputTokens ??
+    usage.completion_tokens ??
+    0;
+  if (!inputTokens && !outputTokens) {
+    return;
+  }
+  recordUsage({
+    modelId,
+    inputTokens,
+    outputTokens,
+  });
+}
+
 async function generateStatementMatchQuestion(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
   sourceConfig: StatementMatchSourceConfig,
-  promptConfig: StatementMatchPromptConfig
+  promptConfig: StatementMatchPromptConfig,
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question> {
-  const newsTopic = await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool(userId);
   const {
     authorCount = 3,
     statementCount = 7,
@@ -182,7 +234,12 @@ async function generateStatementMatchQuestion(
     workingTimeMinutes = 15,
     theme = newsTopic?.theme ?? 'Digitale Gesellschaft',
     topicHint = newsTopic?.headline ?? 'Privatsphäre und Datenkultur in der digitalen Welt',
+    teilLabel,
   } = sourceConfig;
+  if (newsTopic) {
+    const labelSuffix = teilLabel ? ` (${teilLabel})` : '';
+    console.log(`[NewsPool] Using headline${labelSuffix}:`, newsTopic.headline);
+  }
   if (unmatchedCount > 0) {
     throw new Error('Statement matching no longer supports unmatched statements (Option 0).');
   }
@@ -224,6 +281,7 @@ Liefere JSON, das exakt zum Schema passt.
       temperature: 0.6,
     })
   );
+  reportUsage(recordUsage, DEFAULT_STATEMENT_MODEL, result.usage);
 
   const data = result.object;
   if (data.authors.length < authorCount) {
@@ -312,6 +370,7 @@ Liefere JSON, das exakt zum Schema passt.
     layoutVariant: 'statement_match',
     moduleId: QuestionModuleId.STATEMENT_MATCH,
     moduleLabel: 'Statement Matching',
+    sourceReference: mapNewsTopicToSourceReference(newsTopic),
     presentation: {
       workingTimeMinutes,
       intro: data.intro,
@@ -369,7 +428,9 @@ export const statementMatchModule: QuestionModule<
       context.sessionType,
       context.difficulty,
       (context.sourceConfig as StatementMatchSourceConfig) ?? ({} as StatementMatchSourceConfig),
-      context.promptConfig
+      context.promptConfig,
+      context.userId,
+      context.recordUsage
     );
 
     return {

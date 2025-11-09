@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'rec
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { FaustBadge } from '@/components/FaustBadge';
 import type { QuestionResult, Question } from '@/lib/sessions/questions/question-types';
-import { buildQuestionSessionSummary, type QuestionSessionSummary } from '@/lib/sessions/question-manager';
+import { buildQuestionSessionSummary, type QuestionSessionSummary } from '@/lib/sessions/question-summary';
 import type { Session } from '@/lib/sessions/types';
 
 // Icon mapping for session types

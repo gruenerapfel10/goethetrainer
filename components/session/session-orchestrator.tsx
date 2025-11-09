@@ -593,6 +593,7 @@ export function SessionOrchestrator() {
             showA4Format={showA4Format}
             onShowA4FormatChange={setShowA4Format}
             onEndSession={handleEndSession}
+            sourceReference={primaryQuestion.sourceReference}
           />
         );
       }
@@ -600,13 +601,20 @@ export function SessionOrchestrator() {
 
     // Single question display for other cases
     if (!currentQuestion) {
+      const waitingForInitialQuestions =
+        !sessionQuestions.length &&
+        (isGeneratingQuestions || generationState?.status !== 'failed');
+
       return (
-        <div className="text-center p-8">
-          <p className="text-muted-foreground">
-            {isGeneratingQuestions
-              ? 'Weitere Fragen werden geladen …'
-              : 'No questions available'}
-          </p>
+        <div className="flex flex-col items-center justify-center gap-3 p-8 text-muted-foreground">
+          {waitingForInitialQuestions ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <p>Fragen werden gerade generiert …</p>
+            </>
+          ) : (
+            <p>Der Test konnte keine Fragen laden.</p>
+          )}
         </div>
       );
     }

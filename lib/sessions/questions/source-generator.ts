@@ -5,6 +5,7 @@ import type { SessionSourceOptions } from '../session-registry';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
+import type { ModelUsageRecord } from '@/lib/questions/modules/types';
 
 export const maxDuration = 30;
 
@@ -91,7 +92,7 @@ function buildGapExampleBlock(requiredCount: number): string {
 }
 
 function generateDeterministicGaps(
-  source: z.infer<typeof RawSourceSchema>,
+  source: RawSource,
   requiredCount: number
 ): SourceWithGaps | null {
   const text = source.context;
@@ -165,6 +166,8 @@ function generateDeterministicGaps(
 const REQUIRED_GAP_COUNT = 9;
 const MAX_GAP_ATTEMPTS = 2;
 
+type RawSource = z.infer<typeof RawSourceSchema> & { newsTopic?: NewsTopic | null };
+
 interface SourceWithGaps {
   theme: string;
   title: string;
@@ -175,6 +178,7 @@ interface SourceWithGaps {
     gapNumber: number;
     removedWord: string;
   }>;
+  newsTopic?: NewsTopic | null;
 }
 
 interface GapEntryRecord {
@@ -190,9 +194,11 @@ interface GapEntryRecord {
 export async function generateRawSource(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   overrides?: SessionSourceOptions['raw'],
-  logMetadata?: { teilLabel?: string }
-): Promise<z.infer<typeof RawSourceSchema>> {
-  const newsTopic = await getNewsTopicFromPool();
+  logMetadata?: { teilLabel?: string },
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
+): Promise<RawSource> {
+  const newsTopic = await getNewsTopicFromPool(userId);
   const selectedTheme =
     overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
 
@@ -244,13 +250,17 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
       prompt: userPrompt,
       temperature: 0.8,
     });
+    recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
 
     if (newsTopic) {
       const labelSuffix = logMetadata?.teilLabel ? ` (${logMetadata.teilLabel})` : '';
       console.log(`[NewsPool] Using headline${labelSuffix}:`, newsTopic.headline);
     }
 
-    return result.object;
+    return {
+      ...result.object,
+      newsTopic: newsTopic ?? null,
+    };
   } catch (error) {
     throw new Error(`Failed to generate source material: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -260,8 +270,9 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
  * Pass 2: Identify 9 gaps in the source text and extract answers
  */
 export async function identifyGapsInSource(
-  source: z.infer<typeof RawSourceSchema>,
-  overrides?: SessionSourceOptions['gaps']
+  source: RawSource,
+  overrides?: SessionSourceOptions['gaps'],
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
   const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
   const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
@@ -315,6 +326,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
         prompt: buildUserPrompt(attempt),
         temperature: 0.4,
       });
+      recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
 
       const parsedGaps = coerceGapEntries(result.object.gaps);
       const gappedText = typeof result.object.gappedText === 'string' ? result.object.gappedText : '';
@@ -342,6 +354,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
           gapNumber: gap.gapNumber,
           removedWord: gap.removedWord,
         })),
+        newsTopic: source.newsTopic ?? null,
       };
     } catch {
       // retry
@@ -350,7 +363,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
 
   const fallback = generateDeterministicGaps(source, requiredCount);
   if (fallback) {
-    return fallback;
+    return { ...fallback, newsTopic: source.newsTopic ?? null };
   }
   throw new Error(
     `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts`
@@ -363,13 +376,49 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
 export async function generateSourceWithGaps(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   options?: SessionSourceOptions,
-  metadata?: { teilLabel?: string }
+  metadata?: { teilLabel?: string },
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
   // Pass 1: Generate raw source
-  const rawSource = await generateRawSource(difficulty, options?.raw, metadata);
+  const rawSource = await generateRawSource(difficulty, options?.raw, metadata, userId, recordUsage);
 
   // Pass 2: Identify gaps
-  const sourceWithGaps = await identifyGapsInSource(rawSource, options?.gaps);
+  const sourceWithGaps = await identifyGapsInSource(rawSource, options?.gaps, recordUsage);
 
   return sourceWithGaps;
+}
+function recordModelUsage(
+  recordUsage: ((record: ModelUsageRecord) => void) | undefined,
+  modelId: string,
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    outputTokens?: number;
+    inputTokens?: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  } | null
+): void {
+  if (!recordUsage || !usage) {
+    return;
+  }
+  const inputTokens =
+    usage.promptTokens ??
+    usage.inputTokens ??
+    usage.prompt_tokens ??
+    0;
+  const outputTokens =
+    usage.completionTokens ??
+    usage.outputTokens ??
+    usage.completion_tokens ??
+    0;
+  if (!inputTokens && !outputTokens) {
+    return;
+  }
+  recordUsage({
+    modelId,
+    inputTokens,
+    outputTokens,
+  });
 }

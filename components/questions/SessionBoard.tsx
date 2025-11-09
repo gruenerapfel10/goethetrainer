@@ -1,3 +1,5 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
@@ -9,6 +11,8 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import type { QuestionSourceReference } from '@/lib/sessions/questions/question-types';
 
 interface SessionBoardProps {
   teilNumber: number;
@@ -31,6 +35,7 @@ interface SessionBoardProps {
   showA4Format?: boolean;
   onShowA4FormatChange?: (show: boolean) => void;
   onEndSession?: () => void;
+  sourceReference?: QuestionSourceReference;
 }
 
 export function SessionBoard({
@@ -54,8 +59,10 @@ export function SessionBoard({
   showA4Format = true,
   onShowA4FormatChange,
   onEndSession,
+  sourceReference,
 }: SessionBoardProps) {
   const { theme } = useTheme();
+  const { toast } = useToast();
   const teilNumbers = Array.from({ length: totalTeils }, (_, index) => index + 1);
   const handleSubmitClick = () => {
     console.log('[SessionBoard] submit click', {
@@ -79,6 +86,28 @@ export function SessionBoard({
     'w-full h-full flex flex-col dark:bg-background',
     showA4Format ? 'shadow-lg' : 'bg-background rounded-2xl border border-border/60'
   );
+
+  const handleSeeSource = () => {
+    if (!sourceReference) {
+      toast({
+        title: 'Keine Quelle verfügbar',
+        description: 'Diese Aufgabe basiert auf generiertem Material ohne externen Artikel.',
+      });
+      return;
+    }
+
+    if (sourceReference.url && typeof window !== 'undefined') {
+      window.open(sourceReference.url, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    toast({
+      title: sourceReference.title ?? 'Quelle ohne Link',
+      description:
+        sourceReference.summary ??
+        'Diese Quelle wurde intern erzeugt und verweist nicht auf einen externen Artikel.',
+    });
+  };
 
   const PaperContent = (
     <div className={paperClass} style={paperStyle}>
@@ -192,6 +221,16 @@ export function SessionBoard({
               className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
             >
               End Session
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={event => {
+                event.preventDefault();
+                handleSeeSource();
+              }}
+              className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
+              disabled={isSubmitting}
+            >
+              See source
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

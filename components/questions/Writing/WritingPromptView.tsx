@@ -77,6 +77,7 @@ export function WritingPromptView(props: WritingPromptViewProps) {
       showA4Format={showA4Format}
       onShowA4FormatChange={onShowA4FormatChange}
       onEndSession={onEndSession}
+      sourceReference={question.sourceReference}
     />
   );
 }

@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { QuestionModuleId, type QuestionModule } from './types';
+import { QuestionModuleId, type QuestionModule, type ModelUsageRecord } from './types';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import {
   QuestionDifficulty,
@@ -17,6 +17,7 @@ import type {
 } from '@/lib/sessions/questions/question-types';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
+import type { NewsTopic } from '@/lib/news/news-topic-pool';
 
 type MCQAnswer = string | Record<string, string> | null;
 
@@ -257,11 +258,49 @@ async function markQuestion(
   };
 }
 
+function reportUsage(
+  recordUsage: ((record: ModelUsageRecord) => void) | undefined,
+  modelId: string,
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    outputTokens?: number;
+    inputTokens?: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    totalTokens?: number;
+  } | null
+): void {
+  if (!recordUsage || !usage) {
+    return;
+  }
+  const inputTokens =
+    usage.promptTokens ??
+    usage.inputTokens ??
+    usage.prompt_tokens ??
+    0;
+  const outputTokens =
+    usage.completionTokens ??
+    usage.outputTokens ??
+    usage.completion_tokens ??
+    0;
+  if (!inputTokens && !outputTokens) {
+    return;
+  }
+  recordUsage({
+    modelId,
+    inputTokens,
+    outputTokens,
+  });
+}
+
 async function generateStandardMCQ(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
   questionCount: number,
-  sourceConfig?: TextSourceConfig
+  sourceConfig?: TextSourceConfig,
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
   const resolvedQuestionCount = Math.max(
     1,
@@ -275,7 +314,9 @@ async function generateStandardMCQ(
       theme: sourceConfig?.theme,
       systemPrompt: sourceConfig?.prompts?.passage,
     },
-    sourceConfig?.teilLabel ? { teilLabel: sourceConfig.teilLabel } : undefined
+    sourceConfig?.teilLabel ? { teilLabel: sourceConfig.teilLabel } : undefined,
+    userId,
+    recordUsage
   );
 
   const questionSchema = z.object({
@@ -314,9 +355,11 @@ ${sourceConfig?.prompts?.questions ?? ''}`;
       temperature: 0.55,
     })
   );
+  reportUsage(recordUsage, DEFAULT_MODEL, questionResult.usage);
 
   const questions = questionResult.object.questions.slice(0, resolvedQuestionCount);
   const questionType = resolveQuestionType(sessionType);
+  const sourceReference = mapNewsTopicToSourceReference(rawSource.newsTopic);
 
   return questions.map((entry, index) => {
     const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
@@ -337,6 +380,7 @@ ${sourceConfig?.prompts?.questions ?? ''}`;
       points: 1,
       moduleId: QuestionModuleId.MULTIPLE_CHOICE,
       moduleLabel: 'Multiple Choice',
+      sourceReference,
     };
   });
 }
@@ -344,20 +388,28 @@ ${sourceConfig?.prompts?.questions ?? ''}`;
 async function generateGappedMCQ(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
-  sourceConfig: GappedSourceConfig
+  sourceConfig: GappedSourceConfig,
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
   const teilLabel =
     (sourceConfig as any)?.teilLabel ??
     (sourceConfig as any)?.label ??
     null;
 
-  const sourceWithGaps = await generateSourceWithGaps(difficulty, {
-    type: 'gapped_text',
-    raw: {},
-    gaps: {
-      requiredCount: sourceConfig.gapCount,
+  const sourceWithGaps = await generateSourceWithGaps(
+    difficulty,
+    {
+      type: 'gapped_text',
+      raw: {},
+      gaps: {
+        requiredCount: sourceConfig.gapCount,
+      },
     },
-  }, { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined });
+    { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined },
+    userId,
+    recordUsage
+  );
 
   const model = customModel(DEFAULT_MODEL);
 
@@ -401,6 +453,7 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
         temperature: 0.7,
       })
     );
+    reportUsage(recordUsage, DEFAULT_MODEL, result.usage);
 
     const normalised = normaliseGeneratedOptions(result.object.options, result.object.correctOptionId);
 
@@ -431,25 +484,36 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
     } as any;
   });
 
-  return Promise.all(questionPromises);
+  const sourceReference = mapNewsTopicToSourceReference(sourceWithGaps.newsTopic);
+  return (await Promise.all(questionPromises)).map(question => ({
+    ...question,
+    sourceReference,
+  }));
 }
 
 async function generateAudioPassageMCQ(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
   questionCount: number,
-  sourceConfig: AudioPassageSourceConfig
+  sourceConfig: AudioPassageSourceConfig,
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
   const requiredQuestions = Math.max(questionCount, 1);
-  const transcript = await generateNewsBackedAudioTranscript(difficulty, {
-    conversationStyle: sourceConfig.conversationStyle,
-    speakerCount: sourceConfig.speakerCount,
-    segmentCount: sourceConfig.segmentCount,
-    listeningMode: sourceConfig.listeningMode,
-    scenario: sourceConfig.scenario,
-    prompts: { transcript: sourceConfig.prompts?.transcript },
-    teilLabel: sourceConfig.teilLabel,
-  });
+  const transcript = await generateNewsBackedAudioTranscript(
+    difficulty,
+    {
+      conversationStyle: sourceConfig.conversationStyle,
+      speakerCount: sourceConfig.speakerCount,
+      segmentCount: sourceConfig.segmentCount,
+      listeningMode: sourceConfig.listeningMode,
+      scenario: sourceConfig.scenario,
+      prompts: { transcript: sourceConfig.prompts?.transcript },
+      teilLabel: sourceConfig.teilLabel,
+    },
+    userId,
+    recordUsage
+  );
 
   const questionModel = customModel(DEFAULT_MODEL);
   const questionsSchema = z.object({
@@ -499,6 +563,7 @@ Erstelle ${requiredQuestions} Aufgaben, stelle sicher, dass die Antworten eindeu
       temperature: 0.55,
     })
   );
+  reportUsage(recordUsage, DEFAULT_MODEL, questionResult.usage);
 
   if (
     !Array.isArray(questionResult.object.questions) ||
@@ -596,10 +661,23 @@ export const multipleChoiceModule: QuestionModule<
   },
   clientRenderKey: 'MultipleChoice',
   async generate(context) {
-    const { sessionType, difficulty, questionCount, sourceConfig } = context;
+    const {
+      sessionType,
+      difficulty,
+      questionCount,
+      sourceConfig,
+      userId,
+      recordUsage,
+    } = context;
 
     if (sourceConfig.type === 'gapped_text') {
-      const questions = await generateGappedMCQ(sessionType, difficulty, sourceConfig);
+      const questions = await generateGappedMCQ(
+        sessionType,
+        difficulty,
+        sourceConfig,
+        userId,
+        recordUsage
+      );
       return {
         questions: questions.slice(0, questionCount).map((question, index) => ({
           ...question,
@@ -618,7 +696,9 @@ export const multipleChoiceModule: QuestionModule<
         sessionType,
         difficulty,
         targetCount,
-        sourceConfig
+        sourceConfig,
+        userId,
+        recordUsage
       );
 
       return {
@@ -631,11 +711,17 @@ export const multipleChoiceModule: QuestionModule<
 
     if (sourceConfig.type === 'audio_with_gaps') {
       // TODO: Implement audio generation; fall back to gap text for now.
-      const questions = await generateGappedMCQ(sessionType, difficulty, {
-        type: 'gapped_text',
-        gapCount: sourceConfig.gapCount,
-        optionsPerGap: sourceConfig.optionsPerGap,
-      });
+      const questions = await generateGappedMCQ(
+        sessionType,
+        difficulty,
+        {
+          type: 'gapped_text',
+          gapCount: sourceConfig.gapCount,
+          optionsPerGap: sourceConfig.optionsPerGap,
+        },
+        userId,
+        recordUsage
+      );
       return {
         questions: questions.slice(0, questionCount).map((question, index) => ({
           ...question,
@@ -655,15 +741,17 @@ export const multipleChoiceModule: QuestionModule<
     sessionType,
     difficulty,
     questionCount || (sourceConfig as TextSourceConfig).questionCount,
-    sourceConfig as TextSourceConfig
+    sourceConfig as TextSourceConfig,
+    userId,
+    recordUsage
   );
 
-    return {
-      questions: questions.map(question => ({
-        ...question,
-        points: 1,
-      })),
-    };
+  return {
+    questions: questions.map(question => ({
+      ...question,
+      points: 1,
+    })),
+  };
   },
   normaliseAnswer(value, question) {
     if (question.gaps && question.gaps.length > 0) {
@@ -740,4 +828,16 @@ async function callWithRetry<T>(operation: () => Promise<T>): Promise<T> {
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+}
+function mapNewsTopicToSourceReference(topic?: NewsTopic | null) {
+  if (!topic) {
+    return undefined;
+  }
+  return {
+    title: topic.headline,
+    summary: topic.summary,
+    url: topic.url,
+    provider: topic.source,
+    publishedAt: topic.publishedAt,
+  };
 }

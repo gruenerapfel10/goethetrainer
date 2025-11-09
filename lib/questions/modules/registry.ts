@@ -8,6 +8,7 @@ import type {
   QuestionModulePromptConfig,
   QuestionModuleRenderConfig,
   QuestionModuleSourceConfig,
+  ModelUsageRecord,
 } from './types';
 import { QuestionModuleId } from './types';
 
@@ -32,6 +33,8 @@ export function listQuestionModules(): QuestionModule[] {
 interface ExecuteTaskOptions {
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
+  userId?: string;
+  recordUsage?: (record: ModelUsageRecord) => void;
 }
 
 export async function executeQuestionModuleTask(
@@ -59,6 +62,8 @@ export async function executeQuestionModuleTask(
   ) as QuestionModuleSourceConfig;
 
   const result = await module.generate({
+    userId: options.userId,
+    recordUsage: options.recordUsage,
     sessionType: options.sessionType,
     difficulty: options.difficulty,
     questionCount: task.questionCount,
@@ -79,4 +84,3 @@ export async function executeQuestionModuleTask(
 
   return { ...result, moduleId: module.id };
 }
-

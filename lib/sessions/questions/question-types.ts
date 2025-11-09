@@ -84,6 +84,14 @@ export interface AudioSourceDefinition {
   generatedAudio?: GeneratedAudioDefinition;
 }
 
+export interface QuestionSourceReference {
+  title?: string;
+  summary?: string;
+  url?: string;
+  provider?: string;
+  publishedAt?: string;
+}
+
 export interface Question {
   id: string;
   type: QuestionType;
@@ -172,6 +180,8 @@ export interface Question {
     title?: string;
     body: string;
   }>;
+
+  sourceReference?: QuestionSourceReference;
   
   // Metadata
   points: number;

@@ -26,8 +26,7 @@ import {
   getSupportedModules as getSupportedModulesFromRegistry,
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
-import { getQuestionModule } from '@/lib/questions/modules';
-import { buildQuestionSessionSummary } from './question-manager';
+import { buildQuestionSessionSummary } from './question-summary';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -147,6 +146,91 @@ function defaultNormaliseAnswer(
   }
 
   return value;
+}
+
+function normaliseSingleSelection(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+  return null;
+}
+
+function normaliseGapAnswerValue(
+  question: Question,
+  value: unknown
+): Record<string, string> | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const fallbackId =
+      question.gaps?.[0]?.id ??
+      (Array.isArray(question.gaps) && question.gaps.length > 0
+        ? question.gaps[0]?.id
+        : null) ??
+      'GAP_0';
+    return { [fallbackId]: trimmed };
+  }
+  if (typeof value === 'object' && value) {
+    const allowedIds = new Set(
+      (question.gaps ?? [])
+        .map(gap => gap.id)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+    );
+
+    const result: Record<string, string> = {};
+    Object.entries(value as Record<string, unknown>).forEach(([key, raw]) => {
+      if (typeof raw !== 'string') {
+        return;
+      }
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        return;
+      }
+      if (allowedIds.size === 0 || allowedIds.has(key)) {
+        result[key] = trimmed;
+      }
+    });
+    return Object.keys(result).length > 0 ? result : null;
+  }
+  return null;
+}
+
+function normaliseStatementMatchAnswer(
+  question: Question,
+  value: unknown
+): Record<string, string> | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const statements = question.statements ?? [];
+  const allowedIds = new Set(statements.map(statement => statement.id));
+  const allowedOptions = new Set(
+    (question.options ?? []).map(option => option.id ?? option.text)
+  );
+
+  const entries = Object.entries(value as Record<string, unknown>).reduce<Record<string, string>>(
+    (acc, [statementId, rawValue]) => {
+      if (
+        typeof rawValue === 'string' &&
+        rawValue.trim().length > 0 &&
+        (allowedIds.size === 0 || allowedIds.has(statementId)) &&
+        (allowedOptions.size === 0 || allowedOptions.has(rawValue.trim()))
+      ) {
+        acc[statementId] = rawValue.trim();
+      }
+      return acc;
+    },
+    {}
+  );
+
+  return Object.keys(entries).length > 0 ? entries : null;
 }
 
 function deriveActiveQuestionId(
@@ -1405,14 +1489,25 @@ function normaliseAnswerForQuestion(
     return null;
   }
 
-  try {
-    const moduleId = (question.moduleId ??
-      question.registryType ??
-      QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
-    const module = getQuestionModule(moduleId);
-    return module.normaliseAnswer(value, question) as AnswerValue | null;
-  } catch (error) {
-    console.warn('Failed to normalise answer for question', question.id, error);
-    return defaultNormaliseAnswer(value);
+  const moduleId = (question.moduleId ??
+    question.registryType ??
+    QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
+
+  if (moduleId === QuestionModuleId.STATEMENT_MATCH) {
+    return normaliseStatementMatchAnswer(question, value);
   }
+
+  if (question.gaps && question.gaps.length > 0) {
+    return normaliseGapAnswerValue(question, value);
+  }
+
+  if (moduleId === QuestionModuleId.WRITTEN_RESPONSE || question.inputType === 'long_text') {
+    return typeof value === 'string' ? value : defaultNormaliseAnswer(value);
+  }
+
+  if (moduleId === QuestionModuleId.MULTIPLE_CHOICE || question.inputType === 'multiple_choice') {
+    return normaliseSingleSelection(value);
+  }
+
+  return defaultNormaliseAnswer(value);
 }

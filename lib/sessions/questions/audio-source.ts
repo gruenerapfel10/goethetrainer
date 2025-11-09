@@ -4,6 +4,42 @@ import { QuestionDifficulty } from './question-types';
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
+import type { ModelUsageRecord } from '@/lib/questions/modules/types';
+
+function recordModelUsage(
+  recordUsage: ((record: ModelUsageRecord) => void) | undefined,
+  modelId: string,
+  usage?: {
+    promptTokens?: number;
+    completionTokens?: number;
+    outputTokens?: number;
+    inputTokens?: number;
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  } | null
+): void {
+  if (!recordUsage || !usage) {
+    return;
+  }
+  const inputTokens =
+    usage.promptTokens ??
+    usage.inputTokens ??
+    usage.prompt_tokens ??
+    0;
+  const outputTokens =
+    usage.completionTokens ??
+    usage.outputTokens ??
+    usage.completion_tokens ??
+    0;
+  if (!inputTokens && !outputTokens) {
+    return;
+  }
+  recordUsage({
+    modelId,
+    inputTokens,
+    outputTokens,
+  });
+}
 
 export interface AudioTranscriptSegment {
   speakerId: string;
@@ -85,9 +121,11 @@ function buildTranscriptString(segments: AudioTranscriptSegment[]): string {
 
 export async function generateNewsBackedAudioTranscript(
   difficulty: QuestionDifficulty,
-  options: AudioTranscriptOptions = {}
+  options: AudioTranscriptOptions = {},
+  userId?: string,
+  recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<AudioTranscriptResult> {
-  const newsTopic = await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool(userId);
   const conversationStyle = options.conversationStyle ?? 'podcast';
   const speakerCount =
     options.speakerCount ??
@@ -140,6 +178,7 @@ Liefere eine strukturierte Übersicht entsprechend des Schemas.`;
     prompt: outlinePrompt,
     temperature: 0.4,
   });
+  recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, outline.usage);
 
   const transcriptPrompt = `
 Erstelle das vollständige Transkript für den geplanten Hörtext.
@@ -167,6 +206,7 @@ Schreibe alle Inhalte auf Deutsch. Jeder Abschnitt enthält genau eine Sprecher-
     prompt: transcriptPrompt,
     temperature: 0.45,
   });
+  recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, transcript.usage);
 
   const segments: AudioTranscriptSegment[] = transcript.object.segments
     .slice(0, segmentCount)

@@ -34,7 +34,8 @@ import {
   executeQuestionModuleTask,
   registerDefaultQuestionModules,
 } from '@/lib/questions/modules';
-import type { QuestionModuleTask } from '@/lib/questions/modules/types';
+import type { QuestionModuleTask, ModelUsageRecord } from '@/lib/questions/modules/types';
+import { calculateCost } from '@/lib/ai/model-registry';
 
 registerDefaultQuestionModules();
 
@@ -81,12 +82,18 @@ function markQuestionAsExample(question: Question): Question {
   };
 }
 
+interface TeilGenerationResult {
+  questions: Question[];
+  usage: ModelUsageRecord[];
+}
+
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
   layoutEntry: NormalisedSessionLayoutEntry,
   difficulty: QuestionDifficulty,
-  teilNumber: number
-): Promise<Question[]> {
+  teilNumber: number,
+  userId?: string
+): Promise<TeilGenerationResult> {
   const exampleRequested = layoutEntry.generateExample === true;
   const baseQuestionCount = layoutEntry.questionCount;
   const requestedQuestionCount =
@@ -109,9 +116,15 @@ async function generateTeilQuestions(
     metadata: layoutEntry.metadata,
   };
 
+  const usageRecords: ModelUsageRecord[] = [];
+
   const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
     sessionType,
     difficulty,
+    userId,
+    recordUsage: record => {
+      usageRecords.push(record);
+    },
   });
 
   let questions = rawQuestions.map((question: any, index: number) => ({
@@ -203,7 +216,10 @@ async function generateTeilQuestions(
     }
   }
 
-  return ensureQuestionIdentifiers(questions);
+  return {
+    questions: ensureQuestionIdentifiers(questions),
+    usage: usageRecords,
+  };
 }
 
 
@@ -518,38 +534,122 @@ export async function generateQuestionsForSession(
       await persistSession(session);
     };
 
-    try {
-      for (const layoutEntry of plan) {
-        const teilQuestions = await generateTeilQuestions(
-          sessionType,
-          layoutEntry,
-          difficulty,
-          teilNumber
+    const pendingTeils = new Map<number, { entry: NormalisedSessionLayoutEntry; result: TeilGenerationResult }>();
+    let nextPlanIndex = 0;
+    let nextTeilToFlush = 1;
+    let workerError: unknown = null;
+    let flushLock: Promise<void> | null = null;
+
+    const processTeilResult = async (
+      currentTeil: number,
+      entry: NormalisedSessionLayoutEntry,
+      teilResult: TeilGenerationResult
+    ) => {
+      const teilQuestions = teilResult.questions;
+      if (!teilQuestions.length) {
+        console.warn(`[SessionGenerator] Teil ${currentTeil} returned no questions`);
+        return;
+      }
+
+      const usage = teilResult.usage;
+      if (usage.length) {
+        const inputTokens = usage.reduce<number>((sum, record) => sum + record.inputTokens, 0);
+        const outputTokens = usage.reduce<number>((sum, record) => sum + record.outputTokens, 0);
+        const estimatedCost = usage.reduce<number>((sum, record) => {
+          const cost = calculateCost(record.modelId, record.inputTokens, record.outputTokens);
+          return sum + (cost ?? 0);
+        }, 0);
+        console.log(
+          `[SessionGenerator] Teil ${currentTeil} usage: input=${inputTokens} output=${outputTokens} tokens, approx cost=$${estimatedCost.toFixed(4)}`
         );
+      } else {
+        console.log(`[SessionGenerator] Teil ${currentTeil} usage metrics unavailable (no usage reported).`);
+      }
 
-        if (!teilQuestions.length) {
-          teilNumber += 1;
-          continue;
-        }
-
-        session.data.generation = {
-          ...(session.data.generation ?? {
-            status: 'in_progress',
-            total: 0,
-            generated: 0,
-          }),
+      session.data.generation = {
+        ...(session.data.generation ?? {
           status: 'in_progress',
-          total: (session.data.generation?.total ?? 0) + teilQuestions.length,
-          currentTeil: teilNumber,
-        };
-        touchSession(session);
-        await persistSession(session);
+          total: 0,
+          generated: 0,
+        }),
+        status: 'in_progress',
+        total: (session.data.generation?.total ?? 0) + teilQuestions.length,
+        currentTeil,
+      };
+      touchSession(session);
+      await persistSession(session);
 
-        for (const question of teilQuestions) {
-          await appendQuestion(question);
+      for (const question of teilQuestions) {
+        await appendQuestion(question);
+      }
+    };
+
+    const flushReadyTeils = async () => {
+      if (flushLock) {
+        await flushLock;
+        return;
+      }
+      flushLock = (async () => {
+        try {
+          while (pendingTeils.has(nextTeilToFlush)) {
+            const payload = pendingTeils.get(nextTeilToFlush)!;
+            pendingTeils.delete(nextTeilToFlush);
+            await processTeilResult(nextTeilToFlush, payload.entry, payload.result);
+            nextTeilToFlush += 1;
+            teilNumber = nextTeilToFlush;
+          }
+        } finally {
+          flushLock = null;
         }
+      })();
+      await flushLock;
+    };
 
-        teilNumber += 1;
+    const getNextPlanIndex = () => {
+      if (nextPlanIndex >= plan.length) {
+        return null;
+      }
+      const index = nextPlanIndex;
+      nextPlanIndex += 1;
+      return index;
+    };
+
+    const worker = async () => {
+      while (true) {
+        if (workerError) {
+          return;
+        }
+        const planIndex = getNextPlanIndex();
+        if (planIndex === null) {
+          return;
+        }
+        const currentTeil = planIndex + 1;
+        const entry = plan[planIndex];
+        try {
+          const result = await generateTeilQuestions(
+            sessionType,
+            entry,
+            difficulty,
+            currentTeil,
+            userId
+          );
+          pendingTeils.set(currentTeil, { entry, result });
+          await flushReadyTeils();
+        } catch (error) {
+          workerError = error;
+          return;
+        }
+      }
+    };
+
+    try {
+      const concurrency = Math.min(4, plan.length);
+      const workers = Array.from({ length: concurrency }, () => worker());
+      await Promise.all(workers);
+      await flushReadyTeils();
+
+      if (workerError) {
+        throw workerError;
       }
 
       session.data.generation = {

@@ -82,6 +82,8 @@ export interface QuestionModuleGenerateContext<
   P extends QuestionModulePromptConfig,
   S extends QuestionModuleSourceConfig
 > {
+  userId?: string;
+  recordUsage?: (record: ModelUsageRecord) => void;
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
   questionCount: number;
@@ -102,6 +104,12 @@ export interface QuestionModuleMarkContext<TAnswer = unknown> {
 
 export interface QuestionModuleMarkResult extends QuestionResult {
   breakdown?: Record<string, unknown>;
+}
+
+export interface ModelUsageRecord {
+  modelId: string;
+  inputTokens: number;
+  outputTokens: number;
 }
 
 export interface QuestionModule<
