@@ -20,6 +20,9 @@ interface WritingPromptViewProps {
   onSubmit: () => void;
   activeView: 'fragen' | 'quelle';
   onActiveViewChange: (view: 'fragen' | 'quelle') => void;
+  showA4Format?: boolean;
+  onShowA4FormatChange?: (show: boolean) => void;
+  onEndSession?: () => void;
 }
 
 export function WritingPromptView(props: WritingPromptViewProps) {
@@ -40,6 +43,9 @@ export function WritingPromptView(props: WritingPromptViewProps) {
     onSubmit,
     activeView,
     onActiveViewChange,
+    showA4Format = true,
+    onShowA4FormatChange,
+    onEndSession,
   } = props;
 
   return (
@@ -68,6 +74,9 @@ export function WritingPromptView(props: WritingPromptViewProps) {
         />
       }
       quelleContent={<WritingSource question={question} />}
+      showA4Format={showA4Format}
+      onShowA4FormatChange={onShowA4FormatChange}
+      onEndSession={onEndSession}
     />
   );
 }

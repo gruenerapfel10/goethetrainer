@@ -5,14 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useLearningSession, QuestionStatus } from '@/lib/sessions/learning-session-context';
 import { useSessionPage } from '@/lib/sessions/session-page-context';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from '@/components/ui/dropdown-menu';
-import { Loader2, MoreHorizontal } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import type { AnswerValue } from '@/lib/sessions/types';
 import { resolveModuleComponent } from '@/components/question-modules/module-registry';
@@ -459,6 +452,9 @@ export function SessionOrchestrator() {
             onSubmit={() => handleTeilCompletion()}
             activeView={activeView}
             onActiveViewChange={setActiveView}
+            showA4Format={showA4Format}
+            onShowA4FormatChange={setShowA4Format}
+            onEndSession={handleEndSession}
           />
         );
       }
@@ -469,6 +465,7 @@ export function SessionOrchestrator() {
             key={`teil-${activeTeilNumber}`}
             questions={activeTeilQuestions}
             showA4Format={showA4Format}
+            onShowA4FormatChange={setShowA4Format}
             isLastTeil={isLastTeil}
             accumulatedAnswers={accumulatedAnswers}
             onBack={
@@ -487,6 +484,7 @@ export function SessionOrchestrator() {
             isSubmitting={isSubmitting || isNavigating}
             activeView={activeView}
             onActiveViewChange={setActiveView}
+            onEndSession={handleEndSession}
             onTeilNavigate={teil => {
               if (isNavigating) return;
               activateTeil(teil);
@@ -536,6 +534,9 @@ export function SessionOrchestrator() {
             onSubmit={() => handleTeilCompletion()}
             activeView={activeView}
             onActiveViewChange={setActiveView}
+            showA4Format={showA4Format}
+            onShowA4FormatChange={setShowA4Format}
+            onEndSession={handleEndSession}
           />
         );
       }
@@ -589,6 +590,9 @@ export function SessionOrchestrator() {
             }
             quelleContent={quelleContent}
             showSourceToggle={Boolean(quelleContent)}
+            showA4Format={showA4Format}
+            onShowA4FormatChange={setShowA4Format}
+            onEndSession={handleEndSession}
           />
         );
       }
@@ -651,28 +655,6 @@ export function SessionOrchestrator() {
           Teil {activeTeilNumber + 1} wird vorbereitet …
         </div>
       )}
-
-      {/* Triple dot menu */}
-      <div className="absolute top-4 right-4 z-10">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuCheckboxItem
-              checked={showA4Format}
-              onCheckedChange={setShowA4Format}
-            >
-              A4 Format
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuItem onClick={handleEndSession}>
-              End Session
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       {/* Question Component */}
       <div className="h-full overflow-hidden">

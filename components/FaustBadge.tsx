@@ -23,27 +23,15 @@ interface FaustBadgeProps {
 }
 
 export function FaustBadge({ percentage, className, latestSessionPercentage }: FaustBadgeProps) {
-  const [displayedPercentage, setDisplayedPercentage] = useState(0);
+  const [displayedPercentage, setDisplayedPercentage] = useState(percentage);
   const gradeInfo = resolveGradeInfo(percentage);
 
-  const difference = latestSessionPercentage !== undefined ? latestSessionPercentage - percentage : 0;
-  const isPositive = difference > 0;
-  const isNeutral = difference === 0;
+  const delta = latestSessionPercentage ?? 0;
+  const isPositive = delta > 0;
+  const isNeutral = delta === 0;
 
   useEffect(() => {
-    let currentValue = 0;
-    const increment = Math.ceil(percentage / 30);
-    const interval = setInterval(() => {
-      currentValue += increment;
-      if (currentValue >= percentage) {
-        setDisplayedPercentage(percentage);
-        clearInterval(interval);
-      } else {
-        setDisplayedPercentage(currentValue);
-      }
-    }, 30);
-
-    return () => clearInterval(interval);
+    setDisplayedPercentage(percentage);
   }, [percentage]);
 
   return (
@@ -77,11 +65,11 @@ export function FaustBadge({ percentage, className, latestSessionPercentage }: F
       <div className="relative z-10">
         {latestSessionPercentage !== undefined && (
           <p className={cn('absolute -top-4 -left-12 text-2xl font-bold tracking-wide', isPositive ? 'text-green-300' : isNeutral ? 'text-primary-foreground' : 'text-red-300')}>
-            {isPositive ? '+' : ''}{difference}%
+            {isPositive ? '+' : ''}{delta.toFixed(1)}%
           </p>
         )}
         <p className="text-6xl font-black text-primary-foreground leading-none">
-          {displayedPercentage}%
+          {displayedPercentage.toFixed(1)}%
         </p>
       </div>
       <p className={cn('text-2xl font-bold tracking-wide relative z-10', gradeInfo.color === 'text-red-600' ? 'text-primary-foreground' : 'text-primary-foreground') }>

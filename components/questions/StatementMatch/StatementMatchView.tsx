@@ -22,6 +22,9 @@ interface StatementMatchViewProps {
   onSubmit: () => void;
   activeView: 'fragen' | 'quelle';
   onActiveViewChange: (view: 'fragen' | 'quelle') => void;
+  showA4Format?: boolean;
+  onShowA4FormatChange?: (show: boolean) => void;
+  onEndSession?: () => void;
 }
 
 export function StatementMatchView({
@@ -42,6 +45,9 @@ export function StatementMatchView({
   onSubmit,
   activeView,
   onActiveViewChange,
+  showA4Format = true,
+  onShowA4FormatChange,
+  onEndSession,
 }: StatementMatchViewProps) {
   return (
     <SessionBoard
@@ -69,6 +75,9 @@ export function StatementMatchView({
         />
       }
       quelleContent={<StatementMatchSource question={question} />}
+      showA4Format={showA4Format}
+      onShowA4FormatChange={onShowA4FormatChange}
+      onEndSession={onEndSession}
     />
   );
 }

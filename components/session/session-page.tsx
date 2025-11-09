@@ -354,13 +354,32 @@ function SessionContent() {
               </div>
             )}
           </div>
-          {insights?.chart.length ? (
-            <FaustBadge
-              percentage={Math.round(insights.chart.reduce((sum, point) => sum + point.score, 0) / insights.chart.length)}
-              latestSessionPercentage={insights.chart[insights.chart.length - 1].score}
-              className="h-96"
-            />
-          ) : null}
+          {insights?.chart.length ? (() => {
+            const allScores = insights.chart.map(point => point.score);
+            const latestScore = allScores[allScores.length - 1];
+            const previousScores = allScores.slice(0, -1);
+
+            const sumAll = allScores.reduce((sum, score) => sum + score, 0);
+            const overallAverage = sumAll / allScores.length;
+            const roundedAverage = Math.round(overallAverage * 10) / 10;
+
+            const sumWithoutLatest = previousScores.reduce((sum, score) => sum + score, 0);
+            const averageWithoutLatest =
+              previousScores.length > 0 ? sumWithoutLatest / previousScores.length : null;
+
+            const percentageChange =
+              averageWithoutLatest !== null
+                ? Math.round((overallAverage - averageWithoutLatest) * 10) / 10
+                : 0;
+
+            return (
+              <FaustBadge
+                percentage={roundedAverage}
+                latestSessionPercentage={percentageChange}
+                className="h-96"
+              />
+            );
+          })() : null}
         </div>
       </div>
 

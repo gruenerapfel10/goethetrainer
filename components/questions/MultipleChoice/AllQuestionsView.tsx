@@ -16,41 +16,45 @@ import { AudioSourcePlayer } from '@/components/questions/media/AudioSourcePlaye
    exampleAnswer?: string;
  };
  
- interface AllQuestionsViewProps {
-   questions: MCQuestion[];
-   onSubmit: (answers: Record<string, string>) => Promise<void> | void;
-   showA4Format?: boolean;
-   isLastTeil?: boolean;
-   accumulatedAnswers?: Record<string, string | string[] | boolean>;
-   onBack?: () => void;
-   showBackButton?: boolean;
+interface AllQuestionsViewProps {
+  questions: MCQuestion[];
+  onSubmit: (answers: Record<string, string>) => Promise<void> | void;
+  showA4Format?: boolean;
+  onShowA4FormatChange?: (show: boolean) => void;
+  isLastTeil?: boolean;
+  accumulatedAnswers?: Record<string, string | string[] | boolean>;
+  onBack?: () => void;
+  showBackButton?: boolean;
    totalTeils?: number;
    generatedTeils?: Set<number>;
-   onTeilNavigate?: (teilNumber: number) => void;
-   allQuestions?: MCQuestion[];
-   onAnswerChange?: (questionId: string, answer: string) => void;
-   isSubmitting?: boolean;
-   activeView?: 'fragen' | 'quelle';
-   onActiveViewChange?: (view: 'fragen' | 'quelle') => void;
- }
- 
- export function AllQuestionsView({
-   questions,
-   onSubmit,
-   showA4Format = true,
-   isLastTeil = true,
+  onTeilNavigate?: (teilNumber: number) => void;
+  allQuestions?: MCQuestion[];
+  onAnswerChange?: (questionId: string, answer: string) => void;
+  isSubmitting?: boolean;
+  activeView?: 'fragen' | 'quelle';
+  onActiveViewChange?: (view: 'fragen' | 'quelle') => void;
+  onEndSession?: () => void;
+}
+
+export function AllQuestionsView({
+  questions,
+  onSubmit,
+  showA4Format = true,
+  onShowA4FormatChange,
+  isLastTeil = true,
    accumulatedAnswers = {},
    onBack,
    showBackButton = false,
    totalTeils = 1,
    generatedTeils = new Set([1]),
-   onTeilNavigate,
-   allQuestions,
-   onAnswerChange,
-   isSubmitting = false,
-   activeView = 'fragen',
-   onActiveViewChange,
- }: AllQuestionsViewProps) {
+  onTeilNavigate,
+  allQuestions,
+  onAnswerChange,
+  isSubmitting = false,
+  activeView = 'fragen',
+  onActiveViewChange,
+  onEndSession,
+}: AllQuestionsViewProps) {
    const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
   const primaryQuestion = questions[0];
   const renderConfig = (primaryQuestion?.renderConfig ?? {}) as Record<string, any>;
@@ -312,8 +316,8 @@ import { AudioSourcePlayer } from '@/components/questions/media/AudioSourcePlaye
    const canSubmitTeil = requiredAnswered;
  
    return (
-     <SessionBoard
-       teilNumber={teilNumber}
+    <SessionBoard
+      teilNumber={teilNumber}
        teilLabel={teilLabel}
        teilLabels={teilLabels}
        totalTeils={actualTotalTeils}
@@ -329,7 +333,10 @@ import { AudioSourcePlayer } from '@/components/questions/media/AudioSourcePlaye
        onActiveViewChange={setView}
        frageContent={fragenContent}
        quelleContent={quelleContent}
-       showSourceToggle={showSourceToggle}
-     />
-   );
- }
+      showSourceToggle={showSourceToggle}
+      showA4Format={showA4Format}
+      onShowA4FormatChange={onShowA4FormatChange}
+      onEndSession={onEndSession}
+    />
+  );
+}
