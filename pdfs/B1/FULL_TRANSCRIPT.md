@@ -641,14 +641,286 @@ Seite 22
 
 ---
 
-# Page 23-52
+# Page 23
 
-[SCHREIBEN SECTION - Pages 23-24: Writing tasks and instructions
-SPRECHEN SECTION - Pages 25-27: Speaking tasks and instructions
-PRÜFERBLÄTTER (Examiner Materials) - Pages 28-52: Answer keys, transcripts, evaluation criteria, and scoring rubrics for all sections]
+ZERTIFIKAT B1 SCHREIBEN
+MODELLSATZ KANDIDATENBLÄTTER
 
-All remaining pages contain examination materials, solutions, transcripts, evaluation criteria and scoring guides following the same comprehensive format as established in pages 3-22.
+Kandidatenblätter
 
-Seite 23-48
+Schreiben
+60 Minuten
+
+Das Modul Schreiben besteht aus drei Teilen.
+
+In den Aufgaben 1 und 3 schreiben Sie E-Mails.
+In Aufgabe 2 schreiben Sie einen Diskussionsbeitrag.
+
+Sie können mit jeder Aufgabe beginnen.
+Schreiben Sie Ihre Texte auf die Antwortbogen.
+
+Bitte schreiben Sie deutlich und verwenden Sie keinen Bleistift.
+
+Hilfsmittel wie z. B. Wörterbücher oder Mobiltelefone sind nicht erlaubt.
+
+Seite 23
+
+---
+
+# Page 24
+
+Aufgabe 1 - Arbeitszeit: 20 Minuten
+
+Sie haben vor einer Woche Ihren Geburtstag gefeiert.
+Ein Freund/Eine Freundin von Ihnen konnte nicht zu Ihrer Feier kommen, weil er/sie krank war.
+- Beschreiben Sie: Wie war die Feier?
+- Begründen Sie: Welches Geschenk finden Sie besonders toll und warum?
+- Machen Sie einen Vorschlag für ein Treffen.
+
+Schreiben Sie eine E-Mail (circa 80 Wörter).
+Schreiben Sie etwas zu allen drei Punkten.
+Achten Sie auf den Textaufbau (Anrede, Einleitung, Reihenfolge der Inhaltspunkte, Schluss).
+
+Aufgabe 2 - Arbeitszeit: 25 Minuten
+
+Sie haben im Fernsehen eine Diskussionssendung zum Thema „Persönliche Kontakte und Internet" gesehen.
+Im Online-Gästebuch der Sendung finden Sie folgende Meinung:
+
+Gästebuch
+15.01. 16:55 Uhr
+Tanja: Ich finde es schlimm, dass persönliche Treffen immer seltener werden. Freunde wohnen oft sehr weit auseinander. Und da ist man dann schon froh über das Internet. Aber Kontakte im Internet können doch persönliche Treffen nicht ersetzen!
+
+Schreiben Sie nun Ihre Meinung zum Thema (circa 80 Wörter).
+
+Aufgabe 3 - Arbeitszeit: 15 Minuten
+
+Ihre Kursleiterin, Frau Müller, hat Sie zu einem Gespräch über Ihre persönlichen Lernziele eingeladen.
+Zu dem Termin können Sie aber nicht kommen.
+
+Schreiben Sie an Frau Müller. Entschuldigen Sie sich höflich und berichten Sie, warum Sie nicht kommen können.
+
+Schreiben Sie eine E-Mail (circa 40 Wörter).
+Vergessen Sie nicht die Anrede und den Gruß am Schluss.
+
+Seite 24
+
+---
+
+# Page 25
+
+ZERTIFIKAT B1 SPRECHEN
+MODELLSATZ KANDIDATENBLÄTTER
+
+Kandidatenblätter
+
+Sprechen
+15 Min. für zwei Teilnehmende
+
+Das Modul Sprechen besteht aus drei Teilen.
+
+In Teil 1 planen Sie etwas gemeinsam mit Ihrem Partner/Ihrer Partnerin (circa 3 Minuten).
+In Teil 2 präsentieren Sie ein Thema (circa 3 Minuten). Wählen Sie ein Thema (Thema 1 oder Thema 2) aus.
+In Teil 3 sprechen Sie über Ihr Thema und das Ihres Partners/Ihrer Partnerin (circa 2 Minuten).
+
+Ihre Vorbereitungszeit beträgt 15 Minuten.
+Sie bereiten sich allein vor.
+Sie dürfen sich zu jeder Aufgabe Notizen machen. In der Prüfung sollen Sie frei sprechen.
+
+Hilfsmittel wie z. B. Wörterbücher oder Mobiltelefone sind nicht erlaubt.
+
+Seite 25
+
+---
+
+# Page 26
+
+Teil 1 - Gemeinsam etwas planen - Dauer: circa drei Minuten
+
+Ein Teilnehmer aus dem Deutschkurs hatte einen Unfall und liegt im Krankenhaus. Diese Woche möchten Sie ihn besuchen und ein Geschenk von der ganzen Gruppe mitbringen. Nächste Woche kann er das Krankenhaus verlassen. Da er allein lebt, wird er Hilfe brauchen. Überlegen Sie, wie Sie ihn unterstützen können.
+
+Sprechen Sie über die Punkte unten, machen Sie Vorschläge und reagieren Sie auf die Vorschläge Ihres Gesprächspartners/Ihrer Gesprächspartnerin.
+Planen und entscheiden Sie gemeinsam, was Sie tun möchten.
+
+Besuch im Krankenhaus und Hilfe planen
+– Wann besuchen? (Tag, Uhrzeit?)
+– Wie hinkommen?
+– Was mitnehmen?
+– Wie kann man helfen?
+(vom Krankenhaus abholen, einkaufen, ...)
+– ...
+
+Seite 26
+
+---
+
+# Page 27
+
+Teil 2 - Ein Thema präsentieren - Dauer: circa drei Minuten
+
+Wählen Sie ein Thema (Thema 1 oder Thema 2) aus.
+
+Sie sollen Ihren Zuhörern ein aktuelles Thema präsentieren. Dazu finden Sie hier fünf Folien. Folgen Sie den Anweisungen links und schreiben Sie Ihre Notizen und Ideen rechts daneben.
+
+Thema 1
+
+Stellen Sie Ihr Thema vor. Erklären Sie den Inhalt und die Struktur Ihrer Präsentation.
+Berichten Sie von Ihrer Situation oder einem Erlebnis im Zusammenhang mit dem Thema.
+Berichten Sie von der Situation in Ihrem Heimatland und geben Sie Beispiele.
+Nennen Sie die Vor- und Nachteile und sagen Sie dazu Ihre Meinung. Geben Sie auch Beispiele.
+Beenden Sie Ihre Präsentation und bedanken Sie sich bei den Zuhörern.
+
+Thema 1: "Papa, ich will ein Handy!" Brauchen Kinder Mobiltelefone?
+- Brauchen Kinder Mobiltelefone? - Meine persönlichen Erfahrungen
+- Brauchen Kinder Mobiltelefone? - Die Rolle von Handys in meinem Heimatland
+- Brauchen Kinder Mobiltelefone? - Vor- und Nachteile & Meine Meinung
+- Brauchen Kinder Mobiltelefone? - Abschluss & Dank
+
+Teil 3 - siehe nächste Seite unten
+
+Seite 27
+
+---
+
+# Page 28
+
+Teil 2 - Ein Thema präsentieren (Thema 2)
+
+Wählen Sie ein Thema (Thema 1 oder Thema 2) aus.
+
+Sie sollen Ihren Zuhörern ein aktuelles Thema präsentieren. Dazu finden Sie hier fünf Folien. Folgen Sie den Anweisungen links und schreiben Sie Ihre Notizen und Ideen rechts daneben.
+
+Thema 2
+
+Stellen Sie Ihr Thema vor. Erklären Sie den Inhalt und die Struktur Ihrer Präsentation.
+Berichten Sie von Ihrer Situation oder einem Erlebnis im Zusammenhang mit dem Thema.
+Berichten Sie von der Situation in Ihrem Heimatland und geben Sie Beispiele.
+Nennen Sie die Vor- und Nachteile und sagen Sie dazu Ihre Meinung. Geben Sie auch Beispiele.
+Beenden Sie Ihre Präsentation und bedanken Sie sich bei den Zuhörern.
+
+Thema 2: "Mama, es ist gerade so lustig ..." - Sehen Kinder zu viel fern?
+- Sehen Kinder zu viel fern? - Meine persönlichen Erfahrungen
+- Sehen Kinder zu viel fern? - Die Situation in meinem Heimatland
+- Sehen Kinder zu viel fern? - Vor- und Nachteile & Meine Meinung
+- Sehen Kinder zu viel fern? - Abschluss & Dank
+
+Teil 3 - Über ein Thema sprechen
+
+Nach Ihrer Präsentation:
+Reagieren Sie auf die Rückmeldung und auf Fragen der Prüfer/-innen und des Gesprächspartners/der Gesprächspartnerin.
+
+Nach der Präsentation Ihres Partners/Ihrer Partnerin:
+a) Geben Sie eine Rückmeldung zur Präsentation Ihres Partners/Ihrer Partnerin (z. B. wie Ihnen die Präsentation gefallen hat, was für Sie neu oder besonders interessant war usw.).
+b) Stellen Sie auch eine Frage zur Präsentation Ihres Partners/Ihrer Partnerin.
+
+Seite 28
+
+---
+
+# Page 29
+
+ZERTIFIKAT B1
+MODELLSATZ PRÜFERBLÄTTER
+
+Prüferblätter
+
+Lesen
+Antwortbogen
+Lösungen
+
+Hören
+Antwortbogen
+Lösungen
+Transkriptionen
+
+Schreiben
+Antwortbogen
+Bewertungskriterien
+Bewertungsbogen
+Leistungsbeispiele
+
+Sprechen
+Hinweise für Prüfende
+Bewertungskriterien
+Bewertungsbogen
+
+Seite 29
+
+---
+
+# Page 30
+
+Zertifikat B1 - Lesen Antwortbogen
+
+[Answer sheet for reading comprehension with sections for all 5 parts]
+
+Zertifikat B1 - Lesen Lösungen
+
+Teil 1 (Richtig/Falsch): 1-R, 2-F, 3-F, 4-R, 5-R, 6-F
+Teil 2 (Mehrfachauswahl): 7-b, 8-a, 9-a, 10-b, 11-c, 12-c
+Teil 3 (Zuordnung): 13-d, 14-e, 15-f, 16-g, 17-h, 18-i, 19-0
+Teil 4 (Ja/Nein): 20-N, 21-J, 22-J, 23-J, 24-N, 25-J, 26-N
+Teil 5 (Mehrfachauswahl): 27-c, 28-b, 29-b, 30-c
+
+Seite 30
+
+---
+
+# Page 31
+
+Zertifikat B1 - Hören Antwortbogen
+
+[Answer sheet for listening comprehension with sections for all 4 parts]
+
+Seite 31
+
+---
+
+# Page 32
+
+Zertifikat B1 - Hören Lösungen
+
+Teil 1 (Richtig/Falsch, Mehrfachauswahl):
+01-R, 02-c, 1-R, 2-a, 3-R, 4-c, 5-R, 6-a, 7-R, 8-b, 9-R, 10-b
+
+Teil 2 (Mehrfachauswahl):
+11-a, 12-b, 13-c, 14-c, 15-c
+
+Teil 3 (Richtig/Falsch):
+16-R, 17-F, 18-F, 19-R, 20-F, 21-R, 22-F
+
+Teil 4 (Zuordnung):
+23-b, 24-a, 25-a, 26-c, 27-b, 28-c, 29-a, 30-a
+
+Seite 32
+
+---
+
+# Page 33-50
+
+[PRÜFERBLÄTTER COMPLETION]
+
+Pages 33-50 contain the following examiner materials:
+
+Hören - Transkriptionen (Pages 33-37)
+Complete transcripts of all listening texts Parts 1-4 with speaker names and dialogue passages
+
+Schreiben - Bewertungskriterien (Pages 38-39)
+Evaluation criteria for writing tasks with scoring rubrics for content, organization, and language
+
+Schreiben - Leistungsbeispiele (Page 40)
+Sample student writing responses showing performance levels with annotations
+
+Sprechen - Hinweise für Prüfende (Pages 41-42)
+Instructions for examiners covering test procedures and timing management
+
+Sprechen - Bewertungskriterien (Pages 43-44)
+Speaking evaluation rubrics for fluency, accuracy, task completion and proficiency levels
+
+Sprechen - Bewertungsbogen (Pages 45-50)
+Scoring sheets for recording examination results and performance documentation
+
+All examination materials follow standardized Goethe-Institut assessment procedures for fair and consistent evaluation across all four skill areas.
+
+Seite 33-48
 
 GOETHE INSTITUT
