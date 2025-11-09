@@ -89,9 +89,9 @@ export async function microsoftLogin() {
   try {
     return await signIn('microsoft-entra-id', {
       redirect: true,
-      callbackUrl: '/',
+      callbackUrl: '/dashboard',
       // Add this to help with PKCE issues
-      redirectTo: '/'
+      redirectTo: '/dashboard'
     });
   } catch (error) {
     console.error('[auth] Microsoft login error:', error);

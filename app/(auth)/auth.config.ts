@@ -4,7 +4,7 @@ export const authConfig = {
   secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
   pages: {
     signIn: '/login',
-    newUser: '/',
+    newUser: '/dashboard',
     error: '/login', // Add error page
   },
   providers: [],
@@ -26,7 +26,7 @@ export const authConfig = {
       }
 
       if (isLoggedIn && isAuthRoute) {
-        return Response.redirect(new URL('/', nextUrl));
+        return Response.redirect(new URL('/dashboard', nextUrl));
       }
 
       if (isPublicRoute) {

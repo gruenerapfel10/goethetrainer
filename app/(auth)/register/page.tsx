@@ -37,7 +37,7 @@ export default function Page() {
     } else if (state.status === 'success') {
       toast.success(t('register.success'));
       setIsSuccessful(true);
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [state.status, router, t]);
 

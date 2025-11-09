@@ -44,7 +44,7 @@ export default function Page() {
       toast.error(t('login.errors.invalidData'));
     } else if (state.status === 'success') {
       setIsSuccessful(true);
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [state.status, router, t]);
 

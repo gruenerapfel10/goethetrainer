@@ -20,6 +20,14 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/register') ||
     pathname.startsWith('/home');
 
+  const isChatRoute =
+    pathname === '/chat' ||
+    pathname.startsWith('/chat/');
+
+  if (isChatRoute) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
+  }
+
   // Allow static files
   if (PUBLIC_FILES.some(file => pathname.includes(file))) {
     return NextResponse.next();
@@ -48,16 +56,6 @@ export async function middleware(request: NextRequest) {
     secureCookie: shouldUseSecureCookies,
   });
 
-  // Check if this is a chat page request
-  const isChatPage = pathname.startsWith('/chat/');
-  
-  // For chat pages, we need to check if it's public before requiring auth
-  if (isChatPage && !token) {
-    // Allow the request to proceed to the page where it will check visibility
-    // The page itself will handle authentication for private chats
-    return NextResponse.next();
-  }
-
   // If no token, redirect to login (except for auth pages and public chats)
   if (!token) {
     if (isPublicPath) {
@@ -69,7 +67,7 @@ export async function middleware(request: NextRequest) {
 
   // If logged in and trying to access auth pages, redirect to home
   if (token && (pathname === '/login' || pathname === '/register')) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // Protect API routes (except auth and public ones)

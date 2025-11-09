@@ -209,7 +209,7 @@ export function SidebarHistory({
     setShowDeleteDialog(false);
 
     if (deleteId === id) {
-      router.push('/');
+      router.push('/dashboard');
     }
   };
 

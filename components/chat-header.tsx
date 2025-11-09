@@ -83,7 +83,7 @@ function PureChatHeader({
             <div className="flex items-center gap-2 flex-1">
               <SidebarToggle />
               <Button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/dashboard')}
                 className="h-9 bg-[#0A0C10] border-0 text-white hover:text-white rounded-xl hover:bg-[#12151C] transition-colors duration-200 flex items-center gap-2.5 px-3"
               >
                 <PlusIcon className="h-4 w-4" />
