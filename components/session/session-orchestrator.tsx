@@ -92,6 +92,14 @@ export function SessionOrchestrator() {
     }
   }, [sessionType]);
 
+  const plannedQuestionTotal = useMemo(() => {
+    return sessionLayout.reduce((sum, entry) => {
+      const baseCount = entry.questionCount ?? 0;
+      const exampleCount = entry.generateExample ? 1 : 0;
+      return sum + baseCount + exampleCount;
+    }, 0);
+  }, [sessionLayout]);
+
   const expectedTeilCount = sessionLayout.length > 0 ? sessionLayout.length : 1;
   const teilLabels = useMemo(() => {
     return sessionLayout.reduce<Record<number, string>>((acc, entry, index) => {
@@ -389,12 +397,15 @@ export function SessionOrchestrator() {
   }
 
   const renderQuestion = () => {
-    if (isGeneratingQuestions && sessionQuestions.length === 0) {
+    if (isGeneratingQuestions) {
       const generated = generationState?.generated ?? 0;
-      const total = generationState?.total ?? 0;
+      const total =
+        plannedQuestionTotal > 0
+          ? plannedQuestionTotal
+          : Math.max(sessionQuestions.length, generationState?.total ?? 0);
       const progressLabel =
         total > 0
-          ? `${generated} von ${total} Fragen sind bereit.`
+          ? `${generated} / ${total} Fragen sind bereit.`
           : 'Wir generieren deine erste Frage.';
 
       return (

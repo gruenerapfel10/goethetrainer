@@ -240,7 +240,8 @@ async function generateStatementMatchQuestion(
     const labelSuffix = teilLabel ? ` (${teilLabel})` : '';
     console.log(`[NewsPool] Using headline${labelSuffix}:`, newsTopic.headline);
   }
-  if (unmatchedCount > 0) {
+  const optionZeroEnabled = unmatchedCount > 0;
+  if (!optionZeroEnabled && unmatchedCount > 0) {
     throw new Error('Statement matching no longer supports unmatched statements (Option 0).');
   }
 
@@ -252,6 +253,10 @@ const newsBlock = newsTopic
 - Zusammenfassung: ${newsTopic.summary}`
   : '';
 
+const optionZeroBlock = optionZeroEnabled
+  ? `Davon ohne passenden Autor (Antwort \"0\"): ${unmatchedCount}`
+  : 'Jede Aussage muss genau einer Person aus der Autorenliste zugeordnet werden.';
+
 const userPrompt = `
 Erstelle eine Aufgabe im Stil des Goethe-Zertifikats C1 Lesen, Teil 4.
 
@@ -260,7 +265,7 @@ Inhaltlicher Fokus: ${topicHint}
 Sprachlevel: ${difficulty}
 Autorenanzahl: ${authorCount}
 Anzahl Aussagen: ${statementCount}
-Davon ohne passenden Autor (Antwort "0"): ${unmatchedCount}
+${optionZeroBlock}
 
 ${newsBlock}
 
@@ -306,7 +311,7 @@ Liefere JSON, das exakt zum Schema passt.
 
   const statements = data.statements.slice(0, statementCount);
   const actualUnmatched = statements.filter(entry => !entry.authorId || entry.authorId === '0').length;
-  if (actualUnmatched > 0) {
+  if (!optionZeroEnabled && actualUnmatched > 0) {
     throw new Error(
       'Das Modell lieferte Aussagen ohne gültige Autorenzuordnung, Option 0 ist deaktiviert.'
     );

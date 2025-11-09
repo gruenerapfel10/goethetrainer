@@ -87,6 +87,8 @@ interface TeilGenerationResult {
   usage: ModelUsageRecord[];
 }
 
+const TEIL_GENERATION_MAX_ATTEMPTS = 3;
+
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
   layoutEntry: NormalisedSessionLayoutEntry,
@@ -118,108 +120,130 @@ async function generateTeilQuestions(
 
   const usageRecords: ModelUsageRecord[] = [];
 
-  const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
-    sessionType,
-    difficulty,
-    userId,
-    recordUsage: record => {
-      usageRecords.push(record);
-    },
-  });
+  let attempt = 0;
+  let lastError: unknown = null;
+  while (attempt < TEIL_GENERATION_MAX_ATTEMPTS) {
+    attempt += 1;
+    try {
+      console.log(
+        `[SessionGenerator] Teil ${teilNumber} (${layoutEntry.moduleId}) attempt ${attempt}/${TEIL_GENERATION_MAX_ATTEMPTS}`
+      );
+      const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
+        sessionType,
+        difficulty,
+        userId,
+        recordUsage: record => {
+          usageRecords.push(record);
+        },
+      });
 
-  let questions = rawQuestions.map((question: any, index: number) => ({
-    ...question,
-    answer: question.answer ?? null,
-    teil: teilNumber,
-    order: index,
-    registryType: layoutEntry.moduleId,
-    answered: !!question.answer,
-    inputType: question.inputType ?? question.answerType,
-    answerType: question.answerType ?? question.inputType,
-    layoutId: layoutEntry.id,
-    layoutLabel: layoutEntry.label,
-  }));
-
-  if (exampleRequested && questions.length > 0) {
-    const [exampleQuestion, ...restQuestions] = questions;
-    const updatedExample = markQuestionAsExample(exampleQuestion);
-    questions = [updatedExample, ...restQuestions];
-  }
-
-  const pointsOverride = layoutEntry.metadata?.points;
-  if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
-    const totalPoints = Math.max(0, Math.round(pointsOverride));
-
-    const scoredQuestions = questions.filter(question => !question.isExample);
-    const scoredCount = scoredQuestions.length;
-
-    const scaleRubric = (question: Question, targetPoints: number): Question => {
-      const next: Question = {
+      let questions = rawQuestions.map((question: any, index: number) => ({
         ...question,
-        points: targetPoints,
-      };
+        answer: question.answer ?? null,
+        teil: teilNumber,
+        order: index,
+        registryType: layoutEntry.moduleId,
+        answered: !!question.answer,
+        inputType: question.inputType ?? question.answerType,
+        answerType: question.answerType ?? question.inputType,
+        layoutId: layoutEntry.id,
+        layoutLabel: layoutEntry.label,
+      }));
 
-      if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
-        const rubricTotal = next.scoringRubric.reduce(
-          (sum, entry) => sum + (entry.maxPoints ?? 0),
-          0
-        );
+      if (exampleRequested && questions.length > 0) {
+        const [exampleQuestion, ...restQuestions] = questions;
+        const updatedExample = markQuestionAsExample(exampleQuestion);
+        questions = [updatedExample, ...restQuestions];
+      }
 
-        if (rubricTotal > 0) {
-          const scale = targetPoints / rubricTotal;
-          const scaledRubric = next.scoringRubric.map(entry => ({
-            ...entry,
-            maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
-          }));
+      const pointsOverride = layoutEntry.metadata?.points;
+      if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
+        const totalPoints = Math.max(0, Math.round(pointsOverride));
 
-          const scaledTotal = scaledRubric.reduce(
-            (sum, entry) => sum + (entry.maxPoints ?? 0),
-            0
-          );
-          const delta = targetPoints - scaledTotal;
-          if (scaledRubric.length > 0 && delta !== 0) {
-            scaledRubric[0] = {
-              ...scaledRubric[0],
-              maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
-            };
+        const scoredQuestions = questions.filter(question => !question.isExample);
+        const scoredCount = scoredQuestions.length;
+
+        const scaleRubric = (question: Question, targetPoints: number): Question => {
+          const next: Question = {
+            ...question,
+            points: targetPoints,
+          };
+
+          if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
+            const rubricTotal = next.scoringRubric.reduce(
+              (sum, entry) => sum + (entry.maxPoints ?? 0),
+              0
+            );
+
+            if (rubricTotal > 0) {
+              const scale = targetPoints / rubricTotal;
+              const scaledRubric = next.scoringRubric.map(entry => ({
+                ...entry,
+                maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
+              }));
+
+              const scaledTotal = scaledRubric.reduce(
+                (sum, entry) => sum + (entry.maxPoints ?? 0),
+                0
+              );
+              const delta = targetPoints - scaledTotal;
+              if (scaledRubric.length > 0 && delta !== 0) {
+                scaledRubric[0] = {
+                  ...scaledRubric[0],
+                  maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
+                };
+              }
+
+              next.scoringRubric = scaledRubric;
+            }
           }
 
-          next.scoringRubric = scaledRubric;
+          return next;
+        };
+
+        if (scoredCount > 0) {
+          const basePointValue = Math.floor(totalPoints / scoredCount);
+          let remainder = totalPoints - basePointValue * scoredCount;
+
+          let scoredIndex = 0;
+          questions = questions.map(question => {
+            if (question.isExample) {
+              return scaleRubric(question, 0);
+            }
+
+            const extra = remainder > 0 ? 1 : 0;
+            if (extra > 0) {
+              remainder -= 1;
+            }
+
+            const targetPoints = basePointValue + extra;
+            const scaled = scaleRubric(question, targetPoints);
+            scoredIndex += 1;
+            return scaled;
+          });
+        } else {
+          questions = questions.map(question => scaleRubric(question, totalPoints));
         }
       }
 
-      return next;
-    };
-
-    if (scoredCount > 0) {
-      const basePointValue = Math.floor(totalPoints / scoredCount);
-      let remainder = totalPoints - basePointValue * scoredCount;
-
-      let scoredIndex = 0;
-      questions = questions.map(question => {
-        if (question.isExample) {
-          return scaleRubric(question, 0);
-        }
-
-        const extra = remainder > 0 ? 1 : 0;
-        if (extra > 0) {
-          remainder -= 1;
-        }
-
-        const targetPoints = basePointValue + extra;
-        const scaled = scaleRubric(question, targetPoints);
-        scoredIndex += 1;
-        return scaled;
-      });
-    } else {
-      questions = questions.map(question => scaleRubric(question, totalPoints));
+      return {
+        questions: ensureQuestionIdentifiers(questions),
+        usage: usageRecords,
+      };
+    } catch (error) {
+      lastError = error;
+      console.error(
+        `[SessionGenerator] Teil ${teilNumber} (${layoutEntry.moduleId}) attempt ${attempt} failed`,
+        error
+      );
+      if (attempt >= TEIL_GENERATION_MAX_ATTEMPTS) {
+        break;
+      }
+      usageRecords.length = 0;
     }
   }
 
-  return {
-    questions: ensureQuestionIdentifiers(questions),
-    usage: usageRecords,
-  };
+  throw lastError ?? new Error(`Teil ${teilNumber} generation failed`);
 }
 
 
@@ -472,7 +496,7 @@ export async function generateQuestionsForSession(
     touchSession(session);
     await persistSession(session);
 
-    let teilNumber = 1;
+    let fallbackTeilNumber = 1;
     let maxScore = session.data.progress?.maxScore ?? 0;
 
     const appendQuestion = async (question: Question) => {
@@ -511,7 +535,7 @@ export async function generateQuestionsForSession(
       const state = session.data.state ?? { activeQuestionId: null, activeTeil: null, activeView: 'fragen' as const };
       if (!state.activeQuestionId) {
         state.activeQuestionId = normalised.id;
-        state.activeTeil = normalised.teil ?? teilNumber;
+        state.activeTeil = normalised.teil ?? fallbackTeilNumber;
         session.data.state = state;
         if (session.metadata) {
           session.metadata.activeQuestionId = normalised.id;
@@ -527,31 +551,27 @@ export async function generateQuestionsForSession(
         status: 'in_progress',
         generated: (session.data.generation?.generated ?? 0) + 1,
         lastGeneratedQuestionId: normalised.id,
-        currentTeil: normalised.teil ?? teilNumber,
+        currentTeil: normalised.teil ?? fallbackTeilNumber,
       };
 
       touchSession(session);
       await persistSession(session);
     };
 
-    const pendingTeils = new Map<number, { entry: NormalisedSessionLayoutEntry; result: TeilGenerationResult }>();
+    type PendingTeil = {
+      entry: NormalisedSessionLayoutEntry;
+      result: TeilGenerationResult;
+      startedAt: number;
+      finishedAt: number;
+    };
+
+    const pendingTeils = new Map<number, PendingTeil>();
     let nextPlanIndex = 0;
     let nextTeilToFlush = 1;
     let workerError: unknown = null;
     let flushLock: Promise<void> | null = null;
 
-    const processTeilResult = async (
-      currentTeil: number,
-      entry: NormalisedSessionLayoutEntry,
-      teilResult: TeilGenerationResult
-    ) => {
-      const teilQuestions = teilResult.questions;
-      if (!teilQuestions.length) {
-        console.warn(`[SessionGenerator] Teil ${currentTeil} returned no questions`);
-        return;
-      }
-
-      const usage = teilResult.usage;
+    const logUsage = (teilNumberToLog: number, usage: ModelUsageRecord[], durationMs: number) => {
       if (usage.length) {
         const inputTokens = usage.reduce<number>((sum, record) => sum + record.inputTokens, 0);
         const outputTokens = usage.reduce<number>((sum, record) => sum + record.outputTokens, 0);
@@ -560,11 +580,25 @@ export async function generateQuestionsForSession(
           return sum + (cost ?? 0);
         }, 0);
         console.log(
-          `[SessionGenerator] Teil ${currentTeil} usage: input=${inputTokens} output=${outputTokens} tokens, approx cost=$${estimatedCost.toFixed(4)}`
+          `[SessionGenerator] Teil ${teilNumberToLog} finished in ${(durationMs / 1000).toFixed(2)}s | input=${inputTokens} output=${outputTokens} tokens | approx cost=$${estimatedCost.toFixed(4)}`
         );
       } else {
-        console.log(`[SessionGenerator] Teil ${currentTeil} usage metrics unavailable (no usage reported).`);
+        console.log(`[SessionGenerator] Teil ${teilNumberToLog} finished with no usage metrics (duration ${(durationMs / 1000).toFixed(2)}s)`);
       }
+    };
+
+    const processTeilResult = async (
+      targetTeilNumber: number,
+      payload: PendingTeil
+    ) => {
+      const { entry, result, startedAt, finishedAt } = payload;
+      const teilQuestions = result.questions;
+      if (!teilQuestions.length) {
+        console.warn(`[SessionGenerator] Teil ${targetTeilNumber} returned no questions`);
+        return;
+      }
+
+      logUsage(targetTeilNumber, result.usage, finishedAt - startedAt);
 
       session.data.generation = {
         ...(session.data.generation ?? {
@@ -574,7 +608,7 @@ export async function generateQuestionsForSession(
         }),
         status: 'in_progress',
         total: (session.data.generation?.total ?? 0) + teilQuestions.length,
-        currentTeil,
+        currentTeil: targetTeilNumber,
       };
       touchSession(session);
       await persistSession(session);
@@ -582,27 +616,44 @@ export async function generateQuestionsForSession(
       for (const question of teilQuestions) {
         await appendQuestion(question);
       }
+
+      console.log(
+        `[SessionGenerator] Teil ${targetTeilNumber} persisted (${teilQuestions.length} questions, total=${session.data.questions.length})`
+      );
+      fallbackTeilNumber = targetTeilNumber + 1;
     };
 
-    const flushReadyTeils = async () => {
+    const flushReadyTeils = async (): Promise<void> => {
       if (flushLock) {
         await flushLock;
+        // Another worker may have queued ready teils while we were waiting.
+        return flushReadyTeils();
+      }
+
+      if (!pendingTeils.has(nextTeilToFlush)) {
         return;
       }
+
       flushLock = (async () => {
         try {
           while (pendingTeils.has(nextTeilToFlush)) {
+            console.log(`[SessionGenerator] Flushing queued Teil ${nextTeilToFlush}`);
             const payload = pendingTeils.get(nextTeilToFlush)!;
             pendingTeils.delete(nextTeilToFlush);
-            await processTeilResult(nextTeilToFlush, payload.entry, payload.result);
+            await processTeilResult(nextTeilToFlush, payload);
             nextTeilToFlush += 1;
-            teilNumber = nextTeilToFlush;
           }
+          console.log('[SessionGenerator] Flush run complete');
         } finally {
           flushLock = null;
         }
       })();
+
       await flushLock;
+
+      if (pendingTeils.has(nextTeilToFlush)) {
+        await flushReadyTeils();
+      }
     };
 
     const getNextPlanIndex = () => {
@@ -614,7 +665,7 @@ export async function generateQuestionsForSession(
       return index;
     };
 
-    const worker = async () => {
+    const worker = async (workerId: number) => {
       while (true) {
         if (workerError) {
           return;
@@ -625,6 +676,8 @@ export async function generateQuestionsForSession(
         }
         const currentTeil = planIndex + 1;
         const entry = plan[planIndex];
+        console.log(`[SessionGenerator] Worker ${workerId} dispatch Teil ${currentTeil} (${entry.moduleId})`);
+        const startTime = Date.now();
         try {
           const result = await generateTeilQuestions(
             sessionType,
@@ -633,20 +686,35 @@ export async function generateQuestionsForSession(
             currentTeil,
             userId
           );
-          pendingTeils.set(currentTeil, { entry, result });
+          console.log(
+            `[SessionGenerator] Worker ${workerId} completed Teil ${currentTeil} (questions=${result.questions.length})`
+          );
+          pendingTeils.set(currentTeil, {
+            entry,
+            result,
+            startedAt: startTime,
+            finishedAt: Date.now(),
+          });
           await flushReadyTeils();
         } catch (error) {
           workerError = error;
+          console.error(`[SessionGenerator] Worker ${workerId} failed on Teil ${currentTeil}`, error);
           return;
         }
       }
     };
 
     try {
-      const concurrency = Math.min(4, plan.length);
-      const workers = Array.from({ length: concurrency }, () => worker());
-      await Promise.all(workers);
-      await flushReadyTeils();
+      const remainingPlanLength = plan.length - nextPlanIndex;
+      if (remainingPlanLength > 0) {
+        const concurrency = Math.min(4, remainingPlanLength);
+        console.log(
+          `[SessionGenerator] Starting worker pool with ${concurrency} workers for ${remainingPlanLength} teils`
+        );
+        const workers = Array.from({ length: concurrency }, (_, idx) => worker(idx + 1));
+        await Promise.all(workers);
+        await flushReadyTeils();
+      }
 
       if (workerError) {
         throw workerError;
