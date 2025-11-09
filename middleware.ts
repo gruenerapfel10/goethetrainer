@@ -36,10 +36,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // Get the session token
+  // Only read secure cookies when we're actually on HTTPS (matches NextAuth defaults)
+  const shouldUseSecureCookies =
+    request.nextUrl.protocol === 'https:' ||
+    process.env.VERCEL === '1' ||
+    process.env.NEXTAUTH_URL?.startsWith('https://');
+
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    secureCookie: process.env.NODE_ENV === 'production',
+    secureCookie: shouldUseSecureCookies,
   });
 
   // Check if this is a chat page request
