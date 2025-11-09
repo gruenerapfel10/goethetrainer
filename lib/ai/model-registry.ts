@@ -1,12 +1,13 @@
 export enum ModelId {
   CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250514',
   CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5-20251001',
+  GLM_4_5_AIR = 'zai/glm-4.5-air',
 }
 
 export interface ModelMetadata {
   id: ModelId;
-  provider: 'anthropic';
-  family: 'claude';
+  provider: 'anthropic' | 'zai';
+  family: 'claude' | 'glm';
   contextWindow: number;
   costs: {
     input: number;
@@ -35,6 +36,14 @@ export const MODEL_REGISTRY: Record<ModelId, ModelMetadata> = {
     contextWindow: 200000,
     costs: { input: 0.80, output: 4.00 },
     capabilities: { vision: true, streaming: true, toolUse: true },
+  },
+  [ModelId.GLM_4_5_AIR]: {
+    id: ModelId.GLM_4_5_AIR,
+    provider: 'zai',
+    family: 'glm',
+    contextWindow: 128000,
+    costs: { input: 0.15, output: 0.60 },
+    capabilities: { vision: false, streaming: true, toolUse: true },
   },
 };
 
