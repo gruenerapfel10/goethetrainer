@@ -11,28 +11,26 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnChat = nextUrl.pathname.startsWith('/');
-      const isOnRegister = nextUrl.pathname.startsWith('/register');
-      const isOnLogin = nextUrl.pathname.startsWith('/login');
-      const isOnCallback = nextUrl.pathname.startsWith('/api/auth/callback');
-      const isOnError = nextUrl.pathname.startsWith('/api/auth/error');
+      const pathname = nextUrl.pathname;
+      const isOnRegister = pathname.startsWith('/register');
+      const isOnLogin = pathname.startsWith('/login');
+      const isOnHome = pathname.startsWith('/home');
+      const isOnCallback = pathname.startsWith('/api/auth/callback');
+      const isOnError = pathname.startsWith('/api/auth/error');
+      const isAuthRoute = isOnLogin || isOnRegister;
+      const isPublicRoute = isOnHome || isAuthRoute;
 
       // Allow auth callbacks and error pages
       if (isOnCallback || isOnError) {
         return true;
       }
 
-      if (isLoggedIn && (isOnLogin || isOnRegister)) {
+      if (isLoggedIn && isAuthRoute) {
         return Response.redirect(new URL('/', nextUrl));
       }
 
-      if (isOnRegister || isOnLogin) {
+      if (isPublicRoute) {
         return true;
-      }
-
-      if (isOnChat) {
-        if (isLoggedIn) return true;
-        return false;
       }
 
       if (!isLoggedIn) {

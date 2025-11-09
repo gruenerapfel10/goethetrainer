@@ -5,6 +5,7 @@ import LocaleSwitcherSelect from './language-switcher';
 import { SidebarToggle, RightSidebarToggle } from './sidebar-toggle';
 import { AppBreadcrumb } from './app-breadcrumb';
 import Image from 'next/image';
+import { signOut, useSession } from 'next-auth/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +15,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export function AppNavbar() {
-  const userEmail = 'user@example.com'; // TODO: Get actual user from auth context
+  const { data: session } = useSession();
+  const userEmail = session?.user?.email ?? 'user@example.com';
 
   return (
     <nav className="bg-sidebar text-sidebar-foreground px-6 py-2 flex items-center justify-between flex-shrink-0 h-12 border-0">
@@ -60,7 +62,10 @@ export function AppNavbar() {
               {userEmail}
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-red-600">
+            <DropdownMenuItem
+              className="cursor-pointer text-red-600"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
               Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>

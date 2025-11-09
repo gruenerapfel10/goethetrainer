@@ -15,6 +15,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
 
+  const isPublicPath =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.startsWith('/home');
+
   // Allow static files
   if (PUBLIC_FILES.some(file => pathname.includes(file))) {
     return NextResponse.next();
@@ -49,7 +54,7 @@ export async function middleware(request: NextRequest) {
 
   // If no token, redirect to login (except for auth pages and public chats)
   if (!token) {
-    if (pathname === '/login' || pathname === '/register') {
+    if (isPublicPath) {
       return NextResponse.next();
     }
 
