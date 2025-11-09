@@ -76,10 +76,10 @@ export function StreamContinuationNotice() {
               <div className="flex items-center gap-3">
                 <div className="relative flex-shrink-0">
                   <div className="relative flex items-center justify-center w-8 h-8">
-                    <Image 
-                      src="/moterra-logo-s.svg" 
-                      alt="Moterra" 
-                      width={24} 
+                    <Image
+                      src="/logo.png"
+                      alt="Logo"
+                      width={24}
                       height={24}
                       className="w-6 h-6"
                     />
@@ -89,7 +89,7 @@ export function StreamContinuationNotice() {
                 <div className="flex-1 flex items-center gap-4">
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground">
-                      Moterra is working in the background
+                      Working in the background
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Feel free to leave - we&apos;ll reconnect you when you return

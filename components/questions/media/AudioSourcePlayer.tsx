@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PauseCircle, PlayCircle, RotateCcw, Volume2, Waves } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { AudioSourceDefinition } from '@/lib/sessions/questions/question-types';
@@ -32,12 +32,16 @@ export function AudioSourcePlayer({
 }: AudioSourcePlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastTimeRef = useRef(0);
+  const speechSynthesisRef = useRef<SpeechSynthesis | null>(null);
+  const ttsStateRef = useRef<{ index: number }>({ index: 0 });
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(source.durationSeconds ?? 0);
   const [playCount, setPlayCount] = useState(0);
   const [showTranscript, setShowTranscript] = useState(false);
   const [status, setStatus] = useState<'idle' | 'error' | 'loading'>('idle');
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const playback = useMemo(() => ({
     maxPlays: source.playback?.maxPlays ?? null,
@@ -47,7 +51,65 @@ export function AudioSourcePlayer({
     allowSpeedChange: source.playback?.allowSpeedChange ?? true,
   }), [source.playback]);
 
+  const hasNativeAudio = Boolean(source.url);
+  const isTtsSource = Boolean(!hasNativeAudio && source.generatedAudio);
+
+  const estimatedTtsDuration = useMemo(() => {
+    if (source.durationSeconds) {
+      return source.durationSeconds;
+    }
+    if (source.generatedAudio) {
+      const totalChars = source.generatedAudio.segments.reduce(
+        (sum, segment) => sum + segment.text.length,
+        0
+      );
+      const seconds = Math.max(60, Math.round(totalChars / 14));
+      return seconds;
+    }
+    return 0;
+  }, [source.durationSeconds, source.generatedAudio]);
+
   useEffect(() => {
+    if (hasNativeAudio) {
+      setDuration(source.durationSeconds ?? duration);
+    } else if (estimatedTtsDuration > 0) {
+      setDuration(estimatedTtsDuration);
+    } else {
+      setDuration(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasNativeAudio, source.durationSeconds, estimatedTtsDuration]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isTtsSource) {
+      return;
+    }
+    if ('speechSynthesis' in window) {
+      speechSynthesisRef.current = window.speechSynthesis;
+      setSpeechSupported(true);
+      const updateVoices = () => {
+        setAvailableVoices(window.speechSynthesis.getVoices());
+      };
+      updateVoices();
+      window.speechSynthesis.onvoiceschanged = updateVoices;
+      return () => {
+        if (window.speechSynthesis.onvoiceschanged === updateVoices) {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
+      };
+    }
+  }, [isTtsSource]);
+
+  useEffect(() => {
+    return () => {
+      if (speechSynthesisRef.current) {
+        speechSynthesisRef.current.cancel();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasNativeAudio) return;
     const element = audioRef.current;
     if (!element) return;
 
@@ -101,11 +163,87 @@ export function AudioSourcePlayer({
       element.removeEventListener('canplay', handleCanPlay);
       element.removeEventListener('error', handleError);
     };
-  }, [duration, playback.allowRestart, playback.allowSeek]);
+  }, [duration, playback.allowRestart, playback.allowSeek, hasNativeAudio]);
 
   const canPlayMore = playback.maxPlays ? playCount < playback.maxPlays : true;
 
+  const selectVoice = useCallback(() => {
+    if (!speechSupported || !source.generatedAudio) return null;
+    const locale = source.generatedAudio.locale ?? 'de-DE';
+    const hint = source.generatedAudio.voiceHint?.toLowerCase();
+    const byHint =
+      hint &&
+      availableVoices.find(voice => voice.name.toLowerCase().includes(hint) || voice.lang.toLowerCase().includes(hint));
+    if (byHint) return byHint;
+    const byLocale = availableVoices.find(voice => voice.lang?.startsWith(locale));
+    return byLocale ?? availableVoices[0] ?? null;
+  }, [availableVoices, source.generatedAudio, speechSupported]);
+
+  const speakTranscript = useCallback(() => {
+    if (!speechSupported || !source.generatedAudio || !speechSynthesisRef.current) {
+      setStatus('error');
+      return;
+    }
+    const synth = speechSynthesisRef.current;
+    synth.cancel();
+    const voice = selectVoice();
+    const segments = source.generatedAudio.segments;
+    const locale = source.generatedAudio.locale ?? 'de-DE';
+    const rate = source.generatedAudio.rate ?? 1;
+    const pitch = source.generatedAudio.pitch ?? 1;
+    let index = 0;
+
+    const speakNext = () => {
+      if (index >= segments.length) {
+        setIsPlaying(false);
+        setStatus('idle');
+        setCurrentTime(duration);
+        return;
+      }
+      const segment = segments[index];
+      const utterance = new SpeechSynthesisUtterance(segment.text);
+      utterance.lang = locale;
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+      if (voice) {
+        utterance.voice = voice;
+      }
+      utterance.onend = () => {
+        index += 1;
+        ttsStateRef.current = { index };
+        const progress = Math.min(duration, ((index) / segments.length) * duration);
+        setCurrentTime(progress);
+        speakNext();
+      };
+      utterance.onerror = () => {
+        setStatus('error');
+        setIsPlaying(false);
+        synth.cancel();
+      };
+      synth.speak(utterance);
+    };
+
+    ttsStateRef.current = { index: 0 };
+    setIsPlaying(true);
+    setStatus('idle');
+    speakNext();
+  }, [duration, selectVoice, source.generatedAudio, speechSupported]);
+
   const handlePlayClick = async () => {
+    if (isTtsSource && speechSupported) {
+      if (!canPlayMore) return;
+      const synth = speechSynthesisRef.current;
+      if (synth?.paused) {
+        synth.resume();
+        setIsPlaying(true);
+        setStatus('idle');
+        return;
+      }
+      setPlayCount(count => count + 1);
+      speakTranscript();
+      return;
+    }
+
     const element = audioRef.current;
     if (!element || !canPlayMore) {
       return;
@@ -126,11 +264,29 @@ export function AudioSourcePlayer({
     if (!playback.allowPause) {
       return;
     }
+    if (isTtsSource && speechSupported) {
+      speechSynthesisRef.current?.pause();
+      setIsPlaying(false);
+      return;
+    }
     const element = audioRef.current;
     element?.pause();
   };
 
   const handleRestart = async () => {
+    if (isTtsSource && speechSupported) {
+      if (!playback.allowRestart) return;
+      if (!canPlayMore && ttsStateRef.current.index > 0) return;
+      speechSynthesisRef.current?.cancel();
+      setCurrentTime(0);
+      setIsPlaying(false);
+      if (canPlayMore) {
+        setPlayCount(count => count + 1);
+        speakTranscript();
+      }
+      return;
+    }
+
     const element = audioRef.current;
     if (!element || !playback.allowRestart) {
       return;
@@ -148,6 +304,9 @@ export function AudioSourcePlayer({
   };
 
   const handleSeek = (value: number) => {
+    if (!hasNativeAudio) {
+      return;
+    }
     if (!playback.allowSeek) {
       return;
     }
@@ -161,12 +320,15 @@ export function AudioSourcePlayer({
   };
 
   const statusLabel = useMemo(() => {
+    if (isTtsSource && !speechSupported) {
+      return 'Browser unterstützt kein Text-to-Speech.';
+    }
     if (source.status === 'pending') return 'Audio wird generiert …';
     if (source.status === 'processing') return 'Audio in Verarbeitung …';
     if (status === 'loading') return 'Buffering …';
     if (status === 'error') return 'Wiedergabe fehlgeschlagen';
     return null;
-  }, [source.status, status]);
+  }, [source.status, status, isTtsSource, speechSupported]);
 
   return (
     <div
@@ -236,20 +398,26 @@ export function AudioSourcePlayer({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <input
-            type="range"
-            min={0}
-            max={Math.max(duration, 0.001)}
-            value={Math.min(currentTime, duration)}
-            onChange={event => handleSeek(Number(event.target.value))}
-            disabled={!playback.allowSeek}
-            className="flex-1 accent-primary h-1"
-          />
-          <span className="text-xs text-muted-foreground w-12 text-right">
-            {formatTime(duration)}
-          </span>
-        </div>
+        {hasNativeAudio ? (
+          <div className="flex items-center gap-3">
+            <input
+              type="range"
+              min={0}
+              max={Math.max(duration, 0.001)}
+              value={Math.min(currentTime, duration)}
+              onChange={event => handleSeek(Number(event.target.value))}
+              disabled={!playback.allowSeek}
+              className="flex-1 accent-primary h-1"
+            />
+            <span className="text-xs text-muted-foreground w-12 text-right">
+              {formatTime(duration)}
+            </span>
+          </div>
+        ) : (
+          <div className="rounded-md border border-dashed border-muted px-3 py-2 text-xs text-muted-foreground">
+            Text-to-Speech Wiedergabe aktiv – Steuerung erfolgt über den Browser.
+          </div>
+        )}
 
         {statusLabel && (
           <div className="rounded-md border border-dashed border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -307,7 +475,7 @@ export function AudioSourcePlayer({
         </div>
       )}
 
-      <audio ref={audioRef} src={source.url} preload="auto" hidden />
+      {hasNativeAudio && <audio ref={audioRef} src={source.url} preload="auto" hidden />}
     </div>
   );
 }

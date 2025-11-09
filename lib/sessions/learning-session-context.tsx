@@ -60,6 +60,8 @@ export interface CompletionSummary {
   };
 }
 
+type LatestResultsState = CompletionSummary & { sessionType: SessionTypeEnum };
+
 interface QuestionProgress {
   current: number;
   total: number;
@@ -82,7 +84,7 @@ interface LearningSessionContextValue {
   error: string | null;
   stats: SessionStats | null;
   activeView: 'fragen' | 'quelle';
-  latestResults: CompletionSummary | null;
+  latestResults: LatestResultsState | null;
   startSession: (
     type: SessionType | SessionTypeEnum,
     metadata?: Record<string, any>
@@ -276,7 +278,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<SessionStats | null>(null);
-  const [latestResults, setLatestResults] = useState<CompletionSummary | null>(null);
+  const [latestResults, setLatestResults] = useState<LatestResultsState | null>(null);
   const [generationState, setGenerationState] = useState<SessionGenerationState | null>(null);
 
   const activeSessionRef = useRef<Session | null>(null);
@@ -365,9 +367,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
     try {
       const updatedSession = await requestJson<Session>(
-        `/api/sessions/${session.id}/update`,
+        `/api/sessions/${session.id}`,
         {
-          method: 'POST',
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         }
@@ -585,7 +587,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     }
 
     try {
-      const url = `/api/sessions/${session.id}/update`;
+      const url = `/api/sessions/${session.id}`;
       const blob = new Blob([JSON.stringify(payload)], {
         type: 'application/json',
       });
@@ -696,8 +698,11 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       const hydrateResults = () => {
         if (shouldHydrateResults) {
           setLatestResults(prev => {
-            if (prev) return prev;
+            if (prev?.sessionType === session.type) {
+              return prev;
+            }
             return {
+              sessionType: session.type as SessionTypeEnum,
               results: serverResults,
               summary: buildQuestionSessionSummary(serverResults, questions),
             };
@@ -1177,7 +1182,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         const results = session.data.results as QuestionResult[];
         const summary = buildQuestionSessionSummary(results, questions);
         const completion = { results, summary };
-        setLatestResults(completion);
+        setLatestResults({
+          ...completion,
+          sessionType: session.type as SessionTypeEnum,
+        });
         return completion;
       }
       return latestResults;
@@ -1206,7 +1214,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         { method: 'POST' }
       );
 
-      setLatestResults(completion);
+      setLatestResults({
+        ...completion,
+        sessionType: session.type as SessionTypeEnum,
+      });
       setSessionQuestions(previous => {
         const next = previous.map(question => {
           const result = completion.results.find(
@@ -1232,6 +1243,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         return next;
       });
       syncActiveSessionQuestions();
+      await refreshSessionSnapshot(session.id);
 
       return completion;
     } catch (err) {
@@ -1242,7 +1254,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
       isCompletingRef.current = false;
       setIsSubmitting(false);
     }
-  }, [forceSave, syncActiveSessionQuestions, latestResults]);
+  }, [forceSave, refreshSessionSnapshot, syncActiveSessionQuestions, latestResults]);
 
   const endSession = useCallback(
     async (status: 'completed' | 'abandoned' = 'completed') => {

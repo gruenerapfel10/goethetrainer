@@ -5,7 +5,7 @@ export const readingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.READING,
   
   metadata: {
-    displayName: 'Reading Session',
+    displayName: 'Reading',
     displayNameKey: 'sessions.reading.displayName',
     description: 'Practice and improve your reading comprehension skills',
     descriptionKey: 'sessions.reading.description',
@@ -161,7 +161,7 @@ export const readingSessionConfig: SessionConfig = {
       questionCount: 9,
       renderOverrides: {
         layout: 'vertical',
-        showSourceToggle: false,
+        showSourceToggle: true,
       },
       sourceOverrides: {
         type: 'text_passage',
@@ -206,7 +206,7 @@ export const readingSessionConfig: SessionConfig = {
         type: 'statement_matching',
         authorCount: 3,
         statementCount: 7,
-        unmatchedCount: 2,
+        unmatchedCount: 0,
         startingStatementNumber: 24,
         workingTimeMinutes: 15,
         theme: 'Digitale Gesellschaft',

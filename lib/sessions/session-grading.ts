@@ -109,12 +109,30 @@ export async function finaliseSession(
   );
   session.data.answers = manager.getUserAnswers();
   session.data.results = manager.getQuestionResults();
+  const completedAt = new Date();
+  const completedAtIso = completedAt.toISOString();
+  session.data.resultsSummary = outcome.summary;
+  session.data.resultsGeneratedAt = completedAtIso;
   session.data.currentScore = outcome.summary.totalScore;
   session.data.maxPossibleScore = outcome.summary.maxScore;
   session.data.questionsAnswered = outcome.summary.answeredQuestions;
   session.data.questionsCorrect = outcome.summary.correctAnswers;
   session.data.questionsIncorrect = outcome.summary.incorrectAnswers;
-  session.data.completedAt = new Date().toISOString();
+  session.data.completedAt = completedAtIso;
+  session.status = 'completed';
+  session.endedAt = completedAt;
+  if (session.metadata) {
+    session.metadata.completedAt = completedAtIso;
+  } else {
+    session.metadata = { completedAt: completedAtIso };
+  }
+  if (session.startedAt && session.endedAt) {
+    const durationSeconds = Math.max(
+      0,
+      Math.round((session.endedAt.getTime() - session.startedAt.getTime()) / 1000)
+    );
+    session.duration = durationSeconds;
+  }
 
   touchSession(session);
 

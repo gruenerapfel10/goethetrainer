@@ -43,6 +43,15 @@ export function SessionBoard({
 }: SessionBoardProps) {
   const { theme } = useTheme();
   const teilNumbers = Array.from({ length: totalTeils }, (_, index) => index + 1);
+  const handleSubmitClick = () => {
+    console.log('[SessionBoard] submit click', {
+      teilNumber,
+      isLastTeil,
+      canSubmit,
+      isSubmitting,
+    });
+    onSubmit();
+  };
 
   return (
     <div className="w-full h-full flex flex-col bg-background relative">
@@ -115,11 +124,11 @@ export function SessionBoard({
       )}
 
       <button
-        onClick={onSubmit}
+        onClick={handleSubmitClick}
         disabled={isSubmitting || !canSubmit}
-        className="absolute bottom-6 right-6 px-8 py-2 bg-primary-foreground text-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity z-10"
+        className="absolute bottom-6 right-6 px-8 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity z-10"
       >
-        {isSubmitting ? 'Wird gespeichert...' : isLastTeil ? 'Test abgeben' : 'Weiter'}
+        {isSubmitting ? 'Wird gespeichert…' : isLastTeil ? 'Test abgeben' : 'Weiter'}
       </button>
 
       <div className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar">

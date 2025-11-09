@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { adminDb } from '@/lib/firebase/admin';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import type {
   Session,
   SessionStats,
@@ -51,11 +52,19 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
     }
 
     const data = doc.data();
-    return {
+    const session = {
       ...data,
       startedAt: data?.startedAt?.toDate() || new Date(),
       endedAt: data?.endedAt?.toDate() || undefined
     } as Session;
+
+    console.log('[sessions][queries][getSessionById]', sessionId, {
+      type: session.type,
+      status: session.status,
+      questions: session.data?.questions?.length ?? 0,
+      results: session.data?.results?.length ?? 0,
+    });
+    return session;
   } catch (error) {
     console.error('Error getting session:', error);
     return null;
@@ -79,30 +88,66 @@ export async function updateSession(session: Session): Promise<void> {
 
 // Get user's sessions by type
 export async function getUserSessions(
-  userId: string, 
+  userId: string,
   type?: SessionType,
   limit: number = 20
 ): Promise<Session[]> {
   try {
-    let query = adminDb.collection(SESSIONS_COLLECTION)
-      .where('userId', '==', userId)
-      .orderBy('startedAt', 'desc')
-      .limit(limit);
+    const results: Session[] = [];
+    let cursor: QueryDocumentSnapshot | undefined;
+    const pageSize = 50; // Fetch in batches
 
-    if (type) {
-      query = query.where('type', '==', type);
+    // If limit is explicitly set to a small number, respect it. Otherwise fetch all.
+    const shouldFetchAll = limit >= 20; // Default behavior is to fetch all
+
+    while (true) {
+      let query = adminDb
+        .collection(SESSIONS_COLLECTION)
+        .where('userId', '==', userId)
+        .orderBy('startedAt', 'desc');
+
+      if (cursor) {
+        query = query.startAfter(cursor);
+      }
+
+      const snapshot = await query.limit(pageSize).get();
+      if (snapshot.empty) {
+        break;
+      }
+
+      const page = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          startedAt: data.startedAt?.toDate() || new Date(),
+          endedAt: data.endedAt?.toDate() || undefined,
+        } as Session;
+      });
+
+      for (const session of page) {
+        if (type && session.type !== type) {
+          continue;
+        }
+        results.push(session);
+      }
+
+      const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      if (!lastDoc || snapshot.size < pageSize) {
+        break;
+      }
+      cursor = lastDoc;
     }
 
-    const snapshot = await query.get();
-    
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        startedAt: data.startedAt?.toDate() || new Date(),
-        endedAt: data.endedAt?.toDate() || undefined
-      } as Session;
+    console.log('[sessions][queries][getUserSessions]', {
+      userId,
+      type,
+      requested: limit,
+      returned: results.length,
+      first: results[0]?.id,
+      firstResults: results[0]?.data?.results?.length ?? 0,
     });
+
+    return results;
   } catch (error) {
     console.error('Error getting user sessions:', error);
     return [];

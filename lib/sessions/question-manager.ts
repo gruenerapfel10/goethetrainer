@@ -376,6 +376,9 @@ export class QuestionManager {
     hintsUsed: number
   ): Promise<QuestionResult> {
     const question = this.ensureQuestion(questionId);
+    if (question.isExample) {
+      throw new Error('Example questions cannot be answered.');
+    }
 
     const previousAnswer = this.answerIndex.get(questionId);
     const attempts = previousAnswer ? previousAnswer.attempts + 1 : 1;
@@ -415,6 +418,10 @@ export class QuestionManager {
       if (!this.questionIndex.has(entry.questionId)) {
         throw new Error(`Question ${entry.questionId} is not tracked by QuestionManager`);
       }
+      const question = this.ensureQuestion(entry.questionId);
+      if (question.isExample) {
+        throw new Error('Example questions cannot be answered.');
+      }
 
       const result = await this.submitAnswer(
         entry.questionId,
@@ -430,9 +437,17 @@ export class QuestionManager {
 
   async finaliseSession(): Promise<QuestionSessionOutcome> {
     const orderedQuestions = this.getAllQuestions();
+    const scorableQuestions = orderedQuestions.filter(question => !question.isExample);
 
-    // Ensure every question has an answer object for downstream persistence
-    const answers: UserAnswer[] = orderedQuestions.map(question => {
+    if (scorableQuestions.length === 0) {
+      return {
+        results: [],
+        summary: buildQuestionSessionSummary([], []),
+      };
+    }
+
+    // Ensure every scorable question has an answer object for downstream persistence
+    const answers: UserAnswer[] = scorableQuestions.map(question => {
       const existing = this.answerIndex.get(question.id);
       if (existing) {
         return existing;
@@ -442,10 +457,10 @@ export class QuestionManager {
       return emptyAnswer;
     });
 
-    const results = await markQuestions(orderedQuestions, answers);
+    const results = await markQuestions(scorableQuestions, answers);
     results.forEach(result => this.updateResult(result));
 
-    const summary = buildQuestionSessionSummary(results, orderedQuestions);
+    const summary = buildQuestionSessionSummary(results, scorableQuestions);
 
     return {
       results: results.map(cloneResult),

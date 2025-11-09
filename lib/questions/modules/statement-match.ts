@@ -18,6 +18,7 @@ import {
 } from './types';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
+import { getNewsTopicFromPool } from '@/lib/news/news-topic-pool';
 
 interface StatementMatchPromptConfig extends QuestionModulePromptConfig {
   instructions: string;
@@ -172,17 +173,28 @@ async function generateStatementMatchQuestion(
   sourceConfig: StatementMatchSourceConfig,
   promptConfig: StatementMatchPromptConfig
 ): Promise<Question> {
+  const newsTopic = await getNewsTopicFromPool();
   const {
     authorCount = 3,
     statementCount = 7,
-    unmatchedCount = 2,
+    unmatchedCount = 0,
     startingStatementNumber = 24,
     workingTimeMinutes = 15,
-    theme = 'Digitale Gesellschaft',
-    topicHint = 'Privatsphäre und Datenkultur in der digitalen Welt',
+    theme = newsTopic?.theme ?? 'Digitale Gesellschaft',
+    topicHint = newsTopic?.headline ?? 'Privatsphäre und Datenkultur in der digitalen Welt',
   } = sourceConfig;
+  if (unmatchedCount > 0) {
+    throw new Error('Statement matching no longer supports unmatched statements (Option 0).');
+  }
 
   const model = customModel(DEFAULT_STATEMENT_MODEL);
+const newsBlock = newsTopic
+  ? `Aktuelle Meldung:
+- Schlagzeile: ${newsTopic.headline}
+- Quelle: ${newsTopic.source ?? 'unbekannt'}
+- Zusammenfassung: ${newsTopic.summary}`
+  : '';
+
 const userPrompt = `
 Erstelle eine Aufgabe im Stil des Goethe-Zertifikats C1 Lesen, Teil 4.
 
@@ -192,6 +204,8 @@ Sprachlevel: ${difficulty}
 Autorenanzahl: ${authorCount}
 Anzahl Aussagen: ${statementCount}
 Davon ohne passenden Autor (Antwort "0"): ${unmatchedCount}
+
+${newsBlock}
 
 WICHTIG:
 - Verwende KEINE eigenen Buchstabenpräfixe für Autor*innen (keine "A", "B", ...).
@@ -234,9 +248,9 @@ Liefere JSON, das exakt zum Schema passt.
 
   const statements = data.statements.slice(0, statementCount);
   const actualUnmatched = statements.filter(entry => !entry.authorId || entry.authorId === '0').length;
-  if (actualUnmatched !== unmatchedCount) {
+  if (actualUnmatched > 0) {
     throw new Error(
-      `Erwarte ${unmatchedCount} Aussagen ohne passenden Autor, erhalten: ${actualUnmatched}`
+      'Das Modell lieferte Aussagen ohne gültige Autorenzuordnung, Option 0 ist deaktiviert.'
     );
   }
 
@@ -256,20 +270,17 @@ Liefere JSON, das exakt zum Schema passt.
         candidate.internalId === entry.authorId ||
         candidate.letter === entry.authorId
     );
-    acc[entry.id] = author ? author.letter : '0';
+    if (!author) {
+      throw new Error('Unbekannte Autorenzuordnung in einer Aussage.');
+    }
+    acc[entry.id] = author.letter;
     return acc;
   }, {});
 
-  const options = [
-    ...authors.map(author => ({
-      id: author.letter,
-      text: author.letter,
-    })),
-    {
-      id: '0',
-      text: '0',
-    },
-  ];
+  const options = authors.map(author => ({
+    id: author.letter,
+    text: author.letter,
+  }));
 
   return {
     id: `statement-match-${Date.now()}`,
@@ -314,6 +325,7 @@ Liefere JSON, das exakt zum Schema passt.
           )?.letter ?? '0',
         explanation: data.example.explanation,
       },
+      newsTopic,
     },
   } as Question;
 }

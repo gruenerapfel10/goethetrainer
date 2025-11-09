@@ -53,6 +53,22 @@ export interface AudioSourceSegment {
   summary: string;
 }
 
+export interface AudioDialogueSegment {
+  speakerId: string;
+  speakerName?: string;
+  role?: string;
+  text: string;
+}
+
+export interface GeneratedAudioDefinition {
+  provider: 'web_speech';
+  locale?: string;
+  voiceHint?: string;
+  rate?: number;
+  pitch?: number;
+  segments: AudioDialogueSegment[];
+}
+
 export interface AudioSourceDefinition {
   id?: string;
   title?: string;
@@ -64,6 +80,8 @@ export interface AudioSourceDefinition {
   segments?: AudioSourceSegment[];
   status?: 'ready' | 'processing' | 'pending' | 'error';
   playback?: AudioPlaybackPolicy;
+  dialogue?: AudioDialogueSegment[];
+  generatedAudio?: GeneratedAudioDefinition;
 }
 
 export interface Question {

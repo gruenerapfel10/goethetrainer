@@ -57,6 +57,8 @@ export function SessionOrchestrator() {
     clearResults,
   } = useLearningSession();
 
+  const hasLatestResultsForSession = latestResults?.sessionType === sessionType;
+
   // Local state
   const [userAnswer, setUserAnswer] = useState<AnswerValue>(null);
   const [questionResult, setQuestionResult] = useState<QuestionResult | null>(null);
@@ -222,7 +224,14 @@ export function SessionOrchestrator() {
 
   const handleTeilCompletion = useCallback(
     async () => {
-      if (isNavigating || latestResults) {
+      console.log('[SessionOrchestrator] handleTeilCompletion', {
+        sessionId,
+        teilNumber: activeTeilNumber,
+        nextTeilNumber,
+        isNavigating,
+        hasResults: hasLatestResultsForSession,
+      });
+      if (isNavigating || hasLatestResultsForSession) {
         return;
       }
 
@@ -252,8 +261,13 @@ export function SessionOrchestrator() {
         }
 
         const completion = await completeQuestions();
+        console.log('[SessionOrchestrator] completeQuestions response', {
+          sessionId,
+          hasCompletion: Boolean(completion),
+        });
         if (completion) {
           await endSession('completed');
+          console.log('[SessionOrchestrator] Session marked completed via teil submission', sessionId);
           setPendingTeilUnlock(false);
         }
       } finally {
@@ -265,7 +279,7 @@ export function SessionOrchestrator() {
       activeTeilNumber,
       nextTeilNumber,
       isNavigating,
-      latestResults,
+      hasLatestResultsForSession,
       submitTeilAnswers,
       activateTeil,
       setPendingTeilUnlock,
@@ -297,7 +311,16 @@ export function SessionOrchestrator() {
 
     setIsSubmitting(true);
     try {
+      console.log('[SessionOrchestrator] submitAnswer start', {
+        sessionId,
+        questionId: currentQuestion.id,
+      });
       const result = await submitAnswer(currentQuestion.id, answerPayload, 0, 0);
+      console.log('[SessionOrchestrator] submitAnswer done', {
+        sessionId,
+        questionId: currentQuestion.id,
+        score: result?.score,
+      });
       setQuestionResult(result);
     } finally {
       setIsSubmitting(false);
@@ -309,9 +332,29 @@ export function SessionOrchestrator() {
     nextQuestion();
   };
 
-  const handleEndSession = () => {
-    endSession('abandoned');
-    router.push(`/${sessionType}`);
+  const handleEndSession = async () => {
+    console.log('[SessionOrchestrator] handleEndSession invoked', { sessionId });
+    setIsNavigating(true);
+    try {
+      const completion = await completeQuestions();
+      console.log('[SessionOrchestrator] handleEndSession completion result', {
+        sessionId,
+        hasCompletion: Boolean(completion),
+      });
+      if (completion) {
+        await endSession('completed');
+        console.log('[SessionOrchestrator] Session completed via handleEndSession', sessionId);
+        router.replace(`/${sessionType}`);
+        return;
+      }
+    } catch (error) {
+      console.error('failed to complete before ending', error);
+    } finally {
+      setIsNavigating(false);
+    }
+    await endSession('abandoned');
+    console.log('[SessionOrchestrator] Session marked abandoned via handleEndSession', sessionId);
+    router.replace(`/${sessionType}`);
   };
 
   // Loading state
@@ -332,7 +375,8 @@ export function SessionOrchestrator() {
   }
 
   // Render question based on type
-  if (latestResults) {
+  if (hasLatestResultsForSession) {
+    const issuedAtValue = activeSession?.endedAt ?? activeSession?.metadata?.completedAt ?? activeSession?.metadata?.lastUpdatedAt ?? activeSession?.startedAt ?? new Date();
     return (
       <div className="h-full overflow-hidden">
         <div className="h-full overflow-y-auto">
@@ -340,6 +384,7 @@ export function SessionOrchestrator() {
             results={latestResults.results}
             summary={latestResults.summary}
             sessionType={sessionType}
+            issuedAt={issuedAtValue}
             onClose={() => {
               clearResults();
               router.replace(`/${sessionType}`);

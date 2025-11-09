@@ -4,6 +4,7 @@ import { QuestionDifficulty } from './question-types';
 import type { SessionSourceOptions } from '../session-registry';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
+import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
 
 export const maxDuration = 30;
 
@@ -47,6 +48,7 @@ const GapIdentificationSchema = z.object({
 const GAP_WORD_REGEX = /\b[\p{L}][\p{L}\-]{3,}\b/gu;
 const GAP_PLACEHOLDER_REGEX = /\[(?:GAP|Gap|gap)[\s_\-]?(\d+)\]/g;
 
+
 function normaliseGapPlaceholders(text: string): string {
   let normalised = text.replace(GAP_PLACEHOLDER_REGEX, (_match, num) => `[GAP_${num}]`);
   normalised = normalised.replace(/\(GAP_(\d+)\)/g, '[GAP_$1]');
@@ -64,8 +66,8 @@ function coerceGapEntries(value: unknown): GapEntryRecord[] | null {
       if (Array.isArray(parsed)) {
         return parsed as GapEntryRecord[];
       }
-    } catch (error) {
-      console.warn('Failed to parse gap string payload:', error);
+    } catch {
+      // ignore invalid payload
     }
   }
   return null;
@@ -123,7 +125,6 @@ function generateDeterministicGaps(
   }
 
   if (selections.length < requiredCount) {
-    console.warn('Deterministic gap generation found insufficient tokens.');
     return null;
   }
 
@@ -188,9 +189,12 @@ interface GapEntryRecord {
  */
 export async function generateRawSource(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
-  overrides?: SessionSourceOptions['raw']
+  overrides?: SessionSourceOptions['raw'],
+  logMetadata?: { teilLabel?: string }
 ): Promise<z.infer<typeof RawSourceSchema>> {
-  const selectedTheme = overrides?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const newsTopic = await getNewsTopicFromPool();
+  const selectedTheme =
+    overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
 
   const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
 
@@ -205,9 +209,24 @@ Requirements:
 4. Provide a SUBTITLE (brief description 10-15 words)
 5. One context passage (200-300 words, C1 level, naturally written)
 
-The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.`;
+The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.${
+    newsTopic
+      ? `
 
-  const defaultUserPrompt = `Generate a reading passage for theme: ${selectedTheme} at ${difficulty} level.`;
+Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe einen originellen Text:
+- Schlagzeile: ${newsTopic.headline}
+- Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar.'}${
+          newsTopic.source
+            ? `
+- Quelle: ${newsTopic.source}${newsTopic.publishedAt ? ` • ${newsTopic.publishedAt}` : ''}`
+            : ''
+        }`
+      : ''
+  }`;
+
+  const defaultUserPrompt = `Generate a reading passage for theme: ${selectedTheme} at ${difficulty} level.${
+    newsTopic ? ` Orientiere dich inhaltlich an der Nachricht "${newsTopic.headline}" ohne sie zu kopieren.` : ''
+  }`;
 
   const systemPrompt = (overrides?.systemPrompt ?? defaultSystemPrompt)
     .replace('{{theme}}', selectedTheme)
@@ -226,15 +245,13 @@ The passage should be rich with vocabulary and complex sentence structures suita
       temperature: 0.8,
     });
 
-    console.log('\n**** PASS 1: SOURCE GENERATION ****');
-    console.log(`Theme: ${result.object.theme}`);
-    console.log(`Title: ${result.object.title}`);
-    console.log(`Subtitle: ${result.object.subtitle}`);
-    console.log(`Context (${result.object.context.length} chars):\n${result.object.context}\n`);
+    if (newsTopic) {
+      const labelSuffix = logMetadata?.teilLabel ? ` (${logMetadata.teilLabel})` : '';
+      console.log(`[NewsPool] Using headline${labelSuffix}:`, newsTopic.headline);
+    }
 
     return result.object;
   } catch (error) {
-    console.error('Error generating raw source:', error);
     throw new Error(`Failed to generate source material: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -286,8 +303,6 @@ ${attempt > 1 ? `HINWEIS: Beim letzten Versuch wurden zu wenige Lücken geliefer
 IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps in order of appearance in the text.`)
     .replace('{{requiredCount}}', requiredCount.toString());
 
-  let lastError: unknown;
-
   for (let attempt = 1; attempt <= MAX_GAP_ATTEMPTS; attempt += 1) {
     try {
       const result = await generateObject({
@@ -317,13 +332,6 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
 
       parsedGaps.sort((a, b) => a.gapNumber - b.gapNumber);
 
-      console.log('\n**** PASS 2: GAP IDENTIFICATION ****');
-      console.log(`Total gaps identified: ${gaps.length}`);
-      parsedGaps.forEach(gap => {
-        console.log(`  Gap ${gap.gapNumber}: "${gap.removedWord}" at position ${gap.position}`);
-      });
-      console.log(`\nGapped Text:\n${sanitizedGappedText}\n`);
-
       return {
         theme: source.theme,
         title: source.title,
@@ -335,22 +343,17 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
           removedWord: gap.removedWord,
         })),
       };
-    } catch (error) {
-      lastError = error;
-      console.warn(`Gap identification attempt ${attempt} failed:`, error);
+    } catch {
+      // retry
     }
   }
 
-  console.error('Error identifying gaps after retries:', lastError);
   const fallback = generateDeterministicGaps(source, requiredCount);
   if (fallback) {
-    console.warn('Falling back to deterministic gap selection.');
     return fallback;
   }
   throw new Error(
-    `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts: ${
-      lastError instanceof Error ? lastError.message : String(lastError)
-    }`
+    `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts`
   );
 }
 
@@ -359,10 +362,11 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
  */
 export async function generateSourceWithGaps(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
-  options?: SessionSourceOptions
+  options?: SessionSourceOptions,
+  metadata?: { teilLabel?: string }
 ): Promise<SourceWithGaps> {
   // Pass 1: Generate raw source
-  const rawSource = await generateRawSource(difficulty, options?.raw);
+  const rawSource = await generateRawSource(difficulty, options?.raw, metadata);
 
   // Pass 2: Identify gaps
   const sourceWithGaps = await identifyGapsInSource(rawSource, options?.gaps);

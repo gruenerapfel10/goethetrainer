@@ -12,7 +12,10 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { themes } from '@/lib/constants';
 
 export const metadata: Metadata = {
-  title: 'Moterra Chat',
+  title: 'Faust',
+  icons: {
+    icon: { url: '/favicon.ico', type: 'image/x-icon' },
+  },
 };
 
 export default async function RootLayout({

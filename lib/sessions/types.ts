@@ -3,6 +3,7 @@ import type {
   QuestionResult as SessionQuestionResult,
   UserAnswer,
 } from './questions/question-types';
+import type { QuestionSessionSummary } from './question-manager';
 
 export interface SessionGenerationState {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
@@ -23,6 +24,8 @@ export interface SessionData {
   questions: SessionQuestion[];
   answers: UserAnswer[];
   results: SessionQuestionResult[];
+  resultsSummary?: QuestionSessionSummary | null;
+  resultsGeneratedAt?: string;
   progress?: {
     totalQuestions: number;
     answeredQuestions: number;

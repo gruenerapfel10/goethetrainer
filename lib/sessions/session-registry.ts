@@ -90,6 +90,7 @@ export interface SessionLayoutEntryConfig<
   sourceOverrides?: Partial<S>;
   scoringOverrides?: Partial<ScoringPolicy>;
   metadata?: Record<string, unknown>;
+  generateExample?: boolean;
 }
 
 export type SessionLayoutDefinition = Array<QuestionModuleId | SessionLayoutEntryConfig>;
@@ -108,6 +109,7 @@ export interface NormalisedSessionLayoutEntry<
   sourceOverrides?: Partial<S>;
   scoringOverrides?: Partial<ScoringPolicy>;
   metadata?: Record<string, unknown>;
+  generateExample?: boolean;
 }
 
 export interface SessionFieldDefinition {
@@ -249,6 +251,7 @@ function normaliseSessionLayout(
       sourceOverrides: entry.sourceOverrides,
       scoringOverrides: entry.scoringOverrides,
       metadata: entry.metadata,
+      generateExample: entry.generateExample,
     };
   });
 }

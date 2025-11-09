@@ -4,7 +4,7 @@ import { QuestionModuleId } from '@/lib/questions/modules/types';
 export const writingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.WRITING,
   metadata: {
-    displayName: 'Writing Session',
+    displayName: 'Writing',
     displayNameKey: 'sessions.writing.displayName',
     description: 'Trainiere schriftliche Aufgaben im Stil des Goethe-Zertifikats C1.',
     descriptionKey: 'sessions.writing.description',

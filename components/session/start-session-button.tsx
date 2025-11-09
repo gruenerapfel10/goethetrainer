@@ -28,10 +28,14 @@ export function StartSessionButton({
     activeSession,
     isLoading,
     startSession,
-    endSession
+    endSession,
+    completeQuestions,
   } = useLearningSession();
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const isActiveForType = activeSession && activeSession.type === type;
+  const isBlockingSession =
+    !!activeSession && (activeSession.status === 'active' || activeSession.status === 'paused');
+  const isActiveForType =
+    isBlockingSession && activeSession?.type === type;
 
   const handleStart = async () => {
     const session = await startSession(type, metadata);
@@ -49,7 +53,8 @@ export function StartSessionButton({
       setTimeout(() => setShowEndConfirm(false), 3000); // Auto reset after 3 seconds
       return;
     }
-    
+
+    await completeQuestions();
     await endSession('completed');
     setShowEndConfirm(false);
     if (onSessionEnd) {
@@ -58,7 +63,7 @@ export function StartSessionButton({
   };
 
   // If there's a different type of session active, show disabled state
-  if (activeSession && !isActiveForType) {
+  if (isBlockingSession && activeSession && !isActiveForType) {
     return (
       <Button
         variant="outline"

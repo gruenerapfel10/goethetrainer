@@ -17,6 +17,7 @@ import {
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 import { markQuestionWithAI } from '@/lib/sessions/questions/standard-marker';
+import { getNewsTopicFromPool } from '@/lib/news/news-topic-pool';
 
 interface WritingPromptConfig extends QuestionModulePromptConfig {
   instructions?: string;
@@ -119,6 +120,21 @@ async function generateWritingQuestion(
   promptConfig: WritingPromptConfig
 ): Promise<Question> {
   const model = DEFAULT_MODEL;
+  const newsTopic = await getNewsTopicFromPool();
+  const resolvedTheme =
+    sourceConfig.contextTheme ??
+    newsTopic?.theme ??
+    'Arbeitswelt / Gesellschaft';
+
+  const newsContextBlock = newsTopic
+    ? `Nutze folgenden aktuellen Nachrichtenimpuls als thematische Grundlage und verarbeite seine Kernaussagen glaubwürdig im Szenario:
+- Schlagzeile: ${newsTopic.headline}
+- Quelle: ${newsTopic.source ?? 'unbekannt'}
+- Zusammenfassung: ${newsTopic.summary}
+- Veröffentlichungszeit: ${newsTopic.publishedAt ?? 'unbekannt'}
+
+Belasse den Text auf Deutsch und erfinde keine Fakten, die im Impuls widersprochen werden.`
+    : '';
 
   const systemPrompt = `Du bist Aufgabenentwickler für das Goethe-Zertifikat C1 Schreiben.
 Generiere eine Schreibaufgabe (Teil ${sourceConfig.taskKind === 'formal_letter' ? '1' : '2'}) mit klarer Situationsbeschreibung, Aufgabenstellung
@@ -128,8 +144,9 @@ Sprache: Deutsch.`;
   const userPrompt = `Erstelle eine Aufgabe.
 Aufgabentyp: ${sourceConfig.taskKind}
 Ton: ${sourceConfig.tone}
-Thema: ${sourceConfig.contextTheme ?? 'Arbeitswelt / Gesellschaft'}
+Thema: ${resolvedTheme}
 Niveau: ${difficulty}
+${newsContextBlock}
 
 Liefere JSON entsprechend dem Schema.`;
 
@@ -143,6 +160,15 @@ Liefere JSON entsprechend dem Schema.`;
 
   const data = result.object;
   const questionType = resolveQuestionType(sessionType);
+
+  const articleSection = newsTopic
+    ? [
+        {
+          title: 'Aktuelle Meldung',
+          body: `${newsTopic.headline}\nQuelle: ${newsTopic.source ?? 'unbekannt'}${newsTopic.publishedAt ? ` (${newsTopic.publishedAt})` : ''}\n\n${newsTopic.summary}`,
+        },
+      ]
+    : [];
 
   return {
     id: `writing-${Date.now()}`,
@@ -161,6 +187,7 @@ Liefere JSON entsprechend dem Schema.`;
     sourceSections: [
       { title: data.contextTitle, body: data.contextBody },
       { title: 'Hinweise', body: data.referenceNotes.map(note => `• ${note}`).join('\n') },
+      ...articleSection,
     ],
     instructions:
       promptConfig.instructions ??
@@ -189,6 +216,7 @@ Liefere JSON entsprechend dem Schema.`;
     presentation: {
       referenceNotes: data.referenceNotes,
       closingRemark: data.closingRemark,
+      newsTopic,
     },
   } as Question;
 }

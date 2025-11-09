@@ -4,6 +4,10 @@ export function sanitizeForFirestore<T>(value: T): T {
   }
 
   if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      console.warn('[sanitizeForFirestore] Dropping invalid Date value');
+      return undefined as unknown as T;
+    }
     return value;
   }
 
@@ -47,6 +51,10 @@ export function sanitizeForFirestore<T>(value: T): T {
         return;
       }
       if (typeof cleanValue === 'object' && cleanValue !== null) {
+        if (cleanValue instanceof Date) {
+          clone[key] = cleanValue;
+          return;
+        }
         const childHasSeconds = Object.prototype.hasOwnProperty.call(cleanValue, 'seconds');
         const childHasNanos = Object.prototype.hasOwnProperty.call(cleanValue, 'nanoseconds');
         if (childHasSeconds || childHasNanos) {

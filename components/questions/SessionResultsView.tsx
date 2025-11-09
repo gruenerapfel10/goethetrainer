@@ -40,6 +40,7 @@ interface SessionResultsViewProps {
   };
   sessionType: SessionTypeEnum;
   onClose?: () => void;
+  issuedAt?: string | Date | null;
 }
 
 const MODULE_ORDER: SessionTypeEnum[] = [
@@ -70,7 +71,7 @@ function resolveGradeInfo(percentage: number) {
   return GRADE_BANDS.find(band => percentage >= band.min) ?? GRADE_BANDS[GRADE_BANDS.length - 1];
 }
 
-export function SessionResultsView({ results, summary, sessionType, onClose }: SessionResultsViewProps) {
+export function SessionResultsView({ results, summary, sessionType, onClose, issuedAt }: SessionResultsViewProps) {
   const moduleRows = MODULE_ORDER.map(module => {
     const row = summary.moduleBreakdown?.find(entry => entry.module === module);
     return (
@@ -94,7 +95,11 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
     overallScaledMax > 0 ? Math.round((overallScaledScore / overallScaledMax) * 100) : summary.percentage;
   const gradeInfo = resolveGradeInfo(overallPercentage);
 
-  const issuedAt = new Date();
+  const issuedAtDate = (() => {
+    if (!issuedAt) return new Date();
+    const parsed = new Date(issuedAt);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  })();
   const teilBreakdown = summary.teilBreakdown ?? [];
 
   const formatAnswer = (question: QuestionResult['question'], value: unknown) => {
@@ -181,7 +186,7 @@ export function SessionResultsView({ results, summary, sessionType, onClose }: S
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Ausstellungsdatum</p>
             <p className="text-sm font-semibold">
-              {issuedAt.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              {issuedAtDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </p>
           </div>
         </div>

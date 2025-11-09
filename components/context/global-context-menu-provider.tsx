@@ -55,9 +55,8 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const menuOpenRef = useRef(false);
-  const suppressSelectionRef = useRef(false);
+  const ignoreNextPointerUpRef = useRef(false);
   const anchorRef = useRef<Point | null>(null);
-  const lastPointerAnchorRef = useRef<Point | null>(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -73,15 +72,9 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   }, []);
 
   const closeMenu = useCallback(() => {
-    suppressSelectionRef.current = true;
-    requestAnimationFrame(() => {
-      setMenuState(null);
-      anchorRef.current = null;
-      resetTransientState();
-      requestAnimationFrame(() => {
-        suppressSelectionRef.current = false;
-      });
-    });
+    setMenuState(null);
+    anchorRef.current = null;
+    resetTransientState();
   }, [resetTransientState]);
 
   const openMenu = useCallback(
@@ -120,7 +113,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     });
   }, []);
 
-  const getSelectionData = useCallback((fallbackAnchor?: Point) => {
+  const getSelectionText = useCallback(() => {
     if (typeof window === 'undefined') {
       return null;
     }
@@ -135,19 +128,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       return null;
     }
 
-    const clippedText = text.length > MAX_SELECTION_CHARS ? text.slice(0, MAX_SELECTION_CHARS) : text;
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const hasRect = rect.width > 0 || rect.height > 0;
-
-    const anchor: Point = hasRect
-      ? {
-          x: rect.left + rect.width / 2,
-          y: rect.top - MENU_OFFSET,
-        }
-      : fallbackAnchor ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-
-    return { text: clippedText, anchor };
+    return text.length > MAX_SELECTION_CHARS ? text.slice(0, MAX_SELECTION_CHARS) : text;
   }, []);
 
   const handleTranslate = useCallback(async () => {
@@ -254,24 +235,25 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
         return;
       }
 
-      lastPointerAnchorRef.current = { x: event.clientX, y: event.clientY };
-    };
-
-    const handleSelectionChange = () => {
-      if (suppressSelectionRef.current) {
+      if ((event.target as Element | null)?.closest('[data-context-menu]')) {
         return;
       }
 
-      const data = getSelectionData(lastPointerAnchorRef.current ?? undefined);
-      lastPointerAnchorRef.current = null;
-
-      if (!data) {
-        closeMenu();
+      if (ignoreNextPointerUpRef.current) {
+        ignoreNextPointerUpRef.current = false;
         return;
       }
+
+      const anchor = { x: event.clientX, y: event.clientY };
+      anchorRef.current = anchor;
 
       requestAnimationFrame(() => {
-        openMenu({ ...data, variant: 'mini' });
+        const text = getSelectionText();
+        if (!text) {
+          closeMenu();
+          return;
+        }
+        openMenu({ text, anchor, variant: 'mini' });
       });
     };
 
@@ -284,6 +266,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
         return;
       }
 
+      ignoreNextPointerUpRef.current = true;
       closeMenu();
     };
 
@@ -292,8 +275,8 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
         return;
       }
 
-      const data = getSelectionData();
-      if (!data) {
+      const text = getSelectionText();
+      if (!text) {
         closeMenu();
         return;
       }
@@ -304,30 +287,29 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       if (menuOpenRef.current) {
         expandToFull(anchor);
       } else {
-        openMenu({ text: data.text, anchor, variant: 'full' });
+        openMenu({ text, anchor, variant: 'full' });
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
+        ignoreNextPointerUpRef.current = true;
         closeMenu();
       }
     };
 
     document.addEventListener('pointerup', handlePointerUp, { passive: true });
-    document.addEventListener('selectionchange', handleSelectionChange);
     document.addEventListener('pointerdown', handlePointerDown, { passive: true });
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('pointerup', handlePointerUp);
-      document.removeEventListener('selectionchange', handleSelectionChange);
       document.removeEventListener('pointerdown', handlePointerDown);
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeMenu, expandToFull, getSelectionData, openMenu]);
+  }, [closeMenu, expandToFull, getSelectionText, openMenu]);
 
   if (!mounted) {
     return <>{children}</>;

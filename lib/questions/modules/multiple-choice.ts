@@ -8,7 +8,8 @@ import {
   QuestionInputType,
   type AudioPlaybackPolicy,
 } from '@/lib/sessions/questions/question-types';
-import { generateSourceWithGaps } from '@/lib/sessions/questions/source-generator';
+import { generateRawSource, generateSourceWithGaps } from '@/lib/sessions/questions/source-generator';
+import { generateNewsBackedAudioTranscript } from '@/lib/sessions/questions/audio-source';
 import type {
   Question,
   QuestionResult,
@@ -41,6 +42,12 @@ interface TextSourceConfig extends QuestionModuleSourceConfig {
   type: 'text_passage';
   questionCount: number;
   optionsPerQuestion: number;
+  theme?: string;
+  teilLabel?: string;
+  prompts?: {
+    passage?: string;
+    questions?: string;
+  };
 }
 
 interface GappedSourceConfig extends QuestionModuleSourceConfig {
@@ -61,7 +68,6 @@ interface AudioPassageSourceConfig extends QuestionModuleSourceConfig {
   scenario?: string;
   listeningMode?: string;
   teilLabel?: string;
-  includeExample?: boolean;
   questionCount?: number;
   optionsPerQuestion: number;
   playback?: AudioPlaybackPolicy;
@@ -75,6 +81,17 @@ interface AudioPassageSourceConfig extends QuestionModuleSourceConfig {
   prompts?: {
     instructions?: string;
     exampleSummary?: string;
+    transcript?: string;
+    questions?: string;
+  };
+  conversationStyle?: 'podcast' | 'interview' | 'dialogue' | 'discussion' | 'monologue';
+  speakerCount?: number;
+  segmentCount?: number;
+  tts?: {
+    voiceHint?: string;
+    locale?: string;
+    rate?: number;
+    pitch?: number;
   };
 }
 
@@ -99,10 +116,6 @@ function resolvePointsPerQuestion(
   index: number,
   sourceConfig: MCQSourceConfig
 ): number {
-  if (sourceConfig.type === 'gapped_text') {
-    return index === 0 ? 0 : 1;
-  }
-
   return 1;
 }
 
@@ -247,63 +260,85 @@ async function markQuestion(
 async function generateStandardMCQ(
   sessionType: SessionTypeEnum,
   difficulty: QuestionDifficulty,
-  questionCount: number
+  questionCount: number,
+  sourceConfig?: TextSourceConfig
 ): Promise<Question[]> {
-  const model = customModel(DEFAULT_MODEL);
-  const userPrompt = `Generate a German reading passage with ${questionCount} comprehension questions. Return JSON with theme, title, subtitle, context, and questions array.`;
+  const resolvedQuestionCount = Math.max(
+    1,
+    questionCount || sourceConfig?.questionCount || 7
+  );
+  const optionsPerQuestion = sourceConfig?.optionsPerQuestion ?? 3;
 
-  const generationSchema = z.object({
-    theme: z.string(),
-    title: z.string(),
-    subtitle: z.string(),
-    context: z.string(),
+  const rawSource = await generateRawSource(
+    difficulty,
+    {
+      theme: sourceConfig?.theme,
+      systemPrompt: sourceConfig?.prompts?.passage,
+    },
+    sourceConfig?.teilLabel ? { teilLabel: sourceConfig.teilLabel } : undefined
+  );
+
+  const questionSchema = z.object({
     questions: z.array(
       z.object({
         prompt: z.string(),
-        options: z.array(z.object({ id: z.string(), text: z.string() })),
+        options: z
+          .array(z.object({ id: z.string(), text: z.string() }))
+          .length(optionsPerQuestion),
         correctOptionId: z.string(),
-        explanation: z.string(),
+        explanation: z.string().optional(),
       })
     ),
   });
 
-  const result = await callWithRetry(() =>
+  const questionPrompt = `Du erhältst einen deutschsprachigen Text und sollst Aufgaben für das Goethe-Zertifikat C1 erstellen.
+
+Thema: ${rawSource.theme}
+Titel: ${rawSource.title}
+Untertitel: ${rawSource.subtitle}
+
+Text:
+${rawSource.context}
+
+Erstelle ${resolvedQuestionCount} Multiple-Choice-Fragen mit jeweils ${optionsPerQuestion} Antwortoptionen.
+Jede Frage muss direkt auf den Text Bezug nehmen und genau eine richtige Antwort haben.
+${sourceConfig?.prompts?.questions ?? ''}`;
+
+  const questionResult = await callWithRetry(() =>
     generateObject({
-      model,
-      schema: generationSchema,
-      system: 'You are a German language expert creating reading comprehension questions.',
-      prompt: userPrompt,
-      temperature: 0.7,
+      model: customModel(DEFAULT_MODEL),
+      schema: questionSchema,
+      system:
+        'Du bist Aufgabenentwickler:in für das Goethe-Zertifikat. Formuliere präzise Multiple-Choice-Fragen auf C1-Niveau.',
+      prompt: questionPrompt,
+      temperature: 0.55,
     })
   );
 
-  const data = result.object as any;
-  const questions = data.questions.slice(0, questionCount);
+  const questions = questionResult.object.questions.slice(0, resolvedQuestionCount);
   const questionType = resolveQuestionType(sessionType);
 
-  return questions.map((q: any, index: number) => ({
-    id: `${questionType}-${index}-${Date.now()}`,
-    type: questionType,
-    sessionType,
-    difficulty,
-    inputType: QuestionInputType.MULTIPLE_CHOICE,
-    prompt: q.prompt,
-    context: data.context,
-    title: data.title,
-    subtitle: data.subtitle,
-    theme: data.theme,
-    ...(() => {
-      const normalised = normaliseGeneratedOptions(q.options, q.correctOptionId);
-      return {
-        options: normalised.options,
-        correctOptionId: normalised.correctOptionId,
-      };
-    })(),
-    explanation: q.explanation,
-    points: 1,
-    moduleId: QuestionModuleId.MULTIPLE_CHOICE,
-    moduleLabel: 'Multiple Choice',
-  }));
+  return questions.map((entry, index) => {
+    const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
+    return {
+      id: `${questionType}-${Date.now()}-${index}`,
+      type: questionType,
+      sessionType,
+      difficulty,
+      inputType: QuestionInputType.MULTIPLE_CHOICE,
+      prompt: entry.prompt,
+      context: rawSource.context,
+      title: rawSource.title,
+      subtitle: rawSource.subtitle,
+      theme: rawSource.theme,
+      options: normalised.options,
+      correctOptionId: normalised.correctOptionId,
+      explanation: entry.explanation,
+      points: 1,
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      moduleLabel: 'Multiple Choice',
+    };
+  });
 }
 
 async function generateGappedMCQ(
@@ -311,13 +346,18 @@ async function generateGappedMCQ(
   difficulty: QuestionDifficulty,
   sourceConfig: GappedSourceConfig
 ): Promise<Question[]> {
+  const teilLabel =
+    (sourceConfig as any)?.teilLabel ??
+    (sourceConfig as any)?.label ??
+    null;
+
   const sourceWithGaps = await generateSourceWithGaps(difficulty, {
     type: 'gapped_text',
     raw: {},
     gaps: {
       requiredCount: sourceConfig.gapCount,
     },
-  });
+  }, { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined });
 
   const model = customModel(DEFAULT_MODEL);
 
@@ -363,7 +403,6 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
     );
 
     const normalised = normaliseGeneratedOptions(result.object.options, result.object.correctOptionId);
-    const points = index === 0 ? 0 : 1;
 
     return {
       id: `${questionType}-gap-${gap.gapNumber}-${Date.now()}`,
@@ -379,9 +418,7 @@ Return the result as JSON with "options": [{ "id": "a", "text": "..." }, ...] an
       options: normalised.options,
       correctOptionId: normalised.correctOptionId,
       explanation: `Das richtige Wort ist "${gap.removedWord}".`,
-      isExample: index === 0,
-      exampleAnswer: index === 0 ? normalised.correctOptionId : undefined,
-      points,
+      points: 1,
       moduleId: QuestionModuleId.MULTIPLE_CHOICE,
       moduleLabel: 'Multiple Choice',
       gaps: [
@@ -403,22 +440,19 @@ async function generateAudioPassageMCQ(
   questionCount: number,
   sourceConfig: AudioPassageSourceConfig
 ): Promise<Question[]> {
-  const requiredQuestions = Math.max(questionCount, 1) + (sourceConfig.includeExample ? 1 : 0);
-  const model = customModel(DEFAULT_MODEL);
-  const schema = z.object({
-    theme: z.string(),
-    title: z.string(),
-    description: z.string(),
-    transcript: z.string(),
-    segments: z
-      .array(
-        z.object({
-          timestamp: z.string(),
-          summary: z.string(),
-        })
-      )
-      .max(8)
-      .optional(),
+  const requiredQuestions = Math.max(questionCount, 1);
+  const transcript = await generateNewsBackedAudioTranscript(difficulty, {
+    conversationStyle: sourceConfig.conversationStyle,
+    speakerCount: sourceConfig.speakerCount,
+    segmentCount: sourceConfig.segmentCount,
+    listeningMode: sourceConfig.listeningMode,
+    scenario: sourceConfig.scenario,
+    prompts: { transcript: sourceConfig.prompts?.transcript },
+    teilLabel: sourceConfig.teilLabel,
+  });
+
+  const questionModel = customModel(DEFAULT_MODEL);
+  const questionsSchema = z.object({
     questions: z.array(
       z.object({
         prompt: z.string(),
@@ -436,58 +470,77 @@ async function generateAudioPassageMCQ(
     ),
   });
 
-  const listeningMode = sourceConfig.listeningMode ?? 'Podcastgespräch';
-  const scenario = sourceConfig.scenario ?? 'aktuelles Gespräch über Gesellschaft und Kultur';
-  const styleHint = sourceConfig.styleHint ?? 'Fragen sollen präzise Aussagen prüfen und zwischen ähnlichen Optionen differenzieren.';
-  const teilLabel = sourceConfig.teilLabel ?? 'Teil';
+  const transcriptBody = transcript.segments
+    .map((segment, index) => `${index + 1}. ${segment.speakerName}: ${segment.text}`)
+    .join('\n');
 
-  const prompt = `Erstelle für das Goethe-Zertifikat C1 (${teilLabel}) einen Hörtext im Format ${listeningMode}.
+  const questionPrompt = `
+Du erstellst Aufgaben für Goethe-Zertifikat C1 Hören (${sourceConfig.teilLabel ?? 'Teil'}).
 
-Thema: ${scenario}
-Schwierigkeitsgrad: ${difficulty}
-Anzahl Fragen: ${requiredQuestions}
-Antwortoptionen pro Frage: ${sourceConfig.optionsPerQuestion}
+Vorgaben:
+- Schwierigkeitsgrad: ${difficulty}
+- Antwortoptionen je Frage: ${sourceConfig.optionsPerQuestion}
+- Format: ${sourceConfig.listeningMode ?? 'Hörtext'}
 
-Liefere:
-1. Eine kurze Beschreibung (max. 30 Wörter)
-2. Ein vollständiges Transkript (250-320 Wörter)
-3. ${requiredQuestions} Fragen mit Antwortoptionen (${styleHint})
+Transkript:
+${transcriptBody}
 
-Die Fragen sollen abwechslungsreich sein (Detail, Meinung, Motivation etc.) und klar Bezug auf das Transkript nehmen.`;
+${sourceConfig.prompts?.questions ?? ''}
 
-  const result = await callWithRetry(() =>
+Erstelle ${requiredQuestions} Aufgaben, stelle sicher, dass die Antworten eindeutig aus dem Transkript hervorgehen. Wenn ein Beispiel verlangt ist, markiere die erste Aufgabe so, dass sie eindeutig als Beispiel verwendet werden kann (wir kennzeichnen sie später).`;
+
+  const questionResult = await callWithRetry(() =>
     generateObject({
-      model,
-      schema,
+      model: questionModel,
+      schema: questionsSchema,
       system:
-        'Du bist ein Prüfer des Goethe-Instituts und entwirfst authentische Hörverstehensprüfungen auf C1-Niveau.',
-      prompt,
-      temperature: 0.65,
+        'Du bist Aufgabenentwickler:in für Hörverstehensprüfungen und formulierst präzise Multiple-Choice-Fragen.',
+      prompt: questionPrompt,
+      temperature: 0.55,
     })
   );
 
-  if (!Array.isArray(result.object.questions) || result.object.questions.length < requiredQuestions) {
-    throw new Error('Audio generator returned zu wenige Fragen');
+  if (
+    !Array.isArray(questionResult.object.questions) ||
+    questionResult.object.questions.length < requiredQuestions
+  ) {
+    throw new Error('Audio question generator returned too few questions');
   }
 
   const playback = withDefaultPlayback(sourceConfig.playback);
+  const ttsConfig = sourceConfig.tts ?? {};
   const audioSource = {
-    title: sourceConfig.audioAsset?.title ?? result.object.title,
-    description: sourceConfig.audioAsset?.description ?? result.object.description,
-    url: sourceConfig.audioAsset?.url ?? '/audio/listening-teil-1.wav',
-    durationSeconds: sourceConfig.audioAsset?.durationSeconds ?? 360,
-    transcript: result.object.transcript,
-    segments: result.object.segments,
-    status: sourceConfig.audioAsset?.url ? 'ready' : 'pending',
+    title: sourceConfig.audioAsset?.title ?? transcript.title,
+    description: sourceConfig.audioAsset?.description ?? transcript.description,
+    url: sourceConfig.audioAsset?.url ?? '',
+    durationSeconds: sourceConfig.audioAsset?.durationSeconds ?? transcript.durationSeconds,
+    transcript: transcript.transcript,
+    transcriptLanguage: 'de-DE',
+    segments: transcript.segments.slice(0, 6).map((segment, index) => ({
+      timestamp: `S${index + 1}`,
+      summary: `${segment.speakerName}: ${segment.text.slice(0, 140)}${
+        segment.text.length > 140 ? '…' : ''
+      }`,
+    })),
+    status: 'ready' as const,
     playback,
+    dialogue: transcript.segments,
+    generatedAudio: sourceConfig.audioAsset?.url
+      ? undefined
+      : {
+          provider: 'web_speech' as const,
+          locale: ttsConfig.locale ?? 'de-DE',
+          voiceHint: ttsConfig.voiceHint ?? transcript.speakingStyle,
+          rate: ttsConfig.rate ?? 1,
+          pitch: ttsConfig.pitch ?? 1,
+          segments: transcript.segments,
+        },
   };
 
   const questionType = resolveQuestionType(sessionType);
 
-  return result.object.questions.slice(0, requiredQuestions).map((entry, index) => {
+  return questionResult.object.questions.slice(0, requiredQuestions).map((entry, index) => {
     const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
-    const isExample = Boolean(sourceConfig.includeExample && index === 0);
-
     return {
       id: `${questionType}-audio-${Date.now()}-${index}`,
       type: questionType,
@@ -495,17 +548,15 @@ Die Fragen sollen abwechslungsreich sein (Detail, Meinung, Motivation etc.) und 
       difficulty,
       inputType: QuestionInputType.MULTIPLE_CHOICE,
       prompt: entry.prompt,
-      context: result.object.transcript,
-      title: result.object.title,
-      subtitle: result.object.description,
-      theme: result.object.theme,
+      context: transcript.transcript,
+      title: transcript.title,
+      subtitle: transcript.description,
+      theme: transcript.theme,
       options: normalised.options,
       correctOptionId: normalised.correctOptionId,
       explanation: entry.explanation,
       points: 1,
       audioSource,
-      isExample,
-      exampleAnswer: isExample ? normalised.correctOptionId : undefined,
       instructions: sourceConfig.prompts?.instructions,
     };
   });
@@ -562,8 +613,7 @@ export const multipleChoiceModule: QuestionModule<
         questionCount ||
         sourceConfig.questionCount ||
         DEFAULT_AUDIO_QUESTION_COUNT;
-      const includeExample = sourceConfig.includeExample ?? true;
-      const requiredCount = includeExample ? targetCount + 1 : targetCount;
+      const requiredCount = targetCount;
       const questions = await generateAudioPassageMCQ(
         sessionType,
         difficulty,
@@ -574,7 +624,7 @@ export const multipleChoiceModule: QuestionModule<
       return {
         questions: questions.slice(0, requiredCount).map((question, index) => ({
           ...question,
-          points: includeExample && index === 0 ? 0 : 1,
+          points: 1,
         })),
       };
     }
@@ -599,13 +649,14 @@ export const multipleChoiceModule: QuestionModule<
           audioGenerationPending: true,
         },
       };
-    }
+  }
 
-    const questions = await generateStandardMCQ(
-      sessionType,
-      difficulty,
-      questionCount || (sourceConfig as TextSourceConfig).questionCount
-    );
+  const questions = await generateStandardMCQ(
+    sessionType,
+    difficulty,
+    questionCount || (sourceConfig as TextSourceConfig).questionCount,
+    sourceConfig as TextSourceConfig
+  );
 
     return {
       questions: questions.map(question => ({

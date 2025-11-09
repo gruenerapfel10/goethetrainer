@@ -7,6 +7,14 @@ interface StatementMatchSourceProps {
 
 export function StatementMatchSource({ question }: StatementMatchSourceProps) {
   const texts = question.texts ?? [];
+  const presentation = (question.presentation ?? {}) as {
+    intro?: string;
+    example?: {
+      statement: string;
+      answer: string;
+      explanation?: string;
+    };
+  };
 
   return (
     <div className="space-y-8 text-sm leading-relaxed text-foreground">
@@ -21,6 +29,29 @@ export function StatementMatchSource({ question }: StatementMatchSourceProps) {
           <p className="text-base font-semibold text-foreground">{question.subtitle}</p>
         )}
       </div>
+
+      {(question.prompt || presentation.intro || presentation.example) && (
+        <div className="space-y-3 border border-dashed border-border/70 rounded-lg p-4 bg-muted/40">
+          {question.prompt && (
+            <p className="whitespace-pre-line font-medium text-foreground/90">{question.prompt}</p>
+          )}
+          {presentation.intro && (
+            <p className="whitespace-pre-line text-foreground/80">{presentation.intro}</p>
+          )}
+          {presentation.example && (
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center justify-between font-semibold">
+                <span>Beispiel</span>
+                <span>Lösung: {presentation.example.answer}</span>
+              </div>
+              <p>{presentation.example.statement}</p>
+              {presentation.example.explanation && (
+                <p className="text-xs text-muted-foreground">{presentation.example.explanation}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="space-y-6">
         {texts.map(text => (

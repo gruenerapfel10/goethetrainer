@@ -38,20 +38,73 @@ import type { QuestionModuleTask } from '@/lib/questions/modules/types';
 
 registerDefaultQuestionModules();
 
+function deriveExampleAnswer(question: Question): AnswerValue {
+  if (typeof question.correctOptionId === 'string' && question.correctOptionId.length > 0) {
+    return question.correctOptionId;
+  }
+
+  if (typeof question.correctAnswer === 'string' && question.correctAnswer.length > 0) {
+    return question.correctAnswer;
+  }
+
+  if (Array.isArray(question.gaps) && question.gaps.length > 0) {
+    const record: Record<string, string> = {};
+    question.gaps.forEach((gap, index) => {
+      const gapId = gap.id ?? `GAP_${index + 1}`;
+      const value =
+        gap.correctOptionId ??
+        (typeof gap.correctAnswer === 'string' ? gap.correctAnswer : undefined);
+      if (gapId && typeof value === 'string' && value.length > 0) {
+        record[gapId] = value;
+      }
+    });
+    return Object.keys(record).length > 0 ? record : null;
+  }
+
+  if (question.correctMatches && Object.keys(question.correctMatches).length > 0) {
+    return { ...question.correctMatches };
+  }
+
+  return null;
+}
+
+function markQuestionAsExample(question: Question): Question {
+  const exampleAnswer = deriveExampleAnswer(question);
+  return {
+    ...question,
+    isExample: true,
+    exampleAnswer:
+      typeof exampleAnswer === 'string' ? exampleAnswer : question.exampleAnswer,
+    answer: exampleAnswer ?? question.answer ?? null,
+    answered: true,
+    points: 0,
+  };
+}
+
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
   layoutEntry: NormalisedSessionLayoutEntry,
   difficulty: QuestionDifficulty,
   teilNumber: number
 ): Promise<Question[]> {
+  const exampleRequested = layoutEntry.generateExample === true;
+  const baseQuestionCount = layoutEntry.questionCount;
+  const requestedQuestionCount =
+    typeof baseQuestionCount === 'number'
+      ? baseQuestionCount + (exampleRequested ? 1 : 0)
+      : baseQuestionCount;
+
   const task: QuestionModuleTask = {
     id: layoutEntry.id,
     label: layoutEntry.label,
     moduleId: layoutEntry.moduleId,
-    questionCount: layoutEntry.questionCount ?? 0,
+    questionCount: requestedQuestionCount ?? 0,
     promptOverrides: layoutEntry.promptOverrides,
     renderOverrides: layoutEntry.renderOverrides,
-    sourceOverrides: layoutEntry.sourceOverrides,
+    sourceOverrides: {
+      ...(layoutEntry.sourceOverrides ?? {}),
+      teilLabel: layoutEntry.label ?? `Teil ${teilNumber}`,
+    },
     scoringOverrides: layoutEntry.scoringOverrides,
     metadata: layoutEntry.metadata,
   };
@@ -73,6 +126,12 @@ async function generateTeilQuestions(
     layoutId: layoutEntry.id,
     layoutLabel: layoutEntry.label,
   }));
+
+  if (exampleRequested && questions.length > 0) {
+    const [exampleQuestion, ...restQuestions] = questions;
+    const updatedExample = markQuestionAsExample(exampleQuestion);
+    questions = [updatedExample, ...restQuestions];
+  }
 
   const pointsOverride = layoutEntry.metadata?.points;
   if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
@@ -230,28 +289,74 @@ export async function updateSessionForUser(
   }
 
   if (updates.data) {
-    const { questions, answers, results, ...rest } = updates.data;
+    const {
+      questions,
+      answers,
+      results,
+      state,
+      progress,
+      metrics,
+      ...rest
+    } = updates.data;
+
+    const nextData = { ...session.data };
 
     if (rest && Object.keys(rest).length > 0) {
-      session.data = {
-        ...session.data,
-        ...rest,
-      };
+      Object.assign(nextData, rest);
     }
 
     if (Array.isArray(results)) {
-      session.data.results = results;
+      nextData.results = results;
     }
 
     if (Array.isArray(answers)) {
-      session.data.answers = answers;
+      nextData.answers = answers;
     }
 
     if (Array.isArray(questions)) {
-      session.data.questions = ensureQuestionIdentifiers(
+      nextData.questions = ensureQuestionIdentifiers(
         questions.map(normaliseAnsweredFlag)
       );
     }
+
+    if (state) {
+      nextData.state = {
+        ...(nextData.state ?? {
+          activeQuestionId: null,
+          activeTeil: null,
+          activeView: 'fragen',
+        }),
+        ...state,
+      };
+      if (nextData.state.activeQuestionId && session.metadata) {
+        session.metadata.activeQuestionId = nextData.state.activeQuestionId;
+      }
+      if (nextData.state.activeView && session.metadata) {
+        session.metadata.activeView = nextData.state.activeView;
+      }
+    }
+
+    if (progress) {
+      nextData.progress = {
+        ...(nextData.progress ?? {
+          totalQuestions: 0,
+          answeredQuestions: 0,
+          correctAnswers: 0,
+          score: 0,
+          maxScore: 0,
+        }),
+        ...progress,
+      };
+    }
+
+    if (metrics) {
+      nextData.metrics = {
+        ...(nextData.metrics ?? {}),
+        ...metrics,
+      };
+    }
+
+    session.data = nextData;
   }
 
   if (updates.metadata) {
@@ -525,6 +630,10 @@ export async function completeSessionForUser(
 ): Promise<CompletionSummary> {
   const session = await loadSessionForUser(sessionId, userId);
   const outcome = await finaliseSession(session);
+  console.log('[session-controller] completeSession', sessionId, {
+    results: session.data?.results?.length ?? 0,
+    questions: session.data?.questions?.length ?? 0,
+  });
   await persistSession(session);
   return outcome;
 }
@@ -535,6 +644,23 @@ export async function endSessionForUser(
   status: SessionStatus
 ): Promise<Session> {
   const session = await loadSessionForUser(sessionId, userId);
+  if (status === 'completed') {
+    const alreadyCompleted =
+      session.status === 'completed' &&
+      Array.isArray(session.data?.results) &&
+      session.data.results.length > 0;
+    if (!alreadyCompleted) {
+      try {
+        await finaliseSession(session);
+        console.log('[session-controller] endSession finalise', sessionId, {
+          results: session.data?.results?.length ?? 0,
+          questions: session.data?.questions?.length ?? 0,
+        });
+      } catch (error) {
+        console.error('Failed to finalise session before ending', error);
+      }
+    }
+  }
   session.status = status;
   session.endedAt = new Date();
   touchSession(session);

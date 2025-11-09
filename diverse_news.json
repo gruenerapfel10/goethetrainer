@@ -1,0 +1,120 @@
+{
+  "World": [],
+  "Business": [],
+  "Technology": [
+    {
+      "title": "Marko – A declarative, HTML‑based language that makes building web apps fun",
+      "link": "https://markojs.com/",
+      "published": "Sat, 08 Nov 2025 18:43:55 +0000",
+      "summary": "<a href=\"https://news.ycombinator.com/item?id=45858905\">Comments</a>",
+      "source": "Hacker News"
+    },
+    {
+      "title": "WriterdeckOS",
+      "link": "https://writerdeckos.com",
+      "published": "Sat, 08 Nov 2025 18:49:47 +0000",
+      "summary": "<a href=\"https://news.ycombinator.com/item?id=45858945\">Comments</a>",
+      "source": "Hacker News"
+    },
+    {
+      "title": "Transparent computer monitor designed to protect your vision",
+      "link": "https://www.visualinstruments.co/phantom/display",
+      "published": "Sat, 08 Nov 2025 19:11:16 +0000",
+      "summary": "<a href=\"https://news.ycombinator.com/item?id=45859107\">Comments</a>",
+      "source": "Hacker News"
+    }
+  ],
+  "Science": [
+    {
+      "title": "DNA pioneer James Watson has died ― colleagues wrestle with his legacy",
+      "link": "https://www.nature.com/articles/d41586-025-03380-2",
+      "published": "N/A",
+      "summary": "<p>Nature, Published online: 08 November 2025; <a href=\"https://www.nature.com/articles/d41586-025-0",
+      "source": "Nature"
+    },
+    {
+      "title": "Surprise ‘tail’ found on an iconic galaxy may rewrite its history",
+      "link": "https://www.nature.com/articles/d41586-025-03665-6",
+      "published": "N/A",
+      "summary": "<p>Nature, Published online: 07 November 2025; <a href=\"https://www.nature.com/articles/d41586-025-0",
+      "source": "Nature"
+    },
+    {
+      "title": "A host of ‘exocomets’ swarms a distant star",
+      "link": "https://www.nature.com/articles/d41586-025-03518-2",
+      "published": "N/A",
+      "summary": "<p>Nature, Published online: 07 November 2025; <a href=\"https://www.nature.com/articles/d41586-025-0",
+      "source": "Nature"
+    }
+  ],
+  "Politics": [
+    {
+      "title": "Why does UK government want to copy Denmark’s immigration system?",
+      "link": "https://www.theguardian.com/uk-news/2025/nov/08/home-office-want-copy-denmark-immigration-system",
+      "published": "Sat, 08 Nov 2025 15:01:12 GMT",
+      "summary": "<p>Some say Denmark’s rigid rules are key to Social Democrats’ power, but critical Labour MPs think ",
+      "source": "The Guardian Politics"
+    },
+    {
+      "title": "UK to announce plans to emulate stringent Danish immigration system",
+      "link": "https://www.theguardian.com/uk-news/2025/nov/08/uk-to-announce-plans-to-emulate-stringent-danish-immigration-system",
+      "published": "Sat, 08 Nov 2025 13:55:13 GMT",
+      "summary": "<p>Shabana Mahmood’s proposals draw scorn from some Labour MPs, while others want government to go f",
+      "source": "The Guardian Politics"
+    },
+    {
+      "title": "Cutting aid for disease fund would be moral failure, Labour MPs tell Starmer",
+      "link": "https://www.theguardian.com/politics/2025/nov/08/cutting-aid-for-disease-fund-would-be-moral-failure-labour-mps-tell-starmer",
+      "published": "Sat, 08 Nov 2025 09:00:03 GMT",
+      "summary": "<p>UK expected to reduce contribution to Global Fund to Fight Aids, Tuberculosis and Malaria by 20%<",
+      "source": "The Guardian Politics"
+    }
+  ],
+  "Sports": [
+    {
+      "title": "Philon's 25 helps Bama upset St. John's at MSG",
+      "link": "https://www.espn.com/mens-college-basketball/story/_/id/46894467/no-15-alabama-upsets-5th-ranked-st-john-103-96-msg",
+      "published": "Sat, 8 Nov 2025 15:50:37 EST",
+      "summary": "Labaron Philon Jr.'s 25 points helped lead No. 15 Alabama to a road upset of fifth-ranked St. John's",
+      "source": "ESPN"
+    },
+    {
+      "title": "Sources: Trump wants D.C. stadium named for him",
+      "link": "https://www.espn.com/nfl/story/_/id/46892115/trump-wants-commanders-stadium-named-him",
+      "published": "Sat, 8 Nov 2025 15:50:37 EST",
+      "summary": "A senior White House source said there have been back-channel communications with a member of the Co",
+      "source": "ESPN"
+    },
+    {
+      "title": "Driver pleads guilty in death of Vikings rookie",
+      "link": "https://www.espn.com/nfl/story/_/id/46894146/driver-caused-death-khyree-jackson-pleads-guilty",
+      "published": "Sat, 8 Nov 2025 15:50:37 EST",
+      "summary": "The driver who caused the crash that killed former Vikings rookie Khyree Jackson and two others last",
+      "source": "ESPN"
+    }
+  ],
+  "Entertainment": [
+    {
+      "title": "Where Have All the Indie Hits Gone?",
+      "link": "https://variety.com/2025/film/columns/where-have-all-the-indie-hits-gone-bugonia-after-the-hunt-1236570489/",
+      "published": "Sat, 08 Nov 2025 19:01:40 +0000",
+      "summary": "We’re now in the thick of the fall movie season, but you wouldn&#8217;t know it from how skimpy the ",
+      "source": "Variety"
+    },
+    {
+      "title": "‘Frankenstein’ Costume Designer Kate Hawley on How David Bowie and Prince Inspired Victor’s Looks",
+      "link": "https://variety.com/2025/artisans/news/frankenstein-costume-designer-kate-hawley-david-bowie-prince-1236572483/",
+      "published": "Sat, 08 Nov 2025 18:30:00 +0000",
+      "summary": "Guillermo del Toro reunited with “Crimson Peak” costume designer Kate Hawley to help bring the look ",
+      "source": "Variety"
+    },
+    {
+      "title": "‘Pluribus’ Star Rhea Seehorn on Channeling Her Character’s Anger: ‘It’s This Special Quality That Makes Her Different’",
+      "link": "https://variety.com/2025/scene/news/pluribus-rhea-seehorn-vince-gilligan-apple-tv-1236570933/",
+      "published": "Sat, 08 Nov 2025 18:16:25 +0000",
+      "summary": "After working as a lawyer trying to save Saul Goodman in Vince Gilligan and Peter Gould’s “Better Ca",
+      "source": "Variety"
+    }
+  ],
+  "Health": []
+}

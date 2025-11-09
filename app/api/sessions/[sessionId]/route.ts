@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { getSessionById } from '@/lib/sessions/queries';
+import { updateSessionForUser } from '@/lib/sessions/session-service';
+import type { UpdateSessionInput } from '@/lib/sessions/types';
 
 export async function GET(
   _request: Request,
@@ -31,4 +33,50 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+async function handleSessionUpdate(
+  request: Request,
+  context: { params: Promise<{ sessionId: string }> }
+) {
+  try {
+    const authSession = await auth();
+    if (!authSession?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { sessionId } = await context.params;
+    const payload = (await request.json().catch(() => ({}))) as UpdateSessionInput;
+    const updated = await updateSessionForUser(
+      sessionId,
+      authSession.user.email,
+      payload
+    );
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error('Error updating session:', error);
+    const status =
+      typeof (error as any)?.statusCode === 'number'
+        ? (error as any).statusCode
+        : 500;
+    return NextResponse.json(
+      { error: 'Failed to update session' },
+      { status }
+    );
+  }
+}
+
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ sessionId: string }> }
+) {
+  return handleSessionUpdate(request, context);
+}
+
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ sessionId: string }> }
+) {
+  return handleSessionUpdate(request, context);
 }

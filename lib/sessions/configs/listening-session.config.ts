@@ -12,7 +12,7 @@ const defaultPlayback = {
 export const listeningSessionConfig: SessionConfig = {
   type: SessionTypeEnum.LISTENING,
   metadata: {
-    displayName: 'Listening Session',
+    displayName: 'Listening',
     displayNameKey: 'sessions.listening.displayName',
     description: 'Trainiere Hörverstehen mit Goethe-Zertifikat-C1-Aufgaben (Teil 1–4).',
     descriptionKey: 'sessions.listening.description',
@@ -83,13 +83,20 @@ export const listeningSessionConfig: SessionConfig = {
         listeningMode: 'Podcast',
         scenario: 'Literaturpodcast – Zuordnung von Aussagen zu Buch 1/2/3',
         questionCount: 6,
-        includeExample: true,
         optionsPerQuestion: 3,
+        conversationStyle: 'podcast',
+        speakerCount: 1,
+        segmentCount: 6,
+        tts: {
+          voiceHint: 'Podcast',
+        },
+        prompts: {
+          transcript: 'Erstelle einen persönlichen Podcast-Monolog mit lebendigem Erzählen.',
+        },
         audioAsset: {
-          url: '/audio/listening-teil-1.wav',
           title: 'Literaturpodcast',
           description: 'Moderatorin spricht über drei neue Bücher.',
-          durationSeconds: 6,
+          durationSeconds: 360,
         },
         playback: defaultPlayback,
         styleHint:
@@ -120,13 +127,20 @@ export const listeningSessionConfig: SessionConfig = {
         listeningMode: 'Radiointerview',
         scenario: 'Interview zur Handschrift in Schule und Beruf',
         questionCount: 9,
-        includeExample: false,
         optionsPerQuestion: 3,
+        conversationStyle: 'interview',
+        speakerCount: 2,
+        segmentCount: 10,
+        tts: {
+          voiceHint: 'Interview',
+        },
+        prompts: {
+          transcript: 'Wechsle klar zwischen Moderator:in und Expert:in, klassisches Radiointerview.',
+        },
         audioAsset: {
-          url: '/audio/listening-teil-2.wav',
           title: 'Radiointerview: Handschrift 4.0',
           description: 'Gespräch zwischen Moderator und Bildungsexperte.',
-          durationSeconds: 6,
+          durationSeconds: 420,
         },
         playback: defaultPlayback,
         styleHint:
@@ -157,13 +171,20 @@ export const listeningSessionConfig: SessionConfig = {
         listeningMode: 'Podiumsdiskussion',
         scenario: 'Stadtplaner:innen diskutieren über Wohnraum der Zukunft',
         questionCount: 8,
-        includeExample: false,
         optionsPerQuestion: 3,
+        conversationStyle: 'dialogue',
+        speakerCount: 3,
+        segmentCount: 12,
+        tts: {
+          voiceHint: 'Dialog',
+        },
+        prompts: {
+          transcript: 'Drei Personen tauschen sich in kurzen Sequenzen aus, inklusive Reaktionen.',
+        },
         audioAsset: {
-          url: '/audio/listening-teil-3.wav',
           title: 'Gespräch über Wohnen',
           description: 'Vier Stimmen diskutieren urbane Wohnkonzepte.',
-          durationSeconds: 6,
+          durationSeconds: 390,
         },
         playback: defaultPlayback,
         styleHint:
@@ -194,13 +215,20 @@ export const listeningSessionConfig: SessionConfig = {
         listeningMode: 'Vortrag',
         scenario: 'EU-Kommission informiert über Familien- und Bildungspolitik',
         questionCount: 7,
-        includeExample: false,
         optionsPerQuestion: 3,
+        conversationStyle: 'discussion',
+        speakerCount: 4,
+        segmentCount: 10,
+        tts: {
+          voiceHint: 'Diskussion',
+        },
+        prompts: {
+          transcript: 'Mehrere Stimmen diskutieren kurz Statements, Moderator fasst Abschnitte zusammen.',
+        },
         audioAsset: {
-          url: '/audio/listening-teil-4.wav',
           title: 'EU-Vortrag',
           description: 'Vertreterin der EU erläutert neue Programme.',
-          durationSeconds: 6,
+          durationSeconds: 420,
         },
         playback: defaultPlayback,
         styleHint:

@@ -136,6 +136,7 @@
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.1",
     "remark-gfm": "^4.0.0",
+    "rss-parser": "^3.13.0",
     "server-only": "^0.0.1",
     "sharp": "^0.33.5",
     "shiki": "^3.13.0",
