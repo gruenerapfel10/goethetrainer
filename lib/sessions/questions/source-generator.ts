@@ -6,6 +6,7 @@ import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
 import type { ModelUsageRecord } from '@/lib/questions/modules/types';
+import { logAiRequest, logAiResponse } from '@/lib/ai/ai-logger';
 
 export const maxDuration = 30;
 
@@ -202,7 +203,7 @@ export async function generateRawSource(
   const selectedTheme =
     overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
 
-  const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
+  const model = customModel(ModelId.GPT_5);
 
   const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
 
@@ -243,6 +244,16 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
     .replace('{{difficulty}}', String(difficulty));
 
   try {
+    logAiRequest('RawSource', 'RawSourceSchema (theme/title/subtitle/context in German)', {
+      system: systemPrompt,
+      prompt: userPrompt,
+      metadata: {
+        teil: logMetadata?.teilLabel ?? 'n/a',
+        theme: selectedTheme,
+        difficulty,
+        newsHeadline: newsTopic?.headline,
+      },
+    });
     const result = await generateObject({
       model,
       schema: RawSourceSchema,
@@ -250,7 +261,8 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
       prompt: userPrompt,
       temperature: 0.8,
     });
-    recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
+    recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+    logAiResponse('RawSource', result.object);
 
     if (newsTopic) {
       const labelSuffix = logMetadata?.teilLabel ? ` (${logMetadata.teilLabel})` : '';
@@ -274,7 +286,7 @@ export async function identifyGapsInSource(
   overrides?: SessionSourceOptions['gaps'],
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
-  const model = customModel(ModelId.CLAUDE_HAIKU_4_5);
+  const model = customModel(ModelId.GPT_5);
   const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
 
 const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
@@ -298,7 +310,7 @@ Requirements:
 Return ALL ${requiredCount} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${requiredCount} is the last gap.`;
   const exampleBlock = buildGapExampleBlock(requiredCount);
 
-const buildUserPrompt = (attempt: number) => (overrides?.userPrompt ??
+const buildUserPrompt = () => (overrides?.userPrompt ??
 `Identify and return EXACTLY ${requiredCount} gaps in this German text. ALL ${requiredCount} GAPS MUST BE RETURNED.
 
 Theme: ${source.theme}
@@ -309,65 +321,78 @@ Text:
 ${source.context}
 
 
-${attempt > 1 ? `HINWEIS: Beim letzten Versuch wurden zu wenige Lücken geliefert. Bitte gib dieses Mal unbedingt alle ${requiredCount} Lücken an.` : ''}
-
 IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps in order of appearance in the text.`)
     .replace('{{requiredCount}}', requiredCount.toString());
 
-  for (let attempt = 1; attempt <= MAX_GAP_ATTEMPTS; attempt += 1) {
-    try {
-      const result = await generateObject({
-        model,
-        mode: 'json',
-        schema: GapIdentificationSchema,
-        schemaName: 'gap_identification',
-        schemaDescription: 'Identifies gaps in German text for C1 level exercises',
-        system: `${(overrides?.systemPrompt ?? baseSystemPrompt).replace('{{requiredCount}}', requiredCount.toString())}\n\n${exampleBlock}`,
-        prompt: buildUserPrompt(attempt),
-        temperature: 0.4,
-      });
-      recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
-
-      const parsedGaps = coerceGapEntries(result.object.gaps);
-      const gappedText = typeof result.object.gappedText === 'string' ? result.object.gappedText : '';
-      const normalisedGappedText = normaliseGapPlaceholders(gappedText);
-
-      if (!parsedGaps || parsedGaps.length !== requiredCount) {
-        throw new Error(`Expected ${requiredCount} gaps but received ${parsedGaps?.length ?? 0}`);
+  const executeGapExtraction = async () => {
+    const prompt = buildUserPrompt();
+    const gapSystemPrompt = `${(overrides?.systemPrompt ?? baseSystemPrompt).replace('{{requiredCount}}', requiredCount.toString())}\n\n${exampleBlock}`;
+    logAiRequest(
+      'GapIdentification',
+      `GapIdentificationSchema with exactly ${requiredCount} gaps`,
+      {
+        system: gapSystemPrompt,
+        prompt,
+        metadata: {
+          requiredCount,
+          title: source.title,
+        },
       }
+    );
+    const result = await generateObject({
+      model,
+      mode: 'json',
+      schema: GapIdentificationSchema,
+      schemaName: 'gap_identification',
+      schemaDescription: 'Identifies gaps in German text for C1 level exercises',
+      system: gapSystemPrompt,
+      prompt,
+      temperature: 0.4,
+    });
+    recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+    logAiResponse('GapIdentification', result.object);
 
-      if (!hasAllGapPlaceholders(normalisedGappedText, requiredCount)) {
-        throw new Error('Gapped text does not contain all required placeholders');
-      }
+    const parsedGaps = coerceGapEntries(result.object.gaps);
+    const gappedText = typeof result.object.gappedText === 'string' ? result.object.gappedText : '';
+    const normalisedGappedText = normaliseGapPlaceholders(gappedText);
 
-      const sanitizedGappedText = normalisedGappedText.replace(/\[(GAP_\d+)\]\]/g, '[$1]');
-
-      parsedGaps.sort((a, b) => a.gapNumber - b.gapNumber);
-
-      return {
-        theme: source.theme,
-        title: source.title,
-        subtitle: source.subtitle,
-        rawContext: source.context,
-        gappedContext: sanitizedGappedText,
-        gaps: parsedGaps.map(gap => ({
-          gapNumber: gap.gapNumber,
-          removedWord: gap.removedWord,
-        })),
-        newsTopic: source.newsTopic ?? null,
-      };
-    } catch {
-      // retry
+    if (!parsedGaps || parsedGaps.length !== requiredCount) {
+      throw new Error(`Expected ${requiredCount} gaps but received ${parsedGaps?.length ?? 0}`);
     }
-  }
 
-  const fallback = generateDeterministicGaps(source, requiredCount);
-  if (fallback) {
-    return { ...fallback, newsTopic: source.newsTopic ?? null };
+    if (!hasAllGapPlaceholders(normalisedGappedText, requiredCount)) {
+      throw new Error('Gapped text does not contain all required placeholders');
+    }
+
+    const sanitizedGappedText = normalisedGappedText.replace(/\[(GAP_\d+)\]\]/g, '[$1]');
+    parsedGaps.sort((a, b) => a.gapNumber - b.gapNumber);
+
+    return {
+      theme: source.theme,
+      title: source.title,
+      subtitle: source.subtitle,
+      rawContext: source.context,
+      gappedContext: sanitizedGappedText,
+      gaps: parsedGaps.map(gap => ({
+        gapNumber: gap.gapNumber,
+        removedWord: gap.removedWord,
+      })),
+      newsTopic: source.newsTopic ?? null,
+    };
+  };
+
+  try {
+    return await executeGapExtraction();
+  } catch (error) {
+    console.error(
+      `Gap identification failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+    const fallback = generateDeterministicGaps(source, requiredCount);
+    if (fallback) {
+      return { ...fallback, newsTopic: source.newsTopic ?? null };
+    }
+    throw error;
   }
-  throw new Error(
-    `Failed to identify gaps in source after ${MAX_GAP_ATTEMPTS} attempts`
-  );
 }
 
 /**

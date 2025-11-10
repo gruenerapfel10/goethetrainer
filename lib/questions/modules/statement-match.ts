@@ -44,7 +44,7 @@ interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
 
 type StatementMatchAnswer = Record<string, string> | null;
 
-const DEFAULT_STATEMENT_MODEL = ModelId.CLAUDE_HAIKU_4_5;
+const DEFAULT_STATEMENT_MODEL = ModelId.GPT_5;
 const STATEMENT_RETRY_ATTEMPTS = 3;
 const STATEMENT_RETRY_DELAY_MS = 1_200;
 

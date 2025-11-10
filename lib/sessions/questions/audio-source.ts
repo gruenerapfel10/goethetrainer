@@ -73,7 +73,7 @@ export interface AudioTranscriptOptions {
   teilLabel?: string;
 }
 
-const DEFAULT_AUDIO_MODEL = customModel(ModelId.CLAUDE_HAIKU_4_5);
+const DEFAULT_AUDIO_MODEL = customModel(ModelId.GPT_5);
 
 const AudioOutlineSchema = z.object({
   title: z.string(),
@@ -178,7 +178,7 @@ Liefere eine strukturierte Übersicht entsprechend des Schemas.`;
     prompt: outlinePrompt,
     temperature: 0.4,
   });
-  recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, outline.usage);
+  recordModelUsage(recordUsage, ModelId.GPT_5, outline.usage);
 
   const transcriptPrompt = `
 Erstelle das vollständige Transkript für den geplanten Hörtext.
@@ -206,7 +206,7 @@ Schreibe alle Inhalte auf Deutsch. Jeder Abschnitt enthält genau eine Sprecher-
     prompt: transcriptPrompt,
     temperature: 0.45,
   });
-  recordModelUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, transcript.usage);
+  recordModelUsage(recordUsage, ModelId.GPT_5, transcript.usage);
 
   const segments: AudioTranscriptSegment[] = transcript.object.segments
     .slice(0, segmentCount)

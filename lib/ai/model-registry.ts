@@ -2,12 +2,15 @@ export enum ModelId {
   CLAUDE_SONNET_4_5 = 'claude-sonnet-4-5-20250514',
   CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5-20251001',
   GLM_4_5_AIR = 'zai/glm-4.5-air',
+  GPT_5_NANO = 'gpt-5-nano',
+  GPT_5_MINI = 'gpt-5-mini',
+  GPT_5 = 'gpt-5',
 }
 
 export interface ModelMetadata {
   id: ModelId;
-  provider: 'anthropic' | 'zai';
-  family: 'claude' | 'glm';
+  provider: 'anthropic' | 'zai' | 'openai';
+  family: 'claude' | 'glm' | 'gpt';
   contextWindow: number;
   costs: {
     input: number;
@@ -44,6 +47,30 @@ export const MODEL_REGISTRY: Record<ModelId, ModelMetadata> = {
     contextWindow: 128000,
     costs: { input: 0.15, output: 0.60 },
     capabilities: { vision: false, streaming: true, toolUse: true },
+  },
+  [ModelId.GPT_5_NANO]: {
+    id: ModelId.GPT_5_NANO,
+    provider: 'openai',
+    family: 'gpt',
+    contextWindow: 128000,
+    costs: { input: 0.04, output: 0.16 },
+    capabilities: { vision: true, streaming: true, toolUse: true },
+  },
+  [ModelId.GPT_5_MINI]: {
+    id: ModelId.GPT_5_MINI,
+    provider: 'openai',
+    family: 'gpt',
+    contextWindow: 128000,
+    costs: { input: 0.15, output: 0.60 },
+    capabilities: { vision: true, streaming: true, toolUse: true },
+  },
+  [ModelId.GPT_5]: {
+    id: ModelId.GPT_5,
+    provider: 'openai',
+    family: 'gpt',
+    contextWindow: 128000,
+    costs: { input: 6.00, output: 24.00 },
+    capabilities: { vision: true, streaming: true, toolUse: true },
   },
 };
 

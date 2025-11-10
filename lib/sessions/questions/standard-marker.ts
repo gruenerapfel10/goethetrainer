@@ -20,7 +20,7 @@ interface KeywordAnalysis {
   coverage: number;
 }
 
-const AI_MARKING_MODEL = customModel(ModelId.CLAUDE_HAIKU_4_5);
+const AI_MARKING_MODEL = customModel(ModelId.GPT_5);
 
 const MarkingDecisionSchema = z.object({
   summary: z.string(),

@@ -376,7 +376,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const activeFlushPromiseRef = useRef<Promise<boolean> | null>(null);
   const resolveFlushPromiseRef = useRef<((value: boolean) => void) | null>(null);
   const isCompletingRef = useRef(false);
-  const generationPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionEventSourceRef = useRef<EventSource | null>(null);
+  const sessionEventRetryRef = useRef<number | null>(null);
+  const sessionEventSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeSessionRef.current = activeSession;
@@ -392,28 +394,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
   const clearError = useCallback(() => setError(null), []);
   const clearResults = useCallback(() => setLatestResults(null), []);
-
-  const stopGenerationMonitor = useCallback((): void => {
-    if (generationPollRef.current) {
-      clearInterval(generationPollRef.current);
-      generationPollRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (generationPollRef.current) {
-        clearInterval(generationPollRef.current);
-        generationPollRef.current = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (generationState?.status === 'completed' || generationState?.status === 'failed') {
-      stopGenerationMonitor();
-    }
-  }, [generationState?.status, stopGenerationMonitor]);
 
   const flushPendingUpdates = useCallback(async (): Promise<boolean> => {
     if (isFlushingRef.current && activeFlushPromiseRef.current) {
@@ -883,34 +863,55 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     [buildSessionState]
   );
 
-  const startGenerationMonitor = useCallback(
+  const stopSessionEventStream = useCallback(() => {
+    if (sessionEventRetryRef.current) {
+      clearTimeout(sessionEventRetryRef.current);
+      sessionEventRetryRef.current = null;
+    }
+    if (sessionEventSourceRef.current) {
+      sessionEventSourceRef.current.close();
+      sessionEventSourceRef.current = null;
+    }
+    sessionEventSessionIdRef.current = null;
+  }, []);
+
+  const startSessionEventStream = useCallback(
     (sessionId: string) => {
-      stopGenerationMonitor();
+      if (typeof window === 'undefined') {
+        return;
+      }
+      stopSessionEventStream();
+      sessionEventSessionIdRef.current = sessionId;
+      const source = new EventSource(`/api/sessions/${sessionId}/events`);
+      sessionEventSourceRef.current = source;
 
-      const tick = async () => {
-        const latest = await refreshSessionSnapshot(sessionId);
-        if (!latest) {
-          return;
-        }
-
-        const status = latest.data?.generation?.status;
-        if (
-          status === 'completed' ||
-          status === 'failed' ||
-          latest.status !== 'active'
-        ) {
-          stopGenerationMonitor();
-        }
+      source.onmessage = () => {
+        void refreshSessionSnapshot(sessionId);
       };
 
-      generationPollRef.current = setInterval(() => {
-        void tick();
-      }, 2500);
-
-      void tick();
+      source.onerror = () => {
+        source.close();
+        sessionEventSourceRef.current = null;
+        if (sessionEventSessionIdRef.current !== sessionId) {
+          return;
+        }
+        sessionEventRetryRef.current = window.setTimeout(() => {
+          if (sessionEventSessionIdRef.current) {
+            startSessionEventStream(sessionEventSessionIdRef.current);
+          }
+        }, 2000);
+      };
     },
-    [refreshSessionSnapshot, stopGenerationMonitor]
+    [refreshSessionSnapshot, stopSessionEventStream]
   );
+
+  useEffect(() => stopSessionEventStream, [stopSessionEventStream]);
+
+  useEffect(() => {
+    if (!activeSession?.id) {
+      stopSessionEventStream();
+    }
+  }, [activeSession?.id, stopSessionEventStream]);
 
   const startSession = useCallback(
     async (
@@ -928,11 +929,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
         buildSessionState(session);
         if (session?.id) {
-          if (session.data?.generation?.status !== 'completed') {
-            startGenerationMonitor(session.id);
-          } else {
-            stopGenerationMonitor();
-          }
+          startSessionEventStream(session.id);
         }
         return session;
       } catch (err) {
@@ -943,7 +940,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setIsLoading(false);
       }
     },
-    [buildSessionState, startGenerationMonitor, stopGenerationMonitor]
+    [buildSessionState, startSessionEventStream]
   );
 
   const initializeSession = useCallback(
@@ -956,11 +953,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         });
         buildSessionState(session);
         if (session?.id) {
-          if (session.data?.generation?.status !== 'completed') {
-            startGenerationMonitor(session.id);
-          } else {
-            stopGenerationMonitor();
-          }
+          startSessionEventStream(session.id);
         }
         return session;
       } catch (err) {
@@ -971,7 +964,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setIsLoading(false);
       }
     },
-    [buildSessionState, startGenerationMonitor, stopGenerationMonitor]
+    [buildSessionState, startSessionEventStream]
   );
 
   const setQuestionAnswer = useCallback(

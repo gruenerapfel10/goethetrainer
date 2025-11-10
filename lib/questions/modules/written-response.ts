@@ -46,7 +46,7 @@ interface WritingAnswerContext {
   answer: string | null;
 }
 
-const DEFAULT_MODEL = customModel(ModelId.CLAUDE_HAIKU_4_5);
+const DEFAULT_MODEL = customModel(ModelId.GPT_5);
 
 function mapNewsTopicToSourceReference(topic?: NewsTopic | null) {
   if (!topic) {
@@ -213,7 +213,7 @@ Liefere JSON entsprechend dem Schema.`;
     prompt: userPrompt,
     temperature: 0.4,
   });
-  reportUsage(recordUsage, ModelId.CLAUDE_HAIKU_4_5, result.usage);
+  reportUsage(recordUsage, ModelId.GPT_5, result.usage);
 
   const data = result.object;
   const questionType = resolveQuestionType(sessionType);

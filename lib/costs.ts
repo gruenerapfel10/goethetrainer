@@ -15,9 +15,9 @@ const buildModelIdMap = (): Record<string, string> => {
     }
   }
   
-  map['haiku'] = ModelId.CLAUDE_HAIKU_4_5;
-  map['artifact-model'] = ModelId.CLAUDE_SONNET_4_5;
-  map['document-agent'] = ModelId.CLAUDE_SONNET_4_5;
+  map['haiku'] = ModelId.GPT_5;
+  map['artifact-model'] = ModelId.GPT_5;
+  map['document-agent'] = ModelId.GPT_5;
   
   return map;
 };

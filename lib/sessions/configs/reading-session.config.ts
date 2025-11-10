@@ -1,5 +1,6 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import { ReadingAssessmentCategory } from '@/lib/questions/assessment-categories';
 
 export const readingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.READING,
@@ -144,6 +145,19 @@ export const readingSessionConfig: SessionConfig = {
         gapCount: 8,
         optionsPerGap: 3,
         optionStyle: 'word',
+        categoryAllocation: {
+          strategy: 'even',
+          categories: [
+            ReadingAssessmentCategory.LEXICAL_NUANCE,
+            ReadingAssessmentCategory.COLLOCATION_CONTROL,
+            ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
+            ReadingAssessmentCategory.CONNECTOR_LOGIC,
+            ReadingAssessmentCategory.IDIOMATIC_EXPRESSION,
+            ReadingAssessmentCategory.REGISTER_TONE,
+            ReadingAssessmentCategory.DISCOURSE_REFERENCE,
+            ReadingAssessmentCategory.INSTITUTIONAL_CONTEXT,
+          ],
+        },
       },
       renderOverrides: {
         layout: 'horizontal',
@@ -154,69 +168,93 @@ export const readingSessionConfig: SessionConfig = {
         strategy: 'per_gap',
       },
     },
-    {
-      id: 'teil_2',
-      label: 'Teil 2',
-      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
-      questionCount: 9,
-      renderOverrides: {
-        layout: 'vertical',
-        showSourceToggle: true,
-      },
-      sourceOverrides: {
-        type: 'text_passage',
-        questionCount: 9,
-        optionsPerQuestion: 3,
-      },
-      scoringOverrides: {
-        maxPoints: 9,
-        strategy: 'single_select',
-      },
-    },
-    {
-      id: 'teil_3',
-      label: 'Teil 3',
-      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
-      questionCount: 11,
-      renderOverrides: {
-        layout: 'single_statement',
-        showSourceToggle: true,
-      },
-      sourceOverrides: {
-        type: 'gapped_text',
-        gapCount: 11,
-        optionsPerGap: 4,
-        optionStyle: 'statement',
-      },
-      scoringOverrides: {
-        maxPoints: 11,
-        strategy: 'per_gap',
-      },
-    },
-    {
-      id: 'teil_4',
-      label: 'Teil 4',
-      moduleId: QuestionModuleId.STATEMENT_MATCH,
-      questionCount: 1,
-      renderOverrides: {
-        layout: 'statement_match',
-        showSourceToggle: true,
-      },
-      sourceOverrides: {
-        type: 'statement_matching',
-        authorCount: 3,
-        statementCount: 7,
-        unmatchedCount: 0,
-        startingStatementNumber: 24,
-        workingTimeMinutes: 15,
-        theme: 'Digitale Gesellschaft',
-        topicHint: 'Privatsphäre, Sicherheit und Datenethik',
-      },
-      scoringOverrides: {
-        maxPoints: 7,
-        strategy: 'per_gap',
-      },
-    },
+    // {
+    //   id: 'teil_2',
+    //   label: 'Teil 2',
+    //   moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+    //   questionCount: 9,
+    //   renderOverrides: {
+    //     layout: 'vertical',
+    //     showSourceToggle: true,
+    //   },
+    //   sourceOverrides: {
+    //     type: 'text_passage',
+    //     questionCount: 9,
+    //     optionsPerQuestion: 3,
+    //     categoryPlan: [
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.COLLOCATION_CONTROL,
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //       ReadingAssessmentCategory.COLLOCATION_CONTROL,
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //     ],
+    //   },
+    //   scoringOverrides: {
+    //     maxPoints: 9,
+    //     strategy: 'single_select',
+    //   },
+    // },
+    // {
+    //   id: 'teil_3',
+    //   label: 'Teil 3',
+    //   moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+    //   questionCount: 11,
+    //   renderOverrides: {
+    //     layout: 'single_statement',
+    //     showSourceToggle: true,
+    //   },
+    //   sourceOverrides: {
+    //     type: 'gapped_text',
+    //     gapCount: 11,
+    //     optionsPerGap: 4,
+    //     optionStyle: 'statement',
+    //     categoryPlan: [
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.COLLOCATION_CONTROL,
+    //       ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.COLLOCATION_CONTROL,
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //       ReadingAssessmentCategory.LEXICAL_NUANCE,
+    //       ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
+    //       ReadingAssessmentCategory.COLLOCATION_CONTROL,
+    //       ReadingAssessmentCategory.CONNECTOR_LOGIC,
+    //     ],
+    //   },
+    //   scoringOverrides: {
+    //     maxPoints: 11,
+    //     strategy: 'per_gap',
+    //   },
+    // },
+    // {
+    //   id: 'teil_4',
+    //   label: 'Teil 4',
+    //   moduleId: QuestionModuleId.STATEMENT_MATCH,
+    //   questionCount: 1,
+    //   renderOverrides: {
+    //     layout: 'statement_match',
+    //     showSourceToggle: true,
+    //   },
+    //   sourceOverrides: {
+    //     type: 'statement_matching',
+    //     authorCount: 3,
+    //     statementCount: 7,
+    //     unmatchedCount: 0,
+    //     startingStatementNumber: 24,
+    //     workingTimeMinutes: 15,
+    //     theme: 'Digitale Gesellschaft',
+    //     topicHint: 'Privatsphäre, Sicherheit und Datenethik',
+    //   },
+    //   scoringOverrides: {
+    //     maxPoints: 7,
+    //     strategy: 'per_gap',
+    //   },
+    // },
   ],
   
   features: {

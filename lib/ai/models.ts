@@ -6,9 +6,8 @@ import { ModelId } from '@/lib/ai/model-registry';
 import { getAgentMetadata } from '@/lib/ai/agents';
 
 export const customModel = (modelId: ModelId | string) => {
-  // Use Vercel AI Gateway for Z.ai models, Anthropic for Claude
-  if (modelId === ModelId.GLM_4_5_AIR || typeof modelId === 'string' && modelId.startsWith('zai/')) {
-    // Vercel AI Gateway automatically routes z.ai models through its gateway
+  // Use OpenAI for GPT and Z.ai models, Anthropic for Claude
+  if (modelId === ModelId.GPT_5 || modelId === ModelId.GPT_5_MINI || modelId === ModelId.GPT_5_NANO || modelId === ModelId.GLM_4_5_AIR || typeof modelId === 'string' && (modelId.startsWith('zai/') || modelId.startsWith('gpt-'))) {
     return openai(modelId);
   }
   return anthropic(modelId);
@@ -16,13 +15,17 @@ export const customModel = (modelId: ModelId | string) => {
 
 export const myProvider = customProvider({
   languageModels: {
-    'grok-4-fast-reasoning': customModel(ModelId.GLM_4_5_AIR),
-    'artifact-model': customModel(ModelId.GLM_4_5_AIR),
-    'bedrock-sonnet-latest': customModel(ModelId.GLM_4_5_AIR),
-    'document-agent': customModel(ModelId.GLM_4_5_AIR),
+    'grok-4-fast-reasoning': customModel(ModelId.GPT_5),
+    'artifact-model': customModel(ModelId.GPT_5),
+    'bedrock-sonnet-latest': customModel(ModelId.GPT_5),
+    'document-agent': customModel(ModelId.GPT_5),
 
-    [AgentType.GENERAL_AGENT]: customModel(ModelId.GLM_4_5_AIR),
-    [AgentType.GOETHE_AGENT]: customModel(ModelId.GLM_4_5_AIR),
+    [ModelId.GPT_5_NANO]: customModel(ModelId.GPT_5_NANO),
+    [ModelId.GPT_5_MINI]: customModel(ModelId.GPT_5_MINI),
+    [ModelId.GPT_5]: customModel(ModelId.GPT_5),
+
+    [AgentType.GENERAL_AGENT]: customModel(ModelId.GPT_5),
+    [AgentType.GOETHE_AGENT]: customModel(ModelId.GPT_5),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),

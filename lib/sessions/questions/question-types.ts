@@ -1,5 +1,6 @@
 import { SessionTypeEnum } from '../session-registry';
 import { QuestionInputType } from '../inputs/types';
+import type { ReadingAssessmentCategory } from '@/lib/questions/assessment-categories';
 
 /**
  * Centralized question type definitions
@@ -127,9 +128,16 @@ export interface Question {
   // Goethe C1 specific fields
   gaps?: Array<{
     id: string;
-    options?: string[];
+    options?: Array<{ id: string; text: string }>;
     correctAnswer?: string;
     correctOptionId?: string; // Alternative to correctAnswer for multiple choice gaps
+    assessmentCategory?: ReadingAssessmentCategory;
+    optionRationales?: Array<{
+      optionId: string;
+      rationale: string;
+      isCorrect: boolean;
+      misconception?: string;
+    }>;
   }>; // For GAP_TEXT_GAP_TEXT_MULTIPLE_CHOICE and GAP_TEXT_MATCHING
   
   sentences?: Array<{
@@ -182,6 +190,13 @@ export interface Question {
   }>;
 
   sourceReference?: QuestionSourceReference;
+  assessmentCategory?: ReadingAssessmentCategory;
+  optionRationales?: Array<{
+    optionId: string;
+    rationale: string;
+    isCorrect: boolean;
+    misconception?: string;
+  }>;
   
   // Metadata
   points: number;

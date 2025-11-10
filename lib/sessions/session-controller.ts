@@ -87,8 +87,6 @@ interface TeilGenerationResult {
   usage: ModelUsageRecord[];
 }
 
-const TEIL_GENERATION_MAX_ATTEMPTS = 3;
-
 async function generateTeilQuestions(
   sessionType: SessionTypeEnum,
   layoutEntry: NormalisedSessionLayoutEntry,
@@ -96,12 +94,31 @@ async function generateTeilQuestions(
   teilNumber: number,
   userId?: string
 ): Promise<TeilGenerationResult> {
-  const exampleRequested = layoutEntry.generateExample === true;
-  const baseQuestionCount = layoutEntry.questionCount;
-  const requestedQuestionCount =
-    typeof baseQuestionCount === 'number'
-      ? baseQuestionCount + (exampleRequested ? 1 : 0)
-      : baseQuestionCount;
+  const stageTimings: Record<string, number> = {};
+  const stageStart = Date.now();
+  const markTiming = (label: string, startedAt: number) => {
+    stageTimings[label] = (stageTimings[label] ?? 0) + (Date.now() - startedAt);
+  };
+
+  console.log(`\n${'═'.repeat(80)}`);
+  console.log(`🎯 TEIL ${teilNumber} GENERATION - STARTING`);
+  console.log(`   Module: ${layoutEntry.moduleId}`);
+  console.log(`   Label: ${layoutEntry.label ?? `Teil ${teilNumber}`}`);
+  console.log(`   Questions: ${layoutEntry.questionCount}`);
+  console.log(`${'═'.repeat(80)}`);
+
+  try {
+    const exampleRequested = layoutEntry.generateExample === true;
+    const baseQuestionCount = layoutEntry.questionCount;
+    const requestedQuestionCount =
+      typeof baseQuestionCount === 'number'
+        ? baseQuestionCount + (exampleRequested ? 1 : 0)
+        : baseQuestionCount;
+
+  console.log(`🔧 Configuration:`);
+  console.log(`   Base questions: ${baseQuestionCount}`);
+  console.log(`   Example requested: ${exampleRequested}`);
+  console.log(`   Total requested: ${requestedQuestionCount}`);
 
   const task: QuestionModuleTask = {
     id: layoutEntry.id,
@@ -120,130 +137,138 @@ async function generateTeilQuestions(
 
   const usageRecords: ModelUsageRecord[] = [];
 
-  let attempt = 0;
-  let lastError: unknown = null;
-  while (attempt < TEIL_GENERATION_MAX_ATTEMPTS) {
-    attempt += 1;
-    try {
-      console.log(
-        `[SessionGenerator] Teil ${teilNumber} (${layoutEntry.moduleId}) attempt ${attempt}/${TEIL_GENERATION_MAX_ATTEMPTS}`
-      );
-      const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
-        sessionType,
-        difficulty,
-        userId,
-        recordUsage: record => {
-          usageRecords.push(record);
-        },
-      });
+    console.log(`\n⏳ Attempting Teil ${teilNumber} generation (single pass) ...`);
+    const moduleStart = Date.now();
+    const { questions: rawQuestions } = await executeQuestionModuleTask(task, {
+      sessionType,
+      difficulty,
+      userId,
+      recordUsage: record => {
+        usageRecords.push(record);
+      },
+    });
+    markTiming('module_execution_ms', moduleStart);
 
-      let questions = rawQuestions.map((question: any, index: number) => ({
-        ...question,
-        answer: question.answer ?? null,
-        teil: teilNumber,
-        order: index,
-        registryType: layoutEntry.moduleId,
-        answered: !!question.answer,
-        inputType: question.inputType ?? question.answerType,
-        answerType: question.answerType ?? question.inputType,
-        layoutId: layoutEntry.id,
-        layoutLabel: layoutEntry.label,
-      }));
+    let questions = rawQuestions.map((question: any, index: number) => ({
+      ...question,
+      answer: question.answer ?? null,
+      teil: teilNumber,
+      order: index,
+      registryType: layoutEntry.moduleId,
+      answered: !!question.answer,
+      inputType: question.inputType ?? question.answerType,
+      answerType: question.answerType ?? question.inputType,
+      layoutId: layoutEntry.id,
+      layoutLabel: layoutEntry.label,
+    }));
 
-      if (exampleRequested && questions.length > 0) {
-        const [exampleQuestion, ...restQuestions] = questions;
-        const updatedExample = markQuestionAsExample(exampleQuestion);
-        questions = [updatedExample, ...restQuestions];
-      }
+    const exampleTimer = exampleRequested && questions.length > 0 ? Date.now() : null;
+    if (exampleTimer && questions.length > 0) {
+      const [exampleQuestion, ...restQuestions] = questions;
+      const updatedExample = markQuestionAsExample(exampleQuestion);
+      questions = [updatedExample, ...restQuestions];
+    }
+    if (exampleTimer) {
+      markTiming('example_adjustment_ms', exampleTimer);
+    }
 
-      const pointsOverride = layoutEntry.metadata?.points;
-      if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
-        const totalPoints = Math.max(0, Math.round(pointsOverride));
+    const pointsOverride = layoutEntry.metadata?.points;
+    if (typeof pointsOverride === 'number' && Number.isFinite(pointsOverride) && pointsOverride > 0) {
+      const scoringStart = Date.now();
+      const totalPoints = Math.max(0, Math.round(pointsOverride));
 
-        const scoredQuestions = questions.filter(question => !question.isExample);
-        const scoredCount = scoredQuestions.length;
+      const scoredQuestions = questions.filter(question => !question.isExample);
+      const scoredCount = scoredQuestions.length;
 
-        const scaleRubric = (question: Question, targetPoints: number): Question => {
-          const next: Question = {
-            ...question,
-            points: targetPoints,
-          };
+      const scaleRubric = (question: Question, targetPoints: number): Question => {
+        const next: Question = {
+          ...question,
+          points: targetPoints,
+        };
 
-          if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
-            const rubricTotal = next.scoringRubric.reduce(
+        if (Array.isArray(next.scoringRubric) && next.scoringRubric.length > 0) {
+          const rubricTotal = next.scoringRubric.reduce(
+            (sum, entry) => sum + (entry.maxPoints ?? 0),
+            0
+          );
+
+          if (rubricTotal > 0) {
+            const scale = targetPoints / rubricTotal;
+            const scaledRubric = next.scoringRubric.map(entry => ({
+              ...entry,
+              maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
+            }));
+
+            const scaledTotal = scaledRubric.reduce(
               (sum, entry) => sum + (entry.maxPoints ?? 0),
               0
             );
-
-            if (rubricTotal > 0) {
-              const scale = targetPoints / rubricTotal;
-              const scaledRubric = next.scoringRubric.map(entry => ({
-                ...entry,
-                maxPoints: Math.max(0, Math.round((entry.maxPoints ?? 0) * scale)),
-              }));
-
-              const scaledTotal = scaledRubric.reduce(
-                (sum, entry) => sum + (entry.maxPoints ?? 0),
-                0
-              );
-              const delta = targetPoints - scaledTotal;
-              if (scaledRubric.length > 0 && delta !== 0) {
-                scaledRubric[0] = {
-                  ...scaledRubric[0],
-                  maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
-                };
-              }
-
-              next.scoringRubric = scaledRubric;
+            const delta = targetPoints - scaledTotal;
+            if (scaledRubric.length > 0 && delta !== 0) {
+              scaledRubric[0] = {
+                ...scaledRubric[0],
+                maxPoints: (scaledRubric[0].maxPoints ?? 0) + delta,
+              };
             }
+
+            next.scoringRubric = scaledRubric;
+          }
+        }
+
+        return next;
+      };
+
+      if (scoredCount > 0) {
+        const basePointValue = Math.floor(totalPoints / scoredCount);
+        let remainder = totalPoints - basePointValue * scoredCount;
+
+        questions = questions.map(question => {
+          if (question.isExample) {
+            return scaleRubric(question, 0);
           }
 
-          return next;
-        };
+          const extra = remainder > 0 ? 1 : 0;
+          if (extra > 0) {
+            remainder -= 1;
+          }
 
-        if (scoredCount > 0) {
-          const basePointValue = Math.floor(totalPoints / scoredCount);
-          let remainder = totalPoints - basePointValue * scoredCount;
-
-          let scoredIndex = 0;
-          questions = questions.map(question => {
-            if (question.isExample) {
-              return scaleRubric(question, 0);
-            }
-
-            const extra = remainder > 0 ? 1 : 0;
-            if (extra > 0) {
-              remainder -= 1;
-            }
-
-            const targetPoints = basePointValue + extra;
-            const scaled = scaleRubric(question, targetPoints);
-            scoredIndex += 1;
-            return scaled;
-          });
-        } else {
-          questions = questions.map(question => scaleRubric(question, totalPoints));
-        }
+          const targetPoints = basePointValue + extra;
+          return scaleRubric(question, targetPoints);
+        });
+      } else {
+        questions = questions.map(question => scaleRubric(question, totalPoints));
       }
 
-      return {
-        questions: ensureQuestionIdentifiers(questions),
-        usage: usageRecords,
-      };
-    } catch (error) {
-      lastError = error;
-      console.error(
-        `[SessionGenerator] Teil ${teilNumber} (${layoutEntry.moduleId}) attempt ${attempt} failed`,
-        error
-      );
-      if (attempt >= TEIL_GENERATION_MAX_ATTEMPTS) {
-        break;
-      }
-      usageRecords.length = 0;
+      markTiming('scoring_adjustment_ms', scoringStart);
     }
-  }
 
-  throw lastError ?? new Error(`Teil ${teilNumber} generation failed`);
+    const normalizeStart = Date.now();
+    const finalQuestions = ensureQuestionIdentifiers(questions);
+    markTiming('normalisation_ms', normalizeStart);
+
+    stageTimings.total_ms = Date.now() - stageStart;
+    const total = stageTimings.total_ms || 1;
+    console.log('📊 Teil timing summary (ms / %):');
+    Object.entries(stageTimings)
+      .filter(([label]) => label.endsWith('_ms') && label !== 'total_ms')
+      .forEach(([label, value]) => {
+        const percentage = ((value / total) * 100).toFixed(1);
+        console.log(`   - ${label.replace('_ms', '')}: ${value} ms (${percentage}%)`);
+      });
+    console.log(`   Total: ${total} ms (100%)`);
+
+    console.log(`✅ TEIL ${teilNumber} generation completed - ${finalQuestions.length} questions`);
+    console.log(`${'═'.repeat(80)}\n`);
+
+    return {
+      questions: finalQuestions,
+      usage: usageRecords,
+    };
+  } catch (error) {
+    console.error(`❌ TEIL ${teilNumber} GENERATION - FAILED`, error);
+    console.log(`${'═'.repeat(80)}\n`);
+    throw error;
+  }
 }
 
 
@@ -666,17 +691,20 @@ export async function generateQuestionsForSession(
     };
 
     const worker = async (workerId: number) => {
+      console.log(`🤖 Worker ${workerId} started and ready for tasks`);
       while (true) {
         if (workerError) {
+          console.log(`🤖 Worker ${workerId} stopping due to upstream error`);
           return;
         }
         const planIndex = getNextPlanIndex();
         if (planIndex === null) {
+          console.log(`🤖 Worker ${workerId} completed (no more teils)`);
           return;
         }
         const currentTeil = planIndex + 1;
         const entry = plan[planIndex];
-        console.log(`[SessionGenerator] Worker ${workerId} dispatch Teil ${currentTeil} (${entry.moduleId})`);
+        console.log(`🤖 Worker ${workerId} dispatching Teil ${currentTeil} (${entry.moduleId})...`);
         const startTime = Date.now();
         try {
           const result = await generateTeilQuestions(
@@ -686,9 +714,8 @@ export async function generateQuestionsForSession(
             currentTeil,
             userId
           );
-          console.log(
-            `[SessionGenerator] Worker ${workerId} completed Teil ${currentTeil} (questions=${result.questions.length})`
-          );
+          const duration = Date.now() - startTime;
+          console.log(`🤖 Worker ${workerId} completed Teil ${currentTeil} - ${result.questions.length} questions in ${(duration / 1000).toFixed(2)}s`);
           pendingTeils.set(currentTeil, {
             entry,
             result,
@@ -698,7 +725,9 @@ export async function generateQuestionsForSession(
           await flushReadyTeils();
         } catch (error) {
           workerError = error;
-          console.error(`[SessionGenerator] Worker ${workerId} failed on Teil ${currentTeil}`, error);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          console.error(`🤖 Worker ${workerId} FAILED on Teil ${currentTeil}`);
+          console.error(`   Error: ${errorMsg}`);
           return;
         }
       }
@@ -706,19 +735,34 @@ export async function generateQuestionsForSession(
 
     try {
       const remainingPlanLength = plan.length - nextPlanIndex;
+      console.log(`\n${'═'.repeat(80)}`);
+      console.log(`🚀 SESSION GENERATION ORCHESTRATION - STARTING`);
+      console.log(`   Session Type: ${sessionType}`);
+      console.log(`   Total Teils: ${plan.length}`);
+      console.log(`   Difficulty: ${difficulty}`);
+      console.log(`${'═'.repeat(80)}`);
+
       if (remainingPlanLength > 0) {
         const concurrency = Math.min(4, remainingPlanLength);
-        console.log(
-          `[SessionGenerator] Starting worker pool with ${concurrency} workers for ${remainingPlanLength} teils`
-        );
+        console.log(`\n🔄 Worker Pool Configuration:`);
+        console.log(`   Workers: ${concurrency}`);
+        console.log(`   Teils to generate: ${remainingPlanLength}`);
+        console.log(`   Starting workers...\n`);
         const workers = Array.from({ length: concurrency }, (_, idx) => worker(idx + 1));
         await Promise.all(workers);
+        console.log(`\n🔄 All workers completed, flushing remaining teils...`);
         await flushReadyTeils();
       }
 
       if (workerError) {
         throw workerError;
       }
+
+      const finalQuestionCount = session.data.questions.length;
+      console.log(`\n✅ SESSION GENERATION ORCHESTRATION - COMPLETED`);
+      console.log(`   Total questions generated: ${finalQuestionCount}`);
+      console.log(`   Total points: ${session.data.progress?.maxScore ?? 0}`);
+      console.log(`${'═'.repeat(80)}\n`);
 
       session.data.generation = {
         ...(session.data.generation ?? {
@@ -735,6 +779,11 @@ export async function generateQuestionsForSession(
       touchSession(session);
       await persistSession(session);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`\n❌ SESSION GENERATION ORCHESTRATION - FAILED`);
+      console.error(`   Error: ${errorMsg}`);
+      console.log(`${'═'.repeat(80)}\n`);
+
       session.data.generation = {
         ...(session.data.generation ?? {
           status: 'failed',
@@ -742,7 +791,7 @@ export async function generateQuestionsForSession(
           generated: session.data.questions.length,
         }),
         status: 'failed',
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMsg,
         currentTeil: null,
       };
       touchSession(session);
