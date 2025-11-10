@@ -7,6 +7,7 @@ import { SidebarChat } from './sidebar-chat';
 import { Sidebar } from '@/components/ui/sidebar';
 import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { ModelId } from '@/lib/ai/model-registry';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReadingListPanel } from '@/components/reading-list/ReadingListPanel';
 import { REQUEST_CHAT_PROMPT_EVENT, type ChatPromptEventDetail } from '@/lib/chat/events';
@@ -85,7 +86,7 @@ export function AppRightbar() {
                   key={chatId}
                   id={chatId}
                   initialMessages={chatData?.messages || []}
-                  selectedChatModel="gpt-4"
+                  selectedChatModel={ModelId.GPT_5_NANO}
                   isReadonly={false}
                   isAdmin={false}
                   selectedVisibilityType="private"

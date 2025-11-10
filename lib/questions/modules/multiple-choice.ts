@@ -648,6 +648,8 @@ async function generateGappedMCQ(
         theme: sourceConfig.theme,
         teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined,
         optionStyle: sourceConfig.optionStyle,
+        difficulty,
+        userId,
       },
       recordUsage
     );

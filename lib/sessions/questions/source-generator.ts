@@ -208,7 +208,6 @@ export async function generateRawSource(
   const newsTopic = await getNewsTopicFromPool(userId);
   const selectedTheme =
     overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
-
   const model = customModel(ModelId.GPT_5);
 
   const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
@@ -426,14 +425,19 @@ export async function generatePlannedGapPassage(
     theme?: string;
     teilLabel?: string;
     optionStyle?: 'word' | 'statement';
+    difficulty?: QuestionDifficulty;
+    userId?: string;
   },
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
-  const { categories, theme, teilLabel, optionStyle } = params;
+  const { categories, theme, teilLabel, optionStyle, difficulty, userId } = params;
   if (!categories.length) {
     throw new Error('Planned gap generation requires at least one category');
   }
 
+  const newsTopic = await getNewsTopicFromPool(userId);
+  const resolvedTheme =
+    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
     theme: z.string().min(3),
@@ -458,15 +462,20 @@ export async function generatePlannedGapPassage(
       const label = definition?.label ?? category;
       const description = definition?.description ?? '';
       const hint = definition?.generationHint ?? '';
+      const extra =
+        category === ReadingAssessmentCategory.COLLOCATION_CONTROL
+          ? 'WICHTIG (Kollokation): Entferne immer die komplette feste Verbindung (z. B. Verb + Objekt oder ganze Redewendung), nicht nur Teile davon.'
+          : '';
       return `Gap ${index + 1}: ${label}
 - Kompetenz: ${description}
-- Generationshinweis: ${hint}`;
+- Generationshinweis: ${hint}
+${extra ? `- Zusatz: ${extra}` : ''}`;
     })
     .join('\n\n');
 
   const jsonExample = JSON.stringify(
     {
-      theme: theme ?? 'TECHNOLOGIE',
+      theme: resolvedTheme,
       title: 'Titel mit 5-10 Wörtern',
       subtitle: 'Kurzer Untertitel (10-15 Wörter)',
       fullText: 'Originaltext ohne Platzhalter …',
@@ -487,7 +496,18 @@ Du schreibst einen zusammenhängenden Goethe C1 Lesetext (ca. 220-260 Wörter) m
   } geplanten Lücken. Jeder Gap testet die angegebene Kompetenz.
 
 Vorgaben:
-- Thema: ${theme ?? 'Wähle ein kohärentes Thema (z. B. Technologie, Gesellschaft, Kultur)'}.
+- Thema: ${resolvedTheme}.
+- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}.
+- ${
+    newsTopic
+      ? `Nutze folgende aktuelle Nachricht als thematischen Bezug ohne sie zu kopieren:
+  • Schlagzeile: ${newsTopic.headline}
+  • Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar'}
+  • Quelle: ${newsTopic.source ?? 'unbekannt'}${
+          newsTopic.publishedAt ? ` (${newsTopic.publishedAt})` : ''
+        }`
+      : 'Wähle ein kohärentes gesellschaftlich relevantes Unterthema.'
+  }
 - Stil: formell-journalistisch, kohäsiv, natürlich.
 - Markiere die Lücken mit [GAP_1] … [GAP_${categories.length}] in "gappedText".
 - Liefere zusätzlich "fullText" (ohne Lücken) und für jede Lücke den vollständigen Originalsatz.
@@ -509,6 +529,7 @@ ${jsonExample}
     metadata: {
       gapCount: categories.length,
       teil: teilLabel ?? 'n/a',
+      newsHeadline: newsTopic?.headline,
     },
   });
 
@@ -546,7 +567,7 @@ ${jsonExample}
       sentence: entry.sentence,
       assessmentCategory: categoryByGap.get(entry.gapNumber),
     })),
-    newsTopic: null,
+    newsTopic: newsTopic ?? null,
   };
 }
 function recordModelUsage(
