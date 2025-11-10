@@ -99,20 +99,41 @@ export function AllQuestionsView({
      onActiveViewChange?.(view);
    }, [view, onActiveViewChange]);
  
-   useEffect(() => {
-     const next: Record<string, string> = {};
-     questions.forEach(question => {
-       const existing = accumulatedAnswers?.[question.id];
-       if (typeof existing === 'string') {
-         next[question.id] = existing;
-       } else if (typeof question.answer === 'string') {
-         next[question.id] = question.answer as string;
-       } else if (question.isExample && question.exampleAnswer) {
-         next[question.id] = question.exampleAnswer;
-       }
-     });
-     setSelectedAnswers(next);
-   }, [questions, accumulatedAnswers]);
+  const questionKey = useMemo(
+    () => questions.map(question => question.id).join('|'),
+    [questions]
+  );
+
+  useEffect(() => {
+    const initial: Record<string, string> = {};
+    questions.forEach(question => {
+      if (question.isExample && question.exampleAnswer) {
+        initial[question.id] = question.exampleAnswer;
+      } else if (typeof question.answer === 'string' && question.answer) {
+        initial[question.id] = question.answer as string;
+      }
+    });
+    setSelectedAnswers(initial);
+  }, [questionKey]);
+
+  useEffect(() => {
+    if (!accumulatedAnswers) {
+      return;
+    }
+    setSelectedAnswers(prev => {
+      let changed = false;
+      const next = { ...prev };
+      Object.entries(accumulatedAnswers).forEach(([questionId, value]) => {
+        if (typeof value === 'string' && value) {
+          if (next[questionId] !== value) {
+            next[questionId] = value;
+            changed = true;
+          }
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [accumulatedAnswers]);
  
    const handleSelectOption = (questionId: string, optionId: string, isExample: boolean) => {
      if (isSubmitting || isExample) return;
