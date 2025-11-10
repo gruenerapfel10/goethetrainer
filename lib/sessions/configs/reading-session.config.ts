@@ -145,6 +145,7 @@ export const readingSessionConfig: SessionConfig = {
         gapCount: 8,
         optionsPerGap: 3,
         optionStyle: 'word',
+        constructionMode: 'planned',
         categoryAllocation: {
           strategy: 'even',
           categories: [

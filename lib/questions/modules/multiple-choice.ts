@@ -8,7 +8,11 @@ import {
   QuestionInputType,
   type AudioPlaybackPolicy,
 } from '@/lib/sessions/questions/question-types';
-import { generateRawSource, generateSourceWithGaps } from '@/lib/sessions/questions/source-generator';
+import {
+  generateRawSource,
+  generateSourceWithGaps,
+  generatePlannedGapPassage,
+} from '@/lib/sessions/questions/source-generator';
 import { generateNewsBackedAudioTranscript } from '@/lib/sessions/questions/audio-source';
 import type {
   Question,
@@ -107,6 +111,8 @@ interface GappedSourceConfig extends QuestionModuleSourceConfig {
   gapCount: number;
   optionsPerGap: number;
   optionStyle?: 'word' | 'statement';
+  theme?: string;
+  constructionMode?: 'auto' | 'planned';
   categoryPlan?: ReadingAssessmentCategory[];
   categoryAllocation?: ReadingCategoryAllocationOptions;
 }
@@ -628,28 +634,47 @@ async function generateGappedMCQ(
     (sourceConfig as any)?.label ??
     null;
 
-  const sourceWithGaps = await generateSourceWithGaps(
-    difficulty,
-    {
-      type: 'gapped_text',
-      raw: {},
-      gaps: {
-        requiredCount: sourceConfig.gapCount,
+  let allocatedCategories: ReadingAssessmentCategory[] = [];
+  let sourceWithGaps: Awaited<ReturnType<typeof generateSourceWithGaps>>;
+
+  if (sourceConfig.constructionMode === 'planned') {
+    allocatedCategories = resolveAssessmentCategories(
+      sourceConfig.gapCount,
+      sourceConfig
+    );
+    sourceWithGaps = await generatePlannedGapPassage(
+      {
+        categories: allocatedCategories,
+        theme: sourceConfig.theme,
+        teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined,
+        optionStyle: sourceConfig.optionStyle,
       },
-    },
-    { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined },
-    userId,
-    recordUsage
-  );
+      recordUsage
+    );
+  } else {
+    sourceWithGaps = await generateSourceWithGaps(
+      difficulty,
+      {
+        type: 'gapped_text',
+        raw: { theme: sourceConfig.theme },
+        gaps: {
+          requiredCount: sourceConfig.gapCount,
+        },
+      },
+      { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined },
+      userId,
+      recordUsage
+    );
+    allocatedCategories = resolveAssessmentCategories(
+      sourceConfig.gapCount,
+      sourceConfig
+    );
+  }
 
   const model = customModel(DEFAULT_MODEL);
 
   const gaps = sourceWithGaps.gaps.slice(0, sourceConfig.gapCount);
   const questionType = resolveQuestionType(sessionType);
-  const allocatedCategories = resolveAssessmentCategories(
-    sourceConfig.gapCount,
-    sourceConfig
-  );
   const distractorCount = Math.max(1, sourceConfig.optionsPerGap - 1);
   const gapSystemPrompt =
     'You are a German language expert who creates Goethe C1 gap-fill multiple-choice options. Always respond with JSON that matches the provided schema.';

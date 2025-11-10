@@ -7,6 +7,10 @@ import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
 import type { ModelUsageRecord } from '@/lib/questions/modules/types';
 import { logAiRequest, logAiResponse } from '@/lib/ai/ai-logger';
+import {
+  ReadingAssessmentCategory,
+  getReadingAssessmentCategoryDefinition,
+} from '@/lib/questions/assessment-categories';
 
 export const maxDuration = 30;
 
@@ -169,7 +173,7 @@ const MAX_GAP_ATTEMPTS = 2;
 
 type RawSource = z.infer<typeof RawSourceSchema> & { newsTopic?: NewsTopic | null };
 
-interface SourceWithGaps {
+export interface SourceWithGaps {
   theme: string;
   title: string;
   subtitle: string;
@@ -178,6 +182,8 @@ interface SourceWithGaps {
   gaps: Array<{
     gapNumber: number;
     removedWord: string;
+    sentence?: string;
+    assessmentCategory?: ReadingAssessmentCategory;
   }>;
   newsTopic?: NewsTopic | null;
 }
@@ -412,6 +418,136 @@ export async function generateSourceWithGaps(
   const sourceWithGaps = await identifyGapsInSource(rawSource, options?.gaps, recordUsage);
 
   return sourceWithGaps;
+}
+
+export async function generatePlannedGapPassage(
+  params: {
+    categories: ReadingAssessmentCategory[];
+    theme?: string;
+    teilLabel?: string;
+    optionStyle?: 'word' | 'statement';
+  },
+  recordUsage?: (record: ModelUsageRecord) => void
+): Promise<SourceWithGaps> {
+  const { categories, theme, teilLabel, optionStyle } = params;
+  if (!categories.length) {
+    throw new Error('Planned gap generation requires at least one category');
+  }
+
+  const model = customModel(ModelId.GPT_5);
+  const schema = z.object({
+    theme: z.string().min(3),
+    title: z.string().min(5),
+    subtitle: z.string().min(10),
+    fullText: z.string().min(200),
+    gappedText: z.string().min(200),
+    gaps: z
+      .array(
+        z.object({
+          gapNumber: z.number().int().positive(),
+          removedWord: z.string().min(1),
+          sentence: z.string().min(20),
+        })
+      )
+      .length(categories.length),
+  });
+
+  const planLines = categories
+    .map((category, index) => {
+      const definition = getReadingAssessmentCategoryDefinition(category);
+      const label = definition?.label ?? category;
+      const description = definition?.description ?? '';
+      const hint = definition?.generationHint ?? '';
+      return `Gap ${index + 1}: ${label}
+- Kompetenz: ${description}
+- Generationshinweis: ${hint}`;
+    })
+    .join('\n\n');
+
+  const jsonExample = JSON.stringify(
+    {
+      theme: theme ?? 'TECHNOLOGIE',
+      title: 'Titel mit 5-10 Wörtern',
+      subtitle: 'Kurzer Untertitel (10-15 Wörter)',
+      fullText: 'Originaltext ohne Platzhalter …',
+      gappedText: 'Text mit [GAP_1] … [GAP_n] …',
+      gaps: categories.map((_, index) => ({
+        gapNumber: index + 1,
+        removedWord: `Beispielwort${index + 1}`,
+        sentence: `Satz ${index + 1} mit Originalwort.`,
+      })),
+    },
+    null,
+    2
+  );
+
+  const prompt = `
+Du schreibst einen zusammenhängenden Goethe C1 Lesetext (ca. 220-260 Wörter) mit exakt ${
+    categories.length
+  } geplanten Lücken. Jeder Gap testet die angegebene Kompetenz.
+
+Vorgaben:
+- Thema: ${theme ?? 'Wähle ein kohärentes Thema (z. B. Technologie, Gesellschaft, Kultur)'}.
+- Stil: formell-journalistisch, kohäsiv, natürlich.
+- Markiere die Lücken mit [GAP_1] … [GAP_${categories.length}] in "gappedText".
+- Liefere zusätzlich "fullText" (ohne Lücken) und für jede Lücke den vollständigen Originalsatz.
+- Optionstil: ${
+    optionStyle === 'statement'
+      ? 'Die Lücke ersetzt einen ganzen Satz.'
+      : 'Die Lücke ersetzt ein einzelnes Wort oder eine feste Kurzphrase.'
+  }
+
+Gap-Plan:
+${planLines}
+
+Ausgabeformat (JSON):
+${jsonExample}
+`;
+
+  logAiRequest('PlannedGaps', 'Planned gapped passage', {
+    prompt,
+    metadata: {
+      gapCount: categories.length,
+      teil: teilLabel ?? 'n/a',
+    },
+  });
+
+  const result = await generateObject({
+    model,
+    schema,
+    system:
+      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Texte mit sorgfältig geplanten Lücken.',
+    prompt,
+    temperature: 0.4,
+  });
+  recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+  logAiResponse('PlannedGaps', result.object);
+
+  const rawFullText = result.object.fullText.trim();
+  const normalisedGappedText = normaliseGapPlaceholders(result.object.gappedText.trim());
+  if (!hasAllGapPlaceholders(normalisedGappedText, categories.length)) {
+    throw new Error('Planned gapped text does not include all required placeholders');
+  }
+
+  const categoryByGap = new Map<number, ReadingAssessmentCategory>();
+  categories.forEach((category, index) => categoryByGap.set(index + 1, category));
+
+  const sortedGaps = [...result.object.gaps].sort((a, b) => a.gapNumber - b.gapNumber);
+
+  return {
+    theme: result.object.theme,
+    title: result.object.title,
+    subtitle: result.object.subtitle,
+    rawContext: rawFullText,
+    gappedContext: normalisedGappedText,
+    gaps: sortedGaps.map(entry => ({
+      gapNumber: entry.gapNumber,
+      removedWord: entry.removedWord,
+      sentence: entry.sentence,
+      assessmentCategory: categoryByGap.get(entry.gapNumber),
+    })),
+    newsTopic: null,
+  };
 }
 function recordModelUsage(
   recordUsage: ((record: ModelUsageRecord) => void) | undefined,
