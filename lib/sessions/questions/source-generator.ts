@@ -570,6 +570,429 @@ ${jsonExample}
     newsTopic: newsTopic ?? null,
   };
 }
+
+export async function generatePlannedSentenceInsertionSet(
+  params: {
+    sentencePoolSize: number;
+    gapCount: number;
+    theme?: string;
+    teilLabel?: string;
+    difficulty?: QuestionDifficulty;
+    userId?: string;
+  },
+  recordUsage?: (record: ModelUsageRecord) => void
+): Promise<SentenceInsertionPlan> {
+  const { sentencePoolSize, gapCount, theme, teilLabel, difficulty, userId } = params;
+  if (gapCount <= 0 || sentencePoolSize < gapCount) {
+    throw new Error('Sentence pool must be >= gap count');
+  }
+  const newsTopic = await getNewsTopicFromPool(userId);
+  const resolvedTheme =
+    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const model = customModel(ModelId.GPT_5);
+  const schema = z.object({
+    theme: z.string().min(3),
+    title: z.string().min(5),
+    subtitle: z.string().min(10),
+    intro: z.string().optional(),
+    context: z.string().min(260),
+    gaps: z
+      .array(
+        z.object({
+          gapNumber: z.number().int().positive(),
+          placeholder: z.string().min(3),
+          solution: z.string().min(1),
+        })
+      )
+      .length(gapCount),
+    sentences: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          text: z.string().min(10),
+          matchesGap: z.boolean(),
+        })
+      )
+      .length(sentencePoolSize),
+  });
+
+  const jsonExample = JSON.stringify(
+    {
+      theme: resolvedTheme,
+      title: 'Titel',
+      subtitle: 'Untertitel',
+      intro: 'Kurze Einführung …',
+      context: 'Kommentartext mit [GAP_1] …',
+      gaps: Array.from({ length: gapCount }).map((_, idx) => ({
+        gapNumber: idx + 1,
+        placeholder: `[GAP_${idx + 1}]`,
+        solution: `S${idx + 1}`,
+      })),
+      sentences: Array.from({ length: sentencePoolSize }).map((_, idx) => ({
+        id: `S${idx + 1}`,
+        text: `Satz ${idx + 1} …`,
+        matchesGap: idx < gapCount,
+      })),
+    },
+    null,
+    2
+  );
+
+  const prompt = `
+Du verfasst einen argumentativen Kommentar (ca. 320 Wörter) mit ${gapCount} Lücken [GAP_1 .. GAP_${gapCount}].
+
+Vorgaben:
+- Thema: ${resolvedTheme}
+- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- ${
+    newsTopic
+      ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
+  • Schlagzeile: ${newsTopic.headline}
+  • Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar'}
+  • Quelle: ${newsTopic.source ?? 'unbekannt'}${
+            newsTopic.publishedAt ? ` (${newsTopic.publishedAt})` : ''
+          }`
+      : 'Wähle ein gesellschaftliches Unterthema.'
+  }
+- Streue die Lücken gleichmäßig; jeder Gap ersetzt einen vollständigen Satz oder Teilsatz (1-2 Hauptsätze).
+- Liefere zusätzlich ${sentencePoolSize} Kandidatensätze: ${gapCount} passende + ${
+      sentencePoolSize - gapCount
+    } falsche. Markiere per „matchesGap”.
+
+Ausgabeformat (JSON):
+${jsonExample}
+`;
+
+  logAiRequest('PlannedSentencePool', 'Sentence insertion set', {
+    prompt,
+    metadata: {
+      gapCount,
+      sentencePoolSize,
+      teil: teilLabel ?? 'Teil',
+      newsHeadline: newsTopic?.headline,
+    },
+  });
+
+  const result = await generateObject({
+    model,
+    schema,
+    system:
+      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Kommentare mit Lücken und Satzpool.',
+    prompt,
+    temperature: 0.35,
+  });
+  recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+  logAiResponse('PlannedSentencePool', result.object);
+
+  return {
+    ...result.object,
+    intro: result.object.intro,
+    newsTopic: newsTopic ?? null,
+  };
+}
+
+export interface SentenceInsertionPlan {
+  theme: string;
+  title: string;
+  subtitle: string;
+  intro?: string;
+  context: string;
+  sentences: Array<{
+    id: string;
+    text: string;
+    matchesGap: boolean;
+  }>;
+  gaps: Array<{
+    gapNumber: number;
+    placeholder: string;
+    solution: string;
+  }>;
+  newsTopic?: NewsTopic | null;
+}
+
+export interface PlannedArticleQuestionSet {
+  theme: string;
+  title: string;
+  subtitle: string;
+  context: string;
+  questions: Array<{
+    prompt: string;
+    options: Array<{ id: string; text: string }>;
+    correctOptionId: string;
+    explanation?: string;
+  }>;
+  newsTopic?: NewsTopic | null;
+}
+
+export async function generatePlannedArticleQuestionSet(
+  params: {
+    questionCount: number;
+    optionsPerQuestion: number;
+    theme?: string;
+    teilLabel?: string;
+    difficulty?: QuestionDifficulty;
+    userId?: string;
+  },
+  recordUsage?: (record: ModelUsageRecord) => void
+): Promise<PlannedArticleQuestionSet> {
+  const { questionCount, optionsPerQuestion, theme, teilLabel, difficulty, userId } = params;
+  if (questionCount <= 0) {
+    throw new Error('Question count must be positive for planned article set');
+  }
+  const newsTopic = await getNewsTopicFromPool(userId);
+  const resolvedTheme =
+    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const model = customModel(ModelId.GPT_5);
+  const schema = z.object({
+    theme: z.string().min(3),
+    title: z.string().min(5),
+    subtitle: z.string().min(10),
+    context: z.string().min(220),
+    questions: z
+      .array(
+        z.object({
+          prompt: z.string().min(10),
+          options: z
+            .array(
+              z.object({
+                id: z.string().min(1),
+                text: z.string().min(1),
+              })
+            )
+            .length(optionsPerQuestion),
+          correctOptionId: z.string().min(1),
+          explanation: z.string().optional(),
+        })
+      )
+      .length(questionCount),
+  });
+
+  const jsonExample = JSON.stringify(
+    {
+      theme: resolvedTheme,
+      title: 'Titel mit 5-10 Wörtern',
+      subtitle: 'Kurzbeschreibung (10-15 Wörter)',
+      context: 'Artikeltext mit 220-260 Wörtern …',
+      questions: Array.from({ length: questionCount }).map((_, idx) => ({
+        prompt: `Frage ${idx + 1} als Satzfragment …`,
+        options: Array.from({ length: optionsPerQuestion }).map((__, optIdx) => ({
+          id: String.fromCharCode(97 + optIdx),
+          text: `Option ${optIdx + 1}`,
+        })),
+        correctOptionId: 'a',
+        explanation: 'Kurze Begründung.',
+      })),
+    },
+    null,
+    2
+  );
+
+  const prompt = `
+Du verfasst einen lesernahen Artikel (ca. 280-320 Wörter) mit genau ${questionCount} Verständnisfragen (Multiple Choice, ${optionsPerQuestion} Optionen).
+
+Vorgaben:
+- Thema: ${resolvedTheme}
+- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- ${
+    newsTopic
+      ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
+  • Schlagzeile: ${newsTopic.headline}
+  • Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar'}
+  • Quelle: ${newsTopic.source ?? 'unbekannt'}${
+          newsTopic.publishedAt ? ` (${newsTopic.publishedAt})` : ''
+        }`
+      : 'Wähle ein aktuelles gesellschaftliches Unterthema.'
+  }
+- Artikelstil: populärwissenschaftlich / gehobene Presse.
+- Jede Frage:
+  • Prompt als Satzfragment, endet mit „…“ (keine W-Frage).
+  • Optionen homogen (gleiche Wortart/Register), max. 12 Wörter.
+  • Genau eine richtige Option, Begründung anhand konkreter Textstelle.
+- Fragen decken unterschiedliche Aspekte (Hauptaussage, Detail, Schlussfolgerung, Haltung).
+
+Liefere ausschließlich JSON in folgendem Format:
+${jsonExample}
+`;
+
+  logAiRequest('PlannedArticleMC', 'Article MC set JSON', {
+    prompt,
+    metadata: {
+      teil: teilLabel ?? 'Teil',
+      questionCount,
+      theme: resolvedTheme,
+      newsHeadline: newsTopic?.headline,
+    },
+  });
+
+  const result = await generateObject({
+    model,
+    schema,
+    system:
+      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Artikel mit präzisen Multiple-Choice-Fragen.',
+    prompt,
+    temperature: 0.35,
+  });
+  recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+  logAiResponse('PlannedArticleMC', result.object);
+
+  return {
+    ...result.object,
+    newsTopic: newsTopic ?? null,
+  };
+}
+
+export interface PlannedAuthorStatementSet {
+  theme: string;
+  title: string;
+  subtitle: string;
+  intro: string;
+  authors: Array<{
+    id: string;
+    name: string;
+    role: string;
+    summary: string;
+    excerpt: string;
+  }>;
+  statements: Array<{
+    id: string;
+    text: string;
+    authorId: string;
+  }>;
+  example: {
+    text: string;
+    authorId: string;
+    explanation?: string;
+  };
+  newsTopic?: NewsTopic | null;
+}
+
+export async function generatePlannedAuthorStatementSet(
+  params: {
+    authorCount: number;
+    statementCount: number;
+    unmatchedCount: number;
+    theme?: string;
+    teilLabel?: string;
+    difficulty?: QuestionDifficulty;
+    userId?: string;
+  },
+  recordUsage?: (record: ModelUsageRecord) => void
+): Promise<PlannedAuthorStatementSet> {
+  const { authorCount, statementCount, unmatchedCount, theme, teilLabel, difficulty, userId } = params;
+  const newsTopic = await getNewsTopicFromPool(userId);
+  const resolvedTheme =
+    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const model = customModel(ModelId.GPT_5);
+  const schema = z.object({
+    theme: z.string().min(3),
+    title: z.string().min(5),
+    subtitle: z.string().min(10),
+    intro: z.string().min(40),
+    authors: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          name: z.string().min(3),
+          role: z.string().min(3),
+          summary: z.string().min(50),
+          excerpt: z.string().min(80),
+        })
+      )
+      .length(authorCount),
+    statements: z
+      .array(
+        z.object({
+          id: z.string().min(1),
+          text: z.string().min(10),
+          authorId: z.string(),
+        })
+      )
+      .length(statementCount),
+    example: z.object({
+      text: z.string().min(10),
+      authorId: z.string(),
+      explanation: z.string().optional(),
+    }),
+  });
+
+  const jsonExample = JSON.stringify(
+    {
+      theme: resolvedTheme,
+      title: 'Titel',
+      subtitle: 'Untertitel',
+      intro: 'Einführung …',
+      authors: Array.from({ length: authorCount }).map((_, idx) => ({
+        id: `author_${idx + 1}`,
+        name: `Dr. Name ${idx + 1}`,
+        role: 'Professorin für …',
+        summary: 'Abstract …',
+        excerpt: 'Zitat …',
+      })),
+      statements: Array.from({ length: statementCount }).map((_, idx) => ({
+        id: `S${idx + 1}`,
+        text: `Aussage ${idx + 1}`,
+        authorId: idx < statementCount - unmatchedCount ? 'author_1' : '0',
+      })),
+      example: {
+        text: 'Beispielaussage',
+        authorId: 'author_1',
+        explanation: 'Begründung',
+      },
+    },
+    null,
+    2
+  );
+
+  const prompt = `
+Du erstellst für Goethe C1 Lesen Teil 4 eine Expertenrubrik mit ${authorCount} Beiträgen und ${statementCount} Aussagen (${unmatchedCount} ohne Zuordnung).
+
+Vorgaben:
+- Thema: ${resolvedTheme}
+- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- ${
+    newsTopic
+      ? `Nutze folgende Nachricht als thematische Referenz:
+  • Schlagzeile: ${newsTopic.headline}
+  • Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar'}
+  • Quelle: ${newsTopic.source ?? 'unbekannt'}${
+            newsTopic.publishedAt ? ` (${newsTopic.publishedAt})` : ''
+          }`
+      : 'Wähle ein aktuelles gesellschaftliches Thema.'
+  }
+- Jeder Autor liefert einen Absatz (summary+Zitat).
+- Aussagen müssen eindeutig einer Autorin/einem Autor oder "0" (passt nicht) zuordenbar sein.
+- Liefere Beispiel (mit Lösung) und Intro.
+
+Ausgabeformat (JSON):
+${jsonExample}
+`;
+
+  logAiRequest('PlannedAuthorMatch', 'Author statement set', {
+    prompt,
+    metadata: {
+      authorCount,
+      statementCount,
+      teil: teilLabel ?? 'Teil',
+      newsHeadline: newsTopic?.headline,
+    },
+  });
+
+  const result = await generateObject({
+    model,
+    schema,
+    system:
+      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Expertenbeiträge mit zuordenbaren Aussagen.',
+    prompt,
+    temperature: 0.3,
+  });
+  recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
+  logAiResponse('PlannedAuthorMatch', result.object);
+
+  return {
+    ...result.object,
+    newsTopic: newsTopic ?? null,
+  };
+}
 function recordModelUsage(
   recordUsage: ((record: ModelUsageRecord) => void) | undefined,
   modelId: string,

@@ -14,6 +14,7 @@ export function StatementMatchSource({ question }: StatementMatchSourceProps) {
       answer: string;
       explanation?: string;
     };
+    sentencePool?: Array<{ id: string; text: string }>;
   };
 
   return (
@@ -50,6 +51,26 @@ export function StatementMatchSource({ question }: StatementMatchSourceProps) {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {question.context && (
+        <div className="border border-border/60 rounded-lg p-4 whitespace-pre-line text-sm leading-relaxed">
+          {question.context}
+        </div>
+      )}
+
+      {presentation.sentencePool && (
+        <div className="space-y-2 border border-dashed border-border rounded-lg p-4 bg-muted/30">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sätze</p>
+          <ol className="space-y-2 list-decimal list-inside text-sm">
+            {presentation.sentencePool.map(sentence => (
+              <li key={sentence.id}>
+                <span className="font-semibold mr-1">{sentence.id}.</span>
+                <span>{sentence.text}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
 

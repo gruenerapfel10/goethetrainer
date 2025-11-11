@@ -20,6 +20,7 @@ import {
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
+import { generatePlannedAuthorStatementSet } from '@/lib/sessions/questions/source-generator';
 
 interface StatementMatchPromptConfig extends QuestionModulePromptConfig {
   instructions: string;
@@ -33,6 +34,7 @@ interface StatementMatchRenderConfig extends QuestionModuleRenderConfig {
 interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
   type: 'statement_matching';
   theme?: string;
+  constructionMode?: 'auto' | 'planned_authors';
   topicHint?: string;
   authorCount?: number;
   statementCount?: number;
@@ -225,6 +227,22 @@ async function generateStatementMatchQuestion(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question> {
+  if (sourceConfig.constructionMode === 'planned_authors') {
+    const plan = await generatePlannedAuthorStatementSet(
+      {
+        authorCount: sourceConfig.authorCount ?? 4,
+        statementCount: sourceConfig.statementCount ?? 7,
+        unmatchedCount: sourceConfig.unmatchedCount ?? 2,
+        theme: sourceConfig.theme,
+        teilLabel: sourceConfig.teilLabel,
+        difficulty,
+        userId,
+      },
+      recordUsage
+    );
+    return buildAuthorStatementQuestion(plan, sessionType, promptConfig, sourceConfig, difficulty);
+  }
+
   const newsTopic = await getNewsTopicFromPool(userId);
   const {
     authorCount = 3,
@@ -391,6 +409,84 @@ Liefere JSON, das exakt zum Schema passt.
       },
       newsTopic,
     },
+  } as Question;
+}
+
+function buildAuthorStatementQuestion(
+  plan: Awaited<ReturnType<typeof generatePlannedAuthorStatementSet>>,
+  sessionType: SessionTypeEnum,
+  promptConfig: StatementMatchPromptConfig,
+  sourceConfig: StatementMatchSourceConfig,
+  difficulty: QuestionDifficulty
+): Question {
+  const authors = plan.authors.map((author, index) => {
+    const letter = String.fromCharCode(65 + index);
+    return {
+      letter,
+      internalId: author.id,
+      name: author.name,
+      role: author.role,
+      summary: author.summary,
+      excerpt: author.excerpt,
+    };
+  });
+  const options = authors.map(author => ({ id: author.letter, text: author.letter }));
+  if (sourceConfig.unmatchedCount && sourceConfig.unmatchedCount > 0) {
+    options.push({ id: '0', text: '0' });
+  }
+
+  const statements = plan.statements.map((statement, index) => ({
+    id: statement.id || `S${index + 1}`,
+    text: statement.text,
+    number: (sourceConfig.startingStatementNumber ?? 24) + index,
+    authorId: statement.authorId,
+  }));
+
+  const correctMatches = statements.reduce<Record<string, string>>((acc, entry) => {
+    const author = authors.find(a => a.internalId === entry.authorId);
+    acc[entry.id] = author?.letter ?? '0';
+    return acc;
+  }, {});
+
+  return {
+    id: `statement-match-${Date.now()}`,
+    type: resolveQuestionType(sessionType),
+    sessionType,
+    difficulty,
+    inputType: QuestionInputType.MATCHING,
+    prompt:
+      promptConfig.instructions ??
+      'Sie lesen in einer Fachzeitschrift Beiträge von Expertinnen und Experten. Ordnen Sie Aussagen zu.',
+    context: `${plan.title} — ${plan.subtitle}`,
+    title: plan.title,
+    subtitle: plan.subtitle,
+    theme: plan.theme,
+    options,
+    texts: authors.map(author => ({
+      id: author.letter,
+      label: author.name,
+      role: author.role,
+      content: `${author.summary}\n\n${author.excerpt}`,
+    })),
+    statements: statements.map(entry => ({
+      id: entry.id,
+      text: entry.text,
+      number: entry.number,
+    })),
+    correctMatches,
+    points: statements.length,
+    moduleId: QuestionModuleId.STATEMENT_MATCH,
+    moduleLabel: 'Statement Matching',
+    presentation: {
+      intro: plan.intro,
+      example: {
+        statement: plan.example.text,
+        answer:
+          authors.find(author => author.internalId === plan.example.authorId)?.letter ?? '0',
+        explanation: plan.example.explanation,
+      },
+    },
+    sourceReference: mapNewsTopicToSourceReference(plan.newsTopic),
   } as Question;
 }
 

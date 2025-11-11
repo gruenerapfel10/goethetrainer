@@ -231,6 +231,29 @@ function isUserStateExpired(state: UserNewsState | null): boolean {
   return Number.isNaN(refreshed) || refreshed + BATCH_TTL_MS <= Date.now();
 }
 
+const newsPickLocks = new Map<string, Promise<void>>();
+
+async function withUserNewsLock<T>(userId: string, task: () => Promise<T>): Promise<T> {
+  const previous = newsPickLocks.get(userId) ?? Promise.resolve();
+  let release: (() => void) | null = null;
+  const current = new Promise<void>(resolve => {
+    release = resolve;
+  });
+  newsPickLocks.set(
+    userId,
+    previous.then(() => current)
+  );
+  await previous;
+  try {
+    return await task();
+  } finally {
+    release?.();
+    if (newsPickLocks.get(userId) === current) {
+      newsPickLocks.delete(userId);
+    }
+  }
+}
+
 async function pickArticleForUser(userId: string): Promise<NewsTopic | null> {
   let batch = await ensureNewsBatch();
   if (!batch.articles.length) {
@@ -270,7 +293,7 @@ async function pickArticleForUser(userId: string): Promise<NewsTopic | null> {
 
 export async function getNewsTopicFromPool(userId?: string): Promise<NewsTopic | null> {
   if (userId) {
-    const userArticle = await pickArticleForUser(userId);
+    const userArticle = await withUserNewsLock(userId, () => pickArticleForUser(userId));
     if (userArticle) {
       return userArticle;
     }

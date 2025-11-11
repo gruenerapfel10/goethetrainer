@@ -25,7 +25,7 @@ export const myProvider = customProvider({
     [ModelId.GPT_5]: customModel(ModelId.GPT_5),
 
     [AgentType.GENERAL_AGENT]: customModel(ModelId.GPT_5),
-    [AgentType.GOETHE_AGENT]: customModel(ModelId.GPT_5),
+    [AgentType.GOETHE_AGENT]: customModel(ModelId.CLAUDE_HAIKU_4_5),
   },
   imageModels: {
     'gpt-image-1': openai.image('gpt-image-1'),

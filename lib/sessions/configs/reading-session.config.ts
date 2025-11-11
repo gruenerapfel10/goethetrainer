@@ -169,6 +169,67 @@ export const readingSessionConfig: SessionConfig = {
         strategy: 'per_gap',
       },
     },
+    {
+      id: 'teil_2',
+      label: 'Teil 2',
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      questionCount: 7,
+      sourceOverrides: {
+        type: 'text_passage',
+        questionCount: 7,
+        optionsPerQuestion: 3,
+        constructionMode: 'planned_article',
+      },
+      renderOverrides: {
+        layout: 'vertical',
+        showSourceToggle: true,
+      },
+      scoringOverrides: {
+        maxPoints: 7,
+        strategy: 'single_select',
+      },
+    },
+    {
+      id: 'teil_3',
+      label: 'Teil 3',
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      questionCount: 1,
+      sourceOverrides: {
+        type: 'gapped_text',
+        gapCount: 8,
+        optionsPerGap: 10,
+        optionStyle: 'statement',
+        constructionMode: 'planned_sentence_pool',
+      },
+      renderOverrides: {
+        layout: 'single_column',
+        showSourceToggle: true,
+      },
+      scoringOverrides: {
+        maxPoints: 8,
+        strategy: 'per_gap',
+      },
+    },
+    {
+      id: 'teil_4',
+      label: 'Teil 4',
+      moduleId: QuestionModuleId.STATEMENT_MATCH,
+      questionCount: 1,
+      sourceOverrides: {
+        type: 'statement_matching',
+        authorCount: 4,
+        statementCount: 7,
+        unmatchedCount: 2,
+        constructionMode: 'planned_authors',
+      },
+      renderOverrides: {
+        showSourceToggle: true,
+      },
+      scoringOverrides: {
+        maxPoints: 7,
+        strategy: 'per_gap',
+      },
+    },
     // {
     //   id: 'teil_2',
     //   label: 'Teil 2',

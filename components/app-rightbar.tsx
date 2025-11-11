@@ -7,7 +7,7 @@ import { SidebarChat } from './sidebar-chat';
 import { Sidebar } from '@/components/ui/sidebar';
 import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import { ModelId } from '@/lib/ai/model-registry';
+import { AgentType } from '@/lib/ai/agents';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ReadingListPanel } from '@/components/reading-list/ReadingListPanel';
 import { REQUEST_CHAT_PROMPT_EVENT, type ChatPromptEventDetail } from '@/lib/chat/events';
@@ -86,7 +86,7 @@ export function AppRightbar() {
                   key={chatId}
                   id={chatId}
                   initialMessages={chatData?.messages || []}
-                  selectedChatModel={ModelId.GPT_5_NANO}
+                  selectedChatModel={AgentType.GOETHE_AGENT}
                   isReadonly={false}
                   isAdmin={false}
                   selectedVisibilityType="private"

@@ -77,6 +77,11 @@ export function MultipleChoice({
   const isGapTextMode = hasGaps && text?.includes('[GAP_');
   const hasContext = !!(question.context && question.context !== question.prompt);
   const hasSourceTab = isGapTextMode || (hasContext && question.options);
+  const presentation = (question.presentation ?? {}) as {
+    intro?: string;
+    sentencePool?: Array<{ id: string; text: string }>;
+  };
+  const sentencePool = presentation.sentencePool ?? null;
 
   // Call onAnswer if this is an example question with pre-filled answer
   useEffect(() => {
@@ -276,7 +281,28 @@ export function MultipleChoice({
           </div>
         ) : isGapTextMode ? (
           // Gap text questions tab - Grid layout matching Goethe C1 format
-          <div className="space-y-2">
+          <div className="space-y-4">
+            {presentation?.intro && (
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{presentation.intro}</p>
+            )}
+            <div className="text-sm leading-relaxed font-serif text-foreground space-y-3 whitespace-pre-wrap">
+              {renderTextWithGaps()}
+            </div>
+            {sentencePool && sentencePool.length > 0 && (
+              <div className="border border-dashed border-border rounded p-3 space-y-2 bg-muted/40">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Satzliste
+                </p>
+                <ol className="space-y-2 list-decimal list-inside">
+                  {sentencePool.map(sentence => (
+                    <li key={sentence.id} className="text-sm text-foreground">
+                      <span className="font-semibold mr-1">{sentence.id}.</span>
+                      <span>{sentence.text}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
             {gaps.map((gap, gapIndex) => {
               const selections = typeof selectedOptions === 'object' ? selectedOptions : {};
               const selectedValue = selections[gap.id];
@@ -289,11 +315,11 @@ export function MultipleChoice({
                   </span>
 
                   {/* Option columns */}
-                  <div className="flex gap-8 flex-1">
+                  <div className="flex gap-8 flex-1 flex-wrap">
                     {gap.options?.map((option, optionIndex) => {
                       const optionId = getOptionId(option);
                       const optionText = getOptionText(option);
-                      const optionNumber = `${optionIndex}`; // 0, 1, 2, 3
+                      const optionNumber = optionId;
                       const isSelected = selectedValue === optionId;
                       const correctOptionId = gap.correctOptionId || gap.correctAnswer;
                       const isCorrectOption = isSubmitted && optionId === correctOptionId;

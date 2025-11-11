@@ -12,6 +12,8 @@ import {
   generateRawSource,
   generateSourceWithGaps,
   generatePlannedGapPassage,
+  generatePlannedArticleQuestionSet,
+  generatePlannedSentenceInsertionSet,
 } from '@/lib/sessions/questions/source-generator';
 import { generateNewsBackedAudioTranscript } from '@/lib/sessions/questions/audio-source';
 import type {
@@ -98,6 +100,7 @@ interface TextSourceConfig extends QuestionModuleSourceConfig {
   optionsPerQuestion: number;
   theme?: string;
   teilLabel?: string;
+  constructionMode?: 'auto' | 'planned_article';
   prompts?: {
     passage?: string;
     questions?: string;
@@ -112,7 +115,7 @@ interface GappedSourceConfig extends QuestionModuleSourceConfig {
   optionsPerGap: number;
   optionStyle?: 'word' | 'statement';
   theme?: string;
-  constructionMode?: 'auto' | 'planned';
+  constructionMode?: 'auto' | 'planned' | 'planned_sentence_pool';
   categoryPlan?: ReadingAssessmentCategory[];
   categoryAllocation?: ReadingCategoryAllocationOptions;
 }
@@ -415,6 +418,44 @@ async function generateStandardMCQ(
   );
   const optionsPerQuestion = sourceConfig?.optionsPerQuestion ?? 3;
 
+  if (sourceConfig?.constructionMode === 'planned_article') {
+    const planned = await generatePlannedArticleQuestionSet(
+      {
+        questionCount: resolvedQuestionCount,
+        optionsPerQuestion,
+        theme: sourceConfig.theme,
+        teilLabel: sourceConfig.teilLabel,
+        difficulty,
+        userId,
+      },
+      recordUsage
+    );
+    const questionType = resolveQuestionType(sessionType);
+    const sourceReference = mapNewsTopicToSourceReference(planned.newsTopic);
+    return planned.questions.map((entry, index) => {
+      const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
+      return {
+        id: `${questionType}-planned-${Date.now()}-${index}`,
+        type: questionType,
+        sessionType,
+        difficulty,
+        inputType: QuestionInputType.MULTIPLE_CHOICE,
+        prompt: entry.prompt,
+        context: planned.context,
+        title: planned.title,
+        subtitle: planned.subtitle,
+        theme: planned.theme,
+        options: normalised.options,
+        correctOptionId: normalised.correctOptionId,
+        explanation: entry.explanation,
+        points: 1,
+        moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+        moduleLabel: 'Multiple Choice',
+        sourceReference,
+      };
+    });
+  }
+
   const rawSource = await generateRawSource(
     difficulty,
     {
@@ -637,7 +678,59 @@ async function generateGappedMCQ(
   let allocatedCategories: ReadingAssessmentCategory[] = [];
   let sourceWithGaps: Awaited<ReturnType<typeof generateSourceWithGaps>>;
 
-  if (sourceConfig.constructionMode === 'planned') {
+  if (sourceConfig.constructionMode === 'planned_sentence_pool') {
+    const sentencePlan = await generatePlannedSentenceInsertionSet(
+      {
+        sentencePoolSize:
+          (sourceConfig as any)?.sentencePoolSize ?? Math.max(sourceConfig.gapCount + 2, sourceConfig.optionsPerGap ?? sourceConfig.gapCount + 2),
+        gapCount: sourceConfig.gapCount,
+        theme: sourceConfig.theme,
+        teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined,
+        difficulty,
+        userId,
+      },
+      recordUsage
+    );
+    const poolOptions = sentencePlan.sentences.map(sentence => ({
+      id: sentence.id,
+      text: sentence.text,
+    }));
+    const questionType = resolveQuestionType(sessionType);
+    const question: Question = {
+      id: `${questionType}-sentence-${Date.now()}`,
+      type: questionType,
+      sessionType,
+      difficulty,
+      inputType: QuestionInputType.MULTIPLE_CHOICE,
+      prompt: 'Fügen Sie die passenden Sätze ein.',
+      context: sentencePlan.context,
+      title: sentencePlan.title,
+      subtitle: sentencePlan.subtitle,
+      theme: sentencePlan.theme,
+      options: poolOptions,
+      correctOptionId: undefined,
+      explanation: undefined,
+      points: sentencePlan.gaps.length,
+      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      moduleLabel: 'Multiple Choice',
+      gaps: sentencePlan.gaps.map(gap => ({
+        id: `GAP_${gap.gapNumber}`,
+        options: poolOptions.map(option => ({ ...option })),
+        correctOptionId: gap.solution,
+      })),
+      presentation: {
+        intro: sentencePlan.intro,
+        sentencePool: poolOptions,
+      },
+    } as any;
+    const sourceReference = mapNewsTopicToSourceReference(sentencePlan.newsTopic);
+    return [
+      {
+        ...question,
+        sourceReference,
+      },
+    ];
+  } else if (sourceConfig.constructionMode === 'planned') {
     allocatedCategories = resolveAssessmentCategories(
       sourceConfig.gapCount,
       sourceConfig
