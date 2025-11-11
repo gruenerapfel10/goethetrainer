@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 const cards = [
@@ -73,7 +72,7 @@ export default function ExpandingCards() {
                 }`}
               >
                 {/* Background gradient */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${card.color} transition-all duration-300`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${card.color} transition-all duration-300`} />
 
                 {/* Content */}
                 <div className="relative z-10 p-6 md:p-8 text-white">
@@ -90,7 +89,7 @@ export default function ExpandingCards() {
                     <ul className="space-y-2 mb-6">
                       {card.keyPoints.map((point) => (
                         <li key={point} className="flex items-start gap-3">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white mt-1.5 flex-shrink-0"></span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-white mt-1.5 flex-shrink-0" />
                           <span className="text-sm">{point}</span>
                         </li>
                       ))}

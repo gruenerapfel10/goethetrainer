@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { QuestionModuleId, type QuestionModule, type ModelUsageRecord } from './types';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import {
-  QuestionDifficulty,
+  type QuestionDifficulty,
   QuestionType,
   QuestionInputType,
   type AudioPlaybackPolicy,
@@ -27,7 +27,7 @@ import type { NewsTopic } from '@/lib/news/news-topic-pool';
 import { logAiRequest, logAiResponse } from '@/lib/ai/ai-logger';
 import {
   ReadingAssessmentCategory,
-  ReadingCategoryAllocationOptions,
+  type ReadingCategoryAllocationOptions,
   allocateReadingAssessmentCategories,
   getReadingAssessmentCategoryDefinition,
 } from '@/lib/questions/assessment-categories';

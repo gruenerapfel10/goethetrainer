@@ -6,11 +6,10 @@ import type {
   QuestionModuleTask,
   QuestionModuleGenerateResult,
   QuestionModulePromptConfig,
-  QuestionModuleRenderConfig,
   QuestionModuleSourceConfig,
   ModelUsageRecord,
 } from './types';
-import { QuestionModuleId } from './types';
+import type { QuestionModuleId } from './types';
 
 const MODULE_REGISTRY = new Map<QuestionModuleId, QuestionModule<any, any, any, any>>();
 

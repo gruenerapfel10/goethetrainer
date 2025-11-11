@@ -20,7 +20,6 @@ import { CapabilitiesToggle } from './CapabilitiesToggle';
 import { FileSearch } from '@/components/FileSearch';
 import { ScrollToBottomButton } from './ScrollToBottomButton';
 import { AttachmentsDropOverlay } from './AttachmentsDropOverlay';
-import { StreamContinuationNotice } from '@/components/StreamContinuationNotice';
 import { SuggestedActions } from '@/components/SuggestedActions';
 
 function PureMultimodalInput({

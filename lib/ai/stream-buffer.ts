@@ -141,7 +141,7 @@ class StreamBufferManager {
 
   cancelReaderForChat(chatId: string): void {
     const buffer = this.getStreamByChatId(chatId);
-    if (buffer && buffer.isResuming) {
+    if (buffer?.isResuming) {
       buffer.isResuming = false;
       console.log(`[StreamBuffer] Cancelled reader for chat ${chatId}, reset isResuming flag`);
     }

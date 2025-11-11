@@ -1,7 +1,6 @@
 'use client';
 
 import { AnswerSheet } from '@/components/AnswerSheet';
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 export default function DemoPage() {

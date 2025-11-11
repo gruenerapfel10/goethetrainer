@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { fetcher } from '@/lib/utils';
 import { READING_LIST_UPDATED_EVENT } from '@/lib/reading-list/events';
-import { cn } from '@/lib/utils';
 
 interface ReadingListItem {
   id: string;

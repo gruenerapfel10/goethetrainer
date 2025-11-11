@@ -33,7 +33,6 @@ type ArtifactToolbarItem = {
   icon: ReactNode;
   onClick: () => void;
 };
-import type { UseChatHelpers } from '@ai-sdk/react';
 
 type ToolProps = {
   description: string;

@@ -4,7 +4,7 @@
  */
 
 import { getAgentConfig, getAgentTypeFromModel } from './agents';
-import { ToolName, TOOL_METADATA } from './tools/tool-registry';
+import { type ToolName, TOOL_METADATA } from './tools/tool-registry';
 
 /**
  * Get which tools are toggleable for a specific model

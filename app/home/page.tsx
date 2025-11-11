@@ -1,10 +1,4 @@
 'use client';
-
-import Image from 'next/image';
-import { useState, useEffect } from 'react';
-
-// Import sub-components (we'll create these next)
-import Banner from '@/components/home/Banner';
 import Navbar from '@/components/home/Navbar';
 import HeroSection from '@/components/home/HeroSection';
 import ProductCards from '@/components/home/ProductCards';

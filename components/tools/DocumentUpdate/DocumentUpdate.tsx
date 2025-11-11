@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { memo, useState, useEffect, useMemo } from 'react';
-import { PenTool, Loader2, AlertCircle, ExternalLink, RefreshCw, FileText, Code, Image } from 'lucide-react';
+import { PenTool, AlertCircle, FileText, Code, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { toast } from 'sonner';
@@ -156,7 +156,7 @@ const DocumentUpdateLoaded = memo<{
           <div className="text-xs prose prose-sm dark:prose-invert max-w-none">
             <Response>
               {displayContent.length > 400 
-                ? displayContent.substring(0, 400) + '...'
+                ? `${displayContent.substring(0, 400)}...`
                 : displayContent}
             </Response>
           </div>

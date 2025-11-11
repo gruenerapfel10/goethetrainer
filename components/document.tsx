@@ -3,7 +3,6 @@ import { memo } from 'react';
 import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from './icons';
 import { toast } from 'sonner';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { useTranslations } from 'next-intl';
 

@@ -43,7 +43,7 @@ export function useSidebarState(defaultOpen: boolean, openProp?: boolean, setOpe
   const [width, setWidthState] = React.useState(() => {
     if (typeof window !== 'undefined') {
       const saved = document.cookie.match(new RegExp(`${SIDEBAR_WIDTH_COOKIE}=([^;]+)`))
-      return saved ? parseInt(saved[1]) : SIDEBAR_WIDTH_DEFAULT
+      return saved ? Number.parseInt(saved[1]) : SIDEBAR_WIDTH_DEFAULT
     }
     return SIDEBAR_WIDTH_DEFAULT
   })

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const COOKIE_NAME = 'right_sidebar_state';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

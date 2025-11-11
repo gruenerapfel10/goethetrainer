@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { SessionTypeEnum, getSessionConfig } from './session-registry';
+import { type SessionTypeEnum, getSessionConfig } from './session-registry';
 import type { SessionConfig } from './session-registry';
 import './configs'; // Import to register all configs
 

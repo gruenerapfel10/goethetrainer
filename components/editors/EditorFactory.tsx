@@ -11,15 +11,15 @@ export class EditorFactory {
   private static editorMap = new Map<string, React.ComponentType<EditorProps>>();
   
   static register(kind: string, component: React.ComponentType<EditorProps>) {
-    this.editorMap.set(kind, component);
+    EditorFactory.editorMap.set(kind, component);
   }
   
   static getEditor(kind: string): React.ComponentType<EditorProps> | undefined {
-    return this.editorMap.get(kind);
+    return EditorFactory.editorMap.get(kind);
   }
   
   static renderEditor(kind: string, props: EditorProps): JSX.Element | null {
-    const Editor = this.editorMap.get(kind);
+    const Editor = EditorFactory.editorMap.get(kind);
     if (!Editor) {
       return <div>Unsupported artifact: {kind}</div>;
     }

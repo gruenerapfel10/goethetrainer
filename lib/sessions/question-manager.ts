@@ -4,7 +4,6 @@ import type { AnswerValue } from './types';
 import {
   buildQuestionSessionSummary,
   type QuestionSessionOutcome,
-  type QuestionSessionSummary,
 } from './question-summary';
 
 export { buildQuestionSessionSummary } from './question-summary';

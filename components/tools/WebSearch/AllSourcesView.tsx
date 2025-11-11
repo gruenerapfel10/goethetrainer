@@ -15,9 +15,8 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { useIsMobile } from '../../../hooks/use-mobile';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
-import { SearchResult } from './utils';
+import type { SearchResult } from './utils';
 import { SourcesList } from './SourcesList';
 
 interface AllSourcesViewProps {

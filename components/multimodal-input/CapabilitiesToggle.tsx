@@ -1,8 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo, useRef, type RefObject } from 'react';
-import type { UIMessage } from 'ai';
-import type { UseChatHelpers } from '@ai-sdk/react';
+import { useState, useEffect, useMemo, memo, useRef, } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FileIcon, 
@@ -29,7 +27,7 @@ import { useTranslations } from "next-intl";
 import { useChat } from '@/contexts/chat-context';
 import { useToast } from '@/hooks/use-toast';
 
-interface CapabilitiesToggleProps {}
+type CapabilitiesToggleProps = {}
 
 // Map icons for tools and features
 const getIcon = (iconName?: string) => {
@@ -144,7 +142,7 @@ function PureCapabilitiesToggle({}: CapabilitiesToggleProps) {
     type === 'feature' ? setAgentFeatures(id, !isActive) : setAgentTools(id, !isActive);
   };
   
-  const renderCapability = (cap: typeof capabilities[0], isInDropdown: boolean = false) => {
+  const renderCapability = (cap: typeof capabilities[0], isInDropdown = false) => {
     const Icon = getIcon(cap.metadata.icon);
     const baseClasses = "flex items-center gap-2 text-xs font-medium rounded-md px-3.5 py-2 transition-all duration-300 border-0";
     const activeClasses = cap.isActive

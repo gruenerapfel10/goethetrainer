@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { FileText, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
-import { SearchResult, getUrlSrc } from './utils';
-import { useChat } from '@/contexts/chat-context';
+import { FileText, ChevronUp, ExternalLink } from 'lucide-react';
+import { type SearchResult, getUrlSrc } from './utils';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { cn } from '@/lib/utils';
 

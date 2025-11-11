@@ -22,7 +22,7 @@ import type {
   QuestionResult,
 } from './questions/question-types';
 import {
-  SessionTypeEnum,
+  type SessionTypeEnum,
   getSupportedModules as getSupportedModulesFromRegistry,
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
@@ -1154,8 +1154,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     async (
       questionId: string,
       answerValue: AnswerValue,
-      timeSpent: number = 0,
-      hintsUsed: number = 0
+      timeSpent = 0,
+      hintsUsed = 0
     ) => {
       const session = activeSessionRef.current;
       if (!session) {

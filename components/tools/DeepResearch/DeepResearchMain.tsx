@@ -34,7 +34,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { TimelineStep } from '@/components/timeline/components/timeline-step';
 import { TimelineCover } from '@/components/timeline/components/timeline-cover';

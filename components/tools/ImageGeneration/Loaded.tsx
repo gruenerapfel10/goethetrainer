@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Download, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ImageGenerationOutput } from './utils';
+import type { ImageGenerationOutput } from './utils';
 
 interface LoadedProps {
   result: ImageGenerationOutput;

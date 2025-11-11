@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { MCQCheckbox } from './questions/MultipleChoice/MCQCheckbox';
 import { ProcessingArea } from './ProcessingArea';
 
 // Data Matrix style barcode component
@@ -57,13 +56,13 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
       <div className="flex items-end">
         {/* Signature 1 */}
         <div className="flex-1">
-          <div className="border-b border-foreground h-6"></div>
+          <div className="border-b border-foreground h-6" />
           <div className="text-[10px] mt-1">Unterschrift Bewertende/r 1</div>
         </div>
 
         {/* Signature 2 */}
         <div className="flex-1">
-          <div className="border-b border-foreground h-6"></div>
+          <div className="border-b border-foreground h-6" />
           <div className="text-[10px] mt-1">Unterschrift Bewertende/r 2</div>
         </div>
 
@@ -75,7 +74,7 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
             <div className="flex items-center gap-3">
               <div className="flex gap-1">
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} className="w-7 h-9 border-2 border-foreground"></div>
+                  <div key={i} className="w-7 h-9 border-2 border-foreground" />
                 ))}
               </div>
               <span className="text-xl">/</span>
@@ -90,15 +89,15 @@ export const AnswerSheetFooter: React.FC<AnswerSheetFooterProps> = ({ className 
           <div className="flex flex-col gap-2 text-[11px]">
             <div className="flex gap-1">
               {[...Array(2)].map((_, i) => (
-                <div key={`bd${i}`} className="w-6 h-8 border border-foreground"></div>
+                <div key={`bd${i}`} className="w-6 h-8 border border-foreground" />
               ))}
               <span className="mx-1 font-bold">.</span>
               {[...Array(2)].map((_, i) => (
-                <div key={`bm${i}`} className="w-6 h-8 border border-foreground"></div>
+                <div key={`bm${i}`} className="w-6 h-8 border border-foreground" />
               ))}
               <span className="mx-1 font-bold">.</span>
               {[...Array(4)].map((_, i) => (
-                <div key={`by${i}`} className="w-6 h-8 border border-foreground"></div>
+                <div key={`by${i}`} className="w-6 h-8 border border-foreground" />
               ))}
             </div>
             <span>Datum</span>

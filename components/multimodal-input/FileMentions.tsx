@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { FileMentionList } from '@/components/ui/file-mention-list';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useChat, AttachmentType } from '@/contexts/chat-context';
+import { useChat, } from '@/contexts/chat-context';
 
 export function FileMentions() {
   const { input, attachments, messages } = useChat();

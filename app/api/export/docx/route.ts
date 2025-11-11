@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 export async function POST(request: NextRequest) {
@@ -20,8 +20,12 @@ export async function POST(request: NextRequest) {
     });
 
     const buffer = await Packer.toBuffer(doc);
+    const uint8Array = new Uint8Array(buffer);
+    const blob = new Blob([uint8Array], {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
 
-    return new NextResponse(buffer, {
+    return new NextResponse(blob, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${title || 'document'}.docx"`,

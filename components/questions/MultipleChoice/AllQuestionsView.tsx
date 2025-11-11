@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { MCQCheckbox } from './MCQCheckbox';
 import { GoetheHeader } from './GoetheHeader';
 // import { QuestionTimeline } from './QuestionTimeline'; // TODO: Re-implement question timeline feature
-import { QuestionStatus } from '@/lib/sessions/learning-session-context';
+import type { QuestionStatus } from '@/lib/sessions/learning-session-context';
 import type { Question as SessionQuestionType } from '@/lib/sessions/types';
 import { SessionBoard } from '@/components/questions/SessionBoard';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { FileItemProps } from "./types"
+import type { FileItemProps } from "./types"
 import { getFileStyle } from "./utils"
 
 export function FileItem({ 

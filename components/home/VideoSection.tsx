@@ -67,7 +67,7 @@ export default function VideoSection() {
                   'Collaborative and innovative culture',
                 ].map((benefit) => (
                   <li key={benefit} className="flex items-center gap-3">
-                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                    <span className="w-2 h-2 bg-white rounded-full" />
                     {benefit}
                   </li>
                 ))}

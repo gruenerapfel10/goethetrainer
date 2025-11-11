@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { getUserSessions } from '@/lib/sessions/queries';
 import type { SessionTypeEnum } from '@/lib/sessions/session-registry';
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const typeParam = request.nextUrl.searchParams.get('type');
-    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '1000'); // Fetch all sessions
+    const limit = Number.parseInt(request.nextUrl.searchParams.get('limit') || '1000'); // Fetch all sessions
 
     if (!typeParam) {
       return NextResponse.json({ error: 'Type parameter required' }, { status: 400 });

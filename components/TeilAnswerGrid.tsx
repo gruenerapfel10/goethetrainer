@@ -47,7 +47,7 @@ export const TeilAnswerGrid: React.FC<TeilAnswerGridProps> = ({
           style={{ borderWidth: '0.5px', borderStyle: 'solid' }}
         >
           {/* Header - empty space */}
-          <div className="w-6 h-[20px]"></div>
+          <div className="w-6 h-[20px]" />
 
           {/* Question Numbers */}
           {Array.from({ length: questionCount }, (_, i) => (

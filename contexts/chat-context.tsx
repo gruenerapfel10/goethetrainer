@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, } from 'react';
 import { useChat as useAiChat } from '@ai-sdk/react';
 import type { UIMessage } from 'ai';
 import { DefaultChatTransport } from 'ai';
@@ -8,11 +8,9 @@ import { generateUUID } from '@/lib/utils';
 import { toast } from 'sonner';
 import { unstable_serialize, useSWRConfig } from 'swr';
 import { getChatHistoryPaginationKey } from '@/components/sidebar-history';
-import { getAgentTypeFromModel, getAgentTools, getAgentFeatures, getAgentConfig, getAgentSuggestedActions } from '@/lib/ai/agents';
-import type { SuggestedAction, AgentConfig } from '@/lib/ai/agents';
+import { getAgentTypeFromModel, getAgentConfig, } from '@/lib/ai/agents';
+import type { AgentConfig } from '@/lib/ai/agents';
 import { TOOL_METADATA } from '@/lib/ai/tools/tool-registry';
-import type { ToolName } from '@/lib/ai/tools/tool-registry';
-import type { FeatureName } from '@/lib/ai/features/feature-registry';
 export enum AttachmentStatus {
   ERROR = 'error',
   UPLOADING = 'uploading',
@@ -196,7 +194,7 @@ export function ChatProvider({
         const exclusions = prev[tool].metadata.exclusions;
         // Disable any conflicting tools
         exclusions.forEach((excludedTool: string) => {
-          if (newState[excludedTool] && newState[excludedTool].active) {
+          if (newState[excludedTool]?.active) {
             newState[excludedTool] = {
               ...newState[excludedTool],
               active: false

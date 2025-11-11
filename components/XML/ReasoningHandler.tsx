@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { TimelineStep } from '@/components/timeline/components/timeline-step';
-import { Brain } from 'lucide-react';
 
 export interface ReasoningData {
   content: string;

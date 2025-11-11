@@ -1,4 +1,4 @@
-import { AgentType } from './agents';
+
 
 export interface AgentInfo {
   name: string;

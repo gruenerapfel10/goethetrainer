@@ -1,4 +1,4 @@
-window.addEventListener("load", function () {
+window.addEventListener("load", () => {
   let blockedDomains = [];
   fetch('https://hubspotonwebflow.com/assets/js/blockedDomains.json')
   .then(response => response.json())
@@ -8,9 +8,9 @@ window.addEventListener("load", function () {
   .catch(error => console.error('Error:', error));
 
   const updateFormData = (formData) => {
-    for (let [name, value] of formData.entries()) {
+    for (const [name, value] of formData.entries()) {
       switch (name) {
-        case "hutk":
+        case "hutk": {
           const cookies = document.cookie.split(";");
           const cookieMap = {};
 
@@ -19,11 +19,12 @@ window.addEventListener("load", function () {
             cookieMap[name] = value;
           });
 
-          const hubspotCookie = cookieMap["hubspotutk"];
+          const hubspotCookie = cookieMap.hubspotutk;
           if (hubspotCookie) {
             formData.set(name, hubspotCookie);
           }
           break;
+        }
         case "pageUri":
           formData.set(name, window.location.href);
           break;
@@ -57,7 +58,7 @@ window.addEventListener("load", function () {
 
     let isBlocked = false;
     const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-    if(blockList && blockList.enabled) {
+    if(blockList?.enabled) {
       let additionalBlockedDomains = [];
       if(blockList.additionalBlockedDomains && Array.isArray(blockList.additionalBlockedDomains) && blockList.additionalBlockedDomains.length > 0) {
         additionalBlockedDomains = blockList.additionalBlockedDomains;
@@ -204,7 +205,7 @@ window.addEventListener("load", function () {
 
       let isBlocked = false;
       const submitButton = form.querySelector('input[type="submit"], button[type="submit"]');
-      if(blockList && blockList.enabled) {
+      if(blockList?.enabled) {
         let additionalBlockedDomains = [];
         if(blockList.additionalBlockedDomains && Array.isArray(blockList.additionalBlockedDomains) && blockList.additionalBlockedDomains.length > 0) {
           additionalBlockedDomains = blockList.additionalBlockedDomains;

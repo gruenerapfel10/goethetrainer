@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, RefreshCw } from 'lucide-react';
+import { X, } from 'lucide-react';
 import Image from 'next/image';
 import { useChat } from '@/contexts/chat-context';
 

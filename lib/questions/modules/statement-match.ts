@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import {
-  QuestionDifficulty,
+  type QuestionDifficulty,
   QuestionType,
   QuestionInputType,
   type Question,
@@ -20,7 +20,10 @@ import {
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
-import { generatePlannedAuthorStatementSet } from '@/lib/sessions/questions/source-generator';
+import {
+  generatePlannedAuthorStatementSet,
+  generatePlannedSentenceInsertionSet,
+} from '@/lib/sessions/questions/source-generator';
 
 interface StatementMatchPromptConfig extends QuestionModulePromptConfig {
   instructions: string;
@@ -34,7 +37,7 @@ interface StatementMatchRenderConfig extends QuestionModuleRenderConfig {
 interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
   type: 'statement_matching';
   theme?: string;
-  constructionMode?: 'auto' | 'planned_authors';
+  constructionMode?: 'auto' | 'planned_authors' | 'planned_sentence_pool';
   topicHint?: string;
   authorCount?: number;
   statementCount?: number;
@@ -42,6 +45,9 @@ interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
   startingStatementNumber?: number;
   workingTimeMinutes?: number;
   teilLabel?: string;
+  gapCount?: number;
+  sentencePoolSize?: number;
+  includeZeroOption?: boolean;
 }
 
 type StatementMatchAnswer = Record<string, string> | null;
@@ -240,7 +246,36 @@ async function generateStatementMatchQuestion(
       },
       recordUsage
     );
-    return buildAuthorStatementQuestion(plan, sessionType, promptConfig, sourceConfig, difficulty);
+    return buildAuthorStatementQuestion(
+      plan,
+      sessionType,
+      promptConfig,
+      sourceConfig,
+      difficulty
+    );
+  }
+
+  if (sourceConfig.constructionMode === 'planned_sentence_pool') {
+    const plan = await generatePlannedSentenceInsertionSet(
+      {
+        sentencePoolSize:
+          sourceConfig.sentencePoolSize ??
+          Math.max((sourceConfig.gapCount ?? 8) + 2, 10),
+        gapCount: sourceConfig.gapCount ?? 8,
+        theme: sourceConfig.theme,
+        teilLabel: sourceConfig.teilLabel,
+        difficulty,
+        userId,
+      },
+      recordUsage
+    );
+    return buildSentencePoolQuestion(
+      plan,
+      sessionType,
+      promptConfig,
+      sourceConfig,
+      difficulty
+    );
   }
 
   const newsTopic = await getNewsTopicFromPool(userId);
@@ -485,6 +520,114 @@ function buildAuthorStatementQuestion(
           authors.find(author => author.internalId === plan.example.authorId)?.letter ?? '0',
         explanation: plan.example.explanation,
       },
+    },
+    sourceReference: mapNewsTopicToSourceReference(plan.newsTopic),
+  } as Question;
+}
+
+function buildSentencePoolQuestion(
+  plan: Awaited<ReturnType<typeof generatePlannedSentenceInsertionSet>>,
+  sessionType: SessionTypeEnum,
+  promptConfig: StatementMatchPromptConfig,
+  sourceConfig: StatementMatchSourceConfig,
+  difficulty: QuestionDifficulty
+): Question {
+  const gapCount = sourceConfig.gapCount ?? plan.gaps.length;
+  const sentencePoolSize =
+    sourceConfig.sentencePoolSize ?? plan.sentences.length;
+  if (sentencePoolSize > 26) {
+    throw new Error('Sentence pool cannot exceed 26 Einträge (A-Z).');
+  }
+
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const optionBySentenceId = new Map<string, string>();
+  const sentencePoolEntries = plan.sentences.slice(0, sentencePoolSize).map((sentence, index) => {
+    const letter = letters[index] ?? `S${index + 1}`;
+    optionBySentenceId.set(sentence.id, letter);
+    return {
+      id: letter,
+      text: sentence.text.trim(),
+    };
+  });
+
+  const options = sentencePoolEntries.map(entry => ({
+    id: entry.id,
+    text: entry.id,
+  }));
+
+  if (sourceConfig.includeZeroOption) {
+    options.push({
+      id: '0',
+      text: '0',
+    });
+  }
+
+  const snippetCache = new Map<number, string>();
+  const contextText = plan.context;
+  const snippetLength = 80;
+  const getGapSnippet = (gapNumber: number) => {
+    if (snippetCache.has(gapNumber)) {
+      return snippetCache.get(gapNumber)!;
+    }
+    const marker = `[GAP_${gapNumber}]`;
+    const index = contextText.indexOf(marker);
+    if (index === -1) {
+      const fallback = `Lücke ${gapNumber}`;
+      snippetCache.set(gapNumber, fallback);
+      return fallback;
+    }
+    const start = Math.max(0, index - snippetLength);
+    const end = Math.min(contextText.length, index + marker.length + snippetLength);
+    const prefix = contextText.slice(start, index).trimStart();
+    const suffix = contextText.slice(index + marker.length, end).trimEnd();
+    const snippet = `${prefix} ____ ${suffix}`.trim();
+    snippetCache.set(gapNumber, snippet);
+    return snippet;
+  };
+
+  const statements = plan.gaps.slice(0, gapCount).map((gap, index) => ({
+    id: `GAP_${gap.gapNumber}`,
+    text: getGapSnippet(gap.gapNumber),
+    number: (sourceConfig.startingStatementNumber ?? 16) + index,
+  }));
+
+  const correctMatches = statements.reduce<Record<string, string>>((acc, statement) => {
+    const gapNumber = Number(statement.id.replace(/\D+/g, ''));
+    const planGap = plan.gaps.find(entry => entry.gapNumber === gapNumber);
+    if (planGap) {
+      const optionId = optionBySentenceId.get(planGap.solution);
+      if (optionId) {
+        acc[statement.id] = optionId;
+      }
+    }
+    return acc;
+  }, {});
+
+  const prompt =
+    promptConfig.instructions ??
+    'Sie lesen einen Kommentar. Ordnen Sie die Sätze (A-J) den Lücken zu. Zwei Sätze bleiben ohne Zuordnung.';
+
+  return {
+    id: `sentence-pool-${Date.now()}`,
+    type: resolveQuestionType(sessionType),
+    sessionType,
+    difficulty,
+    inputType: QuestionInputType.MATCHING,
+    prompt,
+    context: plan.context,
+    title: plan.title,
+    subtitle: plan.subtitle,
+    theme: plan.theme,
+    options,
+    statements,
+    correctMatches,
+    points: statements.length,
+    moduleId: QuestionModuleId.STATEMENT_MATCH,
+    moduleLabel: 'Sentence Pool Matching',
+    presentation: {
+      mode: 'sentence_pool',
+      intro: plan.intro,
+      sentencePool: sentencePoolEntries,
     },
     sourceReference: mapNewsTopicToSourceReference(plan.newsTopic),
   } as Question;

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StartSessionButton } from '@/components/session/start-session-button';
 import { BookOpen, Headphones, PenTool, Mic, Activity } from 'lucide-react';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
@@ -116,7 +115,7 @@ async function fetchSessionInsights(sessionType: SessionTypeEnum): Promise<Sessi
 
     // Get last 5 sessions for chart
     const chartSessions = enhanced
-      .filter(e => e.summary)
+      .filter(e => e.summary && e.summary.percentage !== undefined)
       .slice(-5)
       .map((e, idx) => ({
         session: `S${idx + 1}`,

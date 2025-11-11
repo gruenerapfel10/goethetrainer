@@ -1,7 +1,7 @@
 'use client';
 
 import { FileText } from 'lucide-react';
-import { SearchResult, getUrlSrc } from './utils';
+import { type SearchResult, getUrlSrc } from './utils';
 
 interface SourcesListProps {
   sources: SearchResult[];

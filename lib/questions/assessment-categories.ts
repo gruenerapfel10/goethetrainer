@@ -166,7 +166,7 @@ export function allocateReadingAssessmentCategories(
         remainder,
       };
     });
-    let assigned = provisional.reduce((sum, entry) => sum + entry.count, 0);
+    const assigned = provisional.reduce((sum, entry) => sum + entry.count, 0);
     let remaining = count - assigned;
     const remainderQueue = shuffleForRemainder(provisional.slice(), randomize).sort(
       (a, b) => b.remainder - a.remainder

@@ -1,4 +1,4 @@
-import { SessionTypeEnum } from '../session-registry';
+import type { SessionTypeEnum } from '../session-registry';
 import { QuestionInputType } from '../inputs/types';
 import type { ReadingAssessmentCategory } from '@/lib/questions/assessment-categories';
 

@@ -1,4 +1,4 @@
-import { Search, Database, FileText, Sparkles, Brain, File, Lightbulb, Circle } from "lucide-react";
+import { Database, FileText, Sparkles, Brain, File, Lightbulb, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
@@ -17,7 +17,7 @@ export function ToolIcon({ toolName, className }: ToolIconProps) {
   
   // Extract size from className if provided (e.g., "size-6" -> 24px)
   const sizeMatch = className?.match(/size-(\d+)/);
-  const size = sizeMatch ? parseInt(sizeMatch[1]) * 4 : 16; // Default to 16px
+  const size = sizeMatch ? Number.parseInt(sizeMatch[1]) * 4 : 16; // Default to 16px
   
   // Map tool names to their respective icons
   switch (toolName) {

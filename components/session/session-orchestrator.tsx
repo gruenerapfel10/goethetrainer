@@ -16,7 +16,7 @@ import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuest
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { StatementMatchView } from '@/components/questions/StatementMatch/StatementMatchView';
 import { WritingPromptView } from '@/components/questions/Writing/WritingPromptView';
-import { SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
+import { type SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
 import { SessionBoard } from '@/components/questions/SessionBoard';
 import '@/lib/sessions/configs';
 

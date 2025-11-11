@@ -1,6 +1,6 @@
 import { auth } from '@/app/(auth)/auth';
 import { getChatContext } from '@/lib/ai/chat-manager';
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 
 const tabs = [
   {
@@ -97,9 +96,9 @@ export default function AutoTabs() {
                       <div className="text-6xl opacity-20">{tab.icon}</div>
                       {/* Animated orbits */}
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-32 h-32 border-2 border-white/20 rounded-full animate-spin" style={{ animationDuration: '20s' }}></div>
-                        <div className="absolute w-24 h-24 border-2 border-white/30 rounded-full animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}></div>
-                        <div className="absolute w-16 h-16 border-2 border-white/40 rounded-full animate-spin" style={{ animationDuration: '10s' }}></div>
+                        <div className="w-32 h-32 border-2 border-white/20 rounded-full animate-spin" style={{ animationDuration: '20s' }} />
+                        <div className="absolute w-24 h-24 border-2 border-white/30 rounded-full animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }} />
+                        <div className="absolute w-16 h-16 border-2 border-white/40 rounded-full animate-spin" style={{ animationDuration: '10s' }} />
                       </div>
                     </div>
                   </div>

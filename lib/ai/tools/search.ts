@@ -1,11 +1,7 @@
 import { z } from 'zod';
-import type { Session } from 'next-auth';
 import FirecrawlApp from '@/lib/firecrawl/firecrawl-client';
-import type { SearchResponse } from '@/lib/firecrawl/firecrawl-types';
 
-interface SearchProps {
-  // Props removed - will be provided at execution time
-}
+type SearchProps = {}
 
 // Initialize FirecrawlApp instance
 const getFirecrawlApp = () => {

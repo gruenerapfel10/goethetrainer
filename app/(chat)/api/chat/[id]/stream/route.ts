@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { streamBufferManager } from '@/lib/ai/stream-buffer';
 import { UI_MESSAGE_STREAM_HEADERS } from 'ai';

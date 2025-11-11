@@ -143,8 +143,7 @@ export const PreviewMessageWrapper = memo<PreviewMessageProps>(
             />
 
             {!isReadonly && message.role === 'assistant' && (
-              <>
-                {isLoading ? (
+              isLoading ? (
                   <div className="h-[38px] mt-2" />
                 ) : (
                   <MessageActions
@@ -155,8 +154,7 @@ export const PreviewMessageWrapper = memo<PreviewMessageProps>(
                     isLoading={isLoading}
                     shouldFetchCost={completedMessageIds.has(message.id)}
                   />
-                )}
-              </>
+                )
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";

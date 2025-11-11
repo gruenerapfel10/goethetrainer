@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ChevronDown, FileText, Sparkles, Globe, Hash, TrendingUp } from "lucide-react";
+import { ChevronDown, Sparkles, Globe, Hash, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion, AnimatePresence } from "framer-motion";

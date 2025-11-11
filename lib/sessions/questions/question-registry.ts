@@ -9,9 +9,9 @@ import type {
   QuestionModule,
   QuestionModuleTask,
 } from '@/lib/questions/modules/types';
-import {
+import type {
   QuestionModuleId,
-  type QuestionModuleGenerateResult,
+  QuestionModuleGenerateResult,
 } from '@/lib/questions/modules/types';
 
 registerDefaultQuestionModules();

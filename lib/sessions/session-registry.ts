@@ -6,7 +6,7 @@ import type {
   QuestionModuleSourceConfig,
   ScoringPolicy,
 } from '@/lib/questions/modules/types';
-import { QuestionModuleId } from '@/lib/questions/modules/types';
+import type { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export enum SessionTypeEnum {
   READING = 'reading',

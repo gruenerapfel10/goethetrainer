@@ -90,7 +90,7 @@ export async function updateSession(session: Session): Promise<void> {
 export async function getUserSessions(
   userId: string,
   type?: SessionType,
-  limit: number = 20
+  limit = 20
 ): Promise<Session[]> {
   try {
     const results: Session[] = [];
@@ -266,7 +266,7 @@ export async function getUserSessionStats(userId: string): Promise<SessionStats>
 // Get session analytics by type
 export async function getSessionAnalytics(
   userId: string, 
-  days: number = 30
+  days = 30
 ): Promise<SessionAnalytics> {
   try {
     const startDate = new Date();

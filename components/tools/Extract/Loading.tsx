@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Loader2, Globe } from 'lucide-react';
+import { Loader2, } from 'lucide-react';
 
 interface LoadingProps {
   urls?: string[];

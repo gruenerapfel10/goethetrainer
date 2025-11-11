@@ -25,8 +25,8 @@ export const SearchQualityReflection = ({
   score: string | number; 
   isStreaming?: boolean 
 }) => {
-  const numScore = typeof score === 'string' ? parseInt(score) : score;
-  const validScore = !isNaN(numScore) && numScore > 0;
+  const numScore = typeof score === 'string' ? Number.parseInt(score) : score;
+  const validScore = !Number.isNaN(numScore) && numScore > 0;
   
   const getScoreColor = () => {
     if (!validScore) return 'text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-950 dark:border-gray-800';
@@ -96,7 +96,7 @@ export class SearchQualityHandler {
     let processedContent = content;
 
     // Check for search quality reflection (complete or partial)
-    let reflectionMatch = content.match(/<search_quality_reflection>(.*?)<\/search_quality_reflection>/s);
+    const reflectionMatch = content.match(/<search_quality_reflection>(.*?)<\/search_quality_reflection>/s);
     if (reflectionMatch) {
       qualityReflection = reflectionMatch[1].trim();
       // Remove from content
@@ -111,7 +111,7 @@ export class SearchQualityHandler {
     }
 
     // Check for search quality score (complete or partial)
-    let scoreMatch = content.match(/<search_quality_score>(.*?)<\/search_quality_score>/s);
+    const scoreMatch = content.match(/<search_quality_score>(.*?)<\/search_quality_score>/s);
     if (scoreMatch) {
       qualityScore = scoreMatch[1].trim();
       // Remove from content

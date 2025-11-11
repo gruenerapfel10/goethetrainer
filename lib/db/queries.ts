@@ -457,8 +457,8 @@ export async function getMessagesByChatId({ id }: { id: string }) {
 
 export async function getPaginatedMessagesByChatId(
   chatId: string,
-  limit: number = 50,
-  offset: number = 0
+  limit = 50,
+  offset = 0
 ) {
   try {
     const querySnapshot = await adminDb
@@ -651,7 +651,7 @@ export async function searchChatsByTitle({
         const data = doc.data();
         return (
           data.title.toLowerCase().includes(query.toLowerCase()) ||
-          (data.customTitle && data.customTitle.toLowerCase().includes(query.toLowerCase()))
+          (data.customTitle?.toLowerCase().includes(query.toLowerCase()))
         );
       })
       .map(doc => {

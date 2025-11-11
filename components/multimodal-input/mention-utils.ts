@@ -1,5 +1,5 @@
 import type { UIMessage } from 'ai';
-import { AttachmentType } from '@/contexts/chat-context';
+import type { AttachmentType } from '@/contexts/chat-context';
 import React from 'react';
 
 type Attachment = {

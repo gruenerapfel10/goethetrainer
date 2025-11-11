@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { memo, useState, useEffect, useMemo } from 'react';
-import { FileText, Loader2, AlertCircle, Download, ExternalLink, Code, Image } from 'lucide-react';
+import { FileText, AlertCircle, Code, Image } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { toast } from 'sonner';
@@ -147,7 +147,7 @@ const DocumentCreateLoaded = memo<{
           <div className="text-xs prose prose-sm dark:prose-invert max-w-none">
             <Response>
               {displayContent.length > 400 
-                ? displayContent.substring(0, 400) + '...'
+                ? `${displayContent.substring(0, 400)}...`
                 : displayContent}
             </Response>
           </div>

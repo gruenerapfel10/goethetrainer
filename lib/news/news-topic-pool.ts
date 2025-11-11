@@ -235,7 +235,7 @@ const newsPickLocks = new Map<string, Promise<void>>();
 
 async function withUserNewsLock<T>(userId: string, task: () => Promise<T>): Promise<T> {
   const previous = newsPickLocks.get(userId) ?? Promise.resolve();
-  let release: (() => void) | null = null;
+  let release: (() => void) | undefined;
   const current = new Promise<void>(resolve => {
     release = resolve;
   });

@@ -8,7 +8,7 @@ import { Loaded } from './Loaded';
 import { Error } from './Error';
 import { FullscreenView } from './FullscreenView';
 import { 
-  ImageGenerationProps, 
+  type ImageGenerationProps, 
   processOutput, 
   getImageFilename 
 } from './utils';

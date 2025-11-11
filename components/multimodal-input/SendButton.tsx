@@ -1,15 +1,12 @@
 'use client';
-import type { UIMessage } from 'ai';
 
 import { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import type { UseChatHelpers } from '@ai-sdk/react';
 import { Button } from '@/components/ui/button';
 import { ArrowUpIcon, StopIcon } from '@/components/icons';
 import { Loader2 } from 'lucide-react';
 import classNames from 'classnames';
 import { useChat, AttachmentStatus } from '@/contexts/chat-context';
-import { useWindowSize } from 'usehooks-ts';
 
 function PureSendButton() {
   const { input, status, abort, sendMessage, attachments } = useChat();

@@ -1,14 +1,11 @@
 import { streamObject, tool } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
 import { getDocumentById, saveSuggestions } from '@/lib/db/queries';
 import type { Suggestion } from '@/lib/db/queries';
 import { generateUUID } from '@/lib/utils';
 import { myProvider } from '../models';
 
-interface RequestSuggestionsProps {
-  // Props removed - will be provided at execution time
-}
+type RequestSuggestionsProps = {}
 
 export const requestSuggestions = () =>
   tool({

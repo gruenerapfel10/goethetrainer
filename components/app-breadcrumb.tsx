@@ -46,7 +46,7 @@ export function AppBreadcrumb() {
 
   // Build breadcrumb items
   segments.forEach((segment, index) => {
-    const href = '/' + segments.slice(0, index + 1).join('/');
+    const href = `/${segments.slice(0, index + 1).join('/')}`;
     const isLast = index === segments.length - 1;
 
     // Check if it's a UUID (for session/chat IDs)

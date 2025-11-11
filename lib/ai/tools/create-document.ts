@@ -1,5 +1,5 @@
 import { generateUUID } from '@/lib/utils';
-import { streamText, type UIMessage, tool } from 'ai';
+import { streamText, tool } from 'ai';
 import { smoothStream } from 'ai';
 import { z } from 'zod';
 import type { Session } from 'next-auth';

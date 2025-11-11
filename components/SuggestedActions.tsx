@@ -2,7 +2,6 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
-import type { ChatRequestOptions, UIMessage } from 'ai';
 import { memo } from 'react';
 import { useChat } from '@/contexts/chat-context';
 import { useTranslations } from 'next-intl';
@@ -54,7 +53,7 @@ const getIconForSuggestion = (title: string, index: number) => {
   return fallbackIcons[index % fallbackIcons.length];
 };
 
-interface SuggestedActionsProps {}
+type SuggestedActionsProps = {}
 
 function PureSuggestedActions({}: SuggestedActionsProps) {
   const { selectedModel, sendMessage, setInput, id: chatId, messages, attachments, status } = useChat();

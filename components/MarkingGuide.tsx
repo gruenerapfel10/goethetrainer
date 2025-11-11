@@ -43,7 +43,7 @@ export const MarkingGuide: React.FC<MarkingGuideProps> = ({ className = '', widt
       </div>
       {/* Dot */}
       <div className="w-4 h-4 border border-foreground flex items-center justify-center bg-background">
-        <div className="w-1 h-1 rounded-full bg-foreground"></div>
+        <div className="w-1 h-1 rounded-full bg-foreground" />
       </div>
       {/* Checkmark */}
       <div className="w-4 h-4 border border-foreground flex items-center justify-center bg-background">
@@ -53,9 +53,9 @@ export const MarkingGuide: React.FC<MarkingGuideProps> = ({ className = '', widt
       </div>
       {/* Circle around box */}
       <div className="relative w-4 h-4">
-        <div className="w-4 h-4 border border-foreground bg-background"></div>
+        <div className="w-4 h-4 border border-foreground bg-background" />
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 rounded-full border border-foreground"></div>
+          <div className="w-6 h-6 rounded-full border border-foreground" />
         </div>
       </div>
     </div>

@@ -1,10 +1,10 @@
 'use client';
 
 import type { JSX } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { QuestionComponentProps } from '../types';
 
@@ -41,9 +41,23 @@ export function MultipleChoice({
   };
 
   // Determine if this is gap-text mode or standard mode
-  const hasGaps = question.gaps && question.gaps.length > 0;
+  const sortedGaps = useMemo(() => {
+    if (!Array.isArray(question.gaps)) {
+      return [] as Gap[];
+    }
+    return [...(question.gaps as Gap[])].sort((a, b) => {
+      const parseGapId = (value?: string) => {
+        if (!value) return Number.MAX_SAFE_INTEGER;
+        const match = value.match(/\d+/);
+        return match ? Number.parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+      };
+      return parseGapId(a.id) - parseGapId(b.id);
+    });
+  }, [question.gaps]);
+
+  const hasGaps = sortedGaps.length > 0;
   const text = question.context || question.text || question.prompt;
-  const gaps = (question.gaps || []) as Gap[];
+  const gaps = sortedGaps;
 
   const examplePrefill = question.isExample ? question.exampleAnswer || '' : '';
   const isExampleQuestion = Boolean(question.isExample && hasGaps);
@@ -311,7 +325,10 @@ export function MultipleChoice({
                 <div key={gap.id} className="flex items-center gap-4 text-sm">
                   {/* Gap number */}
                   <span className="font-semibold text-gray-700 min-w-[20px]">
-                    {gapIndex}
+                    {(() => {
+                      const match = gap.id?.match(/\d+/);
+                      return match ? match[0] : gapIndex + 1;
+                    })()}
                   </span>
 
                   {/* Option columns */}

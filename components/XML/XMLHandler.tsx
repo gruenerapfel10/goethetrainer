@@ -3,7 +3,6 @@
 import React, { memo, useMemo } from 'react';
 import { ReferencesHandler } from './ReferencesHandler';
 import { ReasoningHandler } from './ReasoningHandler';
-import { SearchQualityHandler } from './SearchQualityHandler';
 import { TimelineStep } from '@/components/timeline/components/timeline-step';
 import { Search } from 'lucide-react';
 

@@ -77,7 +77,7 @@ export function ArtifactsList({ artifacts, onSelectArtifact }: ArtifactsListProp
                   <div className="text-xs prose prose-sm dark:prose-invert max-w-none">
                     <Response>
                       {art.content.length > 400 
-                        ? art.content.substring(0, 400) + '...'
+                        ? `${art.content.substring(0, 400)}...`
                         : art.content}
                     </Response>
                   </div>

@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
-import { Question, QuestionResult, UserAnswer } from './question-types';
+import type { Question, QuestionResult, UserAnswer } from './question-types';
 
 interface QuestionMetadata {
   defaultPoints?: number;

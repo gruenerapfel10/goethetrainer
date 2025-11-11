@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo, ReactNode } from "react";
+import React, { useState, useMemo, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Timeline } from "@/components/ui/timeline";
 import { ArrowRight, ArrowUp } from "lucide-react";

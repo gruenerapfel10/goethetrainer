@@ -9,7 +9,7 @@ import { CoinsIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { chatModels } from '@/lib/ai/models';
 import { calculateCost, getModelId } from '@/lib/costs';
-import { AgentType, getAgentDisplayName as getAgentDisplay, getAgentModelId } from '@/lib/ai/agents';
+import { AgentType, getAgentDisplayName as getAgentDisplay, } from '@/lib/ai/agents';
 
 interface CostData {
   messageId: string;
@@ -77,7 +77,7 @@ export function MessageCost({
       return;
     }
 
-    console.log("**** cost " + cost)
+    console.log(`**** cost ${cost}`)
     
     // If cost wasn't provided, calculate it
     if (!cost || cost === 0) {
@@ -86,12 +86,12 @@ export function MessageCost({
       console.log('***** agent', agentType, inputTokens, outputTokens);
       console.log(agentType, modelId);
       cost = calculatedCost || 0;
-      formattedCost = `$${parseFloat(cost.toFixed(4))}`;
+      formattedCost = `$${Number.parseFloat(cost.toFixed(4))}`;
     }
     
     // If formatted cost wasn't provided, format it
     if (!formattedCost) {
-      formattedCost = `$${parseFloat(cost.toFixed(4))}`;
+      formattedCost = `$${Number.parseFloat(cost.toFixed(4))}`;
     }
     
     setCostData({

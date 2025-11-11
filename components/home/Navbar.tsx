@@ -73,7 +73,7 @@ export default function Navbar() {
       'featured-news': { bg: 'bg-black', text: 'text-white' },
       'footer': { bg: 'bg-black', text: 'text-white' },
     };
-    return styles[currentSection] || styles['hero'];
+    return styles[currentSection] || styles.hero;
   };
 
   const sectionStyle = getSectionStyle();

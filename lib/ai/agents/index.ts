@@ -1,6 +1,6 @@
 import { generalAgentConfig } from './general-agent.config';
 import { goetheAgentConfig } from './goethe-agent.config';
-import { AgentType, AgentConfig, SuggestedAction } from './types';
+import { AgentType, type AgentConfig, type SuggestedAction } from './types';
 import type { ToolName } from '@/lib/ai/tools/tool-registry';
 import type { FeatureName } from '@/lib/ai/features/feature-registry';
 

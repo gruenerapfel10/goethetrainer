@@ -17,7 +17,6 @@ import { SidebarContext, useSidebar, useSidebarState } from "./sidebar-context"
 import { 
   SIDEBAR_WIDTH, 
   SIDEBAR_WIDTH_ICON, 
-  SIDEBAR_BASE_CLASSES, 
   SIDEBAR_TRANSITION,
   SIDEBAR_WIDTH_MOBILE,
   SIDEBAR_KEYBOARD_SHORTCUT
@@ -111,7 +110,7 @@ export const Sidebar = React.forwardRef<
         const saved = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`))
         // For right sidebar, if cookie exists but is too small, use default
         if (saved) {
-          const width = parseInt(saved[1])
+          const width = Number.parseInt(saved[1])
           if (side === "left") return width
           // For right sidebar, ensure minimum width
           return width < 400 ? 600 : width

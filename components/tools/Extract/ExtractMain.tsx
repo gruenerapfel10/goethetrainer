@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
-import { ExtractedResult, ExtractSummary } from './utils';
+import type { ExtractedResult, ExtractSummary } from './utils';
 import { Loading } from './Loading';
 import { Error } from './Error';
 import { Loaded } from './Loaded';

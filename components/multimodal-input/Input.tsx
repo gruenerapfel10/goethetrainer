@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle, useState, useMemo } from 'react';
+import { useRef, useEffect, forwardRef, useImperativeHandle, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import classNames from 'classnames';
 import { useChat, AttachmentStatus } from '@/contexts/chat-context';

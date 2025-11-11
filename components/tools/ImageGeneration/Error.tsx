@@ -1,6 +1,4 @@
 'use client';
-
-import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 
 interface ErrorProps {

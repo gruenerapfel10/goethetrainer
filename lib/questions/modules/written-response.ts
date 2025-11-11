@@ -2,7 +2,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import {
-  QuestionDifficulty,
+  type QuestionDifficulty,
   QuestionInputType,
   QuestionType,
   type Question,

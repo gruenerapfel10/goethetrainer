@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useWindowSize } from 'usehooks-ts';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import type { ArtifactKind } from '@/components/artifact';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import { ArtifactHeader } from './artifacts/ArtifactHeader';
 import { ArtifactsList } from './artifacts/ArtifactsList';

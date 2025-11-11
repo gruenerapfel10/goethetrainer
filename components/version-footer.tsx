@@ -11,7 +11,6 @@ import { getDocumentTimestampByIndex } from '@/lib/utils';
 
 import { LoaderIcon } from './icons';
 import { Button } from './ui/button';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 
 interface VersionFooterProps {

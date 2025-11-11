@@ -13,10 +13,7 @@ import { ScrapeResults } from '../scrape-results';
 import { ExtractMain } from './Extract/ExtractMain';
 import { Weather } from '../weather';
 import ChartRenderer from '../chart-renderer';
-import { TimelineStep } from '../timeline/components/timeline-step';
-import { RunSqlPreview } from '../sql/run-sql-preview';
 import { AlertCircleIcon } from 'lucide-react';
-import Image from 'next/image';
 
 interface ToolHandlerProps {
   toolName: string;
@@ -52,7 +49,7 @@ export const ToolHandler = memo<ToolHandlerProps>(({
 
   // Handle tools by name
   switch (toolName) {
-    case ToolName.DEEP_RESEARCH:
+    case ToolName.DEEP_RESEARCH: {
       // Extract streaming updates from annotations
       const deepResearchUpdates = message?.annotations
         ?.filter((a: any) => 
@@ -90,6 +87,7 @@ export const ToolHandler = memo<ToolHandlerProps>(({
           updates={researchUpdates}
         />
       );
+    }
     case ToolName.SEARCH:
       return (
         <WebSearch

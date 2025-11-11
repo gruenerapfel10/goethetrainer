@@ -111,7 +111,7 @@ export function ContextDebug({ chatId, enabled = process.env.NODE_ENV === 'devel
         <div className="space-y-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
             </div>
           ) : debugInfo ? (
             <>

@@ -46,7 +46,7 @@ export function Loading({ prompt, input }: LoadingProps) {
 
     let animationId: number | null = null;
     let isHovered = false;
-    let scrollSpeed = 0.5; // pixels per frame
+    const scrollSpeed = 0.5; // pixels per frame
     let lastTime = 0;
 
     const smoothScroll = (currentTime: number) => {
@@ -152,8 +152,8 @@ export function Loading({ prompt, input }: LoadingProps) {
     // Handle property keys with string values
     if (trimmed.includes('": "')) {
       const parts = trimmed.split('": "');
-      const key = parts[0] + '"';
-      const value = '"' + parts.slice(1).join('": "');
+      const key = `${parts[0]}"`;
+      const value = `"${parts.slice(1).join('": "')}`;
       return (
         <>
           <span className="text-blue-600 dark:text-blue-400">{key}</span>
@@ -270,7 +270,7 @@ export function Loading({ prompt, input }: LoadingProps) {
                             'linear-gradient(90deg, rgb(var(--muted-foreground) / 0.3), rgb(var(--muted-foreground) / 0.1))'
                         }}
                         animate={{ opacity: [0.3, 0.7, 0.3] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
+                        transition={{ duration: 1.5, repeat: Number.POSITIVE_INFINITY }}
                       />
                     ) : loadingProgress >= 100 || isFinished || index <= loadingProgress / 5 ? (
                       // Actual content with syntax highlighting

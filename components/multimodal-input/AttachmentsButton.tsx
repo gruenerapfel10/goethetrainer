@@ -1,8 +1,6 @@
 'use client';
 
-import { memo, useRef, useCallback, forwardRef, useImperativeHandle, useState } from 'react';
-import type { UseChatHelpers } from '@ai-sdk/react';
-import type { UIMessage } from 'ai';
+import { memo, useRef, useCallback, forwardRef, useImperativeHandle, } from 'react';
 import { PaperclipIcon } from '@/components/icons';
 import classNames from 'classnames';
 import { toast } from 'sonner';
@@ -24,9 +22,7 @@ export interface FileUploadHandlerRef {
   triggerFileSelect: () => void;
 }
 
-interface AttachmentsButtonProps {
-  // No props needed - everything comes from context
-}
+type AttachmentsButtonProps = {}
 
 // File upload functions
 export const uploadFiles = async (

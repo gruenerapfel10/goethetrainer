@@ -1,14 +1,11 @@
 import { z } from 'zod';
 import { tool } from 'ai';
-import type { Session } from 'next-auth';
 import type { UIMessage } from 'ai';
-import { generateUUID, messagesWithoutFiles } from '@/lib/utils';
+import { generateUUID, } from '@/lib/utils';
 import { getFileContent, parseFirebaseUrl } from '@/lib/firebase/storage-utils';
 import { customModel } from '@/lib/ai/models';
 
-interface ProcessFileProps {
-  // No longer need AWS clients
-}
+type ProcessFileProps = {}
 
 interface ProcessFilesResult {
   fileAnalysisResults: string[];

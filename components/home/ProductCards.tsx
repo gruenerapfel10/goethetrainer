@@ -57,7 +57,7 @@ export default function ProductCards() {
                     fill
                     className="object-cover opacity-20 group-hover:opacity-30 transition-opacity duration-300"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-white via-white/40 to-transparent" />
                 </div>
 
                 {/* Content */}
@@ -89,7 +89,7 @@ export default function ProductCards() {
                     <ul className="space-y-2 mb-8">
                       {product.features.map((feature, i) => (
                         <li key={i} className="flex items-center gap-2 text-black">
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
                           {feature}
                         </li>
                       ))}

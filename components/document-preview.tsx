@@ -14,10 +14,7 @@ import { cn, fetcher } from '@/lib/utils';
 import type { Document } from '@/lib/db/queries';
 import { InlineDocumentSkeleton } from './document-skeleton';
 import useSWR from 'swr';
-import Editor from './text-editor';
 import { DocumentToolCall, DocumentToolResult } from './document';
-import { CodeEditor } from './code-editor';
-import { useChat } from '@/contexts/chat-context';
 import { useArtifactsContext } from '@/contexts/artifacts-context';
 import equal from 'fast-deep-equal';
 import { UnifiedArtifactRenderer } from './editors/EditorFactory';
@@ -152,7 +149,7 @@ const PureHitboxLayer = ({
     async (event: MouseEvent<HTMLElement>) => {
       const boundingBox = event.currentTarget.getBoundingClientRect();
 
-      if (result && result.id) {
+      if (result?.id) {
         console.log('📄 [DOCUMENT PREVIEW] Loading existing document:', {
           documentId: result.id,
           title: result.title,

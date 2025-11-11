@@ -1,6 +1,6 @@
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { QuestionDifficulty } from './question-types';
+import type { QuestionDifficulty } from './question-types';
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';

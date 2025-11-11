@@ -1,5 +1,5 @@
 import { ToolName } from '@/lib/ai/tools/tool-registry';
-import { FeatureName } from '@/lib/ai/features/feature-registry';
+import type { FeatureName } from '@/lib/ai/features/feature-registry';
 import { ModelId } from '@/lib/ai/model-registry';
 import { AgentType, type AgentConfig } from './types';
 

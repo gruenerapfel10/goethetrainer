@@ -1,11 +1,13 @@
 'use client';
 
 import Image from 'next/image';
+import { useState } from 'react';
 import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, ChevronLeft, Circle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ChevronRight } from 'lucide-react';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import { getReadingAssessmentCategoryDefinition } from '@/lib/questions/assessment-categories';
 
 interface SessionResultsViewProps {
   results: QuestionResult[];
@@ -71,7 +73,94 @@ function resolveGradeInfo(percentage: number) {
   return GRADE_BANDS.find(band => percentage >= band.min) ?? GRADE_BANDS[GRADE_BANDS.length - 1];
 }
 
+type OptionBreakdownEntry = {
+  id: string;
+  label: string;
+  text: string;
+  rationale?: string;
+  misconception?: string;
+  isCorrect: boolean;
+};
+
+function buildOptionBreakdown(question: QuestionResult['question']): OptionBreakdownEntry[] {
+  const baseOptions =
+    (question.options && question.options.length > 0
+      ? question.options
+      : question.gaps?.flatMap(gap => gap.options ?? []) ?? []) ?? [];
+  if (!baseOptions.length) {
+    return [];
+  }
+
+  const rationaleEntries =
+    question.optionRationales ??
+    (question.gaps ?? []).flatMap(gap => gap.optionRationales ?? []);
+
+  return baseOptions.map((option, index) => {
+    const optionId =
+      (typeof option.id === 'string' && option.id.length > 0 ? option.id : undefined) ??
+      `opt_${index}`;
+    const rationale = rationaleEntries.find(entry => entry.optionId === optionId);
+    const derivedLabel =
+      optionId === '0'
+        ? '0'
+        : /^[a-z]$/i.test(optionId)
+          ? optionId.toUpperCase()
+          : String.fromCharCode(65 + index);
+
+    const isCorrect =
+      rationale?.isCorrect !== undefined
+        ? rationale.isCorrect
+        : optionId === question.correctOptionId ||
+          (Array.isArray(question.correctAnswer)
+            ? question.correctAnswer.includes(optionId)
+            : false);
+
+    return {
+      id: optionId,
+      label: derivedLabel,
+      text: option.text ?? '',
+      rationale: rationale?.rationale,
+      misconception: rationale?.misconception,
+      isCorrect,
+    };
+  });
+}
+
+function resolveQuestionCriterion(question: QuestionResult['question']): string | null {
+  if (!question.assessmentCategory) {
+    return null;
+  }
+  const definition = getReadingAssessmentCategoryDefinition(question.assessmentCategory);
+  return definition?.label ?? question.assessmentCategory;
+}
+
+function resolveQuestionJustification(
+  question: QuestionResult['question'],
+  optionDetails: OptionBreakdownEntry[]
+): string | null {
+  if (typeof question.explanation === 'string' && question.explanation.trim().length > 0) {
+    const parts = question.explanation
+      .split('\n')
+      .map(entry => entry.trim())
+      .filter(Boolean);
+    const preferred = parts.find(part => !part.toLowerCase().startsWith('kategorie'));
+    return preferred ?? parts[0] ?? null;
+  }
+
+  const correctOption = optionDetails.find(entry => entry.isCorrect);
+  return correctOption?.rationale ?? null;
+}
+
 export function SessionResultsView({ results, summary, sessionType, onClose, issuedAt }: SessionResultsViewProps) {
+  const [expandedOptionRows, setExpandedOptionRows] = useState<Record<string, boolean>>({});
+
+  const toggleOptionRow = (questionId: string) => {
+    setExpandedOptionRows(prev => ({
+      ...prev,
+      [questionId]: !prev[questionId],
+    }));
+  };
+
   const moduleRows = MODULE_ORDER.map(module => {
     const row = summary.moduleBreakdown?.find(entry => entry.module === module);
     return (
@@ -171,6 +260,16 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
     const option = question.options?.find(
       entry => entry.id === optionId || entry.text === optionId
     );
+    const presentationPool = Array.isArray(
+      (question.presentation as { sentencePool?: Array<{ id: string; text: string }> })?.sentencePool
+    )
+      ? ((question.presentation as { sentencePool?: Array<{ id: string; text: string }> })
+          ?.sentencePool ?? [])
+      : [];
+    const poolEntry = presentationPool.find(entry => entry.id === optionId);
+    if (poolEntry) {
+      return `${poolEntry.id}) ${poolEntry.text}`;
+    }
     return option?.text ?? optionId;
   };
 
@@ -427,6 +526,8 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
                         <tr className="text-left text-muted-foreground bg-muted/30 uppercase tracking-wide text-[11px]">
                           <th className="px-2 py-2 w-12">Nr.</th>
                           <th className="px-2 py-2">Aufgabe</th>
+                          <th className="px-2 py-2">Kriterium</th>
+                          <th className="px-2 py-2">Begründung</th>
                           <th className="px-2 py-2">Antwort</th>
                           <th className="px-2 py-2">Korrekt</th>
                           <th className="px-2 py-2 text-right">Punkte</th>
@@ -465,6 +566,8 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
                                   >
                                     <td className="px-2 py-2 font-semibold">{rowIndex}</td>
                                     <td className="px-2 py-2 text-xs leading-snug">{statement.text}</td>
+                                    <td className="px-2 py-2 text-xs text-muted-foreground">—</td>
+                                    <td className="px-2 py-2 text-xs text-muted-foreground">—</td>
                                     <td className="px-2 py-2 font-medium">
                                       {resolveStatementOptionLabel(question, userSelection)}
                                     </td>
@@ -482,6 +585,14 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
                             rowIndex += 1;
                             const userAnswer = formatAnswer(question, result.userAnswer.answer);
                             const correctAnswer = resolveCorrectAnswer(question);
+                            const optionDetails = buildOptionBreakdown(question);
+                            const criterionLabel = resolveQuestionCriterion(question);
+                            const justification = resolveQuestionJustification(
+                              question,
+                              optionDetails
+                            );
+                            const showOptionDetails = optionDetails.length > 0;
+                            const isExpanded = !!expandedOptionRows[question.id];
 
                             return [
                               (
@@ -491,12 +602,35 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
                                     'border-t text-sm',
                                     result.isCorrect
                                       ? 'bg-emerald-50/70 dark:bg-emerald-900/20'
-                                      : 'bg-red-50/70 dark:bg-red-900/10'
+                                      : 'bg-red-50/70 dark:bg-red-900/10',
+                                    showOptionDetails && 'cursor-pointer'
                                   )}
+                                  onClick={() => {
+                                    if (showOptionDetails) {
+                                      toggleOptionRow(question.id);
+                                    }
+                                  }}
                                 >
                                   <td className="px-2 py-2 font-semibold">{rowIndex}</td>
                                   <td className="px-2 py-2 text-xs leading-snug">
-                                    {question.prompt || 'Aufgabe'}
+                                    <div className="flex items-start gap-2">
+                                      {showOptionDetails && (
+                                        <span className="text-muted-foreground mt-0.5" aria-hidden="true">
+                                          {isExpanded ? (
+                                            <ChevronDown className="w-4 h-4" />
+                                          ) : (
+                                            <ChevronRight className="w-4 h-4" />
+                                          )}
+                                        </span>
+                                      )}
+                                      <span>{question.prompt || 'Aufgabe'}</span>
+                                    </div>
+                                  </td>
+                                  <td className="px-2 py-2 text-xs text-muted-foreground">
+                                    {criterionLabel ?? '—'}
+                                  </td>
+                                  <td className="px-2 py-2 text-xs text-muted-foreground whitespace-pre-line">
+                                    {justification ?? '—'}
                                   </td>
                                   <td className="px-2 py-2 font-medium">{userAnswer}</td>
                                   <td className="px-2 py-2 text-muted-foreground">{correctAnswer}</td>
@@ -505,6 +639,42 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
                                   </td>
                                 </tr>
                               ),
+                              showOptionDetails && isExpanded ? (
+                                <tr
+                                  key={`${question.id}-details`}
+                                  className="border-t bg-muted/40 text-xs text-foreground"
+                                >
+                                  <td colSpan={7} className="px-4 py-3">
+                                    <div className="space-y-2">
+                                      {optionDetails.map(option => (
+                                        <div
+                                          key={`${question.id}-opt-${option.id}`}
+                                          className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3"
+                                        >
+                                          <span
+                                            className={cn(
+                                              'font-semibold',
+                                              option.isCorrect
+                                                ? 'text-emerald-700'
+                                                : 'text-red-600'
+                                            )}
+                                          >
+                                            {option.label}) {option.text}
+                                          </span>
+                                          <div className="text-muted-foreground flex-1 whitespace-pre-line">
+                                            {option.rationale ?? 'Keine Begründung hinterlegt.'}
+                                            {option.misconception && (
+                                              <div className="text-[11px] italic text-amber-700 mt-1">
+                                                Fehlannahme: {option.misconception}
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : null,
                             ];
                           });
                         })()}

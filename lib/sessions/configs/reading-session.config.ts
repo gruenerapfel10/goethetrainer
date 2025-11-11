@@ -192,17 +192,18 @@ export const readingSessionConfig: SessionConfig = {
     {
       id: 'teil_3',
       label: 'Teil 3',
-      moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+      moduleId: QuestionModuleId.STATEMENT_MATCH,
       questionCount: 1,
       sourceOverrides: {
-        type: 'gapped_text',
-        gapCount: 8,
-        optionsPerGap: 10,
-        optionStyle: 'statement',
+        type: 'statement_matching',
         constructionMode: 'planned_sentence_pool',
+        gapCount: 8,
+        sentencePoolSize: 10,
+        includeZeroOption: false,
+        startingStatementNumber: 16,
       },
       renderOverrides: {
-        layout: 'single_column',
+        layout: 'statement_match',
         showSourceToggle: true,
       },
       scoringOverrides: {

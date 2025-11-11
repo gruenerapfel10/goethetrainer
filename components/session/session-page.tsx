@@ -5,7 +5,7 @@ import { useSessionPage } from '@/lib/sessions/session-page-context';
 import { useLearningSession } from '@/lib/sessions/learning-session-context';
 import { StartSessionButton } from './start-session-button';
 import { BookOpen, Headphones, PenTool, Mic, Activity } from 'lucide-react';
-import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import type { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { FaustBadge } from '@/components/FaustBadge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -86,8 +86,8 @@ const computeDurationSeconds = (startedAt?: string | Date | null, endedAt?: stri
   if (typeof fallback === 'number' && Number.isFinite(fallback)) {
     return fallback;
   }
-  const start = startedAt ? new Date(startedAt).getTime() : NaN;
-  const end = endedAt ? new Date(endedAt).getTime() : NaN;
+  const start = startedAt ? new Date(startedAt).getTime() : Number.NaN;
+  const end = endedAt ? new Date(endedAt).getTime() : Number.NaN;
   if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
     return null;
   }
@@ -181,7 +181,7 @@ async function fetchSessionInsights(sessionType: SessionTypeEnum): Promise<Sessi
 
     // Create chart data from ALL sessions with results (oldest on the left, newest on the right)
     const chartData: ChartPoint[] = chronologicalEntries
-      .filter(entry => entry.summary) // Only include sessions with calculated scores
+      .filter(entry => entry.summary && entry.summary.percentage !== undefined) // Only include sessions with calculated scores
       .map((entry, index) => ({
         session: `S${index + 1}`,
         score: entry.summary!.percentage,
@@ -491,8 +491,8 @@ export default function SessionPage() {
     <Suspense fallback={
       <div className="p-8">
         <div className="animate-pulse">
-          <div className="h-12 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-12 bg-gray-200 rounded w-1/4 mb-4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
         </div>
       </div>
     }>

@@ -1,8 +1,6 @@
 "use client"
-
-import { motion } from "framer-motion"
 import { Loader2, Search } from "lucide-react"
-import { FileSearchResult } from "./types"
+import type { FileSearchResult } from "./types"
 import { FileItem } from "./FileItem"
 import { FileSearchSkeleton } from "./FileSearchSkeleton"
 

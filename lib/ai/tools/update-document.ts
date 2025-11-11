@@ -3,7 +3,7 @@ import { smoothStream } from 'ai';
 import type { Session } from 'next-auth';
 import { z } from 'zod';
 import { getArtifactManager } from '@/lib/artifacts/artifact-manager';
-import { ArtifactKind } from '@/lib/artifacts/artifact-registry';
+import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 import { myProvider } from '../models';
 import { updateDocumentPrompt } from '@/lib/ai/prompts';
 
@@ -100,7 +100,7 @@ export const updateDocument = (session: Session | null, chatId: string) => {
       let chunkCount = 0;
       
       // Determine the system prompt based on document type
-      let systemPrompt = updateDocumentPrompt(document.content, document.kind as ArtifactKind);
+      const systemPrompt = updateDocumentPrompt(document.content, document.kind as ArtifactKind);
       
       const { fullStream } = streamText({
         model: myProvider.languageModel('artifact-model'),

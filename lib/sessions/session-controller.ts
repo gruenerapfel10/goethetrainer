@@ -9,7 +9,7 @@ import type {
 } from './types';
 import type { Question, QuestionResult } from './questions/question-types';
 import {
-  SessionTypeEnum,
+  type SessionTypeEnum,
   getSessionConfig,
   getSessionLayout,
   initializeSessionData,

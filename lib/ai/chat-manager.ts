@@ -6,12 +6,10 @@ import {
   getChatById, 
   getMessagesByChatId, 
   saveMessages,
-  updateChat,
   withinContext,
   getAttachmentsFromDb
 } from '@/lib/db/queries';
 import type { DBMessage, Chat } from '@/lib/db/queries';
-import type { FileSearchResult } from '@/components/chat-header';
 
 export type Attachment = {
   url?: string;
@@ -39,7 +37,7 @@ export class ChatManager {
   private settings: ChatSettings;
   private chat: Chat | null = null;
   private contextInfo: { messageIds: string[]; totalTokens: number; maxTokens?: number } | null = null;
-  private contextWindow: number = 150000; // Default context window
+  private contextWindow = 150000; // Default context window
 
   constructor(chatId: string) {
     this.chatId = chatId;
@@ -183,7 +181,7 @@ export class ChatManager {
       contentWithoutFiles = [{ type: 'text', text: '' }];
     } else if (Array.isArray(messageParts)) {
       // Filter out undefined and invalid parts
-      const validParts = (messageParts as any[]).filter(part => part && part.type);
+      const validParts = (messageParts as any[]).filter(part => part?.type);
       const fileParts = validParts.filter(part => part.type === 'file');
       const nonFileParts = validParts.filter(part => part.type !== 'file');
       
@@ -237,7 +235,7 @@ export class ChatManager {
       let contentWithoutFiles = messageParts;
       
       if (Array.isArray(messageParts)) {
-        const validParts = (messageParts as any[]).filter(part => part && part.type);
+        const validParts = (messageParts as any[]).filter(part => part?.type);
         const fileParts = validParts.filter(part => part.type === 'file');
         const nonFileParts = validParts.filter(part => part.type !== 'file');
         
@@ -344,7 +342,7 @@ export class ChatManager {
   async saveStreamMessage(
     id: string,
     content: string | any[],
-    isPartial: boolean = false,
+    isPartial = false,
     usage?: { inputTokens?: number; outputTokens?: number }
   ): Promise<void> {
     let messageContent: any[];

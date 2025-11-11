@@ -16,7 +16,7 @@ import {
   List,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ExtractedResult, getUrlSrc, getHostname, formatDisplayData } from './utils';
+import { type ExtractedResult, getUrlSrc, getHostname, formatDisplayData } from './utils';
 
 interface LoadedProps {
   results: ExtractedResult[];

@@ -4,7 +4,6 @@ import { deleteChatById, getChatById, saveChat } from '@/lib/db/queries';
 import { generateTitleFromUserMessage } from '@/app/(chat)/actions';
 import { myProvider } from '@/lib/ai/models';
 import { cleanupOrphanedToolCalls, cleanupEmptyMessages } from '@/lib/utils/message-filter';
-import { getFirebaseFileContent } from '@/lib/utils/firebase-content';
 import type { FileSearchResult } from '@/components/chat-header';
 import { getUserLocale } from '@/services/locale';
 import type { UIMessage } from 'ai';
@@ -361,7 +360,7 @@ export async function POST(request: Request) {
               // For documents (PDF, text, etc.), keep as file parts too
               // Claude SDK v5 now supports native file handling for these types
               const supportedDocumentTypes = ['application/pdf', 'text/plain', 'text/markdown', 'application/json'];
-              const isSupportedDocument = supportedDocumentTypes.some(type => mediaType === type || mediaType.startsWith(type.split('/')[0] + '/'));
+              const isSupportedDocument = supportedDocumentTypes.some(type => mediaType === type || mediaType.startsWith(`${type.split('/')[0]}/`));
               
               if (isSupportedDocument) {
                 // Ensure mediaType is correctly set for documents

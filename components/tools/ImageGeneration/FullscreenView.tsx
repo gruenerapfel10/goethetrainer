@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ImageGenerationOutput, getImageFilename } from './utils';
+import type { ImageGenerationOutput, } from './utils';
 
 interface FullscreenViewProps {
   result: ImageGenerationOutput;

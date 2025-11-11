@@ -1,10 +1,10 @@
 import { storage } from './config';
 import { adminStorage } from './admin';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 
 // Client-side upload function
-export async function uploadFile(file: Blob, fileName: string, folder: string = 'uploads'): Promise<string> {
+export async function uploadFile(file: Blob, fileName: string, folder = 'uploads'): Promise<string> {
   const sanitizedFileName = sanitizeFilename(fileName);
   const fileRef = ref(storage, `${folder}/${uuidv4()}_${sanitizedFileName}`);
   
@@ -15,7 +15,7 @@ export async function uploadFile(file: Blob, fileName: string, folder: string = 
 }
 
 // Server-side functions using admin SDK
-export async function uploadFileAdmin(fileBuffer: Buffer, fileName: string, folder: string = 'uploads'): Promise<{
+export async function uploadFileAdmin(fileBuffer: Buffer, fileName: string, folder = 'uploads'): Promise<{
   downloadURL: string;
   filePath: string;
 }> {
@@ -44,7 +44,7 @@ export async function getFileContent(filePath: string): Promise<Buffer> {
   return buffer;
 }
 
-export async function getSignedUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
+export async function getSignedUrl(filePath: string, expiresIn = 3600): Promise<string> {
   const file = adminStorage.bucket().file(filePath);
   
   const [signedUrl] = await file.getSignedUrl({
