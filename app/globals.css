@@ -480,11 +480,17 @@
         @apply border-border;
     }
 
+    html,
+    body {
+        height: 100%;
+    }
+
     body {
         @apply bg-background text-foreground;
         /* Mobile scrolling optimizations */
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
+        overflow: hidden;
     }
 
     /* Mobile scrolling optimizations for all scrollable elements */

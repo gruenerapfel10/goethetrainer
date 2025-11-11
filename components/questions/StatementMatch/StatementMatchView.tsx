@@ -74,7 +74,13 @@ export function StatementMatchView({
           feedback={question.result?.feedback}
         />
       }
-      quelleContent={<StatementMatchSource question={question} />}
+      quelleContent={
+        <StatementMatchSource
+          question={question}
+          teilLabel={teilLabel}
+          workingTime={question.workingTime}
+        />
+      }
       showA4Format={showA4Format}
       onShowA4FormatChange={onShowA4FormatChange}
       onEndSession={onEndSession}

@@ -195,11 +195,35 @@ export async function addReadingListEntry({
 }): Promise<ReadingListEntry> {
   try {
     const now = Timestamp.now();
+    const normalizedText = text.trim().toLowerCase();
+    const existingSnapshot = await readingListCollection(userId)
+      .where('normalizedText', '==', normalizedText)
+      .limit(1)
+      .get();
+
+    if (!existingSnapshot.empty) {
+      const doc = existingSnapshot.docs[0];
+      await doc.ref.update({
+        text,
+        translation,
+        createdAt: now,
+        normalizedText,
+      });
+      return {
+        id: doc.id,
+        userId,
+        text,
+        translation,
+        createdAt: now.toDate(),
+      };
+    }
+
     const docRef = readingListCollection(userId).doc();
     await docRef.set({
       text,
       translation,
       createdAt: now,
+      normalizedText,
     });
 
     return {
@@ -211,6 +235,44 @@ export async function addReadingListEntry({
     };
   } catch (error) {
     console.error('Failed to add reading list entry:', error);
+    throw error;
+  }
+}
+
+export async function updateReadingListEntry({
+  userId,
+  entryId,
+  text,
+  translation,
+}: {
+  userId: string;
+  entryId: string;
+  text: string;
+  translation: string;
+}): Promise<ReadingListEntry | null> {
+  try {
+    const docRef = readingListCollection(userId).doc(entryId);
+    const snapshot = await docRef.get();
+    if (!snapshot.exists) {
+      return null;
+    }
+    const normalizedText = text.trim().toLowerCase();
+    const now = Timestamp.now();
+    await docRef.update({
+      text,
+      translation,
+      normalizedText,
+      createdAt: now,
+    });
+    return {
+      id: entryId,
+      userId,
+      text,
+      translation,
+      createdAt: now.toDate(),
+    };
+  } catch (error) {
+    console.error('Failed to update reading list entry:', error);
     throw error;
   }
 }

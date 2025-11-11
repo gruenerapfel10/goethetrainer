@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { Search, Trash2 } from 'lucide-react';
+import { PencilLine, Search, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { fetcher } from '@/lib/utils';
-import { READING_LIST_UPDATED_EVENT } from '@/lib/reading-list/events';
+import { fetcher, cn } from '@/lib/utils';
+import {
+  READING_LIST_UPDATED_EVENT,
+  emitReadingListUpdated,
+} from '@/lib/reading-list/events';
 
 interface ReadingListItem {
   id: string;
@@ -26,6 +28,10 @@ const PAGE_SIZE = 20;
 export function ReadingListPanel() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ text: '', translation: '' });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), 250);
@@ -89,13 +95,61 @@ export function ReadingListPanel() {
     try {
       await fetch(`/api/reading-list/${entryId}`, { method: 'DELETE' });
       mutate();
+      emitReadingListUpdated();
     } catch (err) {
       console.error('Failed to delete entry', err);
     }
   };
 
+  const startEdit = (item: ReadingListItem) => {
+    setEditingId(item.id);
+    setEditForm({ text: item.text, translation: item.translation });
+    setErrorMessage(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({ text: '', translation: '' });
+    setErrorMessage(null);
+  };
+
+  const handleEditChange = (field: 'text' | 'translation', value: string) => {
+    setEditForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    if (!editForm.text.trim() || !editForm.translation.trim()) {
+      setErrorMessage('Bitte Text und Übersetzung ausfüllen.');
+      return;
+    }
+    setIsSavingEdit(true);
+    setErrorMessage(null);
+    try {
+      const response = await fetch(`/api/reading-list/${editingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: editForm.text.trim(),
+          translation: editForm.translation.trim(),
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Update failed');
+      }
+      await mutate();
+      cancelEdit();
+      emitReadingListUpdated();
+    } catch (err) {
+      console.error('Failed to update reading list entry', err);
+      setErrorMessage('Speichern fehlgeschlagen. Bitte erneut versuchen.');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -108,7 +162,7 @@ export function ReadingListPanel() {
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-4 py-3">
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {error ? (
           <p className="text-sm text-destructive">
             Failed to load reading list.
@@ -132,24 +186,81 @@ export function ReadingListPanel() {
                     >
                       <div className="flex items-start gap-2">
                         <div className="flex-1 space-y-2">
-                          <p className="text-sm font-medium leading-snug text-foreground">
-                            {item.text}
-                          </p>
-                          <p className="text-sm text-muted-foreground leading-snug">
-                            {item.translation}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatTimestamp(item.createdAt)}
-                          </p>
+                          {editingId === item.id ? (
+                            <>
+                              <Input
+                                value={editForm.text}
+                                onChange={event => handleEditChange('text', event.target.value)}
+                                placeholder="Wort / Ausdruck"
+                                className="text-sm"
+                              />
+                              <Input
+                                value={editForm.translation}
+                                onChange={event =>
+                                  handleEditChange('translation', event.target.value)
+                                }
+                                placeholder="Übersetzung / Notiz"
+                                className="text-sm"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={saveEdit}
+                                  disabled={isSavingEdit}
+                                >
+                                  Speichern
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEdit}
+                                  disabled={isSavingEdit}
+                                >
+                                  Abbrechen
+                                </Button>
+                              </div>
+                              {errorMessage && (
+                                <p className="text-xs text-destructive">{errorMessage}</p>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm font-medium leading-snug text-foreground">
+                                {item.text}
+                              </p>
+                              <p className="text-sm text-muted-foreground leading-snug">
+                                {item.translation}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {formatTimestamp(item.createdAt)}
+                              </p>
+                            </>
+                          )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground opacity-0 transition group-hover:opacity-100"
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+                          {editingId !== item.id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground"
+                              onClick={() => startEdit(item)}
+                            >
+                              <PencilLine className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              'h-8 w-8 text-muted-foreground',
+                              editingId === item.id && 'opacity-100'
+                            )}
+                            onClick={() => handleDelete(item.id)}
+                            disabled={isSavingEdit}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -172,7 +283,7 @@ export function ReadingListPanel() {
             </Button>
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 }

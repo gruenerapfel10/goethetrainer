@@ -29,7 +29,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head />
-      <body className="min-h-screen">
+      <body className="min-h-screen h-screen overflow-hidden bg-background text-foreground antialiased">
         <NextIntlClientProvider messages={messages}>
           <SessionProvider>
             <ThemeProvider themes={themes} attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
