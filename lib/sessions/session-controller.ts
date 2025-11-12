@@ -8,6 +8,7 @@ import type {
   AnswerValue,
 } from './types';
 import type { Question, QuestionResult } from './questions/question-types';
+import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
 import {
   type SessionTypeEnum,
   getSessionConfig,
@@ -36,8 +37,29 @@ import {
 } from '@/lib/questions/modules';
 import type { QuestionModuleTask, ModelUsageRecord } from '@/lib/questions/modules/types';
 import { calculateCost } from '@/lib/ai/model-registry';
+import {
+  ReadingAssessmentCategory,
+  listReadingAssessmentCategories,
+} from '@/lib/questions/assessment-categories';
 
 registerDefaultQuestionModules();
+
+const READING_CATEGORY_SET = new Set(listReadingAssessmentCategories());
+
+function extractReadingFocusCategories(
+  metadata?: Record<string, any>
+): ReadingAssessmentCategory[] | null {
+  const rawSelection = metadata?.preferences?.reading?.gapFocusCategories;
+  if (!Array.isArray(rawSelection)) {
+    return null;
+  }
+
+  const filtered = rawSelection.filter((value): value is ReadingAssessmentCategory => {
+    return typeof value === 'string' && READING_CATEGORY_SET.has(value as ReadingAssessmentCategory);
+  });
+
+  return filtered.length ? filtered : null;
+}
 
 function deriveExampleAnswer(question: Question): AnswerValue {
   if (typeof question.correctOptionId === 'string' && question.correctOptionId.length > 0) {
@@ -465,10 +487,36 @@ export async function generateQuestionsForSession(
       (session.metadata?.difficulty as QuestionDifficulty | undefined) ??
       QuestionDifficulty.INTERMEDIATE;
 
-    const plan = getSessionLayout(sessionType);
+    let plan = getSessionLayout(sessionType);
 
     if (!plan.length) {
       throw new Error(`No question layout defined for session type "${sessionType}"`);
+    }
+
+    if (sessionType === SessionTypeEnum.READING) {
+      const focusCategories = extractReadingFocusCategories(session.metadata);
+      if (focusCategories) {
+        plan = plan.map(entry => {
+          if (entry.id !== 'teil_1') {
+            return entry;
+          }
+          const currentSourceOverrides = entry.sourceOverrides ?? {};
+          const currentCategoryAllocation =
+            (currentSourceOverrides as any).categoryAllocation ?? {};
+          const nextSourceOverrides = {
+            ...currentSourceOverrides,
+            categoryAllocation: {
+              ...currentCategoryAllocation,
+              strategy: currentCategoryAllocation.strategy ?? 'even',
+              categories: focusCategories,
+            },
+          };
+          return {
+            ...entry,
+            sourceOverrides: nextSourceOverrides,
+          };
+        });
+      }
     }
 
     if (regenerate) {
@@ -528,6 +576,7 @@ export async function generateQuestionsForSession(
       const normalised = normaliseAnsweredFlag(question);
       session.data.questions.push(normalised);
       session.data.questions = ensureQuestionIdentifiers(session.data.questions);
+      const questionUnits = getQuestionUnitCount(normalised);
 
       maxScore += normalised.points ?? 0;
 
@@ -539,9 +588,10 @@ export async function generateQuestionsForSession(
         0
       );
 
+      const totalUnits = sumQuestionUnitCounts(session.data.questions as Question[]);
       session.data.progress = {
         ...session.data.progress,
-        totalQuestions: session.data.questions.length,
+        totalQuestions: totalUnits,
         answeredQuestions: answerList.length,
         correctAnswers: correctCount,
         score: scoreSum,
@@ -550,7 +600,7 @@ export async function generateQuestionsForSession(
 
       session.data.metrics = {
         ...(session.data.metrics ?? {}),
-        totalQuestions: session.data.questions.length,
+        totalQuestions: totalUnits,
         answeredQuestions: answerList.length,
         correctAnswers: correctCount,
         score: scoreSum,
@@ -574,7 +624,7 @@ export async function generateQuestionsForSession(
           generated: 0,
         }),
         status: 'in_progress',
-        generated: (session.data.generation?.generated ?? 0) + 1,
+        generated: (session.data.generation?.generated ?? 0) + questionUnits,
         lastGeneratedQuestionId: normalised.id,
         currentTeil: normalised.teil ?? fallbackTeilNumber,
       };
@@ -625,6 +675,7 @@ export async function generateQuestionsForSession(
 
       logUsage(targetTeilNumber, result.usage, finishedAt - startedAt);
 
+      const teilUnitCount = sumQuestionUnitCounts(teilQuestions);
       session.data.generation = {
         ...(session.data.generation ?? {
           status: 'in_progress',
@@ -632,7 +683,7 @@ export async function generateQuestionsForSession(
           generated: 0,
         }),
         status: 'in_progress',
-        total: (session.data.generation?.total ?? 0) + teilQuestions.length,
+        total: (session.data.generation?.total ?? 0) + teilUnitCount,
         currentTeil: targetTeilNumber,
       };
       touchSession(session);

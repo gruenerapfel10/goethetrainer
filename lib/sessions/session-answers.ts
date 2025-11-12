@@ -1,6 +1,7 @@
 import { generateUUID } from '@/lib/utils';
 import type { Session, AnswerValue } from './types';
 import type { Question } from './questions/question-types';
+import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
 import { ensureSessionCollections } from './session-store';
 import { QuestionInputType } from './inputs/types';
 
@@ -126,7 +127,7 @@ export function applyAnswersToSession(
   session.data.answers = answerList;
   session.data.questions = ensureQuestionIdentifiers(questions);
   session.data.results = results;
-  const totalQuestions = session.data.questions.length;
+  const totalQuestions = sumQuestionUnitCounts(session.data.questions as Question[]);
   const answeredCount = answerList.length;
   const correctCount = session.data.results.filter(result => result.isCorrect).length;
   const score = session.data.results.reduce((sum, result) => sum + (result.score ?? 0), 0);

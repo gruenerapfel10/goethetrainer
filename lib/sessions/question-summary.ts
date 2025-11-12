@@ -5,6 +5,7 @@ import type {
   TeilBreakdownEntry,
 } from './types';
 import { SessionTypeEnum } from './session-registry';
+import { getQuestionUnitCount } from './questions/question-units';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 export interface QuestionSessionSummary {
@@ -50,21 +51,8 @@ const MODULE_LABELS: Record<SessionTypeEnum, string> = {
 };
 
 function isStatementMatchQuestion(question: Question): boolean {
-  const moduleId = (question.moduleId ?? question.registryType) as QuestionModuleId | undefined;
+  const moduleId = (question.moduleId ?? question.registryType) as any;
   return moduleId === QuestionModuleId.STATEMENT_MATCH;
-}
-
-function getUnitCount(question: Question): number {
-  if (isStatementMatchQuestion(question)) {
-    const statementCount = question.statements?.length ?? 0;
-    if (statementCount > 0) {
-      return statementCount;
-    }
-    if (typeof question.points === 'number' && question.points > 0) {
-      return Math.round(question.points);
-    }
-  }
-  return 1;
 }
 
 function hasAnswer(value: unknown): boolean {
@@ -92,7 +80,7 @@ export function buildQuestionSessionSummary(
     if (!question) {
       return;
     }
-    const units = getUnitCount(question);
+    const units = getQuestionUnitCount(question);
     const isStatementMatch = isStatementMatchQuestion(question);
     const correct = isStatementMatch
       ? Math.max(0, Math.min(units, Math.round(result.score ?? 0)))
@@ -173,7 +161,7 @@ export function buildQuestionSessionSummary(
         maxScore: 0,
       };
 
-    const units = getUnitCount(question);
+    const units = getQuestionUnitCount(question);
     const isStatementMatch = isStatementMatchQuestion(question);
     const correctUnitContribution = isStatementMatch
       ? Math.max(0, Math.min(units, Math.round(result.score ?? 0)))

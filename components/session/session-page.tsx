@@ -1,11 +1,11 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { useSessionPage } from '@/lib/sessions/session-page-context';
 import { useLearningSession } from '@/lib/sessions/learning-session-context';
 import { StartSessionButton } from './start-session-button';
-import { BookOpen, Headphones, PenTool, Mic, Activity } from 'lucide-react';
-import type { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import { BookOpen, Headphones, PenTool, Mic, Activity, ChevronDown } from 'lucide-react';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { FaustBadge } from '@/components/FaustBadge';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -14,6 +14,18 @@ import type { QuestionResult, Question } from '@/lib/sessions/questions/question
 import { buildQuestionSessionSummary, type QuestionSessionSummary } from '@/lib/sessions/question-summary';
 import type { Session } from '@/lib/sessions/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import {
+  ReadingAssessmentCategory,
+  getReadingAssessmentCategoryDefinition,
+} from '@/lib/questions/assessment-categories';
 
 // Icon mapping for session types
 const ICON_MAP = {
@@ -49,6 +61,13 @@ interface SessionInsights {
   history: SessionHistoryEntry[];
   color: string;
 }
+
+const DEFAULT_READING_FOCUS: ReadingAssessmentCategory[] = [
+  ReadingAssessmentCategory.CONNECTOR_LOGIC,
+  ReadingAssessmentCategory.LEXICAL_NUANCE,
+  ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
+  ReadingAssessmentCategory.DISCOURSE_REFERENCE,
+];
 
 const formatDateTime = (value: string | Date) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -243,7 +262,28 @@ function SessionContent() {
   const [isLoadingInsights, setIsLoadingInsights] = useState(true);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [readingFocus, setReadingFocus] = useState<ReadingAssessmentCategory[]>(DEFAULT_READING_FOCUS);
   const itemsPerPage = 5;
+  const defaultQuestionCount = defaults?.questionCount ?? null;
+
+  const startMetadata = useMemo(() => {
+    const payload: Record<string, any> = {
+      page: sessionType,
+      questionCount: defaultQuestionCount,
+    };
+
+    if (sessionType === SessionTypeEnum.READING && readingFocus.length > 0) {
+      payload.preferences = {
+        ...(payload.preferences ?? {}),
+        reading: {
+          ...(payload.preferences?.reading ?? {}),
+          gapFocusCategories: readingFocus,
+        },
+      };
+    }
+
+    return payload;
+  }, [sessionType, defaultQuestionCount, readingFocus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -318,7 +358,7 @@ function SessionContent() {
         </div>
         <StartSessionButton
           type={sessionType}
-          metadata={{ page: sessionType, questionCount: defaults.questionCount }}
+          metadata={startMetadata}
           className="px-8 py-3 text-lg rounded-full h-auto flex-shrink-0"
           onSessionStart={(sessionId) => {
             console.log(`${sessionType} session started:`, sessionId);
@@ -328,6 +368,13 @@ function SessionContent() {
           }}
         />
       </div>
+
+      {sessionType === SessionTypeEnum.READING && (
+        <ReadingCustomizationCard
+          selectedCategories={readingFocus}
+          onChange={setReadingFocus}
+        />
+      )}
 
       {/* Large Centered Chart */}
       <div className="w-full pl-4">
@@ -484,6 +531,102 @@ function SessionContent() {
       </div>
     </div>
   );
+}
+
+interface ReadingCustomizationCardProps {
+  selectedCategories: ReadingAssessmentCategory[];
+  onChange: Dispatch<SetStateAction<ReadingAssessmentCategory[]>>;
+}
+
+function ReadingCustomizationCard({ selectedCategories, onChange }: ReadingCustomizationCardProps) {
+  const handleSelectionChange = (
+    category: ReadingAssessmentCategory,
+    nextChecked: boolean | 'indeterminate'
+  ) => {
+    onChange(prev => {
+      const alreadySelected = prev.includes(category);
+      const shouldAdd = nextChecked === true;
+
+      if (shouldAdd && !alreadySelected) {
+        return [...prev, category];
+      }
+
+      if (!shouldAdd && alreadySelected) {
+        if (prev.length === 1) {
+          return prev; // Enforce at least one focus area
+        }
+        return prev.filter(item => item !== category);
+      }
+
+      return prev;
+    });
+  };
+
+  const selectedDefinitions = selectedCategories.map(category => {
+    const definition = getReadingAssessmentCategoryDefinition(category);
+    return {
+      id: category,
+      label: definition?.label ?? formatCategoryLabel(category),
+      description: definition?.description ?? '',
+    };
+  });
+
+  return (
+    <div className="rounded-2xl border bg-white/60 p-5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-muted-foreground">Reading focus</p>
+          <h3 className="text-xl font-bold mt-1">Choose your grammar & vocab focus</h3>
+          <p className="text-sm text-muted-foreground">
+            Tailor Teil&nbsp;1 gap questions before you start. At least one focus must remain active.
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <span>{selectedCategories.length} focus area{selectedCategories.length === 1 ? '' : 's'} selected</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            {DEFAULT_READING_FOCUS.map(category => {
+              const definition = getReadingAssessmentCategoryDefinition(category);
+              const checked = selectedCategories.includes(category);
+              return (
+                <DropdownMenuCheckboxItem
+                  key={category}
+                  checked={checked}
+                  onCheckedChange={(value) => handleSelectionChange(category, value)}
+                  className="flex flex-col gap-1 py-2"
+                >
+                  <span className="text-sm font-medium">{definition?.label ?? formatCategoryLabel(category)}</span>
+                  {definition?.description && (
+                    <span className="text-xs text-muted-foreground leading-snug">
+                      {definition.description}
+                    </span>
+                  )}
+                </DropdownMenuCheckboxItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {selectedDefinitions.map(definition => (
+          <Badge key={definition.id} variant="secondary" className="px-3 py-1 text-xs">
+            {definition.label}
+          </Badge>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatCategoryLabel(category: ReadingAssessmentCategory): string {
+  return category
+    .split('_')
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 export default function SessionPage() {

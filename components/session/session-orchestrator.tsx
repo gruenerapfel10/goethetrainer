@@ -10,15 +10,44 @@ import type { QuestionResult } from '@/lib/sessions/questions/question-types';
 import type { AnswerValue } from '@/lib/sessions/types';
 import { resolveModuleComponent } from '@/components/question-modules/module-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import { getQuestionUnitCount } from '@/lib/sessions/questions/question-units';
 
 // Import question components
 import { AllQuestionsView } from '@/components/questions/MultipleChoice/AllQuestionsView';
 import { SessionResultsView } from '@/components/questions/SessionResultsView';
 import { StatementMatchView } from '@/components/questions/StatementMatch/StatementMatchView';
 import { WritingPromptView } from '@/components/questions/Writing/WritingPromptView';
-import { type SessionTypeEnum, getSessionLayout } from '@/lib/sessions/session-registry';
+import {
+  type SessionTypeEnum,
+  type NormalisedSessionLayoutEntry,
+  getSessionLayout,
+} from '@/lib/sessions/session-registry';
 import { SessionBoard } from '@/components/questions/SessionBoard';
 import '@/lib/sessions/configs';
+
+function getPlannedUnitsForEntry(entry: NormalisedSessionLayoutEntry): number {
+  const baseCount = entry.questionCount ?? 0;
+  const exampleCount = entry.generateExample ? 1 : 0;
+  const moduleId = entry.moduleId as QuestionModuleId;
+
+  if (moduleId === QuestionModuleId.STATEMENT_MATCH) {
+    const source = (entry.sourceOverrides ?? {}) as {
+      statementCount?: number;
+      gapCount?: number;
+    };
+    if (typeof source?.statementCount === 'number' && source.statementCount > 0) {
+      return source.statementCount;
+    }
+    if (typeof source?.gapCount === 'number' && source.gapCount > 0) {
+      return source.gapCount;
+    }
+    if (typeof entry.metadata?.points === 'number' && entry.metadata.points > 0) {
+      return Math.round(entry.metadata.points);
+    }
+  }
+
+  return baseCount + exampleCount;
+}
 
 export function SessionOrchestrator() {
   const params = useParams();
@@ -92,12 +121,12 @@ export function SessionOrchestrator() {
     }
   }, [sessionType]);
 
+  const readyQuestionUnits = useMemo(() => {
+    return sessionQuestions.reduce((sum, question) => sum + getQuestionUnitCount(question), 0);
+  }, [sessionQuestions]);
+
   const plannedQuestionTotal = useMemo(() => {
-    return sessionLayout.reduce((sum, entry) => {
-      const baseCount = entry.questionCount ?? 0;
-      const exampleCount = entry.generateExample ? 1 : 0;
-      return sum + baseCount + exampleCount;
-    }, 0);
+    return sessionLayout.reduce((sum, entry) => sum + getPlannedUnitsForEntry(entry), 0);
   }, [sessionLayout]);
 
   const expectedTeilCount = sessionLayout.length > 0 ? sessionLayout.length : 1;
@@ -398,11 +427,9 @@ export function SessionOrchestrator() {
 
   const renderQuestion = () => {
     if (isGeneratingQuestions) {
-      const generated = generationState?.generated ?? 0;
-      const total =
-        plannedQuestionTotal > 0
-          ? plannedQuestionTotal
-          : Math.max(sessionQuestions.length, generationState?.total ?? 0);
+      const generated = readyQuestionUnits > 0 ? readyQuestionUnits : generationState?.generated ?? 0;
+      const fallbackTotal = Math.max(generationState?.total ?? 0, generated);
+      const total = plannedQuestionTotal > 0 ? plannedQuestionTotal : fallbackTotal;
       const progressLabel =
         total > 0
           ? `${generated} / ${total} Fragen sind bereit.`

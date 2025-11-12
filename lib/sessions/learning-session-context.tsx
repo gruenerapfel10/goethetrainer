@@ -27,6 +27,7 @@ import {
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
 import { buildQuestionSessionSummary } from './question-summary';
+import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
 
 export enum QuestionStatus {
   LOADED = 'loaded',
@@ -706,12 +707,18 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   }, [forceSave, sendBeaconForPendingUpdates]);
 
   const questionProgress = useMemo<QuestionProgress>(() => {
-    const expectedTotal = Math.max(
-      sessionQuestions.length,
-      generationState?.total ?? 0
-    );
-    const answered = sessionQuestions.filter(question => question.answered).length;
+    const totalUnits = sumQuestionUnitCounts(sessionQuestions as Question[]);
+    const expectedTotal = Math.max(totalUnits, generationState?.total ?? 0);
+    const answeredUnits = sessionQuestions.reduce((sum, question) => {
+      return sum + (question.answered ? getQuestionUnitCount(question) : 0);
+    }, 0);
     const currentIndex = sessionQuestions.findIndex(question => question.isCurrent);
+    const currentUnitPosition =
+      currentIndex >= 0
+        ? sessionQuestions
+            .slice(0, currentIndex)
+            .reduce((sum, question) => sum + getQuestionUnitCount(question), 0) + 1
+        : 0;
     const completedTeils = new Set(
       sessionQuestions
         .filter(question => question.teilState === 'completed')
@@ -719,9 +726,9 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     );
 
     return {
-      current: currentIndex >= 0 ? currentIndex + 1 : 0,
+      current: Math.min(currentUnitPosition, expectedTotal),
       total: expectedTotal,
-      answered,
+      answered: answeredUnits,
       completedTeilCount: completedTeils.size,
     };
   }, [sessionQuestions, generationState?.total]);
