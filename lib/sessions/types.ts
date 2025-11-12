@@ -4,6 +4,7 @@ import type {
   UserAnswer,
 } from './questions/question-types';
 import type { QuestionSessionSummary } from './question-manager';
+import type { LevelId } from '@/lib/levels';
 
 export interface SessionGenerationState {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
@@ -50,6 +51,7 @@ export interface SessionData {
 
 export interface SessionMetadata {
   [key: string]: any;
+  levelId?: LevelId;
 }
 
 export interface Session {

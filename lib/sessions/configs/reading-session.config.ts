@@ -1,6 +1,7 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
 import { ReadingAssessmentCategory } from '@/lib/questions/assessment-categories';
+import { LevelId } from '@/lib/levels';
 
 export const readingSessionConfig: SessionConfig = {
   type: SessionTypeEnum.READING,
@@ -332,6 +333,7 @@ export const readingSessionConfig: SessionConfig = {
       readingSpeed: 200,
       comprehensionScore: 80,
     },
+    levelId: LevelId.C1,
   },
   
   validation: {

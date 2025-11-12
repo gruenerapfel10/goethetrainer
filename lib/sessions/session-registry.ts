@@ -7,6 +7,7 @@ import type {
   ScoringPolicy,
 } from '@/lib/questions/modules/types';
 import type { QuestionModuleId } from '@/lib/questions/modules/types';
+import type { LevelId } from '@/lib/levels';
 
 export enum SessionTypeEnum {
   READING = 'reading',
@@ -167,6 +168,7 @@ export interface SessionConfig {
     targetDuration?: number; // in seconds
     targetMetrics?: Record<string, number>;
     questionCount?: number;
+    levelId?: LevelId;
   };
   dataDefaults?: Record<string, any>;
   metadataDefaults?: Record<string, any>;
