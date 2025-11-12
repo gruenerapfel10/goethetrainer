@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ReadingAssessmentCategory,
   getReadingAssessmentCategoryDefinition,
+  listReadingAssessmentCategories,
 } from '@/lib/questions/assessment-categories';
 
 // Icon mapping for session types
@@ -62,12 +63,10 @@ interface SessionInsights {
   color: string;
 }
 
-const DEFAULT_READING_FOCUS: ReadingAssessmentCategory[] = [
-  ReadingAssessmentCategory.CONNECTOR_LOGIC,
-  ReadingAssessmentCategory.LEXICAL_NUANCE,
-  ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
-  ReadingAssessmentCategory.DISCOURSE_REFERENCE,
-];
+const ALL_READING_FOCUS_OPTIONS: ReadingAssessmentCategory[] = listReadingAssessmentCategories();
+const DEFAULT_READING_FOCUS: ReadingAssessmentCategory[] = [...ALL_READING_FOCUS_OPTIONS];
+const READING_FOCUS_STORAGE_KEY = 'goethe.readingFocusCategories';
+const READING_FOCUS_ALLOWED_SET = new Set(ALL_READING_FOCUS_OPTIONS);
 
 const formatDateTime = (value: string | Date) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -262,7 +261,8 @@ function SessionContent() {
   const [isLoadingInsights, setIsLoadingInsights] = useState(true);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [readingFocus, setReadingFocus] = useState<ReadingAssessmentCategory[]>(DEFAULT_READING_FOCUS);
+  const [readingFocus, setReadingFocus] = useState<ReadingAssessmentCategory[]>(() => [...DEFAULT_READING_FOCUS]);
+  const [readingFocusLoaded, setReadingFocusLoaded] = useState(false);
   const itemsPerPage = 5;
   const defaultQuestionCount = defaults?.questionCount ?? null;
 
@@ -284,6 +284,53 @@ function SessionContent() {
 
     return payload;
   }, [sessionType, defaultQuestionCount, readingFocus]);
+
+  useEffect(() => {
+    if (sessionType !== SessionTypeEnum.READING) {
+      setReadingFocusLoaded(false);
+      return;
+    }
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(READING_FOCUS_STORAGE_KEY);
+      if (!raw) {
+        setReadingFocus([...DEFAULT_READING_FOCUS]);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((value): value is ReadingAssessmentCategory =>
+          typeof value === 'string' && READING_FOCUS_ALLOWED_SET.has(value as ReadingAssessmentCategory)
+        );
+        if (filtered.length > 0) {
+          setReadingFocus(filtered);
+          return;
+        }
+      }
+      setReadingFocus([...DEFAULT_READING_FOCUS]);
+    } catch (error) {
+      console.warn('Failed to load reading focus preferences', error);
+      setReadingFocus([...DEFAULT_READING_FOCUS]);
+    } finally {
+      setReadingFocusLoaded(true);
+    }
+  }, [sessionType]);
+
+  useEffect(() => {
+    if (!readingFocusLoaded || sessionType !== SessionTypeEnum.READING) {
+      return;
+    }
+    if (typeof window === 'undefined') {
+      return;
+    }
+    try {
+      window.localStorage.setItem(READING_FOCUS_STORAGE_KEY, JSON.stringify(readingFocus));
+    } catch (error) {
+      console.warn('Failed to persist reading focus preferences', error);
+    }
+  }, [readingFocus, readingFocusLoaded, sessionType]);
 
   useEffect(() => {
     let cancelled = false;
@@ -372,6 +419,7 @@ function SessionContent() {
       {sessionType === SessionTypeEnum.READING && (
         <ReadingCustomizationCard
           selectedCategories={readingFocus}
+          availableCategories={ALL_READING_FOCUS_OPTIONS}
           onChange={setReadingFocus}
         />
       )}
@@ -535,10 +583,15 @@ function SessionContent() {
 
 interface ReadingCustomizationCardProps {
   selectedCategories: ReadingAssessmentCategory[];
+  availableCategories: ReadingAssessmentCategory[];
   onChange: Dispatch<SetStateAction<ReadingAssessmentCategory[]>>;
 }
 
-function ReadingCustomizationCard({ selectedCategories, onChange }: ReadingCustomizationCardProps) {
+function ReadingCustomizationCard({
+  selectedCategories,
+  availableCategories,
+  onChange,
+}: ReadingCustomizationCardProps) {
   const handleSelectionChange = (
     category: ReadingAssessmentCategory,
     nextChecked: boolean | 'indeterminate'
@@ -589,7 +642,7 @@ function ReadingCustomizationCard({ selectedCategories, onChange }: ReadingCusto
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
-            {DEFAULT_READING_FOCUS.map(category => {
+            {availableCategories.map(category => {
               const definition = getReadingAssessmentCategoryDefinition(category);
               const checked = selectedCategories.includes(category);
               return (

@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom';
 import { Bookmark, Languages, Loader2, Sparkles, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn, fetcher } from '@/lib/utils';
-import { emitReadingListUpdated } from '@/lib/reading-list/events';
+import { emitReadingListUpdated, READING_LIST_UPDATED_EVENT } from '@/lib/reading-list/events';
 import { emitChatPromptRequest } from '@/lib/chat/events';
 import { isTextToSpeechAvailable, speakText, stopSpeaking } from '@/lib/tts';
 import useSWR from 'swr';
@@ -57,7 +57,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const { data: readingListData } = useSWR<{ items: Array<{ text: string; translation: string }> }>(
+  const { data: readingListData, mutate: mutateReadingList } = useSWR<{ items: Array<{ text: string; translation: string }> }>(
     '/api/reading-list?limit=200',
     fetcher,
     { revalidateOnFocus: false }
@@ -81,6 +81,16 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   useEffect(() => {
     menuOpenRef.current = menuState !== null;
   }, [menuState]);
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const handler = () => {
+      mutateReadingList();
+    };
+    window.addEventListener(READING_LIST_UPDATED_EVENT, handler);
+    return () => window.removeEventListener(READING_LIST_UPDATED_EVENT, handler);
+  }, [mutateReadingList]);
 
   const resetTransientState = useCallback(() => {
     setTranslation(null);
@@ -209,6 +219,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       }
       setSaveMessage('Saved to reading list');
       emitReadingListUpdated();
+      void mutateReadingList();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save entry.');
     } finally {
