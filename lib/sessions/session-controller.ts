@@ -10,7 +10,7 @@ import type {
 import type { Question, QuestionResult } from './questions/question-types';
 import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
 import {
-  type SessionTypeEnum,
+  SessionTypeEnum,
   getSessionConfig,
   getSessionLayout,
   initializeSessionData,

@@ -1,3 +1,5 @@
+import type { SessionTypeEnum, SessionLayoutDefinition } from '@/lib/sessions/session-registry';
+
 export enum LevelId {
   A1 = 'a1',
   A2 = 'a2',
@@ -38,4 +40,5 @@ export interface LevelProfile {
     grammarControls: string;
     errorTolerance: string;
   };
+  layouts?: Partial<Record<SessionTypeEnum, SessionLayoutDefinition>>;
 }

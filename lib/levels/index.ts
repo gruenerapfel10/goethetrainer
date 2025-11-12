@@ -1,4 +1,291 @@
 import { LevelId, type LevelProfile } from './types';
+import {
+  SessionTypeEnum,
+  type SessionLayoutDefinition,
+  type SessionLayoutEntryConfig,
+} from '@/lib/sessions/session-registry';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
+import type { StatementMatchSourceConfig } from '@/lib/questions/modules/statement-match-types';
+
+const buildReadingTeil = (
+  id: string,
+  label: string,
+  questionCount: number,
+  overrides: Partial<SessionLayoutEntryConfig['sourceOverrides']> = {}
+): SessionLayoutEntryConfig => ({
+  id,
+  label,
+  moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+  questionCount,
+  renderOverrides: {
+    layout: 'vertical',
+    showSourceToggle: true,
+  },
+  sourceOverrides: {
+    type: 'text_passage',
+    questionCount,
+    optionsPerQuestion: 3,
+    ...overrides,
+  },
+  scoringOverrides: {
+    maxPoints: questionCount,
+    strategy: 'single_select',
+  },
+});
+
+const buildStatementMatchTeil = (
+  id: string,
+  label: string,
+  statementCount: number,
+  overrides: Partial<StatementMatchSourceConfig> = {}
+): SessionLayoutEntryConfig => ({
+  id,
+  label,
+  moduleId: QuestionModuleId.STATEMENT_MATCH,
+  questionCount: 1,
+  sourceOverrides: {
+    type: 'statement_matching',
+    authorCount: Math.max(3, Math.ceil(statementCount / 2)),
+    statementCount,
+    unmatchedCount: overrides?.unmatchedCount ?? 0,
+    ...overrides,
+  },
+  scoringOverrides: {
+    maxPoints: statementCount - (overrides?.unmatchedCount ?? 0),
+    strategy: 'per_gap',
+  },
+});
+
+const withLayoutOverrides = (
+  entry: SessionLayoutEntryConfig,
+  overrides?: {
+    renderOverrides?: Record<string, any>;
+    metadata?: Record<string, any>;
+  }
+): SessionLayoutEntryConfig => ({
+  ...entry,
+  renderOverrides: {
+    ...(entry.renderOverrides ?? {}),
+    ...(overrides?.renderOverrides ?? {}),
+  },
+  metadata: {
+    ...(entry.metadata ?? {}),
+    ...(overrides?.metadata ?? {}),
+  },
+});
+
+const buildListeningTeil = (
+  id: string,
+  label: string,
+  questionCount: number,
+  overrides: Partial<SessionLayoutEntryConfig['sourceOverrides']> = {}
+): SessionLayoutEntryConfig => ({
+  id,
+  label,
+  moduleId: QuestionModuleId.MULTIPLE_CHOICE,
+  questionCount,
+  renderOverrides: {
+    layout: 'vertical',
+    showAudioControls: true,
+  },
+  sourceOverrides: {
+    type: 'audio_passage',
+    questionCount,
+    optionsPerQuestion: 3,
+    playback: {
+      allowPause: true,
+      allowSeek: false,
+      allowRestart: true,
+      allowScrubbing: false,
+      allowSpeedChange: false,
+    },
+    ...overrides,
+  },
+  scoringOverrides: {
+    maxPoints: questionCount,
+    strategy: 'single_select',
+  },
+});
+
+const buildWritingTeil = (
+  id: string,
+  label: string,
+  wordGuide: { min: number; target: number },
+  config: {
+    taskKind?: 'formal_letter' | 'opinion_article';
+    tone?: 'formal' | 'neutral' | 'personal';
+    contextTheme?: string;
+    points?: number;
+  } = {}
+): SessionLayoutEntryConfig => ({
+  id,
+  label,
+  moduleId: QuestionModuleId.WRITTEN_RESPONSE,
+  questionCount: 1,
+  metadata: {
+    points: config.points ?? 10,
+  },
+  renderOverrides: {
+    layout: 'writing',
+    showSourceToggle: true,
+  },
+  sourceOverrides: {
+    type: 'writing_prompt',
+    taskKind: config.taskKind ?? 'formal_letter',
+    tone: config.tone ?? 'neutral',
+    contextTheme: config.contextTheme ?? 'Alltag',
+    wordGuide,
+  },
+  scoringOverrides: {
+    maxPoints: config.points ?? 10,
+    strategy: 'ai',
+  },
+});
+
+const READING_LAYOUTS: Partial<Record<LevelId, SessionLayoutDefinition>> = {
+  [LevelId.A1]: [
+    buildReadingTeil('teil_1', 'Teil 1', 5, { constructionMode: 'short_notes' }),
+    buildReadingTeil('teil_2', 'Teil 2', 5, { constructionMode: 'simple_dialogue' }),
+    buildStatementMatchTeil('teil_3', 'Teil 3', 5, { unmatchedCount: 0 }),
+  ],
+  [LevelId.A2]: [
+    withLayoutOverrides(
+      buildStatementMatchTeil('teil_1', 'Teil 1', 5, {
+        constructionMode: 'planned_authors',
+        authorCount: 2,
+        statementCount: 5,
+        unmatchedCount: 0,
+        topicHint: 'Zwei kurze Alltagstexte (z. B. Hinweis + Nachricht).',
+        registerHint: 'Einfache Alltagssprache, kurze Sätze.',
+      }),
+      {
+        renderOverrides: {
+          workingTime: '10 Minuten',
+          summary:
+            'Sie lesen zwei kurze Texte (A und B). Ordnen Sie die Aussagen 1–5 dem richtigen Text zu.',
+        },
+      }
+    ),
+    withLayoutOverrides(
+      buildReadingTeil('teil_2', 'Teil 2', 5, {
+        optionsPerQuestion: 2,
+        constructionMode: 'true_false_notice',
+        optionLabels: ['Richtig', 'Falsch'],
+      }),
+      {
+        renderOverrides: {
+          workingTime: '10 Minuten',
+          summary: 'Sie lesen einen kurzen Text. Kreuzen Sie bei 6–10 an: Richtig oder Falsch.',
+        },
+      }
+    ),
+    withLayoutOverrides(
+      buildStatementMatchTeil('teil_3', 'Teil 3', 5, {
+        constructionMode: 'planned_authors',
+        authorCount: 5,
+        statementCount: 5,
+        unmatchedCount: 0,
+        topicHint: 'Kurzprofile von Personen mit Interessen/Angeboten.',
+        registerHint: 'freundlich, knapp, Alltag.',
+      }),
+      {
+        renderOverrides: {
+          workingTime: '10 Minuten',
+          summary:
+            'Sie lesen fünf Kleinanzeigen oder Kurzprofile. Ordnen Sie die Aussagen den richtigen Personen zu.',
+        },
+      }
+    ),
+    withLayoutOverrides(
+      buildReadingTeil('teil_4', 'Teil 4', 5, {
+        constructionMode: 'article_multiple_choice',
+        theme: 'Freizeit & Alltag',
+      }),
+      {
+        renderOverrides: {
+          workingTime: '15 Minuten',
+          summary:
+            'Sie lesen einen Artikel. Wählen Sie für jede Frage 21–25 die richtige Antwort a, b oder c.',
+        },
+      }
+    ),
+  ],
+  [LevelId.B1]: [
+    buildReadingTeil('teil_1', 'Teil 1', 6, { constructionMode: 'correspondence' }),
+    buildReadingTeil('teil_2', 'Teil 2', 6, { constructionMode: 'articles' }),
+    buildStatementMatchTeil('teil_3', 'Teil 3', 7, { unmatchedCount: 1 }),
+    buildReadingTeil('teil_4', 'Teil 4', 7, { constructionMode: 'argumentation', optionsPerQuestion: 2 }),
+    buildReadingTeil('teil_5', 'Teil 5', 4, { constructionMode: 'instructions' }),
+  ],
+  [LevelId.B2]: [
+    buildStatementMatchTeil('teil_1', 'Teil 1', 9, { unmatchedCount: 1 }),
+    buildReadingTeil('teil_2', 'Teil 2', 6, { constructionMode: 'information_match' }),
+    buildReadingTeil('teil_3', 'Teil 3', 6, { constructionMode: 'argumentation' }),
+    buildStatementMatchTeil('teil_4', 'Teil 4', 6, { unmatchedCount: 1 }),
+    buildReadingTeil('teil_5', 'Teil 5', 3, { constructionMode: 'rules' }),
+  ],
+  [LevelId.C2]: [
+    buildReadingTeil('teil_1', 'Teil 1', 10, { constructionMode: 'commentary', optionsPerQuestion: 4 }),
+    buildReadingTeil('teil_2', 'Teil 2', 6, { constructionMode: 'essays', optionsPerQuestion: 4 }),
+    buildStatementMatchTeil('teil_3', 'Teil 3', 6, { unmatchedCount: 1 }),
+    buildReadingTeil('teil_4', 'Teil 4', 4, { constructionMode: 'critique', optionsPerQuestion: 4 }),
+  ],
+};
+
+const LISTENING_LAYOUTS: Partial<Record<LevelId, SessionLayoutDefinition>> = {
+  [LevelId.A1]: [
+    buildListeningTeil('teil_1', 'Teil 1', 5, { scenario: 'Kurze Ansagen', speakerCount: 1 }),
+    buildListeningTeil('teil_2', 'Teil 2', 5, { scenario: 'Alltagsdialoge', speakerCount: 2 }),
+    buildListeningTeil('teil_3', 'Teil 3', 5, { scenario: 'Radioausschnitte', speakerCount: 1 }),
+  ],
+  [LevelId.A2]: [
+    buildListeningTeil('teil_1', 'Teil 1', 6, { scenario: 'Ansagen am Bahnhof', speakerCount: 1 }),
+    buildListeningTeil('teil_2', 'Teil 2', 6, { scenario: 'Gespräche im Alltag', speakerCount: 2 }),
+    buildListeningTeil('teil_3', 'Teil 3', 6, { scenario: 'Telefonische Informationen', speakerCount: 2 }),
+    buildListeningTeil('teil_4', 'Teil 4', 6, { scenario: 'Radiointerview', speakerCount: 2 }),
+  ],
+  [LevelId.B1]: [
+    buildListeningTeil('teil_1', 'Teil 1', 10, { scenario: 'Durchsagen und Anweisungen', speakerCount: 1 }),
+    buildListeningTeil('teil_2', 'Teil 2', 5, { scenario: 'Podiumsgespräch', speakerCount: 3 }),
+    buildListeningTeil('teil_3', 'Teil 3', 7, { scenario: 'Dialoge aus dem Alltag', speakerCount: 2 }),
+    buildListeningTeil('teil_4', 'Teil 4', 8, { scenario: 'Radiobeitrag', speakerCount: 2 }),
+  ],
+  [LevelId.B2]: [
+    buildListeningTeil('teil_1', 'Teil 1', 5, { scenario: 'Live-Statements', speakerCount: 2 }),
+    buildListeningTeil('teil_2', 'Teil 2', 6, { scenario: 'Interview mit Expert/in', speakerCount: 2 }),
+    buildListeningTeil('teil_3', 'Teil 3', 6, { scenario: 'Diskussion mit mehreren Rollen', speakerCount: 3 }),
+    buildListeningTeil('teil_4', 'Teil 4', 8, { scenario: 'Vortrag / Kommentar', speakerCount: 1 }),
+  ],
+  [LevelId.C2]: [
+    buildListeningTeil('teil_1', 'Teil 1', 10, { scenario: 'Radiokommentar', speakerCount: 2 }),
+    buildListeningTeil('teil_2', 'Teil 2', 6, { scenario: 'Fachinterview', speakerCount: 2 }),
+    buildListeningTeil('teil_3', 'Teil 3', 8, { scenario: 'Diskussion mit mehreren Personen', speakerCount: 4 }),
+  ],
+};
+
+const WRITING_LAYOUTS: Partial<Record<LevelId, SessionLayoutDefinition>> = {
+  [LevelId.A1]: [
+    buildWritingTeil('teil_1', 'Teil 1', { min: 20, target: 40 }, { taskKind: 'formal_letter', tone: 'personal', contextTheme: 'Freizeit', points: 5 }),
+    buildWritingTeil('teil_2', 'Teil 2', { min: 30, target: 50 }, { taskKind: 'opinion_article', tone: 'personal', contextTheme: 'Reisen', points: 5 }),
+  ],
+  [LevelId.A2]: [
+    buildWritingTeil('teil_1', 'Teil 1', { min: 50, target: 80 }, { taskKind: 'formal_letter', tone: 'neutral', contextTheme: 'Nachbarschaft', points: 6 }),
+    buildWritingTeil('teil_2', 'Teil 2', { min: 60, target: 90 }, { taskKind: 'opinion_article', tone: 'personal', contextTheme: 'Arbeit & Schule', points: 6 }),
+  ],
+  [LevelId.B1]: [
+    buildWritingTeil('teil_1', 'Teil 1', { min: 80, target: 110 }, { taskKind: 'formal_letter', tone: 'neutral', contextTheme: 'Freunde & Familie', points: 6 }),
+    buildWritingTeil('teil_2', 'Teil 2', { min: 90, target: 130 }, { taskKind: 'opinion_article', tone: 'personal', contextTheme: 'Gesellschaft', points: 6 }),
+    buildWritingTeil('teil_3', 'Teil 3', { min: 70, target: 100 }, { taskKind: 'formal_letter', tone: 'formal', contextTheme: 'Beschwerde', points: 6 }),
+  ],
+  [LevelId.B2]: [
+    buildWritingTeil('teil_1', 'Teil 1', { min: 180, target: 230 }, { taskKind: 'opinion_article', tone: 'neutral', contextTheme: 'Gesellschaft & Politik', points: 8 }),
+    buildWritingTeil('teil_2', 'Teil 2', { min: 130, target: 180 }, { taskKind: 'formal_letter', tone: 'formal', contextTheme: 'Arbeitswelt', points: 7 }),
+  ],
+  [LevelId.C2]: [
+    buildWritingTeil('teil_1', 'Teil 1', { min: 250, target: 320 }, { taskKind: 'opinion_article', tone: 'formal', contextTheme: 'Akademische Debatten', points: 10 }),
+    buildWritingTeil('teil_2', 'Teil 2', { min: 200, target: 280 }, { taskKind: 'formal_letter', tone: 'formal', contextTheme: 'Institutionen & Politik', points: 10 }),
+  ],
+};
 
 export const ALL_LEVEL_IDS: LevelId[] = [
   LevelId.A1,
@@ -58,6 +345,11 @@ export const LEVEL_PROFILE_REGISTRY: Record<LevelId, LevelProfile> = {
       grammarControls: 'Schreibe ausschließlich einfache Hauptsätze ohne Nebensätze oder Partizipialkonstruktionen.',
       errorTolerance: 'Lasse kleinere Wiederholungen zu; vermeide jede Form von Mehrdeutigkeit.',
     },
+    layouts: {
+      [SessionTypeEnum.READING]: READING_LAYOUTS[LevelId.A1],
+      [SessionTypeEnum.LISTENING]: LISTENING_LAYOUTS[LevelId.A1],
+      [SessionTypeEnum.WRITING]: WRITING_LAYOUTS[LevelId.A1],
+    },
   },
   [LevelId.A2]: {
     id: LevelId.A2,
@@ -104,6 +396,11 @@ export const LEVEL_PROFILE_REGISTRY: Record<LevelId, LevelProfile> = {
       lexicalControls: 'Verwende häufige Alltagssynonyme und anschauliche Substantive.',
       grammarControls: 'Baue kurze Nebensätze ein, verzichte auf Passiv und komplexe Nominalphrasen.',
       errorTolerance: 'Fehler dürfen auftreten, solange Kerninformation eindeutig bleibt.',
+    },
+    layouts: {
+      [SessionTypeEnum.READING]: READING_LAYOUTS[LevelId.A2],
+      [SessionTypeEnum.LISTENING]: LISTENING_LAYOUTS[LevelId.A2],
+      [SessionTypeEnum.WRITING]: WRITING_LAYOUTS[LevelId.A2],
     },
   },
   [LevelId.B1]: {
@@ -152,6 +449,11 @@ export const LEVEL_PROFILE_REGISTRY: Record<LevelId, LevelProfile> = {
       grammarControls: 'Setze erweiterte Nebensätze (weil, obwohl, damit) und Perfekt/Präteritum im Wechsel ein.',
       errorTolerance: 'Leichte stilistische Unebenheiten erlaubt, aber keine grundlegenden Grammatikfehler.',
     },
+    layouts: {
+      [SessionTypeEnum.READING]: READING_LAYOUTS[LevelId.B1],
+      [SessionTypeEnum.LISTENING]: LISTENING_LAYOUTS[LevelId.B1],
+      [SessionTypeEnum.WRITING]: WRITING_LAYOUTS[LevelId.B1],
+    },
   },
   [LevelId.B2]: {
     id: LevelId.B2,
@@ -198,6 +500,11 @@ export const LEVEL_PROFILE_REGISTRY: Record<LevelId, LevelProfile> = {
       lexicalControls: 'Nutze themenspezifische Kollokationen, vermeide Umgangssprache.',
       grammarControls: 'Setze Passiv, Infinitivgruppen und konditionale Nebensätze selbstverständlich ein.',
       errorTolerance: 'Nur sehr geringe Fehlerquote; Inhalte müssen kohärent und logisch sein.',
+    },
+    layouts: {
+      [SessionTypeEnum.READING]: READING_LAYOUTS[LevelId.B2],
+      [SessionTypeEnum.LISTENING]: LISTENING_LAYOUTS[LevelId.B2],
+      [SessionTypeEnum.WRITING]: WRITING_LAYOUTS[LevelId.B2],
     },
   },
   [LevelId.C1]: {
@@ -293,6 +600,11 @@ export const LEVEL_PROFILE_REGISTRY: Record<LevelId, LevelProfile> = {
       grammarControls: 'Variiere Satzlängen, nutze Ellipsen, Chiasmus, indirekte Rede und Modalpartikeln.',
       errorTolerance: 'Praktisch fehlerfrei, Nuancen gehen vor Vereinfachung.',
     },
+    layouts: {
+      [SessionTypeEnum.READING]: READING_LAYOUTS[LevelId.C2],
+      [SessionTypeEnum.LISTENING]: LISTENING_LAYOUTS[LevelId.C2],
+      [SessionTypeEnum.WRITING]: WRITING_LAYOUTS[LevelId.C2],
+    },
   },
 };
 
@@ -307,3 +619,4 @@ export function getLevelProfile(levelId?: LevelId | null): LevelProfile {
 
 export { LevelId, type LevelProfile } from './types';
 export { mapLevelToQuestionDifficulty } from './utils';
+export { buildLevelDirective } from './directives';

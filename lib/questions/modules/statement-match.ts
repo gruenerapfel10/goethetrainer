@@ -17,6 +17,7 @@ import {
   type QuestionModuleSourceConfig,
   type ModelUsageRecord,
 } from './types';
+import type { StatementMatchSourceConfig } from './statement-match-types';
 import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import { getNewsTopicFromPool, type NewsTopic } from '@/lib/news/news-topic-pool';
@@ -32,22 +33,6 @@ interface StatementMatchPromptConfig extends QuestionModulePromptConfig {
 interface StatementMatchRenderConfig extends QuestionModuleRenderConfig {
   layout: 'statement_match';
   showSourceToggle: boolean;
-}
-
-interface StatementMatchSourceConfig extends QuestionModuleSourceConfig {
-  type: 'statement_matching';
-  theme?: string;
-  constructionMode?: 'auto' | 'planned_authors' | 'planned_sentence_pool';
-  topicHint?: string;
-  authorCount?: number;
-  statementCount?: number;
-  unmatchedCount?: number;
-  startingStatementNumber?: number;
-  workingTimeMinutes?: number;
-  teilLabel?: string;
-  gapCount?: number;
-  sentencePoolSize?: number;
-  includeZeroOption?: boolean;
 }
 
 type StatementMatchAnswer = Record<string, string> | null;
