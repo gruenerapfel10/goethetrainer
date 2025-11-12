@@ -480,18 +480,12 @@
         @apply border-border;
     }
 
-    html,
-    body {
-        height: 100%;
-    }
-
-    body {
-        @apply bg-background text-foreground;
-        /* Mobile scrolling optimizations */
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        overflow: hidden;
-    }
+body {
+    @apply bg-background text-foreground;
+    /* Mobile scrolling optimizations */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
 
     /* Mobile scrolling optimizations for all scrollable elements */
     * {
@@ -502,21 +496,6 @@
     @media (max-width: 768px) {
         html, body {
             height: 100dvh; /* Dynamic viewport height */
-            overflow: hidden;
-            position: relative;
-        }
-        
-        /* Mobile viewport fix */
-        .mobile-vh {
-            height: 100dvh; /* Dynamic viewport height */
-        }
-        
-        /* Simple mobile scroll - no fancy stuff */
-        .mobile-scroll {
-            overflow-y: scroll !important;
-            -webkit-overflow-scrolling: touch !important;
-            height: 100% !important;
-            width: 100% !important;
         }
     }
 

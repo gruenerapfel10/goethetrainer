@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import useSWRInfinite from 'swr/infinite';
-import { PencilLine, Search, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PencilLine, Search, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { fetcher, cn } from '@/lib/utils';
@@ -10,6 +10,15 @@ import {
   READING_LIST_UPDATED_EVENT,
   emitReadingListUpdated,
 } from '@/lib/reading-list/events';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Languages, Bookmark, Sparkles, Volume2 } from 'lucide-react';
+import { speakText, isTextToSpeechAvailable } from '@/lib/tts';
+import { emitChatPromptRequest } from '@/lib/chat/events';
 
 interface ReadingListItem {
   id: string;
@@ -85,9 +94,15 @@ export function ReadingListPanel() {
 
   const groups = useMemo(() => groupEntries(entries), [entries]);
 
-  const handleLoadMore = () => {
-    if (nextCursor) {
+  const handleNextPage = () => {
+    if (nextCursor && !isValidating) {
       setSize(size + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (size > 1 && !isValidating) {
+      setSize(size - 1);
     }
   };
 
@@ -145,6 +160,33 @@ export function ReadingListPanel() {
       setErrorMessage('Speichern fehlgeschlagen. Bitte erneut versuchen.');
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const handleTranslate = async (text: string) => {
+    try {
+      await fetch('/api/tools/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+    } catch (err) {
+      console.error('Failed to translate entry', err);
+    }
+  };
+
+  const handleAskAIEntry = (text: string) => {
+    emitChatPromptRequest(text);
+  };
+
+  const handleSpeakEntry = async (text: string) => {
+    if (!isTextToSpeechAvailable()) {
+      return;
+    }
+    try {
+      await speakText(text, { lang: 'de-DE' });
+    } catch (err) {
+      console.error('Failed to speak entry', err);
     }
   };
 
@@ -237,7 +279,7 @@ export function ReadingListPanel() {
                             </>
                           )}
                         </div>
-                        <div className="flex gap-1 opacity-0 transition group-hover:opacity-100">
+                        <div className="flex items-center gap-1 ">
                           {editingId !== item.id && (
                             <Button
                               variant="ghost"
@@ -251,15 +293,61 @@ export function ReadingListPanel() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className={cn(
-                              'h-8 w-8 text-muted-foreground',
-                              editingId === item.id && 'opacity-100'
-                            )}
-                            onClick={() => handleDelete(item.id)}
-                            disabled={isSavingEdit}
+                            className="h-8 w-8 text-muted-foreground"
+                            disabled={!isTextToSpeechAvailable()}
+                            onClick={() => handleSpeakEntry(item.text)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Volume2 className="h-4 w-4" />
                           </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem
+                                  onClick={() => handleTranslate(item.text)}
+                                  className="gap-3"
+                                >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                                  <Languages className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold">Translate</p>
+                                  <p className="text-xs text-muted-foreground">Send to translator</p>
+                                </div>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleAskAIEntry(item.text)}
+                                className="gap-3"
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/5 text-primary">
+                                  <Sparkles className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold">Ask AI</p>
+                                  <p className="text-xs text-muted-foreground">Paste into chat</p>
+                                </div>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(item.id)}
+                                className="gap-3"
+                              >
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-semibold">Delete</p>
+                                  <p className="text-xs text-muted-foreground">Remove from list</p>
+                                </div>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </article>
@@ -276,13 +364,27 @@ export function ReadingListPanel() {
           </p>
         )}
 
-        {nextCursor && (
-          <div className="mt-4 flex justify-center">
-            <Button variant="outline" size="sm" onClick={handleLoadMore}>
-              Load more
-            </Button>
-          </div>
-        )}
+        <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={size <= 1 || isValidating}
+          >
+            Previous
+          </Button>
+          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Page {size}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNextPage}
+            disabled={!nextCursor || isValidating}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -319,14 +421,15 @@ function getSectionLabel(entryDate: Date, now: Date): string {
   if (diffDays === 1) {
     return 'Yesterday';
   }
-  if (diffDays < 7) {
-    return 'Last 7 Days';
+  if (diffDays <= 3) {
+    return 'Past 3 Days';
   }
-  if (diffDays < 30) {
-    return 'Last 30 Days';
+  if (diffDays <= 7) {
+    return 'Last Week';
   }
 
   return entryDate.toLocaleDateString(undefined, {
+    day: '2-digit',
     month: 'long',
     year: 'numeric',
   });

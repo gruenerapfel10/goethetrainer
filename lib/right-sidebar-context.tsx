@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const COOKIE_NAME = 'right_sidebar_state';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -15,25 +15,31 @@ type RightSidebarContextProps = {
 const RightSidebarContext = createContext<RightSidebarContextProps | undefined>(undefined);
 
 export function RightSidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setOpenState] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = document.cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
-      if (saved) {
-        return saved[1] === 'true';
-      }
+  const [isOpen, setOpenState] = useState(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
     }
-    return false; // Default to closed
-  });
+    const saved = document.cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+    if (saved) {
+      setOpenState(saved[1] === 'true');
+    }
+  }, []);
 
   const setOpen = useCallback((open: boolean) => {
     setOpenState(open);
-    document.cookie = `${COOKIE_NAME}=${open}; path=/; max-age=${COOKIE_MAX_AGE}`;
+    if (typeof document !== 'undefined') {
+      document.cookie = `${COOKIE_NAME}=${open}; path=/; max-age=${COOKIE_MAX_AGE}`;
+    }
   }, []);
 
   const toggle = useCallback(() => {
     setOpenState(prev => {
       const newState = !prev;
-      document.cookie = `${COOKIE_NAME}=${newState}; path=/; max-age=${COOKIE_MAX_AGE}`;
+      if (typeof document !== 'undefined') {
+        document.cookie = `${COOKIE_NAME}=${newState}; path=/; max-age=${COOKIE_MAX_AGE}`;
+      }
       return newState;
     });
   }, []);

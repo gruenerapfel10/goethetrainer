@@ -397,15 +397,21 @@ function applyHighlight(
   }
 
   if (Array.isArray(node)) {
-    return node.map((child, index) => applyHighlight(child, patterns, `${keyPrefix}-${index}`));
+    return node.map((child, index) =>
+      applyHighlight(child, patterns, `${keyPrefix}-${index}`)
+    );
   }
 
   if (isValidElement(node)) {
-    const highlightedChildren = applyHighlight(node.props.children, patterns, `${keyPrefix}-child`);
+    const highlightedChildren = applyHighlight(
+      node.props.children,
+      patterns,
+      `${keyPrefix}-${node.key ?? 'child'}`
+    );
     if (highlightedChildren === node.props.children) {
       return node;
     }
-    return cloneElement(node, undefined, highlightedChildren);
+    return cloneElement(node, { key: node.key ?? keyPrefix }, highlightedChildren);
   }
 
   return node;

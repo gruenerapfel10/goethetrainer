@@ -9,11 +9,13 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Bookmark, Languages, Loader2, Sparkles, X } from 'lucide-react';
+import { Bookmark, Languages, Loader2, Sparkles, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn, fetcher } from '@/lib/utils';
 import { emitReadingListUpdated } from '@/lib/reading-list/events';
 import { emitChatPromptRequest } from '@/lib/chat/events';
+import { isTextToSpeechAvailable, speakText, stopSpeaking } from '@/lib/tts';
+import useSWR from 'swr';
 
 const MENU_OFFSET = 12;
 const MINI_SIZE = { width: 220, height: 56 };
@@ -30,6 +32,7 @@ interface MenuState {
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const normalizeText = (value: string) => value.trim().toLowerCase();
 
 const computePosition = (anchor: Point, size: { width: number; height: number }) => {
   if (typeof window === 'undefined') {
@@ -53,6 +56,22 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const { data: readingListData } = useSWR<{ items: Array<{ text: string; translation: string }> }>(
+    '/api/reading-list?limit=200',
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const savedTranslations = useMemo(() => {
+    const map = new Map<string, string>();
+    readingListData?.items?.forEach(item => {
+      const key = normalizeText(item.text);
+      if (key) {
+        map.set(key, item.translation);
+      }
+    });
+    return map;
+  }, [readingListData]);
 
   const menuOpenRef = useRef(false);
   const ignoreNextPointerUpRef = useRef(false);
@@ -69,11 +88,13 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     setIsTranslating(false);
     setIsSaving(false);
     setSaveMessage(null);
+    setIsSpeaking(false);
   }, []);
 
   const closeMenu = useCallback(() => {
     setMenuState(null);
     anchorRef.current = null;
+    stopSpeaking();
     resetTransientState();
   }, [resetTransientState]);
 
@@ -203,6 +224,25 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     closeMenu();
   }, [menuState?.text, closeMenu]);
 
+  const handleSpeak = useCallback(async () => {
+    if (!menuState?.text || isSpeaking || !isTextToSpeechAvailable()) {
+      return;
+    }
+    setIsSpeaking(true);
+    setError(null);
+    try {
+      await speakText(menuState.text, { lang: 'de-DE' });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Text-to-speech is not available in this browser.'
+      );
+    } finally {
+      setIsSpeaking(false);
+    }
+  }, [menuState?.text, isSpeaking]);
+
   const handleMiniTranslate = useCallback(() => {
     expandToFull();
     void handleTranslate();
@@ -218,12 +258,34 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     handleAskAI();
   }, [expandToFull, handleAskAI]);
 
+  const handleMiniSpeak = useCallback(() => {
+    expandToFull();
+    void handleSpeak();
+  }, [expandToFull, handleSpeak]);
+
   const selectionPreview = useMemo(() => {
     if (!menuState?.text) {
       return '';
     }
     return menuState.text.length > 160 ? `${menuState.text.slice(0, 160)}…` : menuState.text;
   }, [menuState?.text]);
+
+  const ttsSupported = typeof window !== 'undefined' && isTextToSpeechAvailable();
+
+  useEffect(() => {
+    if (!menuState?.text) {
+      return;
+    }
+    const key = normalizeText(menuState.text);
+    if (!key) {
+      return;
+    }
+    const savedTranslation = savedTranslations.get(key);
+    if (savedTranslation) {
+      setTranslation(savedTranslation);
+      setSaveMessage('Already in reading list');
+    }
+  }, [menuState?.text, savedTranslations]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -319,41 +381,73 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     return <>{children}</>;
   }
 
+  const miniButtonRow = (
+    <div className="flex items-center gap-2">
+      <button
+        type="button"
+        onClick={handleMiniTranslate}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/20"
+        aria-label="Translate"
+      >
+        {isTranslating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={handleMiniSave}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition hover:bg-secondary/80"
+        aria-label="Save"
+      >
+        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bookmark className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={handleMiniSpeak}
+        disabled={!ttsSupported || isSpeaking}
+        className={cn(
+          'flex h-9 w-9 items-center justify-center rounded-full transition',
+          ttsSupported
+            ? 'bg-primary/10 text-primary hover:bg-primary/20'
+            : 'bg-muted text-muted-foreground cursor-not-allowed'
+        )}
+        aria-label="Listen"
+      >
+        {isSpeaking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={handleMiniAsk}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/5 text-primary transition hover:bg-primary/15"
+        aria-label="Ask AI"
+      >
+        <Sparkles className="h-4 w-4" />
+      </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+        onClick={closeMenu}
+      >
+        <X className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   const MenuContent = menuState.variant === 'mini'
     ? (
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleMiniTranslate}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition hover:bg-primary/20"
-            aria-label="Translate"
-          >
-            {isTranslating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            onClick={handleMiniSave}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition hover:bg-secondary/80"
-            aria-label="Save"
-          >
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bookmark className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
-            onClick={handleMiniAsk}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/5 text-primary transition hover:bg-primary/15"
-            aria-label="Ask AI"
-          >
-            <Sparkles className="h-4 w-4" />
-          </button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            onClick={closeMenu}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="space-y-2">
+          {(translation || saveMessage) && (
+            <div className="space-y-1">
+              {translation && (
+                <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-1 whitespace-pre-wrap">
+                  {translation}
+                </p>
+              )}
+              {saveMessage && (
+                <p className="text-[11px] uppercase tracking-[0.2em] text-emerald-600">{saveMessage}</p>
+              )}
+            </div>
+          )}
+          {miniButtonRow}
         </div>
       )
     : (
@@ -422,6 +516,30 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
               <div className="flex-1">
                 <p className="text-sm font-semibold">Ask AI</p>
                 <p className="text-xs text-muted-foreground">Paste the selection into the chat composer.</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={handleSpeak}
+              disabled={!ttsSupported || isSpeaking}
+              className={cn(
+                'flex w-full items-center gap-3 px-4 py-3 text-left transition border-t border-border/40',
+                ttsSupported
+                  ? 'hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/60'
+                  : 'opacity-60 cursor-not-allowed'
+              )}
+            >
+              <div
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-full',
+                  ttsSupported ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {isSpeaking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Listen</p>
+                <p className="text-xs text-muted-foreground">Play this selection via text-to-speech.</p>
               </div>
             </button>
           </div>
