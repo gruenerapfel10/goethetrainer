@@ -1,0 +1,3 @@
+{
+  "/api/flashcards/decks/[deckId]/publish/route": "app/api/flashcards/decks/[deckId]/publish/route.js"
+}

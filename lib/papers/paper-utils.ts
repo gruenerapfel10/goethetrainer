@@ -17,7 +17,7 @@ export function sanitizeQuestionForPaper(question: Question): Question {
     answered: false,
     exampleAnswer: undefined,
     isExample: false,
-    answerType: rest.inputType ?? rest.answerType,
+    answerType: question.inputType,
   };
   return sanitized;
 }

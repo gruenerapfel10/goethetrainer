@@ -4,12 +4,13 @@ import { CardDraftRepository } from '@/lib/flashcards/drafts-repository';
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { draftId: string } }
+  { params }: { params: Promise<{ draftId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  await CardDraftRepository.delete(session.user.email, params.draftId);
+  const resolvedParams = await params;
+  await CardDraftRepository.delete(session.user.email, resolvedParams.draftId);
   return NextResponse.json({ success: true });
 }

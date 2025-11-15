@@ -1,0 +1,71 @@
+{
+  "node": {
+    "40dd304dd925d1387eafabd6f4bc999d2411b65f44": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    },
+    "000d2dd8ea0854040929b46349bbc444145de1b6d2": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    },
+    "4090aa861d8db62488189ff6bf1f85e9e5c17e1c3f": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    },
+    "40efcb12783b062fcdce703eb3ca639ba14b760ee8": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    },
+    "40784f61e028fc26491c797fd51799369f84c66d60": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    },
+    "40a34f921202dd432a09a972c007fe1384f156b9a3": {
+      "workers": {
+        "app/(main)/writing/page": {
+          "moduleId": "[project]/.next-internal/server/app/(main)/writing/page/actions.js { ACTIONS_MODULE0 => \"[project]/services/locale.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/app/(chat)/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/(main)/writing/page": "action-browser"
+      }
+    }
+  },
+  "edge": {}
+}

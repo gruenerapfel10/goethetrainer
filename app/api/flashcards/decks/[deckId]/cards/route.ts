@@ -5,7 +5,7 @@ import { FlashcardDeckType } from '@/lib/flashcards/types';
 
 export async function POST(
   request: Request,
-  { params }: { params: { deckId: string } }
+  { params }: { params: Promise<{ deckId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -17,7 +17,8 @@ export async function POST(
     return NextResponse.json({ error: 'front and back are required' }, { status: 400 });
   }
   try {
-    const deck = await DeckRepository.addCard(session.user.email, params.deckId, {
+    const resolvedParams = await params;
+    const deck = await DeckRepository.addCard(session.user.email, resolvedParams.deckId, {
       type: FlashcardDeckType.BASIC,
       front,
       back,

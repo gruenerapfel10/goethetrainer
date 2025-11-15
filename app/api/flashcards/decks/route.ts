@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
 import { DeckRepository } from '@/lib/flashcards/repository/memory-repo';
+import { FlashcardDeckType } from '@/lib/flashcards/types';
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -29,11 +30,12 @@ export async function POST(request: Request) {
   const sanitizedCards = Array.isArray(cards)
     ? cards
         .map((card: any) => ({
+          type: FlashcardDeckType.BASIC,
           front: typeof card.front === 'string' ? card.front.trim() : '',
           back: typeof card.back === 'string' ? card.back.trim() : '',
           hint: typeof card.hint === 'string' && card.hint.trim() ? card.hint.trim() : undefined,
           tags: Array.isArray(card.tags)
-            ? Array.from(new Set(card.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean)))
+            ? Array.from(new Set(card.tags.map((tag: unknown) => String(tag).trim()).filter(Boolean))) as string[]
             : undefined,
         }))
         .filter(card => card.front && card.back)

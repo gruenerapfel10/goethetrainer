@@ -4,7 +4,7 @@ import { FlashcardAnalytics } from '@/lib/flashcards/analytics/aggregator';
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ deckId: string }> } | { params: { deckId: string } }
+  context: { params: Promise<{ deckId: string }> }
 ) {
   try {
     const session = await auth();

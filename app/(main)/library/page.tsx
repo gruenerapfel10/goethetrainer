@@ -136,9 +136,10 @@ export default function LibraryPage() {
   const renderPaperCard = (paper: PaperBlueprint) => {
     const createdAt = new Date(paper.createdAt);
     const promptPreview =
-      paper.metadata?.preview ??
+      (typeof paper.metadata?.preview === 'string' ? paper.metadata.preview : null) ??
       paper.blueprint.questions[0]?.prompt ??
       `${paper.type} paper`;
+    const subtitle = (typeof paper.metadata?.subtitle === 'string' ? paper.metadata.subtitle : null) ?? promptPreview ?? 'No description';
 
     return (
       <div
@@ -153,7 +154,7 @@ export default function LibraryPage() {
             {paper.metadata?.title ?? 'Generated paper'}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-3">
-            {paper.metadata?.subtitle ?? promptPreview}
+            {subtitle}
           </p>
         </div>
         <div className="flex flex-col gap-3 text-xs text-muted-foreground">

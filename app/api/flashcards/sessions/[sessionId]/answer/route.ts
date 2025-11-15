@@ -5,7 +5,7 @@ import { FeedbackRating } from '@/lib/flashcards/types';
 
 export async function POST(
   request: Request,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   const sessionUser = await auth();
   if (!sessionUser?.user?.email) {
@@ -17,9 +17,10 @@ export async function POST(
     return NextResponse.json({ error: 'feedback is required' }, { status: 400 });
   }
   try {
+    const resolvedParams = await params;
     const session = await FlashcardSessionOrchestrator.answerCard(
       sessionUser.user.email,
-      params.sessionId,
+      resolvedParams.sessionId,
       feedback as FeedbackRating
     );
     return NextResponse.json({ session });

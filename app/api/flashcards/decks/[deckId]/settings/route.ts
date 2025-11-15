@@ -4,7 +4,7 @@ import { DeckRepository } from '@/lib/flashcards/repository/memory-repo';
 
 export async function POST(
   request: Request,
-  { params }: { params: { deckId: string } }
+  { params }: { params: Promise<{ deckId: string }> }
 ) {
   const session = await auth();
   if (!session?.user?.email) {
@@ -17,7 +17,8 @@ export async function POST(
     return NextResponse.json({ error: 'schedulerId or feedbackPolicyId required' }, { status: 400 });
   }
   try {
-    const deck = await DeckRepository.updateSettings(session.user.email, params.deckId, {
+    const resolvedParams = await params;
+    const deck = await DeckRepository.updateSettings(session.user.email, resolvedParams.deckId, {
       schedulerId: validScheduler ? body.schedulerId : undefined,
       feedbackPolicyId: validPolicy ? body.feedbackPolicyId : undefined,
     });

@@ -7,6 +7,7 @@ export const sampleDeck: Deck = {
   description: 'Foundational vocabulary and phrases',
   createdAt: new Date().toISOString(),
   status: 'published',
+  categories: ['greetings', 'basic-phrases'],
   settings: {
     schedulerId: 'fsrs-lite',
     feedbackPolicyId: 'ternary',

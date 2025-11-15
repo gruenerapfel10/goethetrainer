@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Flashcard } from './Flashcard';
 import type { DeckCategory, CardTemplate } from '@/lib/flashcards/types';
+import { FlashcardDeckType } from '@/lib/flashcards/types';
 import { BookOpen } from 'lucide-react';
 
 type BuilderCard = {
@@ -343,7 +344,7 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
                     <Flashcard
                       card={{
                         id: String(carouselIndex),
-                        type: 'basic',
+                        type: FlashcardDeckType.BASIC,
                         front: cards[carouselIndex].front,
                         back: cards[carouselIndex].back,
                         hint: cards[carouselIndex].hint || undefined,
