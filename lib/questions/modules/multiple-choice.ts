@@ -39,40 +39,48 @@ const GAP_FOCUS_INSTRUCTIONS: Partial<Record<ReadingAssessmentCategory, string>>
 Lexikalische Nuance:
 - Alle Optionen müssen gleiche Wortart und Register teilen.
 - Nur eine Option darf die vom Kontext geforderte Wertung oder Konnotation exakt treffen.
+Denke wie eine:n Muttersprachler:in und bewerte ausschließlich auf schwarz-weiß. Keine Grauzonen, nur eindeutig richtig oder falsch.
 `,
   [ReadingAssessmentCategory.COLLOCATION_CONTROL]: `
 Kollokationskontrolle:
 - Stelle die fehlende feste Verbindung wieder her (Verb+Nomen, Präposition, idiomatischer Ausdruck).
 - Distraktoren sollen grammatisch möglich sein, aber eine andere, unpassende Kollokation bilden.
+Es geht nicht um Nuancen, sondern um die einzige valide Kollokation. Nur eine Option ist korrekt – kein Zwischenraum.
 `,
   [ReadingAssessmentCategory.GRAMMAR_AGREEMENT]: `
 Grammatik/Kongruenz:
 - Variiere ausschließlich Kasus-, Genus- oder Numerusendungen.
 - Nenne im Begründungstext das steuernde Bezugswort (z. B. Artikel, Präposition).
+Beurteile streng: Nur wenn Kongruenz exakt stimmt, ist die Option richtig; alle anderen sind falsch.
 `,
   [ReadingAssessmentCategory.CONNECTOR_LOGIC]: `
 Konnektorlogik:
 - Nur die korrekte Option darf die intendierte Relation (Kontrast, Konsequenz, Einschränkung etc.) herstellen.
 - Distraktoren müssen andere, aber plausible Relationen ausdrücken.
+Handele wie ein:e native Redakteur:in – es gibt nur eine logisch passende Verbindung, keine Interpretation.
 `,
   [ReadingAssessmentCategory.IDIOMATIC_EXPRESSION]: `
 Idiome:
 - Rekonstruiere exakt eine etablierte Redewendung.
 - Distraktoren verändern einen Kernbestandteil und machen die Wendung unidiomatisch.
+Nur die berühmte, standardisierte Wendung ist richtig. Synonyme oder leicht veränderte Varianten sind falsch.
 `,
   [ReadingAssessmentCategory.REGISTER_TONE]: `
 Register & Ton:
 - Alle Optionen beschreiben denselben Sachverhalt, unterscheiden sich aber in Formalität/Tonalität.
 - Nur die korrekte Option harmoniert mit dem journalistisch-formellen Stil.
+Werte es als native:r Autor:in – entweder passt der Stil exakt oder er passt nicht. Es gibt keine Abstufung.
 `,
   [ReadingAssessmentCategory.DISCOURSE_REFERENCE]: `
 Diskursreferenz:
 - Optionen verweisen auf unterschiedliche Referenten. Nur eine Option stellt Kohärenz mit dem vorherigen Satzteil her.
+Bewerte streng: nur wenn der Referent eindeutig stimmt, ist die Option korrekt.
 `,
   [ReadingAssessmentCategory.INSTITUTIONAL_CONTEXT]: `
 Institutioneller Kontext:
 - Verwende präzise Terminologie (politisch, juristisch, wirtschaftlich).
 - Distraktoren sollen thematisch ähnlich sein, aber sachlich nicht passen.
+Nur die sachlich richtige Institution oder Rolle ist korrekt; alle anderen Antworten sind falsch.
 `,
 };
 
@@ -804,7 +812,7 @@ async function generateGappedMCQ(
                 misconception: z.string().optional(),
               })
             )
-            .length(distractorCount),
+            .min(distractorCount),
         })
       )
       .length(gaps.length),
@@ -917,7 +925,9 @@ ${brief.focus ? `- Fokus: ${brief.focus}` : ''}`
         distractors: entry.distractors.map(distractor => ({
           text: distractor.text.trim(),
           rationale: distractor.reason.trim(),
-          misconception: distractor.misconception?.trim(),
+          misconception:
+            distractor.misconception?.trim() ??
+            `Typische Fehleinschätzung: ${distractor.reason.trim()}`,
         })),
       };
 

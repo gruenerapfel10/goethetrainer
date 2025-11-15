@@ -884,32 +884,32 @@ export async function generatePlannedAuthorStatementSet(
     theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
-    theme: z.string().min(3),
-    title: z.string().min(5),
-    subtitle: z.string().min(10),
-    intro: z.string().min(40),
+    theme: z.string(),
+    title: z.string(),
+    subtitle: z.string(),
+    intro: z.string(),
     authors: z
       .array(
         z.object({
-          id: z.string().min(1),
-          name: z.string().min(3),
-          role: z.string().min(3),
-          summary: z.string().min(50),
-          excerpt: z.string().min(80),
+          id: z.string(),
+          name: z.string(),
+          role: z.string(),
+          summary: z.string(),
+          excerpt: z.string(),
         })
       )
       .length(authorCount),
     statements: z
       .array(
         z.object({
-          id: z.string().min(1),
-          text: z.string().min(10),
+          id: z.string(),
+          text: z.string(),
           authorId: z.string(),
         })
       )
       .length(statementCount),
     example: z.object({
-      text: z.string().min(10),
+      text: z.string(),
       authorId: z.string(),
       explanation: z.string().optional(),
     }),

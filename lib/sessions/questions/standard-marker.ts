@@ -228,6 +228,8 @@ Arbeite wie auf dem offiziellen Bewertungsbogen:
 - Verwende ausschließlich ganze Punkte, keine Bruchteile.
 - Beziehe dich bei jeder Entscheidung auf wörtliche Textstellen oder eindeutige Paraphrasen aus der Antwort.
 - Formuliere zusätzlich ein einziges, sofort umsetzbares „nextStep“-Statement (max. 200 Zeichen), das den einfachsten Weg beschreibt, um die Punktzahl zu verbessern.
+- Fokussiere dich bei jedem Kriterium strikt auf Richtig vs. Falsch; diskutiere keine Abstufungen wie „besser“ oder „semantisch passend“, sondern lehne ab, wenn die Antwort nicht exakt das geforderte Wissen oder die vorgegebenen Formulierungen enthält.
+- Ignoriere in der Bewertung Synonyme oder ähnliche Formulierungen, die nicht klar aus dem Text hervorgehen; wenn eine Formulierung nicht als eindeutige Paraphrase zu identifizieren ist, gib keine Punkte.
 Antworte strikt im JSON-Format des Schemas.`;
 
   const promptSections = [
@@ -240,6 +242,7 @@ Antworte strikt im JSON-Format des Schemas.`;
     `Aufgabenbeschreibung:\n${question.prompt}\n\n${buildSourceSummary(question)}`,
     `Antwort des Kandidaten (${detectedWordCount} Wörter):\n"""${answerText.replace(/"""/g, '\"\"\"')}"""`,
     'Erstelle das Bewertungsobjekt. Die IDs der Kriterien müssen exakt den Rubrik-IDs entsprechen. Für jede Marke musst du einen "decisions"-Eintrag mit Quelle, Begründung und Ausgang (award/reject) liefern.',
+    'Entscheide bei jeder Marke ausschließlich anhand klarer Belege – keine Abwägungen wie „könnte stimmen“ oder „semantisch sinnvoll“. Entscheide nur „award“ oder „reject“.',
   ]
     .filter(Boolean)
     .join('\n\n');

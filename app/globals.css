@@ -31,6 +31,46 @@
     .text-balance {
         text-wrap: balance;
     }
+    .animate-first {
+        animation: float-blob-one 20s ease-in-out infinite alternate;
+    }
+    .animate-second {
+        animation: float-blob-two 26s ease-in-out infinite alternate;
+    }
+    .animate-third {
+        animation: float-blob-three 32s ease-in-out infinite alternate;
+    }
+    .animate-fourth {
+        animation: float-blob-four 24s ease-in-out infinite alternate;
+    }
+    .animate-fifth {
+        animation: float-blob-five 28s ease-in-out infinite alternate;
+    }
+}
+@keyframes float-blob-one {
+    0% { transform: translate3d(-10%, -10%, 0) scale(1); }
+    50% { transform: translate3d(5%, 15%, 0) scale(1.15) rotate(8deg); }
+    100% { transform: translate3d(-5%, 5%, 0) scale(1.05); }
+}
+@keyframes float-blob-two {
+    0% { transform: translate3d(15%, 0, 0) scale(0.85); }
+    50% { transform: translate3d(-5%, -10%, 0) scale(1.1) rotate(-12deg); }
+    100% { transform: translate3d(10%, 10%, 0) scale(0.95); }
+}
+@keyframes float-blob-three {
+    0% { transform: translate3d(-15%, 10%, 0) scale(0.9); }
+    50% { transform: translate3d(10%, -5%, 0) scale(1.05) rotate(6deg); }
+    100% { transform: translate3d(-5%, 5%, 0) scale(0.9); }
+}
+@keyframes float-blob-four {
+    0% { transform: translate3d(0, 10%, 0) scale(0.95); }
+    50% { transform: translate3d(-10%, -15%, 0) scale(1.1) rotate(-6deg); }
+    100% { transform: translate3d(5%, 10%, 0) scale(0.9); }
+}
+@keyframes float-blob-five {
+    0% { transform: translate3d(10%, -10%, 0) scale(0.85); }
+    50% { transform: translate3d(-15%, 5%, 0) scale(1.1) rotate(10deg); }
+    100% { transform: translate3d(5%, -5%, 0) scale(0.9); }
 }
 
 @layer base {

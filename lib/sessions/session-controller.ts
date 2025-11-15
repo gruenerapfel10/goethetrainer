@@ -6,6 +6,7 @@ import type {
   SubmitAnswerPayload,
   UpdateSessionInput,
   AnswerValue,
+  SessionType,
 } from './types';
 import type { Question, QuestionResult } from './questions/question-types';
 import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
@@ -41,6 +42,9 @@ import {
   ReadingAssessmentCategory,
   listReadingAssessmentCategories,
 } from '@/lib/questions/assessment-categories';
+import { loadPaperBlueprint, savePaperBlueprint } from '@/lib/papers/paper-queries';
+import { sanitizeQuestionForPaper } from '@/lib/papers/paper-utils';
+import type { PaperBlueprint } from '@/lib/papers/types';
 
 registerDefaultQuestionModules();
 
@@ -102,6 +106,43 @@ function markQuestionAsExample(question: Question): Question {
     answered: true,
     points: 0,
   };
+}
+
+async function persistPaperForSession(session: Session): Promise<void> {
+  const questions = session.data?.questions ?? [];
+  if (!questions.length) {
+    return;
+  }
+
+  const sanitizedQuestions = questions.map(sanitizeQuestionForPaper);
+  const displayTitle =
+    session.metadata?.config?.displayName ??
+    `${session.type[0].toUpperCase()}${session.type.slice(1)} Paper`;
+
+  const paper: PaperBlueprint = {
+    id: session.id,
+    sessionId: session.id,
+    type: session.type as SessionType,
+    createdBy: session.userId,
+    createdAt: (session.startedAt ?? new Date()).toISOString(),
+    metadata: {
+      title: displayTitle,
+      subtitle: session.metadata?.config?.description,
+      icon: session.metadata?.config?.icon,
+      color: session.metadata?.config?.color,
+      difficulty: session.metadata?.difficulty,
+      preview: sanitizedQuestions[0]?.prompt,
+    },
+    blueprint: {
+      questions: sanitizedQuestions,
+    },
+  };
+
+  try {
+    await savePaperBlueprint(paper);
+  } catch (error) {
+    console.error('Failed to persist paper blueprint:', error);
+  }
 }
 
 interface TeilGenerationResult {
@@ -829,6 +870,7 @@ export async function generateQuestionsForSession(
       };
       touchSession(session);
       await persistSession(session);
+      await persistPaperForSession(session);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`\n❌ SESSION GENERATION ORCHESTRATION - FAILED`);
@@ -933,4 +975,83 @@ export async function endSessionForUser(
   session.endedAt = new Date();
   touchSession(session);
   return persistSession(session);
+}
+
+export async function createSessionFromPaper(
+  userId: string,
+  paperId: string,
+  metadataOverrides?: Record<string, any>
+): Promise<Session> {
+  const paper = await loadPaperBlueprint(paperId);
+  if (!paper) {
+    const error = new Error('Paper not found');
+    throw Object.assign(error, { statusCode: 404 });
+  }
+  const sessionType = paper.type as SessionTypeEnum;
+  const sanitizedQuestions = ensureQuestionIdentifiers(
+    paper.blueprint.questions.map(sanitizeQuestionForPaper)
+  );
+  const now = new Date();
+  const displayName =
+    paper.metadata?.title ??
+    `${sessionType[0].toUpperCase()}${sessionType.slice(1)} paper`;
+  const sessionMetadata = {
+    ...(metadataOverrides ?? {}),
+    paperId,
+    difficulty: paper.metadata?.difficulty,
+    config: {
+      displayName,
+      icon: paper.metadata?.icon,
+      color: paper.metadata?.color,
+    },
+    activeView: 'fragen',
+    activeQuestionId: null,
+    lastUpdatedAt: now.toISOString(),
+  };
+
+  const session: Session = {
+    id: generateUUID(),
+    userId,
+    type: paper.type,
+    status: 'active',
+    startedAt: now,
+    duration: 0,
+    metadata: sessionMetadata,
+    data: {
+      ...initializeSessionData(sessionType),
+      questions: sanitizedQuestions,
+      answers: [],
+      results: [],
+      progress: {
+        totalQuestions: sanitizedQuestions.length,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        score: 0,
+        maxScore: 0,
+      },
+      metrics: {
+        totalQuestions: sanitizedQuestions.length,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        score: 0,
+        maxScore: 0,
+      },
+      generation: {
+        status: 'completed',
+        total: sanitizedQuestions.length,
+        generated: sanitizedQuestions.length,
+        currentTeil: null,
+        completedAt: now.toISOString(),
+      },
+      state: {
+        activeView: 'fragen',
+        activeTeil: null,
+        activeQuestionId: null,
+      },
+    },
+  };
+
+  touchSession(session);
+  await saveSessionRecord(session);
+  return loadSessionForUser(session.id, userId);
 }

@@ -2,13 +2,18 @@
 
 import Link from 'next/link';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { BarChart3, BookOpen, Headphones, PenTool, Mic } from 'lucide-react';
+import { BarChart3, BookOpen, Headphones, PenTool, Mic, Layers, Sparkles } from 'lucide-react';
 
 const SKILL_ITEMS = [
   { label: 'Reading', href: '/reading', icon: BookOpen },
   { label: 'Listening', href: '/listening', icon: Headphones },
   { label: 'Writing', href: '/writing', icon: PenTool },
   { label: 'Speaking', href: '/speaking', icon: Mic },
+];
+
+const RESOURCE_ITEMS = [
+  { label: 'Library', href: '/library', icon: Layers },
+  { label: 'Flashcards', href: '/flashcards', icon: Sparkles },
 ];
 
 export function AppSidebar() {
@@ -25,6 +30,21 @@ export function AppSidebar() {
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Resources</SidebarGroupLabel>
+          <SidebarMenu className="gap-1 group-data-[collapsible=icon]:gap-0">
+            {RESOURCE_ITEMS.map(({ label, href, icon: Icon }) => (
+              <SidebarMenuItem key={href}>
+                <SidebarMenuButton asChild tooltip={label}>
+                  <Link href={href}>
+                    <Icon className="h-4 w-4" />
+                    <span>{label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </SidebarGroup>
         <SidebarGroup>
