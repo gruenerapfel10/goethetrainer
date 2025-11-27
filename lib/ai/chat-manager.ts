@@ -33,6 +33,7 @@ interface ChatSettings {
 
 export class ChatManager {
   private chatId: string;
+  private userId: string | null = null;
   private messages: UIMessage[] = [];
   private settings: ChatSettings;
   private chat: Chat | null = null;
@@ -51,6 +52,7 @@ export class ChatManager {
   }
 
   async initialize(userId?: string): Promise<void> {
+    this.userId = userId ?? null;
     this.chat = await getChatById({ id: this.chatId });
     if (!this.chat) {
       // Chat not found in Firestore - this is expected after migration from PostgreSQL
@@ -65,6 +67,9 @@ export class ChatManager {
       if (!this.chat) {
         throw new Error(`Failed to create chat ${this.chatId}`);
       }
+    }
+    if (!this.userId && this.chat?.userId) {
+      this.userId = this.chat.userId;
     }
 
     const dbMessages = await getMessagesByChatId({ id: this.chatId });
@@ -210,6 +215,7 @@ export class ChatManager {
     const dbMessage: DBMessage = {
       id: message.id || generateUUID(),
       chatId: this.chatId,
+      userId: this.userId ?? this.chat?.userId ?? null,
       role: message.role as 'user' | 'assistant',
       parts: contentWithoutFiles as any, // Save content without file parts
       attachments: attachments, // Save extracted attachments separately
@@ -254,6 +260,7 @@ export class ChatManager {
       return {
         id: msg.id || generateUUID(),
         chatId: this.chatId,
+        userId: this.userId ?? this.chat?.userId ?? null,
         role: msg.role as 'user' | 'assistant',
         parts: contentWithoutFiles as any, // Save content without file parts
         attachments: attachments,

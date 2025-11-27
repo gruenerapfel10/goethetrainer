@@ -1,6 +1,6 @@
 'use client';
 
-import { startTransition, useMemo, useOptimistic, useState } from 'react';
+import { startTransition, useEffect, useMemo, useOptimistic, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import useSWR from 'swr';
 import { fetcher } from '@/lib/utils';
@@ -14,11 +14,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-import { 
-  CheckCircleFillIcon, 
+import {
+  CheckCircleFillIcon,
   ChevronDownIcon,
-  MessageIcon,
-  ArrowUpIcon,
 } from './icons';
 
 export interface ChatItem {
@@ -33,7 +31,9 @@ export function ChatSelector({
   buttonVariant = "ghost",
   buttonClassName,
   chevronDirection = "up",
-  onExport,
+  isLoading,
+  chatTitle,
+  isTitleGenerating,
 }: {
   currentChatId: string;
   onChatSelect: (chatId: string) => void;
@@ -41,7 +41,9 @@ export function ChatSelector({
   buttonVariant?: "ghost" | "outline";
   buttonClassName?: string;
   chevronDirection?: "up" | "down";
-  onExport?: () => void;
+  isLoading?: boolean;
+  chatTitle?: string;
+  isTitleGenerating?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -54,44 +56,65 @@ export function ChatSelector({
 
   const [optimisticChatId, setOptimisticChatId] = useOptimistic(currentChatId);
 
+  const chatsWithCurrent = useMemo(() => {
+    const exists = chats.some((chat) => chat.id === optimisticChatId);
+    if (exists || (!chatTitle && !isTitleGenerating)) return chats;
+    return [
+      { id: optimisticChatId, title: chatTitle || 'New Chat' },
+      ...chats,
+    ];
+  }, [chats, optimisticChatId, chatTitle, isTitleGenerating]);
+
   const selectedChat = useMemo(
-    () => chats.find((chat) => chat.id === optimisticChatId),
-    [optimisticChatId, chats],
+    () => chatsWithCurrent.find((chat) => chat.id === optimisticChatId),
+    [optimisticChatId, chatsWithCurrent],
   );
+
+  useEffect(() => {
+    if (currentChatId && currentChatId !== optimisticChatId) {
+      startTransition(() => {
+        setOptimisticChatId(currentChatId);
+      });
+    }
+  }, [currentChatId, optimisticChatId, setOptimisticChatId]);
+
+  const handleSelect = (chatId: string) => {
+    setOpen(false);
+    startTransition(() => {
+      setOptimisticChatId(chatId);
+      onChatSelect(chatId);
+    });
+  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <div className="flex items-center gap-2 w-full">
-        <DropdownMenuTrigger
-          asChild
-          className={cn(
-            'w-fit data-[state=open]:bg-accent data-[state=open]:text-accent-foreground shrink-0 flex-1',
-            className,
-          )}
-        >
-          <Button 
-            variant={buttonVariant} 
-            className={buttonClassName || "h-8 px-3 gap-2 text-sm font-normal hover:bg-accent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full justify-between"}
-          >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <MessageIcon size={14} />
-              <span className="hidden sm:inline truncate max-w-[100px]">{selectedChat?.title || 'Chat'}</span>
-            </div>
-            <ChevronDownIcon className={cn("h-4 w-4 flex-shrink-0", chevronDirection === "up" && "rotate-180")} />
-          </Button>
-        </DropdownMenuTrigger>
-        {onExport && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-accent"
-            onClick={onExport}
-            title="Open in full view"
-          >
-            <ArrowUpIcon size={14} />
-          </Button>
+      <DropdownMenuTrigger
+        asChild
+        className={cn(
+          'inline-flex data-[state=open]:bg-transparent data-[state=open]:text-foreground shrink-0',
+          className,
         )}
-      </div>
+      >
+        <Button
+          variant={buttonVariant}
+          className={buttonClassName || "h-8 px-2 gap-2 text-sm font-normal bg-transparent hover:bg-transparent focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 justify-between w-auto"}
+          disabled={isLoading}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            {isLoading && (
+              <span className="h-3 w-3 animate-pulse rounded-full bg-white/70" />
+            )}
+            {isTitleGenerating ? (
+              <span className="hidden sm:inline h-3 w-20 rounded-full bg-muted animate-pulse" />
+            ) : (
+              <span className="hidden sm:inline block truncate max-w-[180px] md:max-w-[260px]">
+                {selectedChat?.title || chatTitle || 'New Chat'}
+              </span>
+            )}
+          </div>
+          <ChevronDownIcon className={cn("h-4 w-4 flex-shrink-0", chevronDirection === "up" && "rotate-180")} />
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent 
         align={isMobile ? "center" : "start"} 
         side="top" 
@@ -106,35 +129,27 @@ export function ChatSelector({
         avoidCollisions={true}
         collisionPadding={16}
       >
-        {chats.length === 0 ? (
+        {chatsWithCurrent.length === 0 ? (
           <div className="px-2 py-3 text-sm text-muted-foreground">
             No chats yet
           </div>
         ) : (
-          chats.map((chat) => (
+          chatsWithCurrent.map((chat) => (
             <DropdownMenuItem
               key={chat.id}
-              onSelect={() => {
-                setOpen(false);
-                startTransition(() => {
-                  setOptimisticChatId(chat.id);
-                  onChatSelect(chat.id);
-                });
+              onSelect={(e) => {
+                e.preventDefault();
+                handleSelect(chat.id);
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleSelect(chat.id);
               }}
               className="gap-2 md:gap-4 group/item flex flex-row justify-between items-center hover:bg-accent data-[highlighted]:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
               data-active={chat.id === optimisticChatId}
             >
-              <div className="flex flex-row gap-3 items-start min-w-0">
-                <MessageIcon 
-                  size={16} 
-                  className={cn(
-                    "mt-0.5 flex-shrink-0",
-                    chat.id === optimisticChatId ? "text-foreground" : "text-muted-foreground"
-                  )} 
-                />
-                <div className="flex flex-col gap-1 items-start min-w-0">
-                  <div className="truncate">{chat.title}</div>
-                </div>
+              <div className="flex flex-col gap-1 items-start min-w-0">
+                <div className="truncate">{chat.title}</div>
               </div>
 
               <div className="text-foreground opacity-0 group-data-[active=true]/item:opacity-100 flex-shrink-0">

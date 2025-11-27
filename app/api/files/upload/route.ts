@@ -1,5 +1,5 @@
 import { auth } from '@/app/(auth)/auth';
-import { adminStorage } from '@/lib/firebase/admin';
+import { createSupabaseServiceClient } from '@/lib/supabase/clients';
 
 export const maxDuration = 60;
 
@@ -38,53 +38,40 @@ export async function POST(request: Request) {
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const storagePath = `uploads/${session.user.email}/${timestamp}-${sanitizedName}`;
 
-    console.log(`[api/files/upload] Uploading to Firebase Storage: ${storagePath}`);
+    console.log(`[api/files/upload] Uploading to Supabase Storage: ${storagePath}`);
 
-    try {
-      // Get the bucket from admin storage
-      const bucket = adminStorage.bucket();
-      const file_ref = bucket.file(storagePath);
-
-      console.log(`[api/files/upload] Creating Firebase storage reference and uploading...`);
-      
-      // Upload file with metadata
-      const metadata = {
+    const supabase = createSupabaseServiceClient();
+    const { error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(storagePath, Buffer.from(uint8Array), {
         contentType: file.type || 'application/octet-stream',
-        metadata: {
-          uploadedBy: session.user.email,
-          originalName: file.name,
-        },
-      };
-
-      await file_ref.save(Buffer.from(uint8Array), { metadata });
-      console.log(`[api/files/upload] Upload successful, generating signed URL...`);
-
-      // Generate a signed URL that expires in 7 days
-      const [signedUrl] = await file_ref.getSignedUrl({
-        version: 'v4',
-        action: 'read',
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+        upsert: true,
       });
 
-      console.log(`[api/files/upload] Signed URL obtained: ${signedUrl.substring(0, 50)}...`);
-
-      return new Response(
-        JSON.stringify({
-          url: signedUrl,
-          name: file.name,
-          contentType: file.type || 'application/octet-stream',
-          size: file.size,
-          storagePath,
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    } catch (storageError) {
-      console.error('[api/files/upload] Firebase Storage error:', storageError);
-      throw storageError;
+    if (uploadError) {
+      console.error('[api/files/upload] Supabase Storage error:', uploadError);
+      throw uploadError;
     }
+
+    const { data: signed } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(storagePath, 60 * 60 * 24 * 7); // 7 days
+
+    const signedUrl = signed?.signedUrl;
+
+    return new Response(
+      JSON.stringify({
+        url: signedUrl || null,
+        name: file.name,
+        contentType: file.type || 'application/octet-stream',
+        size: file.size,
+        storagePath,
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('[api/files/upload] Error uploading file:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';

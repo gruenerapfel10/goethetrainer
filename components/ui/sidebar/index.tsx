@@ -1,3 +1,5 @@
+"use client"
+
 // Core components
 export {
   Sidebar,

@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'sonner';
 import { NextIntlClientProvider } from 'next-intl';
-import { SessionProvider } from 'next-auth/react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { NotificationInitializer } from '@/components/notification-initializer';
 import { DeepResearchProvider } from '@/lib/deep-research-context';
@@ -31,7 +30,6 @@ export default async function RootLayout({
       <head />
       <body className="min-h-screen bg-background text-foreground antialiased">
         <NextIntlClientProvider messages={messages}>
-          <SessionProvider>
             <ThemeProvider themes={themes} attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
               <Toaster />
               <NotificationInitializer />
@@ -41,7 +39,6 @@ export default async function RootLayout({
                 </GlobalContextMenuProvider>
               </DeepResearchProvider>
             </ThemeProvider>
-          </SessionProvider>
         </NextIntlClientProvider>
       </body>
     </html>

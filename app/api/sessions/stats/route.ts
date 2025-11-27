@@ -6,11 +6,11 @@ export async function GET() {
   try {
     const session = await auth();
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const stats = await getUserSessionStats(session.user.email);
+    const stats = await getUserSessionStats(session.user.id);
     return NextResponse.json(stats);
   } catch (error) {
     console.error('Error getting session stats:', error);

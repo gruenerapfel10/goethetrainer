@@ -1,8 +1,9 @@
 import 'server-only';
 
 import { genSaltSync, hashSync } from 'bcrypt-ts';
-import { adminDb } from '@/lib/firebase/admin';
-import { Timestamp, FieldValue } from 'firebase-admin/firestore';
+import { createSupabaseServiceClient } from '@/lib/supabase/clients';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+import { myProvider } from '@/lib/ai/models';
 
 export interface User {
   id: string;
@@ -24,11 +25,13 @@ export interface Chat {
   isPinned: boolean;
   createdAt: Date;
   updatedAt: Date;
+  modelId?: string | null;
 }
 
 export interface DBMessage {
   id: string;
   chatId: string;
+  userId?: string | null;
   role: 'user' | 'assistant';
   parts: any[];
   attachments?: any[];
@@ -57,131 +60,95 @@ export interface ReadingListEntry {
   createdAt: Date;
 }
 
-function readingListCollection(userId: string) {
-  return adminDb.collection('users').doc(userId).collection('readingList');
+function mapProfile(row: any): User {
+  return {
+    id: row.id,
+    email: row.email,
+    password: row.password ?? null,
+    isAdmin: row.is_admin ?? false,
+    createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+    updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+  };
 }
 
 export async function getUser(email: string): Promise<Array<User>> {
-  try {
-    const normalizedEmail = email.toLowerCase().trim();
-    const querySnapshot = await adminDb.collection('users').where('email', '==', normalizedEmail).get();
-    
-    if (querySnapshot.empty) return [];
-    
-    const userDoc = querySnapshot.docs[0];
-    const data = userDoc.data();
-    return [{
-      id: userDoc.id,
-      email: data.email,
-      password: data.password || null,
-      isAdmin: data.isAdmin,
-      createdAt: (data.createdAt as Timestamp).toDate(),
-      updatedAt: (data.createdAt as Timestamp).toDate(),
-    }] as User[];
-  } catch (error) {
-    console.error('Failed to get user from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', email.trim().toLowerCase())
+    .limit(1);
+  if (error) throw error;
+  return data?.map(mapProfile) ?? [];
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  try {
-    const normalizedEmail = email.toLowerCase().trim();
-    const querySnapshot = await adminDb.collection('users').where('email', '==', normalizedEmail).get();
-    
-    if (querySnapshot.empty) return null;
-    
-    const userDoc = querySnapshot.docs[0];
-    const data = userDoc.data();
-    return {
-      id: userDoc.id,
-      email: data.email,
-      password: data.password || null,
-      isAdmin: data.isAdmin,
-      createdAt: (data.createdAt as Timestamp).toDate(),
-      updatedAt: (data.createdAt as Timestamp).toDate(),
-    };
-  } catch (error) {
-    console.error('Failed to get user by email from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .ilike('email', email.trim().toLowerCase())
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data ? mapProfile(data) : null;
 }
 
 export async function createUser(emailOrData: string | { email: string; isAdmin?: boolean }, password?: string) {
-  try {
-    const normalizedEmail = typeof emailOrData === 'string' 
-      ? emailOrData.toLowerCase().trim()
-      : emailOrData.email.toLowerCase().trim();
-    
-    const isAdmin = typeof emailOrData === 'object' ? emailOrData.isAdmin || false : false;
-    
-    // If password is provided, hash it; otherwise create user without password (for OAuth)
-    let hashedPassword = null;
-    if (typeof emailOrData === 'string' && password) {
-      const salt = genSaltSync(10);
-      hashedPassword = hashSync(password, salt);
-    }
-    
-    const userRef = adminDb.collection('users').doc();
-    
-    await userRef.set({
-      email: normalizedEmail,
-      password: hashedPassword,
-      isAdmin: isAdmin,
-      createdAt: Timestamp.now(),
-    });
-    return [];
-  } catch (error) {
-    console.error('Failed to create user in Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const email = (typeof emailOrData === 'string' ? emailOrData : emailOrData.email).toLowerCase().trim();
+  const isAdmin = typeof emailOrData === 'object' ? emailOrData.isAdmin ?? false : false;
+
+  // Create Supabase Auth user
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    app_metadata: { is_admin: isAdmin },
+    user_metadata: { is_admin: isAdmin },
+  });
+  if (error) throw error;
+  const userId = data.user?.id ?? crypto.randomUUID();
+
+  // Hash password for local profile record
+  const hashedPassword = password ? hashSync(password, genSaltSync(10)) : null;
+
+  const { error: upsertError } = await supabase.from('profiles').upsert({
+    id: userId,
+    email,
+    is_admin: isAdmin,
+    password: hashedPassword,
+  });
+  if (upsertError) throw upsertError;
+  return [];
 }
 
 export async function saveChat({
   id,
   userId,
   title,
+  modelId,
 }: {
   id: string;
   userId: string;
   title: string;
+  modelId?: string;
 }) {
-  try {
-    const now = new Date();
-    const chatRef = adminDb.collection('chats').doc(id);
-    
-    await chatRef.set({
-      id,
-      userId,
-      title,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now),
-      visibility: 'private',
-      isPinned: false,
-    });
-    return [{ id }];
-  } catch (error) {
-    console.error('Failed to save chat to Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase.from('chats').insert({
+    id,
+    user_id: userId,
+    title,
+    model_id: modelId ?? null,
+  });
+  if (error) throw error;
+  return [{ id }];
 }
 
 export async function deleteChatById({ id }: { id: string }) {
-  try {
-    const messagesSnapshot = await adminDb.collection('chats').doc(id).collection('messages').get();
-    const deletePromises = messagesSnapshot.docs.map(messageDoc => messageDoc.ref.delete());
-    await Promise.all(deletePromises);
-    
-    const votesSnapshot = await adminDb.collection('chats').doc(id).collection('votes').get();
-    const deleteVotePromises = votesSnapshot.docs.map(voteDoc => voteDoc.ref.delete());
-    await Promise.all(deleteVotePromises);
-    
-    await adminDb.collection('chats').doc(id).delete();
-    return { id };
-  } catch (error) {
-    console.error('Failed to delete chat by id from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase.from('chats').delete().eq('id', id);
+  if (error) throw error;
+  return { id };
 }
 
 export async function addReadingListEntry({
@@ -193,50 +160,20 @@ export async function addReadingListEntry({
   text: string;
   translation: string;
 }): Promise<ReadingListEntry> {
-  try {
-    const now = Timestamp.now();
-    const normalizedText = text.trim().toLowerCase();
-    const existingSnapshot = await readingListCollection(userId)
-      .where('normalizedText', '==', normalizedText)
-      .limit(1)
-      .get();
-
-    if (!existingSnapshot.empty) {
-      const doc = existingSnapshot.docs[0];
-      await doc.ref.update({
-        text,
-        translation,
-        createdAt: now,
-        normalizedText,
-      });
-      return {
-        id: doc.id,
-        userId,
-        text,
-        translation,
-        createdAt: now.toDate(),
-      };
-    }
-
-    const docRef = readingListCollection(userId).doc();
-    await docRef.set({
-      text,
-      translation,
-      createdAt: now,
-      normalizedText,
-    });
-
-    return {
-      id: docRef.id,
-      userId,
-      text,
-      translation,
-      createdAt: now.toDate(),
-    };
-  } catch (error) {
-    console.error('Failed to add reading list entry:', error);
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('reading_list')
+    .insert({ id: crypto.randomUUID(), user_id: userId, text, translation })
+    .select()
+    .single();
+  if (error) throw error;
+  return {
+    id: data.id,
+    userId,
+    text: data.text,
+    translation: data.translation,
+    createdAt: new Date(data.created_at),
+  };
 }
 
 export async function updateReadingListEntry({
@@ -250,31 +187,23 @@ export async function updateReadingListEntry({
   text: string;
   translation: string;
 }): Promise<ReadingListEntry | null> {
-  try {
-    const docRef = readingListCollection(userId).doc(entryId);
-    const snapshot = await docRef.get();
-    if (!snapshot.exists) {
-      return null;
-    }
-    const normalizedText = text.trim().toLowerCase();
-    const now = Timestamp.now();
-    await docRef.update({
-      text,
-      translation,
-      normalizedText,
-      createdAt: now,
-    });
-    return {
-      id: entryId,
-      userId,
-      text,
-      translation,
-      createdAt: now.toDate(),
-    };
-  } catch (error) {
-    console.error('Failed to update reading list entry:', error);
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('reading_list')
+    .update({ text, translation })
+    .eq('id', entryId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    userId,
+    text: data.text,
+    translation: data.translation,
+    createdAt: new Date(data.created_at),
+  };
 }
 
 export async function getReadingListEntries({
@@ -288,51 +217,35 @@ export async function getReadingListEntries({
   cursor?: string | null;
   search?: string | null;
 }): Promise<{ items: ReadingListEntry[]; nextCursor: string | null }> {
-  try {
-    const fetchLimit = search ? limit * 3 + 1 : limit + 1;
-    let query = readingListCollection(userId)
-      .orderBy('createdAt', 'desc')
-      .limit(fetchLimit);
+  const supabase = createSupabaseServiceClient();
+  let query = supabase
+    .from('reading_list')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit + 1);
 
-    if (cursor) {
-      query = query.startAfter(Timestamp.fromMillis(Date.parse(cursor)));
-    }
-
-    const snapshot = await query.get();
-    const rawItems: ReadingListEntry[] = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userId,
-        text: data.text,
-        translation: data.translation,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-      };
-    });
-
-    const normalizedSearch = search?.trim().toLowerCase();
-    const filtered = normalizedSearch
-      ? rawItems.filter(entry =>
-          entry.text.toLowerCase().includes(normalizedSearch) ||
-          entry.translation.toLowerCase().includes(normalizedSearch)
-        )
-      : rawItems;
-
-    const limitedItems = filtered.slice(0, limit);
-    const hasMore = filtered.length > limit;
-    const nextCursor =
-      hasMore && limitedItems.length > 0
-        ? limitedItems[limitedItems.length - 1].createdAt.toISOString()
-        : null;
-
-    return {
-      items: limitedItems,
-      nextCursor,
-    };
-  } catch (error) {
-    console.error('Failed to fetch reading list entries:', error);
-    throw error;
+  if (cursor) {
+    query = query.lt('created_at', cursor);
   }
+  if (search) {
+    query = query.or(`text.ilike.%${search}%,translation.ilike.%${search}%`);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const hasMore = data.length > limit;
+  const items = data.slice(0, limit).map(entry => ({
+    id: entry.id,
+    userId,
+    text: entry.text,
+    translation: entry.translation,
+    createdAt: new Date(entry.created_at),
+  }));
+
+  const nextCursor = hasMore ? data[limit - 1]?.created_at : null;
+  return { items, nextCursor };
 }
 
 export async function deleteReadingListEntry({
@@ -342,13 +255,13 @@ export async function deleteReadingListEntry({
   userId: string;
   entryId: string;
 }): Promise<void> {
-  try {
-    const docRef = readingListCollection(userId).doc(entryId);
-    await docRef.delete();
-  } catch (error) {
-    console.error('Failed to delete reading list entry:', error);
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('reading_list')
+    .delete()
+    .eq('id', entryId)
+    .eq('user_id', userId);
+  if (error) throw error;
 }
 
 export async function getChatsByUserId({
@@ -360,82 +273,42 @@ export async function getChatsByUserId({
   limit?: number;
   offset?: number;
 }) {
-  try {
-    const pinnedQuery = adminDb
-      .collection('chats')
-      .where('userId', '==', id)
-      .where('isPinned', '==', true)
-      .orderBy('updatedAt', 'desc')
-      .limit(limit);
-    
-    const unpinnedQuery = adminDb
-      .collection('chats')
-      .where('userId', '==', id)
-      .where('isPinned', '==', false)
-      .orderBy('updatedAt', 'desc')
-      .limit(limit);
-    
-    const [pinnedSnapshot, unpinnedSnapshot] = await Promise.all([
-      pinnedQuery.get(),
-      unpinnedQuery.get()
-    ]);
-    
-    const pinnedChats = pinnedSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userId: data.userId,
-        title: data.title,
-        customTitle: data.customTitle || null,
-        visibility: (data.visibility || 'private') as VisibilityType,
-        isPinned: data.isPinned || false,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
-      } as Chat;
-    });
-    
-    const unpinnedChats = unpinnedSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userId: data.userId,
-        title: data.title,
-        customTitle: data.customTitle || null,
-        visibility: (data.visibility || 'private') as VisibilityType,
-        isPinned: data.isPinned || false,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        updatedAt: (data.updatedAt as Timestamp).toDate(),
-      } as Chat;
-    });
-    
-    return [...pinnedChats, ...unpinnedChats].slice(offset, offset + limit);
-  } catch (error) {
-    console.error('Failed to get chats by user id from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('chats')
+    .select('*')
+    .eq('user_id', id)
+    .order('updated_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  return (data || []).map(doc => ({
+    id: doc.id,
+    userId: doc.user_id,
+    title: doc.title,
+    customTitle: doc.custom_title || null,
+    visibility: (doc.visibility || 'private') as VisibilityType,
+    isPinned: doc.is_pinned || false,
+    createdAt: new Date(doc.created_at),
+    updatedAt: new Date(doc.updated_at),
+  })) as Chat[];
 }
 
 export async function getChatById({ id }: { id: string }): Promise<Chat | null> {
-  try {
-    const chatDoc = await adminDb.collection('chats').doc(id).get();
-    
-    if (!chatDoc.exists) return null;
-    
-    const data = chatDoc.data()!;
-    return {
-      id: chatDoc.id,
-      createdAt: (data.createdAt as Timestamp).toDate(),
-      updatedAt: (data.updatedAt as Timestamp).toDate(),
-      title: data.title,
-      userId: data.userId,
-      visibility: (data.visibility || 'private') as VisibilityType,
-      isPinned: data.isPinned || false,
-      customTitle: data.customTitle || null,
-    } as Chat;
-  } catch (error) {
-    console.error('Failed to get chat by id from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.from('chats').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    createdAt: new Date(data.created_at),
+    updatedAt: new Date(data.updated_at),
+    title: data.title,
+    userId: data.user_id,
+    visibility: (data.visibility || 'private') as VisibilityType,
+    isPinned: data.is_pinned || false,
+    customTitle: data.custom_title || null,
+    modelId: data.model_id || null,
+  };
 }
 
 export async function saveMessages({
@@ -443,78 +316,59 @@ export async function saveMessages({
 }: {
   messages: Array<DBMessage>;
 }) {
-  try {
-    const results = [];
-    for (const msg of messages) {
-      try {
-        const parts = msg.parts || [{ type: 'text', text: '' }];
-        const serializedParts = JSON.parse(JSON.stringify(parts));
-        
-        const messageData: any = {
-          chatId: msg.chatId,
-          role: msg.role,
-          parts: serializedParts,
-          attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
-          processed: msg.processed || false,
-          createdAt: Timestamp.fromDate(msg.createdAt || new Date()),
-        };
-        
-        if (msg.agentType) messageData.agentType = msg.agentType;
-        if (msg.useCaseId) messageData.useCaseId = msg.useCaseId;
-        if (msg.modelId) messageData.modelId = msg.modelId;
-        if (msg.inputTokens) messageData.inputTokens = msg.inputTokens;
-        if (msg.outputTokens) messageData.outputTokens = msg.outputTokens;
-        
-        const messageRef = adminDb.collection('chats').doc(msg.chatId).collection('messages').doc(msg.id);
-        await messageRef.set(messageData);
-        
-        const chatRef = adminDb.collection('chats').doc(msg.chatId);
-        await chatRef.update({
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-        
-        results.push(msg.id);
-      } catch (err) {
-        console.error(`Failed to save message ${msg.id}`, err);
-      }
-    }
-    return results;
-  } catch (error) {
-    console.error('Failed to save messages to Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const payload = messages.map(msg => ({
+    id: msg.id,
+    chat_id: msg.chatId,
+    user_id: msg.userId ?? null,
+    role: msg.role,
+    parts: msg.parts ?? [{ type: 'text', text: '' }],
+    attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
+    processed: msg.processed || false,
+    created_at: msg.createdAt || new Date(),
+    agent_type: msg.agentType || null,
+    model_id: msg.modelId || null,
+    input_tokens: msg.inputTokens || 0,
+    output_tokens: msg.outputTokens || 0,
+  }));
+
+  const { error } = await supabase.from('messages').upsert(payload);
+  if (error) throw error;
+
+  const { error: chatUpdateError } = await supabase
+    .from('chats')
+    .update({ updated_at: new Date() })
+    .in(
+      'id',
+      messages.map(m => m.chatId),
+    );
+  if (chatUpdateError) throw chatUpdateError;
+
+  return messages.map(m => m.id);
 }
 
 export async function getMessagesByChatId({ id }: { id: string }) {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(id)
-      .collection('messages')
-      .orderBy('createdAt', 'asc')
-      .get();
-    
-    return querySnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        chatId: data.chatId,
-        role: data.role,
-        parts: data.parts,
-        attachments: data.attachments,
-        createdAt: (data.createdAt as Timestamp).toDate(),
-        agentType: data.agentType || null,
-        useCaseId: data.useCaseId || null,
-        modelId: data.modelId || null,
-        inputTokens: data.inputTokens || 0,
-        outputTokens: data.outputTokens || 0,
-        processed: data.processed || false,
-      };
-    });
-  } catch (error) {
-    console.error('Failed to get messages by chat id from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('chat_id', id)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data || []).map(doc => ({
+    id: doc.id,
+    chatId: doc.chat_id,
+    role: doc.role,
+    parts: doc.parts,
+    attachments: doc.attachments,
+    createdAt: new Date(doc.created_at),
+    agentType: doc.agent_type || null,
+    useCaseId: doc.use_case_id || null,
+    modelId: doc.model_id || null,
+    inputTokens: doc.input_tokens || 0,
+    outputTokens: doc.output_tokens || 0,
+    processed: doc.processed || false,
+  }));
 }
 
 export async function getPaginatedMessagesByChatId(
@@ -522,69 +376,46 @@ export async function getPaginatedMessagesByChatId(
   limit = 50,
   offset = 0
 ) {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('createdAt', 'desc')
-      .get();
-    
-    const paginatedMessages = querySnapshot.docs
-      .slice(offset, offset + limit)
-      .map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          chatId: data.chatId,
-          role: data.role,
-          parts: data.parts,
-          attachments: data.attachments,
-          createdAt: (data.createdAt as Timestamp).toDate(),
-          agentType: data.agentType || null,
-          useCaseId: data.useCaseId || null,
-          modelId: data.modelId || null,
-        };
-      });
-    
-    return paginatedMessages;
-  } catch (error) {
-    console.error('Failed to get paginated messages from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('chat_id', chatId)
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw error;
+  return (data || []).map(doc => ({
+    id: doc.id,
+    chatId: doc.chat_id,
+    role: doc.role,
+    parts: doc.parts,
+    attachments: doc.attachments,
+    createdAt: new Date(doc.created_at),
+    agentType: doc.agent_type || null,
+    useCaseId: doc.use_case_id || null,
+    modelId: doc.model_id || null,
+  }));
 }
 
 export async function getMessageById({ id }: { id: string }): Promise<DBMessage | null> {
-  try {
-    // Search across all chats for this message (inefficient but works for now)
-    const chatsSnapshot = await adminDb.collection('chats').get();
-    
-    for (const chatDoc of chatsSnapshot.docs) {
-      const messageDoc = await chatDoc.ref.collection('messages').doc(id).get();
-      if (messageDoc.exists) {
-        const data = messageDoc.data()!;
-        return {
-          id: messageDoc.id,
-          chatId: data.chatId,
-          role: data.role,
-          parts: data.parts,
-          attachments: data.attachments || [],
-          createdAt: (data.createdAt as Timestamp).toDate(),
-          agentType: data.agentType || undefined,
-          useCaseId: data.useCaseId || null,
-          modelId: data.modelId || undefined,
-          inputTokens: data.inputTokens || 0,
-          outputTokens: data.outputTokens || 0,
-          processed: data.processed || false,
-        } as DBMessage;
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Failed to get message by id from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.from('messages').select('*').eq('id', id).single();
+  if (error && error.code !== 'PGRST116') throw error;
+  if (!data) return null;
+  return {
+    id: data.id,
+    chatId: data.chat_id,
+    role: data.role,
+    parts: data.parts,
+    attachments: data.attachments || [],
+    createdAt: new Date(data.created_at),
+    agentType: data.agent_type || undefined,
+    useCaseId: data.use_case_id || null,
+    modelId: data.model_id || undefined,
+    inputTokens: data.input_tokens || 0,
+    outputTokens: data.output_tokens || 0,
+    processed: data.processed || false,
+  } as DBMessage;
 }
 
 export async function deleteMessagesByChatIdAfterTimestamp({
@@ -594,22 +425,14 @@ export async function deleteMessagesByChatIdAfterTimestamp({
   chatId: string;
   timestamp: Date;
 }) {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .where('createdAt', '>', Timestamp.fromDate(timestamp))
-      .get();
-    
-    const deletePromises = querySnapshot.docs.map(doc => doc.ref.delete());
-    await Promise.all(deletePromises);
-    
-    return querySnapshot.docs.length;
-  } catch (error) {
-    console.error('Failed to delete messages from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('messages')
+    .delete()
+    .eq('chat_id', chatId)
+    .gt('created_at', timestamp.toISOString());
+  if (error) throw error;
+  return null;
 }
 
 export async function updateChatVisiblityById({
@@ -619,14 +442,13 @@ export async function updateChatVisiblityById({
   chatId: string;
   visibility: string;
 }) {
-  try {
-    const chatRef = adminDb.collection('chats').doc(chatId);
-    await chatRef.update({ visibility, updatedAt: FieldValue.serverTimestamp() });
-    return null;
-  } catch (error) {
-    console.error('Failed to update chat visibility in Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('chats')
+    .update({ visibility, updated_at: new Date() })
+    .eq('id', chatId);
+  if (error) throw error;
+  return null;
 }
 
 export async function updateChatTitle({
@@ -638,18 +460,13 @@ export async function updateChatTitle({
   title?: string;
   customTitle?: string;
 }) {
-  try {
-    const chatRef = adminDb.collection('chats').doc(chatId);
-    const updates: any = { updatedAt: FieldValue.serverTimestamp() };
-    if (title) updates.title = title;
-    if (customTitle) updates.customTitle = customTitle;
-    
-    await chatRef.update(updates);
-    return null;
-  } catch (error) {
-    console.error('Failed to update chat title in Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const updates: any = { updated_at: new Date() };
+  if (title) updates.title = title;
+  if (customTitle) updates.custom_title = customTitle;
+  const { error } = await supabase.from('chats').update(updates).eq('id', chatId);
+  if (error) throw error;
+  return null;
 }
 
 export async function updateChat({
@@ -659,17 +476,12 @@ export async function updateChat({
   id: string;
   modelId?: string;
 }) {
-  try {
-    const chatRef = adminDb.collection('chats').doc(id);
-    const updates: any = { updatedAt: FieldValue.serverTimestamp() };
-    if (modelId) updates.modelId = modelId;
-    
-    await chatRef.update(updates);
-    return null;
-  } catch (error) {
-    console.error('Failed to update chat in Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const updates: any = { updated_at: new Date() };
+  if (modelId) updates.model_id = modelId;
+  const { error } = await supabase.from('chats').update(updates).eq('id', id);
+  if (error) throw error;
+  return null;
 }
 
 export async function toggleChatPinned({
@@ -677,20 +489,15 @@ export async function toggleChatPinned({
 }: {
   chatId: string;
 }) {
-  try {
-    const chatDoc = await adminDb.collection('chats').doc(chatId).get();
-    if (!chatDoc.exists) throw new Error('Chat not found');
-    
-    const data = chatDoc.data()!;
-    await adminDb.collection('chats').doc(chatId).update({
-      isPinned: !data.isPinned,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    return null;
-  } catch (error) {
-    console.error('Failed to toggle chat pinned in Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.from('chats').select('is_pinned').eq('id', chatId).single();
+  if (error) throw error;
+  const { error: updateError } = await supabase
+    .from('chats')
+    .update({ is_pinned: !data.is_pinned, updated_at: new Date() })
+    .eq('id', chatId);
+  if (updateError) throw updateError;
+  return null;
 }
 
 export async function searchChatsByTitle({
@@ -700,140 +507,85 @@ export async function searchChatsByTitle({
   userId: string;
   query: string;
 }) {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .where('userId', '==', userId)
-      .orderBy('updatedAt', 'desc')
-      .limit(100)
-      .get();
-    
-    const filtered = querySnapshot.docs
-      .filter(doc => {
-        const data = doc.data();
-        return (
-          data.title.toLowerCase().includes(query.toLowerCase()) ||
-          (data.customTitle?.toLowerCase().includes(query.toLowerCase()))
-        );
-      })
-      .map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          userId: data.userId,
-          title: data.title,
-          customTitle: data.customTitle || null,
-          visibility: data.visibility,
-          isPinned: data.isPinned,
-          createdAt: (data.createdAt as Timestamp).toDate(),
-          updatedAt: (data.updatedAt as Timestamp).toDate(),
-        };
-      });
-    
-    return filtered;
-  } catch (error) {
-    console.error('Failed to search chats from Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('chats')
+    .select('*')
+    .eq('user_id', userId)
+    .ilike('title', `%${query}%`)
+    .order('updated_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data || []).map(doc => ({
+    id: doc.id,
+    userId: doc.user_id,
+    title: doc.title,
+    customTitle: doc.custom_title || null,
+    visibility: doc.visibility,
+    isPinned: doc.is_pinned,
+    createdAt: new Date(doc.created_at),
+    updatedAt: new Date(doc.updated_at),
+  }));
 }
 
 export async function withinContext(chatId: string, maxTokens = 150000): Promise<{
   messageIds: string[];
   totalTokens: number;
 }> {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('createdAt', 'asc')
-      .get();
-    
-    const messages = querySnapshot.docs.map(doc => doc.data());
-    const messageIds: string[] = [];
-    let totalTokens = 0;
-    
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      const estimatedTokens = JSON.stringify(msg).length / 4;
-      
-      if (totalTokens + estimatedTokens > maxTokens) break;
-      
-      messageIds.unshift(querySnapshot.docs[i].id);
-      totalTokens += estimatedTokens;
-    }
-    
-    return { messageIds, totalTokens };
-  } catch (error) {
-    console.error('Failed to check context in Firestore');
-    throw error;
+  const messages = await getMessagesByChatId({ id: chatId });
+  const messageIds: string[] = [];
+  let totalTokens = 0;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const estimatedTokens = JSON.stringify(msg).length / 4;
+    if (totalTokens + estimatedTokens > maxTokens) break;
+    messageIds.unshift(msg.id);
+    totalTokens += estimatedTokens;
   }
+
+  return { messageIds, totalTokens };
 }
 
 export async function getAttachmentsFromDb(chatId: string) {
-  try {
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .get();
-    
-    const attachments: any[] = [];
-    querySnapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.attachments && Array.isArray(data.attachments)) {
-        attachments.push(...data.attachments);
-      }
-    });
-    
-    return attachments;
-  } catch (error) {
-    console.error('Failed to get attachments from Firestore');
-    throw error;
-  }
+  const messages = await getMessagesByChatId({ id: chatId });
+  const attachments: any[] = [];
+  messages.forEach(msg => {
+    if (msg.attachments && Array.isArray(msg.attachments)) {
+      attachments.push(...msg.attachments);
+    }
+  });
+  return attachments;
 }
 
 export async function getDocumentsByChatId({ chatId }: { chatId: string }) {
-  try {
-    // Assuming documents are stored as subcollection in chats
-    const querySnapshot = await adminDb
-      .collection('chats')
-      .doc(chatId)
-      .collection('documents')
-      .get();
-    
-    return querySnapshot.docs.map(doc => doc.data()) || [];
-  } catch (error) {
-    console.error('Failed to get documents by chat id from Firestore');
-    return [];
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('documents')
+    .select('*')
+    .eq('chat_id', chatId);
+  if (error) throw error;
+  return data || [];
 }
 
 export async function getSystemPromptByAssistantId(assistantId: string): Promise<string | null> {
-  try {
-    const docSnapshot = await adminDb.collection('systemPrompts').doc(assistantId).get();
-    
-    if (!docSnapshot.exists) return null;
-    
-    const data = docSnapshot.data();
-    return data?.prompt || null;
-  } catch (error) {
-    console.error('Failed to get system prompt from Firestore');
-    return null;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('system_prompts')
+    .select('prompt')
+    .eq('assistant_id', assistantId)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data?.prompt || null;
 }
 
 export async function saveSystemPrompt(assistantId: string, prompt: string) {
-  try {
-    await adminDb.collection('systemPrompts').doc(assistantId).set({
-      prompt,
-      updatedAt: Timestamp.now(),
-    });
-    return null;
-  } catch (error) {
-    console.error('Failed to save system prompt to Firestore');
-    throw error;
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('system_prompts')
+    .upsert({ assistant_id: assistantId, prompt, updated_at: new Date() });
+  if (error) throw error;
+  return null;
 }
 
 export interface Document {
@@ -852,80 +604,82 @@ export interface Document {
 }
 
 export async function saveDocument(doc: Partial<Document> & { id: string }): Promise<void> {
-  try {
-    const { version, ...docData } = doc;
-    
-    if (version) {
-      const parentDocId = doc.id.split('-v')[0];
-      const versionId = `v${version}`;
-      
-      await adminDb.collection('documents').doc(parentDocId).collection('versions').doc(versionId).set({
-        ...docData,
-        version,
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
-      
-      await adminDb.collection('documents').doc(parentDocId).set({
-        title: doc.title,
-        kind: doc.kind,
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
-    } else {
-      await adminDb.collection('documents').doc(doc.id).set({
-        ...docData,
-        updatedAt: Timestamp.now(),
-      }, { merge: true });
-    }
-  } catch (error) {
-    console.error('Failed to save document to Firestore');
-    throw error;
+  const supabase = createSupabaseServiceClient();
+  const { version, ...docData } = doc;
+
+  if (version) {
+    await supabase.from('document_versions').upsert({
+      id: crypto.randomUUID(),
+      document_id: doc.id,
+      content: doc.content,
+      version,
+      author: doc.author,
+      is_working_version: doc.isWorkingVersion,
+      forked_from_version: doc.forkedFromVersion,
+    });
+    await supabase.from('documents').upsert({
+      id: doc.id,
+      title: doc.title,
+      kind: doc.kind,
+      user_id: doc.userId,
+      updated_at: new Date(),
+    });
+  } else {
+    await supabase.from('documents').upsert({
+      id: doc.id,
+      title: doc.title,
+      kind: doc.kind,
+      user_id: doc.userId,
+      updated_at: new Date(),
+    });
   }
 }
 
 export async function getDocumentsById({ id }: { id: string }): Promise<Document[]> {
-  try {
-    const versionsSnapshot = await adminDb.collection('documents').doc(id).collection('versions').orderBy('version').get();
-    
-    if (versionsSnapshot.empty) {
-      const docSnapshot = await adminDb.collection('documents').doc(id).get();
-      if (!docSnapshot.exists) return [];
-      const data = docSnapshot.data();
-      return [{
-        id: docSnapshot.id,
-        title: data?.title || '',
-        content: data?.content || '',
-        kind: data?.kind,
-        userId: data?.userId,
-        chatId: data?.chatId,
-        author: data?.author as 'user' | 'ai' | undefined,
+  const supabase = createSupabaseServiceClient();
+
+  const { data: versions, error } = await supabase
+    .from('document_versions')
+    .select('*')
+    .eq('document_id', id)
+    .order('version');
+
+  if (error) throw error;
+
+  if (!versions || versions.length === 0) {
+    const { data: doc } = await supabase.from('documents').select('*').eq('id', id).single();
+    if (!doc) return [];
+    return [
+      {
+        id: doc.id,
+        title: doc.title || '',
+        content: doc.content || '',
+        kind: doc.kind,
+        userId: doc.user_id,
+        chatId: doc.chat_id,
+        author: doc.author as 'user' | 'ai' | undefined,
         version: 1,
         isWorkingVersion: true,
-        createdAt: (data?.createdAt as Timestamp)?.toDate() || new Date(),
-        updatedAt: (data?.updatedAt as Timestamp)?.toDate() || new Date(),
-      }];
-    }
-    
-    return versionsSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: data.id || doc.ref.parent.parent?.id || '',
-        title: data.title || '',
-        content: data.content || '',
-        kind: data.kind,
-        userId: data.userId,
-        chatId: data.chatId,
-        author: data.author as 'user' | 'ai' | undefined,
-        version: data.version || 1,
-        isWorkingVersion: data.isWorkingVersion || false,
-        forkedFromVersion: data.forkedFromVersion,
-        createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-        updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-      };
-    });
-  } catch (error) {
-    console.error('Failed to get documents from Firestore');
-    return [];
+        createdAt: doc.created_at ? new Date(doc.created_at) : new Date(),
+        updatedAt: doc.updated_at ? new Date(doc.updated_at) : new Date(),
+      },
+    ];
   }
+
+  return versions.map(doc => ({
+    id: doc.document_id,
+    title: '',
+    content: doc.content || '',
+    kind: undefined,
+    userId: undefined,
+    chatId: undefined,
+    author: doc.author as 'user' | 'ai' | undefined,
+    version: doc.version || 1,
+    isWorkingVersion: doc.is_working_version || false,
+    forkedFromVersion: doc.forked_from_version,
+    createdAt: doc.created_at ? new Date(doc.created_at) : new Date(),
+    updatedAt: doc.created_at ? new Date(doc.created_at) : new Date(),
+  }));
 }
 
 export async function getDocumentById({ id }: { id: string }): Promise<Document | null> {
@@ -938,7 +692,7 @@ export function getWorkingVersion(): string {
 }
 
 export async function saveSuggestions(data: { suggestions: any[]; userId?: string }): Promise<void> {
-  // Stub function for suggestions
+  console.log('[supabase] saveSuggestions stub', data);
 }
 
 export interface Suggestion {

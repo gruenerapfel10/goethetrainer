@@ -1,14 +1,12 @@
 import 'server-only';
 
-import { adminDb } from '@/lib/firebase/admin';
-import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
+import { createSupabaseServiceClient } from '@/lib/supabase/clients';
 import type {
   Session,
   SessionStats,
   SessionAnalytics,
   SessionType,
 } from './types';
-import { sanitizeForFirestore } from './utils';
 
 const SESSION_TYPES: SessionType[] = ['reading', 'listening', 'writing', 'speaking'];
 
@@ -23,329 +21,200 @@ const createEmptyAnalytics = (): SessionAnalytics =>
     return acc;
   }, {} as SessionAnalytics);
 
-const SESSIONS_COLLECTION = 'sessions';
-
-// Save a new session
-export async function saveSession(session: Session): Promise<void> {
-  try {
-    const cleanedSession = sanitizeForFirestore({
-      ...session,
-      startedAt: session.startedAt,
-      endedAt: session.endedAt ?? null,
-      updatedAt: new Date(),
-    });
-
-    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).set(cleanedSession);
-  } catch (error) {
-    console.error('Error saving session:', error);
-    throw new Error('Failed to save session');
-  }
+function mapSession(row: any): Session {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    status: row.status,
+    metadata: row.metadata || {},
+    data: row.data || {},
+    duration: row.duration || 0,
+    startedAt: row.started_at ? new Date(row.started_at) : new Date(),
+    endedAt: row.ended_at ? new Date(row.ended_at) : undefined,
+  } as Session;
 }
 
-// Get session by ID
+export async function saveSession(session: Session): Promise<void> {
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase.from('sessions').insert({
+    id: session.id,
+    user_id: session.userId,
+    type: session.type,
+    status: session.status,
+    metadata: session.metadata ?? {},
+    data: session.data ?? {},
+    duration: session.duration ?? 0,
+    started_at: session.startedAt ?? new Date(),
+    ended_at: session.endedAt ?? null,
+  });
+  if (error) throw error;
+}
+
 export async function getSessionById(sessionId: string): Promise<Session | null> {
-  try {
-    const doc = await adminDb.collection(SESSIONS_COLLECTION).doc(sessionId).get();
-    
-    if (!doc.exists) {
-      return null;
-    }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase.from('sessions').select('*').eq('id', sessionId).single();
+  if (error && error.code !== 'PGRST116') throw error;
+  if (!data) return null;
+  return mapSession(data);
+}
 
-    const data = doc.data();
-    const session = {
-      ...data,
-      startedAt: data?.startedAt?.toDate() || new Date(),
-      endedAt: data?.endedAt?.toDate() || undefined
-    } as Session;
-
-    console.log('[sessions][queries][getSessionById]', sessionId, {
+export async function updateSession(session: Session): Promise<void> {
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('sessions')
+    .update({
       type: session.type,
       status: session.status,
-      questions: session.data?.questions?.length ?? 0,
-      results: session.data?.results?.length ?? 0,
-    });
-    return session;
-  } catch (error) {
-    console.error('Error getting session:', error);
-    return null;
-  }
+      metadata: session.metadata ?? {},
+      data: session.data ?? {},
+      duration: session.duration ?? 0,
+      started_at: session.startedAt ?? new Date(),
+      ended_at: session.endedAt ?? null,
+      updated_at: new Date(),
+    })
+    .eq('id', session.id);
+  if (error) throw error;
 }
 
-// Update existing session
-export async function updateSession(session: Session): Promise<void> {
-  try {
-    const cleanedSession = sanitizeForFirestore({
-      ...session,
-      updatedAt: new Date(),
-    });
-
-    await adminDb.collection(SESSIONS_COLLECTION).doc(session.id).update(cleanedSession);
-  } catch (error) {
-    console.error('Error updating session:', error);
-    throw new Error('Failed to update session');
-  }
-}
-
-// Get user's sessions by type
 export async function getUserSessions(
   userId: string,
   type?: SessionType,
   limit = 20
 ): Promise<Session[]> {
-  try {
-    const results: Session[] = [];
-    let cursor: QueryDocumentSnapshot | undefined;
-    const pageSize = 50; // Fetch in batches
+  const supabase = createSupabaseServiceClient();
+  let query = supabase
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(limit);
 
-    // If limit is explicitly set to a small number, respect it. Otherwise fetch all.
-    const shouldFetchAll = limit >= 20; // Default behavior is to fetch all
-
-    while (true) {
-      let query = adminDb
-        .collection(SESSIONS_COLLECTION)
-        .where('userId', '==', userId)
-        .orderBy('startedAt', 'desc');
-
-      if (cursor) {
-        query = query.startAfter(cursor);
-      }
-
-      const snapshot = await query.limit(pageSize).get();
-      if (snapshot.empty) {
-        break;
-      }
-
-      const page = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          ...data,
-          startedAt: data.startedAt?.toDate() || new Date(),
-          endedAt: data.endedAt?.toDate() || undefined,
-        } as Session;
-      });
-
-      for (const session of page) {
-        if (type && session.type !== type) {
-          continue;
-        }
-        results.push(session);
-      }
-
-      const lastDoc = snapshot.docs[snapshot.docs.length - 1];
-      if (!lastDoc || snapshot.size < pageSize) {
-        break;
-      }
-      cursor = lastDoc;
-    }
-
-    console.log('[sessions][queries][getUserSessions]', {
-      userId,
-      type,
-      requested: limit,
-      returned: results.length,
-      first: results[0]?.id,
-      firstResults: results[0]?.data?.results?.length ?? 0,
-    });
-
-    return results;
-  } catch (error) {
-    console.error('Error getting user sessions:', error);
-    return [];
+  if (type) {
+    query = query.eq('type', type);
   }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(mapSession);
 }
 
-// Get user's active sessions
 export async function getActiveSessions(userId: string): Promise<Session[]> {
-  try {
-    // Simplified query to avoid index requirement
-    const snapshot = await adminDb.collection(SESSIONS_COLLECTION)
-      .where('userId', '==', userId)
-      .get();
-
-    // Filter active sessions in memory
-    const sessions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        startedAt: data.startedAt?.toDate() || new Date(),
-        endedAt: data.endedAt?.toDate() || undefined
-      } as Session;
-    });
-
-    // Filter for active/paused sessions and sort by startedAt
-    return sessions
-      .filter(s => s.status === 'active' || s.status === 'paused')
-      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-  } catch (error) {
-    console.error('Error getting active sessions:', error);
-    return [];
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .in('status', ['active', 'paused'])
+    .order('started_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapSession);
 }
 
-// Get user session statistics
 export async function getUserSessionStats(userId: string): Promise<SessionStats> {
-  try {
-    const snapshot = await adminDb.collection(SESSIONS_COLLECTION)
-      .where('userId', '==', userId)
-      .get();
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId);
+  if (error) throw error;
 
-    const sessions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        startedAt: data.startedAt?.toDate() || new Date(),
-        endedAt: data.endedAt?.toDate() || undefined
-      } as Session;
-    });
+  const sessions = (data || []).map(mapSession);
+  const completedSessions = sessions.filter(s => s.status === 'completed');
+  const totalDuration = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
 
-    const completedSessions = sessions.filter(s => s.status === 'completed');
-    const totalDuration = sessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-    
-    // Calculate streak
-    const sortedSessions = sessions
-      .filter(s => s.status === 'completed')
-      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-    
-    let streakDays = 0;
-    if (sortedSessions.length > 0) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      let currentDate = new Date(sortedSessions[0].startedAt);
-      currentDate.setHours(0, 0, 0, 0);
-      
-      // Check if there was a session today or yesterday
-      const dayDiff = Math.floor((today.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
-      if (dayDiff <= 1) {
-        streakDays = 1;
-        
-        // Count consecutive days
-        for (let i = 1; i < sortedSessions.length; i++) {
-          const sessionDate = new Date(sortedSessions[i].startedAt);
-          sessionDate.setHours(0, 0, 0, 0);
-          
-          const diff = Math.floor((currentDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
-          
-          if (diff <= 1) {
-            if (diff === 1) {
-              streakDays++;
-              currentDate = sessionDate;
-            }
-          } else {
-            break;
-          }
+  // streak calculation
+  const sortedSessions = completedSessions.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+  let streakDays = 0;
+  if (sortedSessions.length > 0) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let currentDate = new Date(sortedSessions[0].startedAt);
+    currentDate.setHours(0, 0, 0, 0);
+    const dayDiff = Math.floor((today.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+    if (dayDiff <= 1) {
+      streakDays = 1;
+      for (let i = 1; i < sortedSessions.length; i++) {
+        const sessionDate = new Date(sortedSessions[i].startedAt);
+        sessionDate.setHours(0, 0, 0, 0);
+        const diff = Math.floor((currentDate.getTime() - sessionDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diff === 1) {
+          streakDays++;
+          currentDate = sessionDate;
+        } else {
+          break;
         }
       }
     }
-
-    // Get last session date from all sessions, not just completed
-    const lastSession = sessions.length > 0 
-      ? sessions.sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0]
-      : null;
-
-    return {
-      totalSessions: sessions.length,
-      completedSessions: completedSessions.length,
-      totalDuration,
-      averageDuration: sessions.length > 0 ? Math.round(totalDuration / sessions.length) : 0,
-      lastSessionDate: lastSession ? lastSession.startedAt : undefined,
-      streakDays
-    };
-  } catch (error) {
-    console.error('Error getting session stats:', error);
-    return {
-      totalSessions: 0,
-      completedSessions: 0,
-      totalDuration: 0,
-      averageDuration: 0,
-      streakDays: 0
-    };
   }
+
+  const lastSession = sessions.length > 0
+    ? [...sessions].sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime())[0]
+    : null;
+
+  return {
+    totalSessions: sessions.length,
+    completedSessions: completedSessions.length,
+    totalDuration,
+    averageDuration: sessions.length > 0 ? Math.round(totalDuration / sessions.length) : 0,
+    lastSessionDate: lastSession ? lastSession.startedAt : undefined,
+    streakDays,
+  };
 }
 
-// Get session analytics by type
 export async function getSessionAnalytics(
-  userId: string, 
+  userId: string,
   days = 30
 ): Promise<SessionAnalytics> {
-  try {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  const supabase = createSupabaseServiceClient();
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
 
-    const snapshot = await adminDb.collection(SESSIONS_COLLECTION)
-      .where('userId', '==', userId)
-      .where('startedAt', '>=', startDate)
-      .get();
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('started_at', startDate.toISOString());
+  if (error) throw error;
 
-    const sessions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        startedAt: data.startedAt?.toDate() || new Date(),
-        endedAt: data.endedAt?.toDate() || undefined
-      } as Session;
-    });
+  const sessions = (data || []).map(mapSession);
+  const analytics: SessionAnalytics = createEmptyAnalytics();
 
-    const analytics: SessionAnalytics = createEmptyAnalytics();
+  for (const type of SESSION_TYPES) {
+    const typeSessions = sessions.filter(s => s.type === type);
+    const completed = typeSessions.filter(s => s.status === 'completed');
+    const totalDuration = typeSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
 
-    for (const type of SESSION_TYPES) {
-      const typeSessions = sessions.filter(s => s.type === type);
-      const completed = typeSessions.filter(s => s.status === 'completed');
-      const totalDuration = typeSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
-
-      analytics[type] = {
-        count: typeSessions.length,
-        totalDuration,
-        averageDuration: typeSessions.length > 0 ? Math.round(totalDuration / typeSessions.length) : 0,
-        completionRate: typeSessions.length > 0 ? (completed.length / typeSessions.length) * 100 : 0
-      };
-    }
-
-    return analytics;
-  } catch (error) {
-    console.error('Error getting session analytics:', error);
-    return createEmptyAnalytics();
+    analytics[type] = {
+      count: typeSessions.length,
+      totalDuration,
+      averageDuration: typeSessions.length > 0 ? Math.round(totalDuration / typeSessions.length) : 0,
+      completionRate: typeSessions.length > 0 ? (completed.length / typeSessions.length) * 100 : 0,
+    };
   }
+
+  return analytics;
 }
 
-// Delete session
 export async function deleteSession(sessionId: string): Promise<void> {
-  try {
-    await adminDb.collection(SESSIONS_COLLECTION).doc(sessionId).delete();
-  } catch (error) {
-    console.error('Error deleting session:', error);
-    throw new Error('Failed to delete session');
-  }
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase.from('sessions').delete().eq('id', sessionId);
+  if (error) throw error;
 }
 
-// Get sessions within date range
 export async function getSessionsByDateRange(
   userId: string,
   startDate: Date,
   endDate: Date
 ): Promise<Session[]> {
-  try {
-    // Simplified query to avoid index requirement
-    const snapshot = await adminDb.collection(SESSIONS_COLLECTION)
-      .where('userId', '==', userId)
-      .get();
-
-    // Filter and sort in memory
-    const sessions = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        startedAt: data.startedAt?.toDate() || new Date(),
-        endedAt: data.endedAt?.toDate() || undefined
-      } as Session;
-    });
-
-    // Filter by date range and sort
-    return sessions
-      .filter(s => s.startedAt >= startDate && s.startedAt <= endDate)
-      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
-  } catch (error) {
-    console.error('Error getting sessions by date range:', error);
-    return [];
-  }
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('sessions')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('started_at', startDate.toISOString())
+    .lte('started_at', endDate.toISOString())
+    .order('started_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(mapSession);
 }

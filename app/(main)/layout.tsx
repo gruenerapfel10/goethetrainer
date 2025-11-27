@@ -12,18 +12,40 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  await auth();
 
   return (
     <LearningSessionProvider>
       <RightSidebarProvider>
-        <SidebarProvider defaultOpen={false} className="flex flex-col h-screen">
+        <SidebarProvider
+          defaultOpen={true}
+          className="flex flex-col h-screen overflow-hidden bg-[hsl(var(--content-color))]"
+        >
           <KeyboardShortcutHandler />
           <AppNavbar />
-          <div className="flex-1 min-h-0 bg-sidebar flex">
+          <div className="flex-1 min-h-0 flex bg-[hsl(var(--content-color))] overflow-hidden">
             <AppSidebar />
-            <SidebarInset className="!bg-sidebar flex flex-col flex-1 min-h-0 p-3">
-              <div className="flex-1 dark:bg-none border border-border dark:border-0 rounded-lg min-h-0 overflow-auto">
+            <SidebarInset className="relative flex flex-col flex-1 min-h-0 p-0 pb-2 pr-2 bg-[hsl(var(--content-color))] overflow-auto">
+              <div className="relative flex-1 min-h-0 overflow-auto bg-[hsl(var(--layout-color))] rounded-none border-0">
+                {/* Top vignette */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 h-16 z-20"
+                  style={{
+                    top: 'var(--page-header-offset, 0px)',
+                    background: 'linear-gradient(to bottom, hsl(var(--content-color)) 0%, transparent 70%)',
+                    opacity: 1,
+                  }}
+                />
+                {/* Bottom vignette */}
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-16 z-20"
+                  style={{
+                    background: 'linear-gradient(to top, hsl(var(--content-color)) 0%, transparent 70%)',
+                    opacity: 1,
+                  }}
+                />
                 {children}
               </div>
             </SidebarInset>

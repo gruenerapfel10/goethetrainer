@@ -10,7 +10,6 @@ import {
 } from 'ai';
 import { z } from 'zod';
 import { getChatContext } from '@/lib/ai/chat-manager';
-import type { Session } from 'next-auth';
 import {
   getAgentConfig,
   getAgentTypeFromModel,
@@ -23,7 +22,6 @@ import { streamBufferManager } from '@/lib/ai/stream-buffer';
 // Import tool implementations
 import { chartTool } from '@/lib/ai/tools/chart';
 import { getWeather } from '@/lib/ai/tools/get-weather';
-import { processFile } from '@/lib/ai/tools/process-file';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 
 export const maxDuration = 60;
@@ -31,7 +29,7 @@ export const maxDuration = 60;
 import type { AgentTools, AgentFeatures } from '@/contexts/chat-context';
 
 interface StreamAgentOptions {
-  session: Session;
+  session: { user: { id: string; email?: string | null } };
   model: LanguageModel;
   userMessage: UIMessage;
   messages: Array<UIMessage>;
@@ -69,7 +67,7 @@ async function initializeActiveTools(
 const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<any>> = {
   [ToolName.CHART]: async () => chartTool,
   [ToolName.GET_WEATHER]: async () => getWeather,
-  [ToolName.PROCESS_FILE]: async () => processFile,
+  [ToolName.PROCESS_FILE]: async () => null,
   [ToolName.CREATE_DOCUMENT]: async (session, chatId) => (await import('@/lib/ai/tools/create-document')).createDocument(session, chatId),
   [ToolName.UPDATE_DOCUMENT]: async (session, chatId) => (await import('@/lib/ai/tools/update-document')).updateDocument(session, chatId),
   [ToolName.REQUEST_SUGGESTIONS]: async () => requestSuggestions(),
@@ -77,22 +75,28 @@ const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<
   [ToolName.EXTRACT]: async () => (await import('@/lib/ai/tools/extract')).extract(),
   [ToolName.SCRAPE]: async () => (await import('@/lib/ai/tools/scrape')).scrape(),
   [ToolName.DEEP_RESEARCH]: async () => (await import('@/lib/ai/tools/deep-research')).deepResearch(),
-  [ToolName.GENERATE_IMAGE]: async () => (await import('@/lib/ai/tools/image-generation')).imageGeneration(),
-  [ToolName.EDIT_IMAGE]: async () => tool({
-    description: 'Edit existing images based on instructions',
-    inputSchema: z.object({
-      imageUrl: z.string().describe('The URL of the image to edit'),
-      instructions: z.string().describe('Instructions for how to edit the image'),
+  // Image tooling disabled for now to avoid missing module errors
+  [ToolName.GENERATE_IMAGE]: async () =>
+    tool({
+      description: 'Image generation is disabled in this deployment.',
+      inputSchema: z.object({ prompt: z.string() }),
+      execute: async () => ({
+        status: 'error',
+        message: 'Image generation is not available in this deployment.',
+      }),
     }),
-    execute: async ({ imageUrl, instructions }) => ({
-      success: true,
-      originalImageUrl: imageUrl,
-      editedImageUrl: `https://via.placeholder.com/512/e74c3c/ffffff?text=Edited+Image`,
-      instructions,
-      message: `Successfully edited image with instructions: "${instructions}"`,
-      metadata: { model: 'mock-image-editor', timestamp: new Date().toISOString() }
+  [ToolName.EDIT_IMAGE]: async () =>
+    tool({
+      description: 'Image editing is disabled in this deployment.',
+      inputSchema: z.object({
+        imageUrl: z.string().url(),
+        instructions: z.string(),
+      }),
+      execute: async () => ({
+        status: 'error',
+        message: 'Image editing is not available in this deployment.',
+      }),
     }),
-  }),
 };
 
 async function initializeTool(toolName: ToolName, session: Session, chatId: string): Promise<any> {

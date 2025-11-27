@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import { useRightSidebar } from '@/lib/right-sidebar-context';
-import { SidebarChat } from './sidebar-chat';
+import { Chat } from './chat';
 import { Sidebar } from '@/components/ui/sidebar';
 import { generateUUID, fetcher } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -55,15 +55,15 @@ export function AppRightbar() {
     }
   );
 
-  // Use the improved Sidebar component with externalOpen prop
   return (
     <Sidebar
       side="right"
       resizable={true}
       collapsible="none"
-      externalOpen={isOpen}
+      open={isOpen}
+      onOpenChange={setOpen}
       className={cn(
-        "flex-shrink-0"
+        "flex-shrink-0 bg-[hsl(var(--content-color))] text-foreground"
       )}
     >
       {isOpen && (
@@ -72,34 +72,46 @@ export function AppRightbar() {
           onValueChange={(value) => setActiveTab(value as 'chat' | 'reading')}
           className="flex h-full flex-col overflow-hidden"
         >
-          <div className="border-b border-border/60 px-4 py-3">
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="chat">Chat</TabsTrigger>
-              <TabsTrigger value="reading">Reading List</TabsTrigger>
+          <div className="px-4 py-2">
+            <TabsList className="grid grid-cols-2 bg-transparent p-0 border-0">
+              <TabsTrigger
+                value="chat"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground px-0 py-2 bg-transparent data-[state=active]:bg-transparent data-[state=inactive]:bg-transparent"
+              >
+                Chat
+              </TabsTrigger>
+              <TabsTrigger
+                value="reading"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:text-foreground data-[state=inactive]:text-muted-foreground px-0 py-2 bg-transparent data-[state=active]:bg-transparent data-[state=inactive]:bg-transparent"
+              >
+                Reading List
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="chat" className="flex-1 overflow-hidden data-[state=inactive]:hidden">
-            {chatId ? (
-              <div className="h-full">
-                <SidebarChat
-                  key={chatId}
-                  id={chatId}
-                  initialMessages={chatData?.messages || []}
-                  selectedChatModel={AgentType.GOETHE_AGENT}
-                  isReadonly={false}
-                  isAdmin={false}
-                  selectedVisibilityType="private"
-                  onChatChange={setChatId}
-                  chat={chatData?.title ? { title: chatData.title } : undefined}
-                  pendingPrompt={pendingPrompt}
-                  onPromptConsumed={() => setPendingPrompt(null)}
-                />
-              </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground px-4 text-center">
-                Chat is unavailable. Close and reopen the sidebar to start a new conversation.
-              </div>
+        <TabsContent value="chat" className="flex-1 overflow-hidden data-[state=inactive]:hidden">
+          {chatId ? (
+            <div className="h-full">
+              <Chat
+                key={chatId}
+                id={chatId}
+                initialMessages={chatData?.messages || []}
+                selectedChatModel={AgentType.GOETHE_AGENT}
+                isReadonly={false}
+                isAdmin={false}
+                selectedVisibilityType="private"
+                onChatChange={setChatId}
+                chat={chatData?.title ? { title: chatData.title } : undefined}
+                pendingPrompt={pendingPrompt}
+                onPromptConsumed={() => setPendingPrompt(null)}
+                variant="sidebar"
+                shouldUpdateUrl={false}
+              />
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground px-4 text-center">
+              Chat is unavailable. Close and reopen the sidebar to start a new conversation.
+            </div>
             )}
           </TabsContent>
 

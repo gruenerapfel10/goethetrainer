@@ -70,12 +70,23 @@ export function AllQuestionsView({
   const contextBody = isListening ? '' : primaryQuestion?.context ?? audioSource?.transcript ?? '';
   const hasGapMarkers = Boolean(!isListening && primaryQuestion?.context && /\[GAP_\d+\]/.test(primaryQuestion.context));
    const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
-   const globalOrder = useMemo(() => {
-     if (!allQuestions || allQuestions.length === 0) {
-       return new Map<string, number>();
-     }
-     return new Map(allQuestions.map((question, index) => [question.id, index]));
-   }, [allQuestions]);
+  const globalOrder = useMemo(() => {
+    if (!allQuestions || allQuestions.length === 0) {
+      return new Map<string, number>();
+    }
+    // Skip example questions in numbering: start at 1 for the first non-example
+    let counter = 1;
+    const entries: Array<[string, number]> = [];
+    allQuestions.forEach(question => {
+      if (question.isExample) {
+        entries.push([question.id, 0]);
+      } else {
+        entries.push([question.id, counter]);
+        counter += 1;
+      }
+    });
+    return new Map(entries);
+  }, [allQuestions]);
  
    useEffect(() => {
      const handleKeyDown = (e: KeyboardEvent) => {
@@ -107,9 +118,11 @@ export function AllQuestionsView({
   useEffect(() => {
     const initial: Record<string, string> = {};
     questions.forEach(question => {
-      if (question.isExample && question.exampleAnswer) {
-        initial[question.id] = question.exampleAnswer;
-      } else if (typeof question.answer === 'string' && question.answer) {
+      if (question.isExample) {
+        // Don't show example options nor prefill them into the user's answers
+        return;
+      }
+      if (typeof question.answer === 'string' && question.answer) {
         initial[question.id] = question.answer as string;
       }
     });
@@ -178,7 +191,7 @@ export function AllQuestionsView({
        {questions.map((question, qIndex) => {
          const optionLayout = question.renderConfig?.layout ?? renderLayout;
          const isHorizontal = optionLayout === 'horizontal';
-         const isExample = question.isExample === true;
+        const isExample = question.isExample === true;
 
          return (
            <div
@@ -187,12 +200,12 @@ export function AllQuestionsView({
            >
              <div className="grid grid-cols-[minmax(28px,40px)_1fr] gap-4">
                <div className="font-bold text-sm text-right pt-1">
-                 {(globalOrder.get(question.id) ?? qIndex).toString()}
+                 {(globalOrder.get(question.id) ?? qIndex + 1).toString()}
                </div>
                <div className="space-y-3">
                  {isExample && (
                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                     Beispiel
+                     Beispiel (nicht nummeriert)
                    </div>
                  )}
                  <div

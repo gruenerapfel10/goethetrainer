@@ -1,0 +1,71 @@
+# Project identifier (replace with your project ref when linking)
+project_id = "your-project-ref"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[db.pooler]
+enabled = false
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.migrations]
+enabled = true
+schema_paths = []
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = true
+ip_version = "IPv4"
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://localhost"
+
+[storage]
+enabled = true
+file_size_limit = "100MiB"
+
+[storage.buckets.chat]
+public = false
+file_size_limit = "50MiB"
+
+[storage.buckets.documents]
+public = false
+file_size_limit = "100MiB"
+allowed_mime_types = ["application/pdf", "text/plain", "application/json", "text/markdown"]
+
+[auth]
+enabled = true
+site_url = "http://localhost:3002"
+additional_redirect_urls = ["http://localhost:3000", "http://localhost:3002"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+secure_password_change = false
+
+[auth.external.azure]
+enabled = true
+client_id = "env(AZURE_AD_CLIENT_ID)"
+secret = "env(AZURE_AD_CLIENT_SECRET)"
+redirect_uri = "http://localhost:3002"

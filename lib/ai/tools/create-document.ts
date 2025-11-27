@@ -2,7 +2,6 @@ import { generateUUID } from '@/lib/utils';
 import { streamText, tool } from 'ai';
 import { smoothStream } from 'ai';
 import { z } from 'zod';
-import type { Session } from 'next-auth';
 import { myProvider } from '../models';
 import { getArtifactManager } from '@/lib/artifacts/artifact-manager';
 import { ArtifactKind } from '@/lib/artifacts/artifact-registry';
@@ -10,7 +9,7 @@ import { ArtifactKind } from '@/lib/artifacts/artifact-registry';
 const artifactKinds = Object.values(ArtifactKind) as [ArtifactKind, ...ArtifactKind[]];
 
 // Export the create document tool using native V5 generator pattern
-export const createDocument = (session: Session | null, chatId: string) => {
+export const createDocument = (session: { user: { id: string } } | null, chatId: string) => {
   return tool({
     description: 'Create a document for writing, content creation, or image generation/editing. This tool will call other functions that will generate the contents of the document based on the title and kind. For image generation or editing, use kind="image".',
     inputSchema: z.object({

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,9 +18,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Type parameter required' }, { status: 400 });
     }
 
-    const sessions = await getUserSessions(session.user.email, typeParam as SessionTypeEnum, limit);
+    const sessions = await getUserSessions(session.user.id, typeParam as SessionTypeEnum, limit);
     console.log('[sessions][by-type]', {
-      user: session.user.email,
+      user: session.user.id,
       type: typeParam,
       limit,
       returned: sessions.length,

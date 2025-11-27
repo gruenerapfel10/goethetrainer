@@ -1,9 +1,9 @@
 'use client';
 import { Check, ChevronUp } from 'lucide-react';
 import Image from 'next/image';
-import type { User } from 'next-auth';
-import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
+import { useSupabaseSession } from '@/lib/supabase/use-session';
 
 import {
   DropdownMenu,
@@ -22,9 +22,12 @@ import {
 import { useTranslations } from 'next-intl';
 import { themes } from '@/lib/constants';
 
-export function SidebarUserNav({ user }: { user: User }) {
+export function SidebarUserNav() {
   const { setTheme, theme } = useTheme();
   const t = useTranslations();
+  const { user } = useSupabaseSession();
+  const userEmail = user?.email ?? 'user@example.com';
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -32,13 +35,13 @@ export function SidebarUserNav({ user }: { user: User }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="data-[state=open]:bg-sidebar-accent bg-background data-[state=open]:text-sidebar-accent-foreground h-10">
               <Image
-                src={`https://avatar.vercel.sh/${user.email}`}
-                alt={user.email ?? 'User Avatar'}
+                src={`https://avatar.vercel.sh/${userEmail}`}
+                alt={userEmail}
                 width={24}
                 height={24}
                 className="rounded-full"
               />
-              <span className="truncate">{user?.email}</span>
+              <span className="truncate">{userEmail}</span>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -69,8 +72,9 @@ export function SidebarUserNav({ user }: { user: User }) {
                 type="button"
                 className="w-full cursor-pointer"
                 onClick={() => {
-                  signOut({
-                    redirectTo: '/',
+                  const supabase = createSupabaseBrowserClient();
+                  supabase.auth.signOut().then(() => {
+                    window.location.href = '/login';
                   });
                 }}
               >

@@ -1,6 +1,5 @@
 import { streamText, tool } from 'ai';
 import { smoothStream } from 'ai';
-import type { Session } from 'next-auth';
 import { z } from 'zod';
 import { getArtifactManager } from '@/lib/artifacts/artifact-manager';
 import type { ArtifactKind } from '@/lib/artifacts/artifact-registry';
@@ -20,7 +19,7 @@ interface StreamUpdate {
 }
 
 // Export the update document tool using native V5 generator pattern
-export const updateDocument = (session: Session | null, chatId: string) => {
+export const updateDocument = (session: { user: { id: string } } | null, chatId: string) => {
   return tool({
     description: 'Update a document with the given description.',
     inputSchema: z.object({

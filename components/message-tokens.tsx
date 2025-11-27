@@ -19,12 +19,12 @@
 
 import type { UIMessage } from 'ai';
 import { useMemo } from 'react';
-import { useSession } from 'next-auth/react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { Badge } from './ui/badge';
 import { FileTextIcon, AlertTriangleIcon, CodeIcon } from 'lucide-react';
 import type { FileSearchResult } from '@/components/chat-header';
 import { toast } from 'sonner';
+import { useSupabaseSession } from '@/lib/supabase/use-session';
 
 interface MessageTokensProps {
   message: UIMessage;
@@ -48,7 +48,7 @@ const calculateTokensFromWords = (text: string) => {
 const isDebugMode = process.env.NEXT_PUBLIC_DEBUG_MODE === 'true';
 
 export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: MessagePromptProps) {
-  const { data: session } = useSession();
+  const { profile } = useSupabaseSession();
   
   const fullPrompt = useMemo(() => {
     const messageText = (message as any).parts?.find((p: any) => p.type === 'text')?.text || '';
@@ -92,7 +92,7 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  if (!session?.user?.isAdmin || !isDebugMode) {
+  if (!(profile?.is_admin) || !isDebugMode) {
     return null;
   }
 
@@ -114,7 +114,7 @@ export function MessagePrompt({ message, systemPrompt = '', attachedFiles }: Mes
 }
 
 export function MessageTokens({ message, systemPrompt = '', attachedFiles }: MessageTokensProps) {
-  const { data: session } = useSession();
+  const { profile } = useSupabaseSession();
   
   const tokenDetails = useMemo(() => {
     // Calculate tokens for user message content
@@ -161,7 +161,7 @@ export function MessageTokens({ message, systemPrompt = '', attachedFiles }: Mes
   }, [message, systemPrompt, attachedFiles]);
 
   // Only show for admin users when debug mode is enabled
-  if (!session?.user?.isAdmin || !isDebugMode) {
+  if (!(profile?.is_admin) || !isDebugMode) {
     return null;
   }
 

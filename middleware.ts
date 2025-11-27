@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { createServerClient } from '@supabase/ssr';
 
 const PUBLIC_FILES = [
   '/favicon.ico',
@@ -14,11 +14,12 @@ const PUBLIC_FILES = [
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-
   const isPublicPath =
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
-    pathname.startsWith('/home');
+    pathname.startsWith('/home') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password');
 
   const isChatRoute =
     pathname === '/chat' ||
@@ -33,49 +34,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Always allow NextAuth API routes
-  if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
-  }
-
   // Allow public API routes
   if (pathname.startsWith('/api/current-logo') || pathname.startsWith('/api/logos')) {
     return NextResponse.next();
   }
 
-  // Get the session token
-  // Only read secure cookies when we're actually on HTTPS (matches NextAuth defaults)
-  const shouldUseSecureCookies =
-    request.nextUrl.protocol === 'https:' ||
-    process.env.VERCEL === '1' ||
-    process.env.NEXTAUTH_URL?.startsWith('https://');
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    secureCookie: shouldUseSecureCookies,
-  });
-
-  // If no token, redirect to login (except for auth pages and public chats)
-  if (!token) {
-    if (isPublicPath) {
-      return NextResponse.next();
+  const response = NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
     }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // If logged in and trying to access auth pages, redirect to home
-  if (token && (pathname === '/login' || pathname === '/register')) {
+  if (user && (pathname === '/login' || pathname === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Protect API routes (except auth and public ones)
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

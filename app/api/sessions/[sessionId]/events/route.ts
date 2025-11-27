@@ -1,73 +1,37 @@
-import { NextResponse } from 'next/server';
-import { auth } from '@/app/(auth)/auth';
-import { adminDb } from '@/lib/firebase/admin';
-import { getSessionById } from '@/lib/sessions/queries';
+import { NextRequest } from 'next/server';
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ sessionId: string }> }
-) {
-  const authSession = await auth();
-  if (!authSession?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+// Lightweight SSE stream to satisfy the EventSource listener on the client.
+// We just emit periodic keep-alive "ping" events; the client will refetch the
+// session snapshot on each message.
+export const runtime = 'nodejs';
 
-  const { sessionId } = await context.params;
-  const session = await getSessionById(sessionId);
-  if (!session) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-  }
-  if (session.userId !== authSession.user.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-  }
-
+export async function GET(request: NextRequest, { params }: { params: { sessionId: string } }) {
+  const { sessionId } = params;
   const encoder = new TextEncoder();
 
-  const stream = new ReadableStream<Uint8Array>({
+  const stream = new ReadableStream({
     start(controller) {
-      const sendEvent = (payload: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
-      };
+      // Immediately send a first ping so the client refreshes once.
+      controller.enqueue(encoder.encode(`event: ping\ndata: ${sessionId}\n\n`));
 
-      const unsubscribe = adminDb
-        .collection('sessions')
-        .doc(sessionId)
-        .onSnapshot(
-          snapshot => {
-            const data = snapshot.data();
-            if (!data) {
-              return;
-            }
-            const generation = data?.data?.generation ?? null;
-            const questionsLength = Array.isArray(data?.data?.questions)
-              ? data.data.questions.length
-              : 0;
-            const updatedAt = data?.metadata?.lastUpdatedAt ?? new Date().toISOString();
-            sendEvent({ generation, questionsLength, updatedAt });
-          },
-          error => {
-            controller.enqueue(
-              encoder.encode(
-                `event: error\ndata: ${JSON.stringify({ message: error.message })}\n\n`
-              )
-            );
-            controller.close();
-          }
-        );
+      const interval = setInterval(() => {
+        controller.enqueue(encoder.encode(`event: ping\ndata: ${sessionId}\n\n`));
+      }, 5000);
 
-      const close = () => {
-        unsubscribe();
+      const abort = () => {
+        clearInterval(interval);
         controller.close();
       };
 
-      request.signal.addEventListener('abort', close);
+      request.signal.addEventListener('abort', abort);
     },
   });
 
   return new Response(stream, {
+    status: 200,
     headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
     },
   });

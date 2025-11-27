@@ -120,9 +120,9 @@ export function AppBreadcrumb() {
           <React.Fragment key={item.href}>
             <BreadcrumbItem>
               {item.isLast ? (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                <BreadcrumbPage className="text-foreground">{item.label}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink asChild>
+                <BreadcrumbLink asChild className="text-muted-foreground hover:text-foreground">
                   <Link href={item.href}>{item.label}</Link>
                 </BreadcrumbLink>
               )}

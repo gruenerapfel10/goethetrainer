@@ -1,23 +1,23 @@
 import React, { useTransition } from 'react';
-import { Languages } from 'lucide-react';
+import { Languages, ChevronDown } from 'lucide-react';
 import type { Locale } from '@/i18n/config';
 import { locales } from '@/i18n/config';
 import { setUserLocale } from '@/services/locale';
 import { useLocale, useTranslations } from 'next-intl';
-import { useSidebar } from '@/components/ui/sidebar';
+import { useSidebar, SidebarMenuButton } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
 
-export default function LocaleSwitcherSelect() {
+export default function LocaleSwitcherSelect({ expanded = false }: { expanded?: boolean }) {
   const [isPending, startTransition] = useTransition();
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
   const t = useTranslations();
   const locale = useLocale();
+  const isExpanded = isMobile ? true : state === 'expanded';
 
   const items = locales.map((loc) => ({
     value: loc,
@@ -36,15 +36,17 @@ export default function LocaleSwitcherSelect() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 bg-transparent hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground flex items-center justify-center text-sm font-medium rounded-md transition-colors"
+        <SidebarMenuButton
+          size="lg"
           disabled={isPending}
+          className={`group relative h-9 px-2 py-1.5 text-foreground rounded-lg ${isExpanded ? 'justify-start' : 'justify-center'} hover:bg-primary hover:text-primary-foreground transition-colors`}
           title={currentLanguage}
         >
-          <Languages className="h-4 w-4" />
-        </Button>
+          <Languages className="h-4 w-4 stroke-[2] text-foreground group-hover:text-primary-foreground flex-shrink-0" />
+          {isExpanded && (
+            <span className="font-medium text-sm whitespace-nowrap">{currentLanguage}</span>
+          )}
+        </SidebarMenuButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"

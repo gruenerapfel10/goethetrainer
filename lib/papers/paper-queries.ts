@@ -1,66 +1,53 @@
-import 'server-only';
+import type { PaperBlueprint } from '@/lib/papers/types';
+import { createSupabaseServiceClient } from '@/lib/supabase/clients';
 
-import { adminDb } from '@/lib/firebase/admin';
-import { sanitizeForFirestore } from '@/lib/sessions/utils';
-import type { PaperBlueprint } from './types';
-import type { SessionType } from '@/lib/sessions/types';
-
-const PAPERS_COLLECTION = 'papers';
-
-export async function savePaperBlueprint(paper: PaperBlueprint): Promise<void> {
-  try {
-    const payload = sanitizeForFirestore({
-      ...paper,
-      createdAt: new Date(paper.createdAt),
+export async function savePaperBlueprint(blueprint: PaperBlueprint): Promise<void> {
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from('papers')
+    .upsert({
+      id: blueprint.id,
+      session_id: blueprint.sessionId,
+      type: blueprint.type,
+      created_by: blueprint.createdBy ?? null,
+      created_at: blueprint.createdAt ? new Date(blueprint.createdAt).toISOString() : new Date().toISOString(),
+      metadata: blueprint.metadata ?? {},
+      blueprint: blueprint.blueprint ?? {},
     });
-    await adminDb.collection(PAPERS_COLLECTION).doc(paper.id).set(payload);
-  } catch (error) {
-    console.error('Error saving paper blueprint:', error);
-    throw new Error('Failed to save paper blueprint');
-  }
+  if (error) throw error;
 }
 
-export async function loadPaperBlueprint(paperId: string): Promise<PaperBlueprint | null> {
-  try {
-    const doc = await adminDb.collection(PAPERS_COLLECTION).doc(paperId).get();
-    if (!doc.exists) {
-      return null;
-    }
-    const data = doc.data();
-    if (!data) {
-      return null;
-    }
-    return {
-      ...(data as PaperBlueprint),
-      createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
-    };
-  } catch (error) {
-    console.error('Error loading paper blueprint:', error);
-    return null;
-  }
+export async function loadPaperBlueprint(id: string): Promise<PaperBlueprint | null> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('papers')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error && error.code !== 'PGRST116') throw error;
+  if (!data) return null;
+  return mapPaper(data);
 }
 
-export async function listPapersByType(type: SessionType, limit = 20): Promise<PaperBlueprint[]> {
-  try {
-    const snapshot = await adminDb
-      .collection(PAPERS_COLLECTION)
-      .where('type', '==', type)
-      .limit(limit)
-      .get();
+export async function listPapersByType(type: string): Promise<PaperBlueprint[]> {
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('papers')
+    .select('*')
+    .eq('type', type)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapPaper);
+}
 
-    const papers = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...(data as PaperBlueprint),
-        createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
-      };
-    });
-    return papers.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  } catch (error) {
-    console.error('Error listing paper blueprints:', error);
-    return [];
-  }
+function mapPaper(row: any): PaperBlueprint {
+  return {
+    id: row.id,
+    sessionId: row.session_id ?? row.id,
+    type: row.type,
+    createdBy: row.created_by ?? undefined,
+    createdAt: row.created_at ?? new Date().toISOString(),
+    metadata: row.metadata ?? {},
+    blueprint: row.blueprint ?? {},
+  };
 }

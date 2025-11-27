@@ -1,4 +1,5 @@
-import { generateText } from 'ai';
+import { generateObject } from 'ai';
+import { z } from 'zod';
 import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 
@@ -8,13 +9,16 @@ export async function translateToEnglish(text: string): Promise<string> {
     return '';
   }
 
-  const result = await generateText({
+  const { object } = await generateObject({
     model: customModel(ModelId.CLAUDE_HAIKU_4_5),
     temperature: 0.2,
     system:
-      'You are a precise professional translator specializing in German-to-English conversions. Translate only the provided text into natural English, without commentary. If the text contains German verbs in any conjugated form (e.g., "geht", "geringt", "sind"), mentally revert them to their infinitive forms before choosing the best English equivalent.',
-    prompt: `Translate the following text to natural English. Think of German verbs by their infinitive forms before translating:\n\n${trimmed}\n\nEnglish translation:`,
+      'You are a precise professional translator specializing in German-to-English conversions. Output only JSON that matches the schema. Keep the translation concise and natural; no commentary.',
+    prompt: `Translate to natural English:\n"""${trimmed}"""\nReturn JSON with a single field "translation".`,
+    schema: z.object({
+      translation: z.string().describe('The English translation of the provided text.'),
+    }),
   });
 
-  return result.text.trim();
+  return object.translation.trim();
 }

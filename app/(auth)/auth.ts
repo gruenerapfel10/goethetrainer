@@ -1,118 +1,42 @@
-import { compare } from 'bcrypt-ts';
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
-import { authConfig } from './auth.config';
-import { getUserByEmail, createUser } from '@/lib/db/queries';
+import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase/clients';
 
-const handler = NextAuth({
-  ...authConfig,
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  debug: process.env.NODE_ENV === "development",
-  providers: [
-    Credentials({
-      async authorize({ email, password }: any) {
-        const user = await getUserByEmail(email);
-        if (!user) return null;
-        const passwordsMatch = await compare(password, user.password!);
-        if (!passwordsMatch) return null;
-        return {
-          id: user.id,
-          email: user.email,
-          isAdmin: user.isAdmin || false,
-        };
-      },
-    }),
-    MicrosoftEntraID({
-      clientId: process.env.AZURE_AD_CLIENT_ID!,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      issuer: `https://login.microsoftonline.com/${process.env.AZURE_AD_TENANT_ID}/v2.0`,
-      checks: ["pkce", "state"],
-      authorization: {
-        params: {
-          scope: "openid profile email User.Read",
-          response_type: "code",
-          response_mode: "query"
-        }
-      },
-      profile(profile) {
-        return {
-          id: profile.oid || profile.sub,
-          name: profile.name,
-          email: profile.preferred_username,
-          image: null,
-        };
-      },
-    })
-  ],
-  callbacks: {
-    async signIn({ user, account, profile }) {
-      if (account?.provider === 'credentials') {
-        return true;
-      }
-
-      if (account?.provider === 'microsoft-entra-id' && profile?.preferred_username) {
-        try {
-          const userEmail = profile.preferred_username;
-          const existingUser = await getUserByEmail(userEmail);
-
-          if (!existingUser) {
-            await createUser({
-              email: userEmail,
-              isAdmin: false,
-            });
-            const newUser = await getUserByEmail(userEmail);
-
-            if (!newUser) {
-              console.error('[auth] Failed to create user for:', userEmail);
-              return false;
-            }
-
-            user.id = newUser.id;
-            user.email = userEmail;
-            user.isAdmin = newUser.isAdmin || false;
-          } else {
-            user.id = existingUser.id;
-            user.email = userEmail;
-            user.isAdmin = existingUser.isAdmin || false;
-          }
-        } catch (error) {
-          console.error('[auth] Error in signIn callback:', error);
-          return false;
-        }
-      }
-
-      return true;
-    },
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.isAdmin = user.isAdmin;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.isAdmin = token.isAdmin as boolean;
-      }
-      return session;
+type AuthSession =
+  | {
+      user: { id: string; email: string | null; isAdmin: boolean };
     }
-  },
-  events: {
-    async signIn({ user, account }) {
-      console.log('[auth] Successful sign in:', {
-        provider: account?.provider,
-        email: user.email
-      });
-    },
-  }
-});
+  | null;
 
-export const { auth, signIn, signOut } = handler;
-export const { GET, POST } = handler.handlers;
+/**
+ * Compatibility helper replacing NextAuth's `auth()` with Supabase Auth.
+ * Returns minimal session shape used across the app.
+ */
+export async function auth(): Promise<AuthSession> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+
+  const service = createSupabaseServiceClient();
+  const { data: profile } = await service
+    .from('profiles')
+    .select('is_admin')
+    .eq('id', data.user.id)
+    .single();
+
+  return {
+    user: {
+      id: data.user.id,
+      email: data.user.email ?? null,
+      isAdmin: profile?.is_admin ?? false,
+    },
+  };
+}
+
+export const signIn = async () => {
+  throw new Error('signIn is no longer available; use Supabase auth client APIs.');
+};
+export const signOut = async () => {
+  throw new Error('signOut is no longer available; use Supabase auth client APIs.');
+};
+
+export const GET = async () => new Response(null, { status: 404 });
+export const POST = async () => new Response(null, { status: 404 });

@@ -19,6 +19,8 @@ import {
 import { Languages, Bookmark, Sparkles, Volume2 } from 'lucide-react';
 import { speakText, isTextToSpeechAvailable } from '@/lib/tts';
 import { emitChatPromptRequest } from '@/lib/chat/events';
+import { useToast } from '@/hooks/use-toast';
+import { differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 
 interface ReadingListItem {
   id: string;
@@ -35,17 +37,24 @@ interface ReadingListResponse {
 const PAGE_SIZE = 20;
 
 export function ReadingListPanel() {
+  const { toast } = useToast();
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ text: '', translation: '' });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [ttsSupported, setTtsSupported] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
     const handle = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(handle);
   }, [search]);
+
+  useEffect(() => {
+    setTtsSupported(isTextToSpeechAvailable());
+  }, []);
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: ReadingListResponse | null) => {
@@ -93,6 +102,7 @@ export function ReadingListPanel() {
   const nextCursor = data?.[data.length - 1]?.nextCursor ?? null;
 
   const groups = useMemo(() => groupEntries(entries), [entries]);
+  const timeBuckets = useMemo(() => bucketEntriesByTime(entries), [entries]);
 
   const handleNextPage = () => {
     if (nextCursor && !isValidating) {
@@ -180,13 +190,22 @@ export function ReadingListPanel() {
   };
 
   const handleSpeakEntry = async (text: string) => {
-    if (!isTextToSpeechAvailable()) {
+    if (!ttsSupported) {
+      toast({
+        title: 'Text-to-Speech nicht verfügbar',
+        description: 'Bitte stellen Sie sicher, dass Ihr Browser Sprachausgabe unterstützt.',
+      });
       return;
     }
     try {
       await speakText(text, { lang: 'de-DE' });
     } catch (err) {
       console.error('Failed to speak entry', err);
+      toast({
+        title: 'Wiedergabe fehlgeschlagen',
+        description: 'Die Sprachausgabe konnte nicht gestartet werden.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -216,35 +235,37 @@ export function ReadingListPanel() {
         ) : (
           <div className="space-y-6">
             {groups.map(group => (
-              <div key={group.label} className="space-y-3">
-                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">
+              <div key={group.label} className="space-y-2">
+                <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground px-1">
                   {group.label}
                 </p>
-                <div className="space-y-3">
+                <div className="space-y-0">
                   {group.items.map(item => (
                     <article
                       key={item.id}
-                      className="group rounded-2xl border border-border/50 bg-card/80 px-4 py-3 shadow-sm transition hover:border-border"
+                      className="group px-4 py-3 border-b border-border/60 bg-transparent rounded-none transition hover:bg-muted/20"
                     >
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1 space-y-2">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 min-w-0">
                           {editingId === item.id ? (
                             <>
-                              <Input
-                                value={editForm.text}
-                                onChange={event => handleEditChange('text', event.target.value)}
-                                placeholder="Wort / Ausdruck"
-                                className="text-sm"
-                              />
-                              <Input
-                                value={editForm.translation}
-                                onChange={event =>
-                                  handleEditChange('translation', event.target.value)
-                                }
-                                placeholder="Übersetzung / Notiz"
-                                className="text-sm"
-                              />
-                              <div className="flex gap-2">
+                              <div className="flex flex-col gap-2">
+                                <Input
+                                  value={editForm.text}
+                                  onChange={event => handleEditChange('text', event.target.value)}
+                                  placeholder="Wort / Ausdruck"
+                                  className="text-sm"
+                                />
+                                <Input
+                                  value={editForm.translation}
+                                  onChange={event =>
+                                    handleEditChange('translation', event.target.value)
+                                  }
+                                  placeholder="Übersetzung / Notiz"
+                                  className="text-sm"
+                                />
+                              </div>
+                              <div className="mt-2 flex gap-2">
                                 <Button
                                   size="sm"
                                   onClick={saveEdit}
@@ -262,24 +283,26 @@ export function ReadingListPanel() {
                                 </Button>
                               </div>
                               {errorMessage && (
-                                <p className="text-xs text-destructive">{errorMessage}</p>
+                                <p className="mt-1 text-xs text-destructive">{errorMessage}</p>
                               )}
                             </>
                           ) : (
                             <>
-                              <p className="text-sm font-medium leading-snug text-foreground">
-                                {item.text}
-                              </p>
-                              <p className="text-sm text-muted-foreground leading-snug">
-                                {item.translation}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
+                              <div className="flex items-baseline gap-4 overflow-hidden">
+                                <p className="text-lg font-semibold leading-snug text-foreground truncate">
+                                  {item.text}
+                                </p>
+                                <p className="text-lg font-semibold text-muted-foreground leading-snug truncate">
+                                  {item.translation}
+                                </p>
+                              </div>
+                              <p className="mt-1 text-xs text-muted-foreground">
                                 {formatTimestamp(item.createdAt)}
                               </p>
                             </>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 ">
+                        <div className="flex items-center gap-2">
                           {editingId !== item.id && (
                             <Button
                               variant="ghost"
@@ -294,7 +317,7 @@ export function ReadingListPanel() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground"
-                            disabled={!isTextToSpeechAvailable()}
+                            disabled={!ttsSupported}
                             onClick={() => handleSpeakEntry(item.text)}
                           >
                             <Volume2 className="h-4 w-4" />
@@ -304,16 +327,16 @@ export function ReadingListPanel() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground opacity-0 transition group-hover:opacity-100"
+                                className="h-8 w-8 text-muted-foreground opacity-0 transition group-hover:opacity-100 data-[state=open]:opacity-100"
                               >
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuItem
-                                  onClick={() => handleTranslate(item.text)}
-                                  className="gap-3"
-                                >
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem
+                                onClick={() => handleTranslate(item.text)}
+                                className="gap-3"
+                              >
                                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                                   <Languages className="h-4 w-4" />
                                 </div>
@@ -391,25 +414,40 @@ export function ReadingListPanel() {
 }
 
 function groupEntries(entries: ReadingListItem[]) {
-  const groups: Record<string, ReadingListItem[]> = {};
-  const order: string[] = [];
   const now = new Date();
+  const buckets: Record<string, ReadingListItem[]> = {
+    'Just now': [],
+    'Today': [],
+    'Last 3 days': [],
+    'Last 7 days': [],
+    'Older': [],
+  };
 
   entries.forEach(entry => {
-    const entryDate = new Date(entry.createdAt);
-    const label = getSectionLabel(entryDate, now);
-    if (!groups[label]) {
-      groups[label] = [];
-      order.push(label);
+    const entryDate = parseISO(entry.createdAt);
+    const mins = differenceInMinutes(now, entryDate);
+    const hours = differenceInHours(now, entryDate);
+    if (mins <= 10) {
+      buckets['Just now'].push(entry);
+    } else if (hours < 24) {
+      buckets['Today'].push(entry);
+    } else if (hours < 72) {
+      buckets['Last 3 days'].push(entry);
+    } else if (hours < 24 * 7) {
+      buckets['Last 7 days'].push(entry);
+    } else {
+      buckets['Older'].push(entry);
     }
-    groups[label].push(entry);
   });
 
-  return order.map(label => ({
-    label,
-    items: groups[label],
-  }));
+  return Object.entries(buckets)
+    .filter(([, items]) => items.length > 0)
+    .map(([label, items]) => ({
+      label,
+      items,
+    }));
 }
+
 
 function getSectionLabel(entryDate: Date, now: Date): string {
   const diffMs = now.getTime() - entryDate.getTime();

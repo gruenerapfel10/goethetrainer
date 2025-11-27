@@ -4,23 +4,17 @@ import {
   cloneElement,
   isValidElement,
   type ReactNode,
+  useRef,
   useEffect,
   useMemo,
   useState,
 } from 'react';
-import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-import { Check, Settings } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import type { QuestionSourceReference } from '@/lib/sessions/questions/question-types';
 import useSWR from 'swr';
 import { READING_LIST_UPDATED_EVENT } from '@/lib/reading-list/events';
+import { TeilHeader } from './TeilHeader';
 
 interface SessionBoardProps {
   teilNumber: number;
@@ -69,13 +63,14 @@ export function SessionBoard({
   onEndSession,
   sourceReference,
 }: SessionBoardProps) {
-  const { theme } = useTheme();
   const { toast } = useToast();
+  const headerRef = useRef<HTMLDivElement | null>(null);
   const [highlightSavedWords, setHighlightSavedWords] = useState<boolean>(() => {
     if (typeof window === 'undefined') {
-      return false;
+      return true;
     }
-    return window.localStorage.getItem('highlightSavedWords') === 'true';
+    const stored = window.localStorage.getItem('highlightSavedWords');
+    return stored === null ? true : stored === 'true';
   });
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -83,6 +78,24 @@ export function SessionBoard({
     }
     window.localStorage.setItem('highlightSavedWords', highlightSavedWords ? 'true' : 'false');
   }, [highlightSavedWords]);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const el = headerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      document.documentElement.style.setProperty('--page-header-offset', `${rect.height}px`);
+    };
+
+    const observer = new ResizeObserver(() => update());
+    observer.observe(el);
+    update();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty('--page-header-offset');
+    };
+  }, []);
   const savedWords = useSavedWords(highlightSavedWords);
   const normalizedSavedWords = useMemo(
     () =>
@@ -117,21 +130,27 @@ export function SessionBoard({
     : undefined;
 
   const paperClass = cn(
-    'w-full h-full flex flex-col dark:bg-background',
+    'w-full flex flex-col dark:bg-background',
     showA4Format ? 'shadow-lg' : 'bg-background rounded-2xl border border-border/60'
   );
 
+  const shouldHighlight = highlightSavedWords && normalizedSavedWords.length > 0;
   const enhancedQuelleContent =
-    activeView === 'quelle' &&
-    highlightSavedWords &&
-    normalizedSavedWords.length > 0 &&
-    quelleContent
+    activeView === 'quelle' && shouldHighlight && quelleContent
       ? (
           <SavedWordHighlighter words={normalizedSavedWords}>
             {quelleContent}
           </SavedWordHighlighter>
         )
       : quelleContent;
+  const enhancedFrageContent =
+    activeView === 'fragen' && shouldHighlight && frageContent
+      ? (
+          <SavedWordHighlighter words={normalizedSavedWords}>
+            {frageContent}
+          </SavedWordHighlighter>
+        )
+      : frageContent;
 
   const handleSeeSource = () => {
     if (!sourceReference) {
@@ -155,143 +174,57 @@ export function SessionBoard({
     });
   };
 
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) {
+      return;
+    }
+    const updateOffset = () => {
+      document.documentElement.style.setProperty('--page-header-offset', `${node.offsetHeight}px`);
+    };
+    updateOffset();
+    const observer = new ResizeObserver(updateOffset);
+    observer.observe(node);
+    window.addEventListener('resize', updateOffset);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateOffset);
+      document.documentElement.style.removeProperty('--page-header-offset');
+    };
+  }, []);
+
   const PaperContent = (
     <div className={paperClass} style={paperStyle}>
-      <div className="flex-1 overflow-y-auto px-12 py-10">
-        <div className="mb-10">
-          <h2 className="text-base font-bold">{teilLabel}</h2>
-        </div>
+      <div className="flex-1 overflow-visible px-12 py-10 pt-[var(--page-header-offset,0px)]">
         {activeView === 'fragen' || !showSourceToggle
-          ? frageContent
+          ? enhancedFrageContent ?? frageContent
           : enhancedQuelleContent ?? frageContent}
       </div>
 
-      <div className="text-primary-foreground p-6 flex justify-center items-center mt-auto">
-        <img
-          src={theme === 'dark' ? '/logo_dark.png' : '/logo.png'}
-          alt="Goethe-Institut"
-          className="h-12 w-auto"
-        />
-      </div>
     </div>
   );
 
   return (
-    <div className="w-full h-full flex flex-col bg-background relative">
-      {showSourceToggle && (
-        <div className="absolute top-6 left-6 flex gap-0 z-10 border-b border-border">
-          <button
-            onClick={() => onActiveViewChange('fragen')}
-            className={cn(
-              'px-4 py-2 font-medium transition-colors',
-              activeView === 'fragen'
-                ? 'text-foreground border-b-2 border-primary -mb-px'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            Fragen
-          </button>
-          <button
-            onClick={() => onActiveViewChange('quelle')}
-            className={cn(
-              'px-4 py-2 font-medium transition-colors',
-              activeView === 'quelle'
-                ? 'text-foreground border-b-2 border-primary -mb-px'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-            disabled={!quelleContent}
-          >
-            Quelle
-          </button>
-        </div>
-      )}
-
-      <div className="absolute top-6 right-6 z-10 flex gap-4 items-center">
-        <div className="flex gap-2 border-b border-border">
-          {teilNumbers.map(number => {
-            const label = teilLabels[number] ?? `Teil ${number}`;
-            const isCurrent = number === teilNumber;
-            const isAvailable = generatedTeils.has(number) || number === teilNumber;
-
-            return (
-              <button
-                key={number}
-                type="button"
-                onClick={() => {
-                  if (!isCurrent && isAvailable && !isSubmitting) {
-                    onTeilNavigate?.(number);
-                  }
-                }}
-                disabled={!isAvailable || isSubmitting}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium transition-colors',
-                  isCurrent
-                    ? 'text-foreground border-b-2 border-primary -mb-px'
-                    : 'text-muted-foreground hover:text-foreground',
-                  (!isAvailable || isSubmitting) && 'opacity-40 cursor-not-allowed'
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors rounded"
-              aria-label="Settings"
-              disabled={isSubmitting}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="border-border/30 rounded-xl bg-muted w-48"
-            sideOffset={4}
-          >
-            <DropdownMenuItem
-              onSelect={event => {
-                event.preventDefault();
-                handleToggleA4();
-              }}
-              className="flex justify-between items-center gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
-            >
-              <span>A4 Format</span>
-              {showA4Format && <Check className="w-4 h-4 text-primary" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={event => {
-                event.preventDefault();
-                setHighlightSavedWords(prev => !prev);
-              }}
-              className="flex justify-between items-center gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
-            >
-              <span>Gespeicherte Wörter markieren</span>
-              {highlightSavedWords && <Check className="w-4 h-4 text-primary" />}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={event => {
-                event.preventDefault();
-                onEndSession?.();
-              }}
-              className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
-            >
-              End Session
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={event => {
-                event.preventDefault();
-                handleSeeSource();
-              }}
-              className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
-              disabled={isSubmitting}
-            >
-              See source
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <div className="w-full h-full min-h-0 flex flex-col bg-transparent relative">
+      <div ref={headerRef}>
+        <TeilHeader
+          teilNumbers={teilNumbers}
+          teilLabels={teilLabels}
+          teilNumber={teilNumber}
+          generatedTeils={generatedTeils}
+          isSubmitting={isSubmitting}
+          onTeilNavigate={onTeilNavigate}
+          showSourceToggle={showSourceToggle}
+          activeView={activeView}
+          onActiveViewChange={onActiveViewChange}
+          quelleContent={quelleContent}
+          showA4Format={showA4Format}
+          onToggleA4={handleToggleA4}
+          highlightSavedWords={highlightSavedWords}
+          onToggleHighlightSavedWords={() => setHighlightSavedWords(prev => !prev)}
+          onEndSession={onEndSession}
+          onSeeSource={handleSeeSource}
+        />
       </div>
 
       {showBackButton && onBack && (
@@ -313,11 +246,11 @@ export function SessionBoard({
       </button>
 
       {showA4Format ? (
-        <div className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar">
+        <div className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar overflow-y-auto scrollbar-hide">
           {PaperContent}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto bg-background px-6 py-4">
+        <div className="flex-1 bg-background px-6 py-4 overflow-y-auto scrollbar-hide">
           {PaperContent}
         </div>
       )}
@@ -365,9 +298,17 @@ function SavedWordHighlighter({
 }) {
   const patterns = useMemo<HighlightPattern[]>(
     () =>
-      words.map(word => ({
-        regexSource: escapeRegExp(word),
-      })),
+      words
+        .map(word => word.trim())
+        .filter(Boolean)
+        .map(word => {
+          // Escape regex tokens, then collapse internal whitespace so highlights survive wrapping.
+          const escaped = escapeRegExp(word);
+          const collapsed = escaped.replace(/\s+/g, '\\s+');
+          // Match the word plus any trailing letters (for inflections), with a non-letter boundary in front.
+          const withBoundaries = `(^|[^\\p{L}])(${collapsed}[\\p{L}]*)`;
+          return { regexSource: withBoundaries };
+        }),
     [words]
   );
 
@@ -428,31 +369,39 @@ function highlightString(
       if (typeof segment !== 'string') {
         return [segment];
       }
-      const regex = new RegExp(`(${pattern.regexSource})`, 'gi');
-      const parts = segment.split(regex);
-      if (parts.length === 1) {
-        return [segment];
-      }
+      const regex = new RegExp(pattern.regexSource, 'giu');
       const result: ReactNode[] = [];
-      parts.forEach((part, partIndex) => {
-        if (!part) {
-          return;
+      let lastIndex = 0;
+      let match: RegExpExecArray | null;
+
+      // Manual walk so we can keep boundary characters out of the highlight
+      while ((match = regex.exec(segment)) !== null) {
+        const [full, boundary, matched] = match;
+        const start = match.index;
+        const end = start + full.length;
+
+        if (start > lastIndex) {
+          result.push(segment.slice(lastIndex, start));
         }
-        const isMatch = partIndex % 2 === 1;
-        if (isMatch) {
-          result.push(
-            <mark
-              key={`${keyPrefix}-${patternIndex}-${segmentIndex}-${partIndex}`}
-              className="bg-primary text-background px-0.5"
-              data-saved-word
-            >
-              {part}
-            </mark>
-          );
-        } else {
-          result.push(part);
+        if (boundary) {
+          result.push(boundary);
         }
-      });
+        result.push(
+          <mark
+            key={`${keyPrefix}-${patternIndex}-${segmentIndex}-${start}`}
+            className="bg-foreground text-background px-1 rounded-sm font-semibold shadow-[0_0_0_1px_rgba(0,0,0,0.08)]"
+            data-saved-word
+          >
+            {matched}
+          </mark>
+        );
+        lastIndex = end;
+      }
+
+      if (lastIndex < segment.length) {
+        result.push(segment.slice(lastIndex));
+      }
+
       return result.length > 0 ? result : [segment];
     });
   });

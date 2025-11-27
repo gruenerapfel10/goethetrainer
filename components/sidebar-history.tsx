@@ -2,7 +2,6 @@
 
 import { isToday, isYesterday, subMonths, subWeeks } from 'date-fns';
 import { useParams, useRouter } from 'next/navigation';
-import type { User } from 'next-auth';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -132,11 +131,9 @@ export function getChatHistoryPaginationKey(
 }
 
 export function SidebarHistory({
-  user,
   searchQuery = '',
   onSearchResultsChange,
 }: {
-  user: User | undefined;
   searchQuery?: string;
   onSearchResultsChange?: (count: number) => void;
 }) {

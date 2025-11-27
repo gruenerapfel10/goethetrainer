@@ -18,6 +18,6 @@ export async function GET(request: Request) {
   }
 
   const type = typeParam as SessionType;
-  const papers = await listPapersByType(type, 20);
+  const papers = await listPapersByType(type);
   return NextResponse.json({ papers });
 }

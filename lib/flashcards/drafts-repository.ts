@@ -1,76 +1,22 @@
-import 'server-only';
-
 import type { CardDraft } from '@/lib/flashcards/types';
-import { adminDb } from '@/lib/firebase/admin';
-import { sanitizeForFirestore } from '@/lib/sessions/utils';
 
-const COLLECTION = 'flashcardDrafts';
+export class CardDraftRepository {
+  private drafts: CardDraft[] = [];
 
-const generateId = () =>
-  typeof crypto !== 'undefined' && 'randomUUID' in crypto
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
+  async list(userId: string): Promise<CardDraft[]> {
+    return this.drafts.filter(d => d.userId === userId);
+  }
 
-const docToDraft = (
-  doc: FirebaseFirestore.QueryDocumentSnapshot | FirebaseFirestore.DocumentSnapshot
-): CardDraft => {
-  const data = doc.data() ?? {};
-  return {
-    id: doc.id,
-    userId: data.userId,
-    deckId: data.deckId,
-    sourceId: data.sourceId,
-    front: data.front,
-    back: data.back,
-    hint: data.hint,
-    createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? new Date().toISOString(),
-  };
-};
+  async get(id: string): Promise<CardDraft | null> {
+    return this.drafts.find(d => d.id === id) ?? null;
+  }
 
-export const CardDraftRepository = {
-  async list(userId: string, deckId: string) {
-    const snapshot = await adminDb
-      .collection(COLLECTION)
-      .where('deckId', '==', deckId)
-      .get();
-    const drafts = snapshot.docs.map(docToDraft);
-    return drafts
-      .filter(draft => draft.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 200);
-  },
-  async create(userId: string, payload: Omit<CardDraft, 'id' | 'createdAt' | 'userId'>): Promise<CardDraft> {
-    const id = generateId();
-    const createdAt = new Date();
-    const draft: CardDraft = {
-      ...payload,
-      userId,
-      id,
-      createdAt: createdAt.toISOString(),
-    };
-    const cleanPayload = sanitizeForFirestore({
-      ...draft,
-      createdAt,
-    });
-    await adminDb.collection(COLLECTION).doc(id).set(cleanPayload);
-    return draft;
-  },
-  async delete(userId: string, draftId: string) {
-    const ref = adminDb.collection(COLLECTION).doc(draftId);
-    const snapshot = await ref.get();
-    if (!snapshot.exists) {
-      return;
-    }
-    if (snapshot.data()?.userId !== userId) {
-      throw new Error('Unauthorized');
-    }
-    await ref.delete();
-  },
-  async get(userId: string, draftId: string) {
-    const snapshot = await adminDb.collection(COLLECTION).doc(draftId).get();
-    if (!snapshot.exists || snapshot.data()?.userId !== userId) {
-      return null;
-    }
-    return docToDraft(snapshot);
-  },
-};
+  async create(draft: CardDraft): Promise<string> {
+    this.drafts.push(draft);
+    return draft.id;
+  }
+
+  async delete(id: string): Promise<void> {
+    this.drafts = this.drafts.filter(d => d.id !== id);
+  }
+}

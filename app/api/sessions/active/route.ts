@@ -6,11 +6,11 @@ export async function GET() {
   try {
     const session = await auth();
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const activeSessions = await getActiveSessions(session.user.email);
+    const activeSessions = await getActiveSessions(session.user.id);
     return NextResponse.json(activeSessions);
   } catch (error) {
     console.error('Error getting active sessions:', error);

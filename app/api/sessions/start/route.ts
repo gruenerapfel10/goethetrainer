@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth();
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,11 +20,7 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const newSession = await createSession(
-      session.user.email,
-      type as SessionTypeEnum,
-      metadata
-    );
+    const newSession = await createSession(session.user.id, type as SessionTypeEnum, metadata);
 
     return NextResponse.json(newSession);
   } catch (error) {

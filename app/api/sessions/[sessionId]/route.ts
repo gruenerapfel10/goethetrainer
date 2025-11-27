@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     const authSession = await auth();
-    if (!authSession?.user?.email) {
+    if (!authSession?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
-    if (session.userId !== authSession.user.email) {
+    if (session.userId !== authSession.user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -41,7 +41,7 @@ async function handleSessionUpdate(
 ) {
   try {
     const authSession = await auth();
-    if (!authSession?.user?.email) {
+    if (!authSession?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -49,7 +49,7 @@ async function handleSessionUpdate(
     const payload = (await request.json().catch(() => ({}))) as UpdateSessionInput;
     const updated = await updateSessionForUser(
       sessionId,
-      authSession.user.email,
+      authSession.user.id,
       payload
     );
 

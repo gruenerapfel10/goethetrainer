@@ -14,6 +14,11 @@ export function Chat({
   isAdmin,
   chat,
   selectedVisibilityType,
+  variant = 'default',
+  shouldUpdateUrl = true,
+  pendingPrompt,
+  onPromptConsumed,
+  onChatChange,
 }: {
   id: string;
   initialMessages: Array<UIMessage>;
@@ -26,6 +31,11 @@ export function Chat({
     title: string;
     customTitle?: string | null;
   };
+  variant?: 'default' | 'sidebar';
+  shouldUpdateUrl?: boolean;
+  pendingPrompt?: string | null;
+  onPromptConsumed?: () => void;
+  onChatChange?: (chatId: string) => void;
 }) {
   return (
     <ChatProvider
@@ -33,12 +43,17 @@ export function Chat({
       initialMessages={initialMessages}
       initialModel={selectedChatModel}
       isReadonly={isReadonly}
+      shouldUpdateUrl={shouldUpdateUrl}
     >
       <ChatContent
         selectedVisibilityType={selectedVisibilityType}
         isAdmin={isAdmin}
         chat={chat}
         initialArtifacts={initialArtifacts}
+        variant={variant}
+        onChatChange={onChatChange}
+        pendingPrompt={pendingPrompt}
+        onPromptConsumed={onPromptConsumed}
       />
     </ChatProvider>
   );

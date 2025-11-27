@@ -31,6 +31,13 @@
     .text-balance {
         text-wrap: balance;
     }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
     .animate-first {
         animation: float-blob-one 20s ease-in-out infinite alternate;
     }
@@ -175,6 +182,8 @@
         /* Base theme colors */
         --background: var(--white);
         --foreground: var(--near-black);
+        --layout-color: var(--light-gray-1);
+        --content-color: var(--white);
 
         /* Card variants */
         --card: var(--white);
@@ -263,6 +272,8 @@
         /* Base theme colors */
         --background: 240 5% 8%;
         --foreground: var(--off-white);
+        --layout-color: 0 0% 0%;
+        --content-color: var(--near-black);
 
         /* Card variants */
         --card-foreground: var(--off-white);

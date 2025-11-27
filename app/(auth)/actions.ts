@@ -1,9 +1,8 @@
 'use server';
 
 import { z } from 'zod';
-import { createUser, getUser } from '@/lib/db/queries';
-import { signIn, signOut } from './auth';
 import { redirect } from 'next/navigation';
+import { createSupabaseServerClient, createSupabaseServiceClient } from '@/lib/supabase/clients';
 
 const authFormSchema = z.object({
   email: z.string().email(),
@@ -24,13 +23,13 @@ export const login = async (
       password: formData.get('password'),
     });
 
-    const result = await signIn('credentials', {
+    const supabase = await createSupabaseServerClient();
+    const { error } = await supabase.auth.signInWithPassword({
       email: validatedData.email.toLowerCase().trim(),
       password: validatedData.password,
-      redirect: false,
     });
 
-    if (result?.error) {
+    if (error) {
       return { status: 'failed' };
     }
 
@@ -64,17 +63,31 @@ export const register = async (
     });
 
     const normalizedEmail = validatedData.email.toLowerCase().trim();
-    const [user] = await getUser(normalizedEmail);
 
-    if (user) {
-      return { status: 'user_exists' } as RegisterActionState;
-    }
-    await createUser(normalizedEmail, validatedData.password);
-    await signIn('credentials', {
+    // Use service role to create the user and confirm immediately.
+    const service = createSupabaseServiceClient();
+    const { data, error } = await service.auth.admin.createUser({
       email: normalizedEmail,
       password: validatedData.password,
-      redirect: false,
+      email_confirm: true,
     });
+
+    if (error) {
+      const msg = error.message?.toLowerCase() || '';
+      if (msg.includes('already registered') || msg.includes('duplicate')) {
+        return { status: 'user_exists' };
+      }
+      console.error('[auth] register error', error);
+      return { status: 'failed' };
+    }
+
+    if (data.user) {
+      await service.from('profiles').upsert({
+        id: data.user.id,
+        email: normalizedEmail,
+        is_admin: false,
+      });
+    }
 
     return { status: 'success' };
   } catch (error) {
@@ -86,21 +99,11 @@ export const register = async (
 };
 
 export async function microsoftLogin() {
-  try {
-    return await signIn('microsoft-entra-id', {
-      redirect: true,
-      callbackUrl: '/dashboard',
-      // Add this to help with PKCE issues
-      redirectTo: '/dashboard'
-    });
-  } catch (error) {
-    console.error('[auth] Microsoft login error:', error);
-    // You might want to redirect to an error page or login with an error message
-    throw error;
-  }
+  throw new Error('Microsoft login is disabled.');
 }
 
 export async function handleSignOut() {
-  await signOut({ redirect: false });
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut();
   redirect('/login');
 }
