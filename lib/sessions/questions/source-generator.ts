@@ -205,7 +205,7 @@ export async function generateRawSource(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<RawSource> {
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const selectedTheme =
     overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
@@ -435,7 +435,7 @@ export async function generatePlannedGapPassage(
     throw new Error('Planned gap generation requires at least one category');
   }
 
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme =
     theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
@@ -586,7 +586,7 @@ export async function generatePlannedSentenceInsertionSet(
   if (gapCount <= 0 || sentencePoolSize < gapCount) {
     throw new Error('Sentence pool must be >= gap count');
   }
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme =
     theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
@@ -739,7 +739,7 @@ export async function generatePlannedArticleQuestionSet(
   if (questionCount <= 0) {
     throw new Error('Question count must be positive for planned article set');
   }
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme =
     theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);
@@ -879,7 +879,7 @@ export async function generatePlannedAuthorStatementSet(
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<PlannedAuthorStatementSet> {
   const { authorCount, statementCount, unmatchedCount, theme, teilLabel, difficulty, userId } = params;
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme =
     theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
   const model = customModel(ModelId.GPT_5);

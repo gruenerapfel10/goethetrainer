@@ -263,7 +263,7 @@ async function generateStatementMatchQuestion(
     );
   }
 
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const {
     authorCount = 3,
     statementCount = 7,

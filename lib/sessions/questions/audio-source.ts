@@ -125,7 +125,7 @@ export async function generateNewsBackedAudioTranscript(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<AudioTranscriptResult> {
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const conversationStyle = options.conversationStyle ?? 'podcast';
   const speakerCount =
     options.speakerCount ??

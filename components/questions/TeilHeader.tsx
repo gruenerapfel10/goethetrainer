@@ -52,7 +52,7 @@ export function TeilHeader({
   className,
 }: TeilHeaderProps) {
   return (
-    <div className={cn('px-6 pt-6 space-y-4 z-10 bg-[hsl(var(--content-color))]', className)}>
+    <div className={cn('space-y-4 z-10 bg-[hsl(var(--content-color))]', className)}>
       <div
         className="grid w-full"
         style={{ gridTemplateColumns: `repeat(${teilNumbers.length}, minmax(0, 1fr))` }}

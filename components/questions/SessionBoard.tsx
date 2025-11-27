@@ -125,9 +125,14 @@ export function SessionBoard({
     onShowA4FormatChange?.(!showA4Format);
   };
 
-  const paperStyle = showA4Format
-    ? { width: '210mm', height: '297mm', backgroundColor: 'hsl(var(--sidebar-background))' }
-    : undefined;
+  const isSourceView = activeView === 'quelle' && showSourceToggle;
+
+  const paperStyle =
+    showA4Format && !isSourceView
+      ? { width: '210mm', height: '297mm', backgroundColor: 'hsl(var(--sidebar-background))' }
+      : showA4Format
+        ? { width: '210mm', backgroundColor: 'hsl(var(--sidebar-background))' }
+        : undefined;
 
   const paperClass = cn(
     'w-full flex flex-col dark:bg-background',
@@ -227,26 +232,8 @@ export function SessionBoard({
         />
       </div>
 
-      {showBackButton && onBack && (
-        <button
-          onClick={onBack}
-          disabled={isSubmitting}
-          className="absolute bottom-6 left-6 px-4 py-2 bg-muted text-foreground rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-opacity z-10"
-        >
-          ← Zurück
-        </button>
-      )}
-
-      <button
-        onClick={handleSubmitClick}
-        disabled={isSubmitting || !canSubmit}
-        className="absolute bottom-6 right-6 px-8 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-medium transition-opacity z-10"
-      >
-        {isSubmitting ? 'Wird gespeichert…' : isLastTeil ? 'Test abgeben' : 'Weiter'}
-      </button>
-
       {showA4Format ? (
-        <div className="flex-1 flex items-center justify-center bg-gray-200 dark:bg-sidebar overflow-y-auto scrollbar-hide">
+        <div className="flex-1 flex items-start justify-center bg-gray-200 dark:bg-sidebar overflow-y-auto scrollbar-hide">
           {PaperContent}
         </div>
       ) : (

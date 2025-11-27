@@ -172,7 +172,7 @@ async function generateWritingQuestion(
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question> {
   const model = DEFAULT_MODEL;
-  const newsTopic = await getNewsTopicFromPool(userId);
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme =
     sourceConfig.contextTheme ??
     newsTopic?.theme ??

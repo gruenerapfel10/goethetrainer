@@ -102,7 +102,6 @@ export function ReadingListPanel() {
   const nextCursor = data?.[data.length - 1]?.nextCursor ?? null;
 
   const groups = useMemo(() => groupEntries(entries), [entries]);
-  const timeBuckets = useMemo(() => bucketEntriesByTime(entries), [entries]);
 
   const handleNextPage = () => {
     if (nextCursor && !isValidating) {

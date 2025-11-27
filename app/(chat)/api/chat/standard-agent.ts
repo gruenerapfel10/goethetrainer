@@ -18,6 +18,7 @@ import {
 } from '@/lib/ai/agents';
 import { ToolName } from '@/lib/ai/tools/tool-registry';
 import { streamBufferManager } from '@/lib/ai/stream-buffer';
+type MinimalSession = { user: { id: string; email?: string | null } };
 
 // Import tool implementations
 import { chartTool } from '@/lib/ai/tools/chart';
@@ -44,7 +45,7 @@ interface StreamAgentOptions {
 // Initialize all active tools at once
 async function initializeActiveTools(
   agentTools: AgentTools,
-  session: Session,
+  session: MinimalSession,
   chatId: string
 ): Promise<Record<string, any>> {
   const entries = await Promise.all(
@@ -64,7 +65,7 @@ async function initializeActiveTools(
   return Object.fromEntries(entries.filter(e => e !== null) as Array<[string, any]>);
 }
 
-const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<any>> = {
+const toolLoaders: Record<string, (session: MinimalSession, chatId: string) => Promise<any>> = {
   [ToolName.CHART]: async () => chartTool,
   [ToolName.GET_WEATHER]: async () => getWeather,
   [ToolName.PROCESS_FILE]: async () => null,
@@ -99,7 +100,7 @@ const toolLoaders: Record<string, (session: Session, chatId: string) => Promise<
     }),
 };
 
-async function initializeTool(toolName: ToolName, session: Session, chatId: string): Promise<any> {
+async function initializeTool(toolName: ToolName, session: MinimalSession, chatId: string): Promise<any> {
   const loader = toolLoaders[toolName];
   if (!loader) {
     console.warn(`Unknown tool: ${toolName}`);

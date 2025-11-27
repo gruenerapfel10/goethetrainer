@@ -66,7 +66,7 @@ function SidebarResizeHandle({ side, isDragging, onPointerDown }: ResizeHandlePr
       <div
         className={cn(
           "h-20 w-1.5 rounded-full bg-primary/35 transition-transform transition-colors duration-200 ease-out",
-          isDragging && "bg-primary scale-y-125 shadow-[0_0_0_1px_theme(colors.primary/60%)]"
+          isDragging && "bg-primary scale-y-125 shadow-[0_0_0_1px_rgba(0,0,0,0.35)]"
         )}
       />
     </div>

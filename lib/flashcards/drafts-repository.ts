@@ -1,22 +1,31 @@
 import type { CardDraft } from '@/lib/flashcards/types';
 
 export class CardDraftRepository {
-  private drafts: CardDraft[] = [];
+  private static drafts: CardDraft[] = [];
 
-  async list(userId: string): Promise<CardDraft[]> {
-    return this.drafts.filter(d => d.userId === userId);
+  static async list(userId: string, deckId?: string): Promise<CardDraft[]> {
+    return this.drafts.filter(d => d.userId === userId && (deckId ? d.deckId === deckId : true));
   }
 
-  async get(id: string): Promise<CardDraft | null> {
-    return this.drafts.find(d => d.id === id) ?? null;
+  static async get(userId: string, id: string): Promise<CardDraft | null> {
+    return this.drafts.find(d => d.userId === userId && d.id === id) ?? null;
   }
 
-  async create(draft: CardDraft): Promise<string> {
-    this.drafts.push(draft);
-    return draft.id;
+  static async create(
+    userId: string,
+    draft: Omit<CardDraft, 'id' | 'userId' | 'createdAt'>
+  ): Promise<CardDraft> {
+    const full: CardDraft = {
+      ...draft,
+      id: crypto.randomUUID(),
+      userId,
+      createdAt: new Date().toISOString(),
+    };
+    this.drafts.push(full);
+    return full;
   }
 
-  async delete(id: string): Promise<void> {
-    this.drafts = this.drafts.filter(d => d.id !== id);
+  static async delete(userId: string, id: string): Promise<void> {
+    this.drafts = this.drafts.filter(d => !(d.userId === userId && d.id === id));
   }
 }

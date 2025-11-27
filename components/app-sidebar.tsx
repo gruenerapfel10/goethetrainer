@@ -110,11 +110,11 @@ export function AppSidebar() {
       collapsible="icon"
       resizable={false}
       collapsedWidth={44}
-      className="bg-[hsl(var(--layout-color))] overflow-hidden"
+      className="bg-background overflow-hidden"
       suppressHydrationWarning
     >
       <SidebarContent
-        className="p-0 bg-[hsl(var(--layout-color))] overflow-hidden"
+        className="p-0 bg-background overflow-hidden"
         style={{ gap: '0' }}
       >
         {renderMenu(CORE_ITEMS)}

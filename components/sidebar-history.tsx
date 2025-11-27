@@ -28,6 +28,7 @@ import { LoaderIcon, PinIcon } from './icons';
 import { ChatItem } from './sidebar-history-item';
 import { useTranslations } from 'next-intl';
 import { Search } from 'lucide-react';
+import { useSupabaseSession } from '@/lib/supabase/use-session';
 
 type GroupedChats = {
   pinned: Chat[];
@@ -140,6 +141,7 @@ export function SidebarHistory({
   const { setOpenMobile } = useSidebar();
   const { id } = useParams();
   const t = useTranslations();
+  const { user } = useSupabaseSession();
   const {
     data: paginatedChatHistories,
     setSize,

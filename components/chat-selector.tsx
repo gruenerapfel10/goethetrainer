@@ -34,6 +34,7 @@ export function ChatSelector({
   isLoading,
   chatTitle,
   isTitleGenerating,
+  onExport,
 }: {
   currentChatId: string;
   onChatSelect: (chatId: string) => void;
@@ -44,6 +45,7 @@ export function ChatSelector({
   isLoading?: boolean;
   chatTitle?: string;
   isTitleGenerating?: boolean;
+  onExport?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();

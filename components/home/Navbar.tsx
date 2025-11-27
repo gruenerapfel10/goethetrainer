@@ -9,6 +9,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [currentSection, setCurrentSection] = useState<string>('hero');
+  const session = null;
 
   useEffect(() => {
     const sections = [
