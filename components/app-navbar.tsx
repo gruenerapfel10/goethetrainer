@@ -6,7 +6,7 @@ import Image from 'next/image';
 
 export function AppNavbar() {
   return (
-    <nav className="bg-background text-foreground px-6 py-2 flex items-center justify-between flex-shrink-0 h-12 border-0 shadow-sm">
+    <nav className="bg-background dark:bg-[hsl(var(--content-color))] text-foreground px-6 py-2 flex items-center justify-between flex-shrink-0 h-12 border-0 shadow-sm">
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Image

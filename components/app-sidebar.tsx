@@ -110,18 +110,18 @@ export function AppSidebar() {
       collapsible="icon"
       resizable={false}
       collapsedWidth={44}
-      className="bg-background overflow-hidden"
+      className="bg-background dark:bg-[hsl(var(--content-color))] overflow-hidden"
       suppressHydrationWarning
     >
       <SidebarContent
-        className="p-0 bg-background overflow-hidden"
+        className="p-0 bg-background dark:bg-[hsl(var(--content-color))] overflow-hidden"
         style={{ gap: '0' }}
       >
         {renderMenu(CORE_ITEMS)}
         {renderMenu(RESOURCE_ITEMS, 'Resources')}
         {renderMenu(SKILL_ITEMS, 'Skills')}
       </SidebarContent>
-      <SidebarFooter className="mt-auto px-2 py-3 gap-2 bg-background">
+      <SidebarFooter className="mt-auto px-2 py-3 gap-2 bg-background dark:bg-[hsl(var(--content-color))]">
         <div className="flex flex-col gap-2">
           <LocaleSwitcherSelect expanded={isExpanded} />
           <NavbarThemeToggle expanded={isExpanded} />

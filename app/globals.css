@@ -273,7 +273,7 @@
         --background: 240 5% 8%;
         --foreground: var(--off-white);
         --layout-color: 0 0% 0%;
-        --content-color: var(--near-black);
+        --content-color: 0 0% 0%;
 
         /* Card variants */
         --card-foreground: var(--off-white);

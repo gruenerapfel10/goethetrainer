@@ -13,7 +13,8 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const limitParam = Number(searchParams.get('limit') ?? '25');
-  const limit = Number.isNaN(limitParam) ? 25 : Math.min(Math.max(limitParam, 1), 50);
+  // Allow larger result sets for client-side highlighting
+  const limit = Number.isNaN(limitParam) ? 25 : Math.min(Math.max(limitParam, 1), 500);
   const cursor = searchParams.get('cursor');
   const search = searchParams.get('q');
 

@@ -259,7 +259,7 @@ function useSavedWords(enabled: boolean): string[] {
     });
 
   const { data, mutate } = useSWR<{ items: Array<{ text: string }> }>(
-    enabled ? '/api/reading-list?limit=50' : null,
+    enabled ? '/api/reading-list?limit=500' : null,
     fetcher,
     { revalidateOnFocus: false }
   );

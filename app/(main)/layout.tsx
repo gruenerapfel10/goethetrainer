@@ -19,13 +19,13 @@ export default async function MainLayout({
       <RightSidebarProvider>
         <SidebarProvider
           defaultOpen={true}
-          className="flex flex-col h-screen overflow-hidden bg-[hsl(var(--content-color))]"
+          className="flex flex-col h-screen overflow-hidden bg-background dark:bg-[hsl(var(--content-color))]"
         >
           <KeyboardShortcutHandler />
           <AppNavbar />
-          <div className="flex-1 min-h-0 flex bg-[hsl(var(--content-color))] overflow-hidden">
+          <div className="flex-1 min-h-0 flex bg-background dark:bg-[hsl(var(--content-color))] overflow-hidden">
             <AppSidebar />
-            <SidebarInset className="relative flex flex-col flex-1 min-h-0 p-0 pb-2 pr-2 bg-[hsl(var(--content-color))] overflow-auto">
+            <SidebarInset className="relative flex flex-col flex-1 min-h-0 p-0 pb-2 pr-2 bg-background dark:bg-[hsl(var(--content-color))] overflow-auto">
               <div className="relative flex-1 min-h-0 overflow-auto bg-[hsl(var(--layout-color))] rounded-none border-0">
                 {/* Top vignette */}
                 <div

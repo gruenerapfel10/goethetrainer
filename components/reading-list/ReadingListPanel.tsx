@@ -326,9 +326,9 @@ export function ReadingListPanel() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground opacity-0 transition group-hover:opacity-100 data-[state=open]:opacity-100"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground transition-colors"
                               >
-                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                <MoreHorizontal className="h-4 w-4 text-inherit" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
