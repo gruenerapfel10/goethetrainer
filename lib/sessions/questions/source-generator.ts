@@ -208,6 +208,7 @@ export async function generateRawSource(
   const newsTopic = await getNewsTopicFromPool();
   const selectedTheme =
     overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const targetRange = overrides?.targetWordCountRange;
   const model = customModel(ModelId.GPT_5);
 
   const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
@@ -220,8 +221,9 @@ Requirements:
 3. Provide a TITLE for the passage (5-10 words)
 4. Provide a SUBTITLE (brief description 10-15 words)
 5. One context passage (200-300 words, C1 level, naturally written)
+${targetRange ? `6. Target length: ${targetRange[0]}-${targetRange[1]} words (soft constraint)` : ''}
 
-The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.${
+The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.${ 
     newsTopic
       ? `
 
@@ -462,14 +464,10 @@ export async function generatePlannedGapPassage(
       const label = definition?.label ?? category;
       const description = definition?.description ?? '';
       const hint = definition?.generationHint ?? '';
-      const extra =
-        category === ReadingAssessmentCategory.COLLOCATION_CONTROL
-          ? 'WICHTIG (Kollokation): Entferne immer die komplette feste Verbindung (z. B. Verb + Objekt oder ganze Redewendung), nicht nur Teile davon.'
-          : '';
       return `Gap ${index + 1}: ${label}
 - Kompetenz: ${description}
 - Generationshinweis: ${hint}
-${extra ? `- Zusatz: ${extra}` : ''}`;
+`;
     })
     .join('\n\n');
 

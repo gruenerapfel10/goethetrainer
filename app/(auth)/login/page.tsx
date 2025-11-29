@@ -16,6 +16,13 @@ import { login, type LoginActionState } from '../actions';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
+const getRedirectTo = () =>
+  typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback`
+    : process.env.NEXT_PUBLIC_SITE_URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      : undefined;
+
 export default function Page() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -50,7 +57,7 @@ export default function Page() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectTo(),
         },
       });
       if (error) {

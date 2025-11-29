@@ -63,10 +63,10 @@ interface SessionInsights {
   color: string;
 }
 
-const ALL_READING_FOCUS_OPTIONS: ReadingAssessmentCategory[] = listReadingAssessmentCategories();
-const DEFAULT_READING_FOCUS: ReadingAssessmentCategory[] = [...ALL_READING_FOCUS_OPTIONS];
-const READING_FOCUS_STORAGE_KEY = 'goethe.readingFocusCategories';
-const READING_FOCUS_ALLOWED_SET = new Set(ALL_READING_FOCUS_OPTIONS);
+const ALL_FOCUS_OPTIONS: ReadingAssessmentCategory[] = listReadingAssessmentCategories();
+const DEFAULT_FOCUS_SELECTION: ReadingAssessmentCategory[] = [...ALL_FOCUS_OPTIONS];
+const FOCUS_STORAGE_KEY = 'goethe.focusCategories';
+const FOCUS_ALLOWED_SET = new Set(ALL_FOCUS_OPTIONS);
 
 const formatDateTime = (value: string | Date) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -261,8 +261,8 @@ function SessionContent() {
   const [isLoadingInsights, setIsLoadingInsights] = useState(true);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [readingFocus, setReadingFocus] = useState<ReadingAssessmentCategory[]>(() => [...DEFAULT_READING_FOCUS]);
-  const [readingFocusLoaded, setReadingFocusLoaded] = useState(false);
+  const [focusSelection, setFocusSelection] = useState<ReadingAssessmentCategory[]>(() => [...DEFAULT_FOCUS_SELECTION]);
+  const [focusLoaded, setFocusLoaded] = useState(false);
   const itemsPerPage = 5;
   const defaultQuestionCount = defaults?.questionCount ?? null;
 
@@ -272,65 +272,61 @@ function SessionContent() {
       questionCount: defaultQuestionCount,
     };
 
-    if (sessionType === SessionTypeEnum.READING && readingFocus.length > 0) {
+    if (focusSelection.length > 0) {
       payload.preferences = {
         ...(payload.preferences ?? {}),
-        reading: {
-          ...(payload.preferences?.reading ?? {}),
-          gapFocusCategories: readingFocus,
+        focus: {
+          ...(payload.preferences?.focus ?? {}),
+          categories: focusSelection,
         },
       };
     }
 
     return payload;
-  }, [sessionType, defaultQuestionCount, readingFocus]);
+  }, [sessionType, defaultQuestionCount, focusSelection]);
 
   useEffect(() => {
-    if (sessionType !== SessionTypeEnum.READING) {
-      setReadingFocusLoaded(false);
-      return;
-    }
     if (typeof window === 'undefined') {
       return;
     }
     try {
-      const raw = window.localStorage.getItem(READING_FOCUS_STORAGE_KEY);
+      const raw = window.localStorage.getItem(FOCUS_STORAGE_KEY);
       if (!raw) {
-        setReadingFocus([...DEFAULT_READING_FOCUS]);
+        setFocusSelection([...DEFAULT_FOCUS_SELECTION]);
         return;
       }
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        const filtered = parsed.filter((value): value is ReadingAssessmentCategory =>
-          typeof value === 'string' && READING_FOCUS_ALLOWED_SET.has(value as ReadingAssessmentCategory)
-        );
+      const filtered = parsed.filter((value): value is ReadingAssessmentCategory =>
+        typeof value === 'string' && FOCUS_ALLOWED_SET.has(value as ReadingAssessmentCategory)
+      );
         if (filtered.length > 0) {
-          setReadingFocus(filtered);
+          setFocusSelection(filtered);
           return;
         }
       }
-      setReadingFocus([...DEFAULT_READING_FOCUS]);
+      setFocusSelection([...DEFAULT_FOCUS_SELECTION]);
     } catch (error) {
       console.warn('Failed to load reading focus preferences', error);
-      setReadingFocus([...DEFAULT_READING_FOCUS]);
+      setFocusSelection([...DEFAULT_FOCUS_SELECTION]);
     } finally {
-      setReadingFocusLoaded(true);
+      setFocusLoaded(true);
     }
   }, [sessionType]);
 
   useEffect(() => {
-    if (!readingFocusLoaded || sessionType !== SessionTypeEnum.READING) {
+    if (!focusLoaded) {
       return;
     }
     if (typeof window === 'undefined') {
       return;
     }
     try {
-      window.localStorage.setItem(READING_FOCUS_STORAGE_KEY, JSON.stringify(readingFocus));
+      window.localStorage.setItem(FOCUS_STORAGE_KEY, JSON.stringify(focusSelection));
     } catch (error) {
       console.warn('Failed to persist reading focus preferences', error);
     }
-  }, [readingFocus, readingFocusLoaded, sessionType]);
+  }, [focusSelection, focusLoaded, sessionType]);
 
   useEffect(() => {
     let cancelled = false;
@@ -418,9 +414,9 @@ function SessionContent() {
 
       {sessionType === SessionTypeEnum.READING && (
         <ReadingCustomizationCard
-          selectedCategories={readingFocus}
-          availableCategories={ALL_READING_FOCUS_OPTIONS}
-          onChange={setReadingFocus}
+          selectedCategories={focusSelection}
+          availableCategories={ALL_FOCUS_OPTIONS}
+          onChange={setFocusSelection}
         />
       )}
 
@@ -628,10 +624,10 @@ function ReadingCustomizationCard({
     <div className="rounded-2xl border bg-white/60 p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-muted-foreground">Reading focus</p>
-          <h3 className="text-xl font-bold mt-1">Choose your grammar & vocab focus</h3>
+          <p className="text-sm font-semibold text-muted-foreground">Focus</p>
+          <h3 className="text-xl font-bold mt-1">Choose your language focus areas</h3>
           <p className="text-sm text-muted-foreground">
-            Tailor Teil&nbsp;1 gap questions before you start. At least one focus must remain active.
+            Applies to supported question types. At least one focus must remain active.
           </p>
         </div>
         <DropdownMenu>

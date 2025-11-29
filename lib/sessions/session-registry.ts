@@ -62,6 +62,10 @@ export interface SessionSourceOptions {
     theme?: string;
     systemPrompt?: string;
     userPrompt?: string;
+    /**
+     * Target word count range for generated passages (soft hint, may be validated downstream).
+     */
+    targetWordCountRange?: [number, number];
   };
   /**
    * Customisation for post-processing/identification (e.g., gap extraction).

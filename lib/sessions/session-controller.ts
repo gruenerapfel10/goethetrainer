@@ -48,20 +48,18 @@ import type { PaperBlueprint } from '@/lib/papers/types';
 
 registerDefaultQuestionModules();
 
-const READING_CATEGORY_SET = new Set(listReadingAssessmentCategories());
+const GLOBAL_FOCUS_CATEGORY_SET = new Set(listReadingAssessmentCategories());
 
-function extractReadingFocusCategories(
+function extractGlobalFocusCategories(
   metadata?: Record<string, any>
 ): ReadingAssessmentCategory[] | null {
-  const rawSelection = metadata?.preferences?.reading?.gapFocusCategories;
+  const rawSelection = metadata?.preferences?.focus?.categories;
   if (!Array.isArray(rawSelection)) {
     return null;
   }
-
   const filtered = rawSelection.filter((value): value is ReadingAssessmentCategory => {
-    return typeof value === 'string' && READING_CATEGORY_SET.has(value as ReadingAssessmentCategory);
+    return typeof value === 'string' && GLOBAL_FOCUS_CATEGORY_SET.has(value as ReadingAssessmentCategory);
   });
-
   return filtered.length ? filtered : null;
 }
 
@@ -534,30 +532,28 @@ export async function generateQuestionsForSession(
       throw new Error(`No question layout defined for session type "${sessionType}"`);
     }
 
-    if (sessionType === SessionTypeEnum.READING) {
-      const focusCategories = extractReadingFocusCategories(session.metadata);
-      if (focusCategories) {
-        plan = plan.map(entry => {
-          if (entry.id !== 'teil_1') {
-            return entry;
-          }
-          const currentSourceOverrides = entry.sourceOverrides ?? {};
-          const currentCategoryAllocation =
-            (currentSourceOverrides as any).categoryAllocation ?? {};
-          const nextSourceOverrides = {
-            ...currentSourceOverrides,
-            categoryAllocation: {
-              ...currentCategoryAllocation,
-              strategy: currentCategoryAllocation.strategy ?? 'even',
-              categories: focusCategories,
-            },
-          };
-          return {
-            ...entry,
-            sourceOverrides: nextSourceOverrides,
-          };
-        });
-      }
+    const focusCategories = extractGlobalFocusCategories(session.metadata);
+    if (focusCategories) {
+      plan = plan.map(entry => {
+        if (entry.moduleId !== QuestionModuleId.MULTIPLE_CHOICE) {
+          return entry;
+        }
+        const currentSourceOverrides = entry.sourceOverrides ?? {};
+        const currentCategoryAllocation =
+          (currentSourceOverrides as any).categoryAllocation ?? {};
+        const nextSourceOverrides = {
+          ...currentSourceOverrides,
+          categoryAllocation: {
+            ...currentCategoryAllocation,
+            strategy: currentCategoryAllocation.strategy ?? 'even',
+            categories: focusCategories,
+          },
+        };
+        return {
+          ...entry,
+          sourceOverrides: nextSourceOverrides,
+        };
+      });
     }
 
     if (regenerate) {

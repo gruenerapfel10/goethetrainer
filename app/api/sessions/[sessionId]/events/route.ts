@@ -5,8 +5,8 @@ import { NextRequest } from 'next/server';
 // session snapshot on each message.
 export const runtime = 'nodejs';
 
-export async function GET(request: NextRequest, context: any) {
-  const { sessionId } = context.params;
+export async function GET(request: NextRequest, context: { params: Promise<{ sessionId: string }> }) {
+  const { sessionId } = await context.params;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

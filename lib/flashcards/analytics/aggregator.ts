@@ -1,4 +1,6 @@
-import { DeckRepository, ReviewRepository, SchedulingStateRepository } from '@/lib/flashcards/repository/memory-repo';
+import { DeckRepository } from '@/lib/flashcards/repository/supabase-repo';
+import { ReviewRepository } from '@/lib/flashcards/repository/review-repo';
+import { SchedulingStateRepository } from '@/lib/flashcards/repository/state-repo';
 import { FeedbackRating, type CardTemplate, type Deck, type ReviewEvent, type SchedulingState } from '@/lib/flashcards/types';
 import type {
   DeckAnalytics,

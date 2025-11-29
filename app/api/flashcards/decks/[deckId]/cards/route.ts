@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/app/(auth)/auth';
-import { DeckRepository } from '@/lib/flashcards/repository/memory-repo';
+import { DeckRepository } from '@/lib/flashcards/repository/supabase-repo';
 import { FlashcardDeckType } from '@/lib/flashcards/types';
 
 export async function POST(

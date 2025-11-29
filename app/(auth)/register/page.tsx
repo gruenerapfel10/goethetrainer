@@ -18,6 +18,13 @@ import { AuthForm } from '@/components/auth-form';
 import { SubmitButton } from '@/components/submit-button';
 import { register, type RegisterActionState } from '../actions';
 
+const getRedirectTo = () =>
+  typeof window !== 'undefined'
+    ? `${window.location.origin}/auth/callback`
+    : process.env.NEXT_PUBLIC_SITE_URL
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+      : undefined;
+
 export default function Page() {
   const router = useRouter();
   const t = useTranslations();
@@ -60,7 +67,7 @@ export default function Page() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: getRedirectTo(),
         },
       });
       if (error) {

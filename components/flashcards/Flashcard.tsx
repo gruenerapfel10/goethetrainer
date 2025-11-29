@@ -12,6 +12,7 @@ interface FlashcardProps {
   building?: boolean;
   onFrontChange?: (value: string) => void;
   onBackChange?: (value: string) => void;
+  containerClassName?: string;
 }
 
 export function Flashcard({
@@ -22,6 +23,7 @@ export function Flashcard({
   building = false,
   onFrontChange,
   onBackChange,
+  containerClassName,
 }: FlashcardProps) {
   const [flipped, setFlipped] = useState(isFlipped);
   const frontEditorRef = useRef<HTMLDivElement>(null);
@@ -114,9 +116,11 @@ export function Flashcard({
     }
   };
 
-  const containerClass = building
+  const defaultContainerClass = building
     ? 'w-full min-h-[300px] rounded-3xl bg-muted p-8 flex flex-col items-center justify-center relative'
-    : 'w-full h-full min-h-[300px] rounded-3xl bg-card/90 p-8 shadow-[0_25px_80px_rgba(15,23,42,0.12)] flex flex-col items-center justify-center transition-all hover:shadow-[0_25px_100px_rgba(15,23,42,0.2)] cursor-pointer group';
+    : 'w-full h-full min-h-[300px] flex flex-col items-center justify-center';
+
+  const containerClass = containerClassName || defaultContainerClass;
 
   const labelClass = building
     ? 'text-xs uppercase tracking-[0.35em] text-muted-foreground'
@@ -128,8 +132,16 @@ export function Flashcard({
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center">
-      <button
+      <div
+        role={!building ? 'button' : undefined}
+        tabIndex={!building ? 0 : -1}
         onClick={handleFlip}
+        onKeyDown={event => {
+          if (!building && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            handleFlip(event as any);
+          }
+        }}
         className={containerClass}
       >
         {building && (
@@ -246,7 +258,7 @@ export function Flashcard({
             Click to {flipped ? 'see prompt' : 'reveal answer'}
           </p>
         )}
-      </button>
+      </div>
     </div>
   );
 }

@@ -150,10 +150,12 @@ export const readingSessionConfig: SessionConfig = {
         categoryAllocation: {
           strategy: 'even',
           categories: [
-            ReadingAssessmentCategory.CONNECTOR_LOGIC,
-            ReadingAssessmentCategory.LEXICAL_NUANCE,
-            ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
-            ReadingAssessmentCategory.DISCOURSE_REFERENCE,
+            ReadingAssessmentCategory.FORM_GRAMMAR,
+            ReadingAssessmentCategory.COHESION_CONNECTORS,
+            ReadingAssessmentCategory.LEXIS_REGISTER,
+            ReadingAssessmentCategory.GIST_STRUCTURE,
+            ReadingAssessmentCategory.DETAIL_EVIDENCE,
+            ReadingAssessmentCategory.INFERENCE_STANCE,
           ],
         },
       },

@@ -8,6 +8,8 @@ create table if not exists public.flashcard_decks (
   status text default 'draft',
   type text default 'standard',
   cards jsonb default '[]'::jsonb,
+  settings jsonb default '{"schedulerId":"fsrs-lite","feedbackPolicyId":"ternary"}'::jsonb,
+  categories text[] default '{}',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -20,6 +22,7 @@ create table if not exists public.flashcard_sessions (
   status text default 'active',
   answers jsonb default '[]'::jsonb,
   current_index integer default 0,
+  session jsonb,
   created_at timestamptz default now()
 );
 

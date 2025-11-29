@@ -55,6 +55,20 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
   const [carouselIndex, setCarouselIndex] = useState(0);
   const descriptionRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!cards.length) {
+      setCarouselIndex(0);
+      setEditingCardIndex(null);
+      return;
+    }
+    if (carouselIndex > cards.length - 1) {
+      setCarouselIndex(Math.max(0, cards.length - 1));
+    }
+    if (editingCardIndex !== null && editingCardIndex > cards.length - 1) {
+      setEditingCardIndex(null);
+    }
+  }, [cards, carouselIndex, editingCardIndex]);
+
   const normalizedSelectedCategories = useMemo(() => new Set(selectedCategories), [selectedCategories]);
 
   const resetState = useCallback(() => {
@@ -160,6 +174,10 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
   const removeCard = (index: number) => {
     if (cards.length === 1) return;
     setCards(prev => prev.filter((_, idx) => idx !== index));
+    setCarouselIndex(prev => {
+      if (prev > index) return prev - 1;
+      return Math.max(0, prev === index ? prev - 1 : prev);
+    });
   };
 
   const handleSubmit = useCallback(async () => {
@@ -314,7 +332,7 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
                   exit={{ opacity: 0, x: -32 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {editingCardIndex === carouselIndex ? (
+                  {cards[carouselIndex] && editingCardIndex === carouselIndex ? (
                     <div className="space-y-3 rounded-2xl border border-border/30 bg-background/80 p-4">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-foreground">Card {carouselIndex + 1}</p>
@@ -340,7 +358,7 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : cards[carouselIndex] ? (
                     <Flashcard
                       card={{
                         id: String(carouselIndex),
@@ -354,7 +372,7 @@ export function FlashcardBuilderModal({ open, onOpenChange, onRefresh }: Flashca
                       onFrontChange={(value) => handleCardChange(carouselIndex, 'front', value)}
                       onBackChange={(value) => handleCardChange(carouselIndex, 'back', value)}
                     />
-                  )}
+                  ) : null}
                 </motion.div>
               </AnimatePresence>
             </div>

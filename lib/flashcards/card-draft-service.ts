@@ -3,7 +3,7 @@ import { customModel } from '@/lib/ai/models';
 import { ModelId } from '@/lib/ai/model-registry';
 import { SourceRepository } from '@/lib/flashcards/source-documents';
 import { CardDraftRepository } from '@/lib/flashcards/drafts-repository';
-import { DeckRepository } from '@/lib/flashcards/repository/memory-repo';
+import { DeckRepository } from '@/lib/flashcards/repository/supabase-repo';
 import { FlashcardEventLog } from '@/lib/flashcards/logs/event-log';
 
 export async function generateDraftsFromSource(userId: string, deckId: string, sourceId: string) {

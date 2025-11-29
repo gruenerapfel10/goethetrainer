@@ -4,7 +4,7 @@ import { AppRightbar } from '@/components/app-rightbar';
 import { AppNavbar } from '@/components/app-navbar';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { RightSidebarProvider } from '@/lib/right-sidebar-context';
-import { LearningSessionProvider } from '@/lib/sessions/learning-session-context';
+import { LearningSessionProviderWrapper } from '@/components/learning-session-provider-wrapper';
 import { KeyboardShortcutHandler } from '@/components/keyboard-shortcut-handler';
 
 export default async function MainLayout({
@@ -15,7 +15,7 @@ export default async function MainLayout({
   await auth();
 
   return (
-    <LearningSessionProvider>
+    <LearningSessionProviderWrapper>
       <RightSidebarProvider>
         <SidebarProvider
           defaultOpen={true}
@@ -53,6 +53,6 @@ export default async function MainLayout({
           </div>
         </SidebarProvider>
       </RightSidebarProvider>
-    </LearningSessionProvider>
+    </LearningSessionProviderWrapper>
   );
 }

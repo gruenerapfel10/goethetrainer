@@ -47,6 +47,7 @@ export default function FlashcardsPage() {
   const [categoryInput, setCategoryInput] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   const activePolicy = useMemo(() => {
     try {
@@ -134,25 +135,26 @@ export default function FlashcardsPage() {
     setTypedAnswer('');
   }, [session?.activeCard?.card.id, studyMode]);
 
-  const startSession = async (deckId: string) => {
+  useEffect(() => {
+    setShowAnswer(false);
+  }, [session?.activeCard?.card.id]);
+
+  const [runnerMode, setRunnerMode] = useState<'finite' | 'infinite'>('finite');
+
+  const startDeck = async (deckId: string, mode: 'flashcard' | 'typing') => {
     const response = await fetch('/api/flashcards/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deckId }),
+      body: JSON.stringify({ deckId, mode: runnerMode }),
     });
     const payload = await response.json();
     if (!response.ok) {
       setError(payload.error ?? 'Failed to start session');
       return;
     }
-    setSession(payload.session);
-    const deck = publishedDecks.find(d => d.id === deckId);
-    if (deck?.settings?.feedbackPolicyId) {
-      setActivePolicyId(deck.settings.feedbackPolicyId);
-    } else {
-      setActivePolicyId('ternary');
-    }
     setError(null);
+    const targetMode = mode === 'typing' ? 'typing' : 'flashcard';
+    window.location.href = `/flashcards/session/${payload.session.id}?mode=${targetMode}`;
   };
 
   const answerCard = async (feedback: number) => {
@@ -265,10 +267,10 @@ export default function FlashcardsPage() {
 
   return (
     <>
-      <div className="space-y-1 bg-background p-3 h-full">
-        {error && (
-          <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
-        )}
+        <div className="space-y-1 bg-background p-3 h-full">
+          {error && (
+            <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
+          )}
 
         <section className="relative overflow-hidden rounded-[32px] bg-card/90 px-6 py-6 shadow-[0_25px_80px_rgba(15,23,42,0.12)] mx-2">
           <div className="space-y-4">
@@ -371,6 +373,25 @@ export default function FlashcardsPage() {
             >
               +
             </Button>
+            <div className="flex items-center gap-2 pl-2">
+              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Runner</span>
+              <Button
+                size="sm"
+                variant={runnerMode === 'finite' ? 'default' : 'outline'}
+                className="rounded-full"
+                onClick={() => setRunnerMode('finite')}
+              >
+                Finite
+              </Button>
+              <Button
+                size="sm"
+                variant={runnerMode === 'infinite' ? 'default' : 'outline'}
+                className="rounded-full"
+                onClick={() => setRunnerMode('infinite')}
+              >
+                Infinite
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -380,7 +401,7 @@ export default function FlashcardsPage() {
               <p className="text-sm text-muted-foreground">No decks match your search.</p>
             ) : (
               filteredDecks.map(deck => (
-                <div key={deck.id} className="rounded-3xl bg-background dark:bg-black p-8 shadow-[0_25px_80px_rgba(15,23,42,0.12)] min-h-[280px] flex flex-col justify-between cursor-pointer transition-all hover:shadow-[0_25px_100px_rgba(15,23,42,0.2)]">
+                <div key={deck.id} className="rounded-3xl bg-background dark:bg-black p-8 shadow-[0_25px_80px_rgba(15,23,42,0.12)] min-h-[280px] flex flex-col justify-between transition-all hover:shadow-[0_25px_100px_rgba(15,23,42,0.2)]">
                   <div>
                     <div className="flex items-start justify-between mb-1">
                       <h3 className="text-2xl font-bold text-foreground">{deck.title}</h3>
@@ -405,15 +426,160 @@ export default function FlashcardsPage() {
                     <span className="text-xs uppercase text-muted-foreground">
                       {new Date(deck.createdAt).toLocaleDateString()}
                     </span>
-                    <Button className="rounded-full px-8" onClick={() => startSession(deck.id)}>
-                      Start
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="secondary"
+                        className="rounded-full px-4"
+                        onClick={() => void startDeck(deck.id, 'flashcard')}
+                      >
+                        Review
+                      </Button>
+                      <Button
+                        className="rounded-full px-6"
+                        onClick={() => void startDeck(deck.id, 'typing')}
+                      >
+                        Start
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
         </div>
+
+        {/* Study session panel */}
+        {session && (
+          <div className="mx-2 mb-8 rounded-3xl bg-card/90 p-6 shadow-[0_25px_80px_rgba(15,23,42,0.12)]">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground">
+                  Active session
+                </p>
+                <p className="text-xl font-semibold text-foreground">
+                  Deck: {publishedDecks.find(d => d.id === session.deckId)?.title ?? session.deckId}
+                </p>
+              </div>
+              <div className="flex gap-2 text-sm text-muted-foreground">
+                <span>Queue: {activeCardCount}</span>
+                <span className="px-2">•</span>
+                <span>Completed: {session.completed.length}</span>
+              </div>
+            </div>
+
+            {session.activeCard ? (
+              <div className="mt-4 rounded-2xl border border-border/50 bg-background/60 p-4 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant={studyMode === 'flashcard' ? 'default' : 'outline'}
+                      className="rounded-full"
+                      onClick={() => setStudyMode('flashcard')}
+                    >
+                      Flip mode
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={studyMode === 'typing' ? 'default' : 'outline'}
+                      className="rounded-full"
+                      onClick={() => {
+                        setStudyMode('typing');
+                        setShowAnswer(false);
+                      }}
+                    >
+                      Typing mode
+                    </Button>
+                  </div>
+                  <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                    {session.activeCard.card.tags?.join(', ') || 'untagged'}
+                  </span>
+                </div>
+
+                {studyMode === 'flashcard' ? (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-lg font-semibold text-foreground">
+                      {session.activeCard.card.front}
+                    </p>
+                    {!showAnswer && session.activeCard.card.hint && (
+                      <p className="text-sm text-muted-foreground italic">Hint: {session.activeCard.card.hint}</p>
+                    )}
+                    {showAnswer && (
+                      <div className="rounded-xl bg-muted/50 p-3">
+                        <p className="text-base text-foreground">{session.activeCard.card.back}</p>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {!showAnswer && (
+                        <Button variant="secondary" className="rounded-full" onClick={() => setShowAnswer(true)}>
+                          Reveal answer
+                        </Button>
+                      )}
+                      {activePolicy.options.map(option => (
+                        <Button
+                          key={option.label}
+                          className="rounded-full"
+                          variant={option.tone === 'danger' ? 'destructive' : option.tone === 'warning' ? 'secondary' : 'default'}
+                          disabled={isAnswering}
+                          onClick={() => {
+                            setShowAnswer(false);
+                            void answerCard(option.rating);
+                          }}
+                        >
+                          {option.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-lg font-semibold text-foreground">
+                      {session.activeCard.card.front}
+                    </p>
+                    <input
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      placeholder="Type your answer"
+                      value={typedAnswer}
+                      onChange={e => setTypedAnswer(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          void handleTypingSubmit();
+                        }
+                      }}
+                    />
+                    {typingResult && (
+                      <p className="text-sm text-muted-foreground">{typingResult}</p>
+                    )}
+                    <div className="flex gap-2">
+                      <Button
+                        className="rounded-full"
+                        disabled={isAnswering}
+                        onClick={() => void handleTypingSubmit()}
+                      >
+                        Submit
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        className="rounded-full"
+                        onClick={() => {
+                          setTypedAnswer('');
+                          setTypingResult(null);
+                          setShowAnswer(true);
+                        }}
+                      >
+                        Reveal
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-2xl border border-dashed border-border/50 bg-background/40 p-6 text-sm text-muted-foreground">
+                Session complete. Start another deck to keep going.
+              </div>
+            )}
+          </div>
+        )}
       </div>
       <FlashcardBuilderModal open={builderOpen} onOpenChange={setBuilderOpen} onRefresh={builderRefresh} />
 

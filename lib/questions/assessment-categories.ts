@@ -1,12 +1,12 @@
+// Global assessment/focus palette (cross-skill capable, currently used in Reading Teil 1).
+// Keep this stable; map per-skill/module as needed.
 export enum ReadingAssessmentCategory {
-  CONNECTOR_LOGIC = 'connector_logic',
-  LEXICAL_NUANCE = 'lexical_nuance',
-  COLLOCATION_CONTROL = 'collocation_control',
-  GRAMMAR_AGREEMENT = 'grammar_agreement',
-  IDIOMATIC_EXPRESSION = 'idiomatic_expression',
-  REGISTER_TONE = 'register_tone',
-  DISCOURSE_REFERENCE = 'discourse_reference',
-  INSTITUTIONAL_CONTEXT = 'institutional_context',
+  FORM_GRAMMAR = 'form_grammar',
+  COHESION_CONNECTORS = 'cohesion_connectors',
+  LEXIS_REGISTER = 'lexis_register',
+  GIST_STRUCTURE = 'gist_structure',
+  DETAIL_EVIDENCE = 'detail_evidence',
+  INFERENCE_STANCE = 'inference_stance',
 }
 
 export interface ReadingAssessmentCategoryDefinition {
@@ -27,69 +27,53 @@ export interface ReadingCategoryAllocationOptions {
 
 const READING_CATEGORY_DEFINITIONS: Record<ReadingAssessmentCategory, ReadingAssessmentCategoryDefinition> =
   {
-    [ReadingAssessmentCategory.CONNECTOR_LOGIC]: {
-      id: ReadingAssessmentCategory.CONNECTOR_LOGIC,
-      label: 'Connector Logic',
+    [ReadingAssessmentCategory.FORM_GRAMMAR]: {
+      id: ReadingAssessmentCategory.FORM_GRAMMAR,
+      label: 'Form & Grammar',
       description:
-        'Tests whether the learner can restore the correct logical connector (cause, contrast, concession, addition) within a paragraph.',
+        'Morphosyntax and agreement: case, gender, number, tense/aspect, word order.',
       generationHint:
-        'Provide one correct connector that fits the sentence logic and distractors that are grammatically valid but express other logical relations (e.g., causal vs. contrastive).',
+        'Options differ only in grammatical form (case/number/gender/tense). Only one fits the sentence-level agreement and syntax.',
     },
-    [ReadingAssessmentCategory.LEXICAL_NUANCE]: {
-      id: ReadingAssessmentCategory.LEXICAL_NUANCE,
-      label: 'Lexical Nuance',
+    [ReadingAssessmentCategory.COHESION_CONNECTORS]: {
+      id: ReadingAssessmentCategory.COHESION_CONNECTORS,
+      label: 'Cohesion & Connectors',
       description:
-        'Targets fine-grained vocabulary choices among near-synonymous verbs, adjectives oder Substantiven.',
+        'Logical links and discourse markers: cause, contrast, concession, addition, reference.',
       generationHint:
-        'Use options that share Wortart und Register. Nur eine Option darf die semantische Nuance treffen, die der Text verlangt (z. B. Konnotation, Wertung).',
+        'Provide one connector/reference that preserves logic; distractors must be grammatical but express wrong relations.',
     },
-    [ReadingAssessmentCategory.COLLOCATION_CONTROL]: {
-      id: ReadingAssessmentCategory.COLLOCATION_CONTROL,
-      label: 'Collocation Control',
+    [ReadingAssessmentCategory.LEXIS_REGISTER]: {
+      id: ReadingAssessmentCategory.LEXIS_REGISTER,
+      label: 'Lexical Precision & Register',
       description:
-        'Checks idiomatic use of prepositions oder feste Wendungen, die mit einem konkreten Verb/Nomen verbunden sind.',
+        'Nuanced word choice, collocation, and appropriate formality/tone.',
       generationHint:
-        'Alle Optionen sollten grammatisch möglich wirken, aber nur eine bildet die kanonische deutsche Kollokation mit dem umgebenden Ausdruck.',
+        'All options same part of speech; only one matches nuance/register and collocational fit in context.',
     },
-    [ReadingAssessmentCategory.GRAMMAR_AGREEMENT]: {
-      id: ReadingAssessmentCategory.GRAMMAR_AGREEMENT,
-      label: 'Grammar Agreement',
+    [ReadingAssessmentCategory.GIST_STRUCTURE]: {
+      id: ReadingAssessmentCategory.GIST_STRUCTURE,
+      label: 'Gist & Structure',
       description:
-        'Verifies mastery of case, gender, and number in Artikeln, Pronomen oder Adjektivendungen.',
+        'Main idea and macro-organization (topic vs. support, section purpose).',
       generationHint:
-        'Biete Formen an, die sich ausschließlich durch Kasus/Genus/Numerus unterscheiden. Nur die korrekte Form erfüllt die durch das Satzgefüge vorgegebene Kongruenz.',
+        'Anchor the option to the main idea/section role; distractors reflect subordinate or unrelated ideas.',
     },
-    [ReadingAssessmentCategory.IDIOMATIC_EXPRESSION]: {
-      id: ReadingAssessmentCategory.IDIOMATIC_EXPRESSION,
-      label: 'Idiomatic Expression',
+    [ReadingAssessmentCategory.DETAIL_EVIDENCE]: {
+      id: ReadingAssessmentCategory.DETAIL_EVIDENCE,
+      label: 'Detail & Evidence',
       description:
-        'Prüft, ob feste Redewendungen oder metaphorische Formeln präzise wiederhergestellt werden können.',
+        'Concrete facts: numbers, dates, entities, factual statements.',
       generationHint:
-        'Alle Optionen sollen idiomatisch klingen, aber nur eine fügt sich in die bekannte Redewendung (z. B. „etwas auf die lange Bank schieben“). Distraktoren verändern einen Kernbestandteil der Wendung.',
+        'Options should vary subtly in factual detail; only one matches the precise detail given.',
     },
-    [ReadingAssessmentCategory.REGISTER_TONE]: {
-      id: ReadingAssessmentCategory.REGISTER_TONE,
-      label: 'Register & Tone',
+    [ReadingAssessmentCategory.INFERENCE_STANCE]: {
+      id: ReadingAssessmentCategory.INFERENCE_STANCE,
+      label: 'Inference & Stance',
       description:
-        'Überprüft, ob der Sprachstil (formal, umgangssprachlich, ironisch) zum Kontext passt.',
+        'Implied meaning, attitude, intent, and beyond-the-text reasoning.',
       generationHint:
-        'Liefer Optionen gleicher Bedeutungsebene, aber unterschiedlicher Register. Nur eine Option darf stilistisch mit dem vorangehenden Text harmonieren.',
-    },
-    [ReadingAssessmentCategory.DISCOURSE_REFERENCE]: {
-      id: ReadingAssessmentCategory.DISCOURSE_REFERENCE,
-      label: 'Discourse Reference',
-      description:
-        'Fokussiert auf Pronomen oder Bezugsausdrücke, die auf vorherige Inhalte verweisen und Kohärenz sichern.',
-      generationHint:
-        'Stelle Optionen bereit, die sich alle auf unterschiedliche Referenten beziehen könnten. Nur eine Option darf gemäß Textlogik das korrekte Bezugswort wieder aufnehmen.',
-    },
-    [ReadingAssessmentCategory.INSTITUTIONAL_CONTEXT]: {
-      id: ReadingAssessmentCategory.INSTITUTIONAL_CONTEXT,
-      label: 'Institutional Context',
-      description:
-        'Testet Wissen über gesellschaftliche oder institutionelle Begriffe (z. B. juristische, politische Strukturen) im Kontext.',
-      generationHint:
-        'Die Optionen sollen thematisch verwandt sein, aber nur ein Begriff darf sachlich korrekt zum beschriebenen institutionellen Rahmen passen.',
+        'Distractors are plausible literal readings; the correct option captures implied attitude/intent or logical inference.',
     },
   };
 

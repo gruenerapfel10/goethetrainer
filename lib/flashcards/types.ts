@@ -76,6 +76,9 @@ export interface FlashcardSession {
   remainingQueue: ScheduledCard[];
   completed: ReviewEvent[];
   schedulerId: string;
+  deckMode?: 'finite' | 'infinite';
+  startedAt: number;
+  endedAt?: number | null;
 }
 
 export interface SourceDocument {

@@ -54,7 +54,7 @@ export function AppSidebar() {
   const [mounted, setMounted] = useState(false);
   const isExpanded = isMobile ? true : state === 'expanded';
   const { user } = useSupabaseSession();
-  const userEmail = user?.email ?? 'user@example.com';
+  const userEmail = user?.email ?? '';
 
   useEffect(() => setMounted(true), []);
 

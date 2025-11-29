@@ -25,6 +25,7 @@ import { ModelId } from '@/lib/ai/model-registry';
 import { customModel } from '@/lib/ai/models';
 import type { NewsTopic } from '@/lib/news/news-topic-pool';
 import { logAiRequest, logAiResponse } from '@/lib/ai/ai-logger';
+import type { LevelProfile } from '@/lib/levels/level-profiles';
 import {
   ReadingAssessmentCategory,
   type ReadingCategoryAllocationOptions,
@@ -35,52 +36,41 @@ import {
 type MCQAnswer = string | Record<string, string> | null;
 
 const GAP_FOCUS_INSTRUCTIONS: Partial<Record<ReadingAssessmentCategory, string>> = {
-  [ReadingAssessmentCategory.LEXICAL_NUANCE]: `
-Lexikalische Nuance:
-- Alle Optionen müssen gleiche Wortart und Register teilen.
-- Nur eine Option darf die vom Kontext geforderte Wertung oder Konnotation exakt treffen.
-Denke wie eine:n Muttersprachler:in und bewerte ausschließlich auf schwarz-weiß. Keine Grauzonen, nur eindeutig richtig oder falsch.
+  [ReadingAssessmentCategory.FORM_GRAMMAR]: `
+Form & Grammatik:
+- Variiere ausschließlich Formen (Kasus/Genus/Numerus, Wortstellung, Flexion).
+- Nenne das steuernde Bezugswort (Artikel, Präposition, Verb).
+Bewerte schwarz-weiß: Nur die Form mit korrekter Kongruenz ist richtig, alle anderen sind falsch.
 `,
-  [ReadingAssessmentCategory.COLLOCATION_CONTROL]: `
-Kollokationskontrolle:
-- Stelle die fehlende feste Verbindung wieder her (Verb+Nomen, Präposition, idiomatischer Ausdruck).
-- Distraktoren sollen grammatisch möglich sein, aber eine andere, unpassende Kollokation bilden.
-Es geht nicht um Nuancen, sondern um die einzige valide Kollokation. Nur eine Option ist korrekt – kein Zwischenraum.
+  [ReadingAssessmentCategory.COHESION_CONNECTORS]: `
+Kohäsion & Konnektoren:
+- Nur eine Option stellt die intendierte Relation her (Kontrast, Konsequenz, Addition, Verweis).
+- Distraktoren bleiben grammatisch, drücken aber andere Relationen aus.
+Arbeite wie ein:e Redakteur:in – nur die logisch passende Verbindung ist korrekt.
 `,
-  [ReadingAssessmentCategory.GRAMMAR_AGREEMENT]: `
-Grammatik/Kongruenz:
-- Variiere ausschließlich Kasus-, Genus- oder Numerusendungen.
-- Nenne im Begründungstext das steuernde Bezugswort (z. B. Artikel, Präposition).
-Beurteile streng: Nur wenn Kongruenz exakt stimmt, ist die Option richtig; alle anderen sind falsch.
+  [ReadingAssessmentCategory.LEXIS_REGISTER]: `
+Lexikalische Präzision & Register:
+- Alle Optionen sind semantisch verwandt, unterscheiden sich in Nuance, Kollokation und Formalität.
+- Nur eine Option passt idiomatisch und stilistisch zum Kontext.
+Keine Partialkredite: Entweder trifft die Option Nuance & Register exakt oder nicht.
 `,
-  [ReadingAssessmentCategory.CONNECTOR_LOGIC]: `
-Konnektorlogik:
-- Nur die korrekte Option darf die intendierte Relation (Kontrast, Konsequenz, Einschränkung etc.) herstellen.
-- Distraktoren müssen andere, aber plausible Relationen ausdrücken.
-Handele wie ein:e native Redakteur:in – es gibt nur eine logisch passende Verbindung, keine Interpretation.
+  [ReadingAssessmentCategory.GIST_STRUCTURE]: `
+Kernaussage & Struktur:
+- Option muss die Hauptidee oder Abschnittsrolle korrekt widerspiegeln.
+- Distraktoren greifen Nebendetails oder tangentiale Ideen auf.
+Bewerte nach Hauptfunktion, nicht nach Oberflächenähnlichkeit.
 `,
-  [ReadingAssessmentCategory.IDIOMATIC_EXPRESSION]: `
-Idiome:
-- Rekonstruiere exakt eine etablierte Redewendung.
-- Distraktoren verändern einen Kernbestandteil und machen die Wendung unidiomatisch.
-Nur die berühmte, standardisierte Wendung ist richtig. Synonyme oder leicht veränderte Varianten sind falsch.
+  [ReadingAssessmentCategory.DETAIL_EVIDENCE]: `
+Details & Evidenz:
+- Optionen variieren in konkreten Fakten (Zahlen, Daten, Entitäten).
+- Nur eine Option stimmt exakt mit dem Detail überein.
+Kleinste Abweichungen machen die Option falsch.
 `,
-  [ReadingAssessmentCategory.REGISTER_TONE]: `
-Register & Ton:
-- Alle Optionen beschreiben denselben Sachverhalt, unterscheiden sich aber in Formalität/Tonalität.
-- Nur die korrekte Option harmoniert mit dem journalistisch-formellen Stil.
-Werte es als native:r Autor:in – entweder passt der Stil exakt oder er passt nicht. Es gibt keine Abstufung.
-`,
-  [ReadingAssessmentCategory.DISCOURSE_REFERENCE]: `
-Diskursreferenz:
-- Optionen verweisen auf unterschiedliche Referenten. Nur eine Option stellt Kohärenz mit dem vorherigen Satzteil her.
-Bewerte streng: nur wenn der Referent eindeutig stimmt, ist die Option korrekt.
-`,
-  [ReadingAssessmentCategory.INSTITUTIONAL_CONTEXT]: `
-Institutioneller Kontext:
-- Verwende präzise Terminologie (politisch, juristisch, wirtschaftlich).
-- Distraktoren sollen thematisch ähnlich sein, aber sachlich nicht passen.
-Nur die sachlich richtige Institution oder Rolle ist korrekt; alle anderen Antworten sind falsch.
+  [ReadingAssessmentCategory.INFERENCE_STANCE]: `
+Inference & Haltung:
+- Korrekte Option erfasst implizite Bedeutung oder Sprecher:innen-Haltung.
+- Distraktoren wirken wörtlich plausibel, verfehlen aber Intention oder logische Folgerung.
+Wähle die Option, die das unausgesprochene Fazit oder die Haltung widerspiegelt.
 `,
 };
 
@@ -109,6 +99,7 @@ interface TextSourceConfig extends QuestionModuleSourceConfig {
   theme?: string;
   teilLabel?: string;
   constructionMode?: 'auto' | 'planned_article';
+  levelProfile?: LevelProfile;
   prompts?: {
     passage?: string;
     questions?: string;
@@ -424,7 +415,7 @@ async function generateStandardMCQ(
     1,
     questionCount || sourceConfig?.questionCount || 7
   );
-  const optionsPerQuestion = sourceConfig?.optionsPerQuestion ?? 3;
+  const optionsPerQuestion = sourceConfig?.optionsPerQuestion ?? sourceConfig?.levelProfile?.optionsPerItem ?? 3;
 
   if (sourceConfig?.constructionMode === 'planned_article') {
     const planned = await generatePlannedArticleQuestionSet(
@@ -751,6 +742,7 @@ async function generateGappedMCQ(
         optionStyle: sourceConfig.optionStyle,
         difficulty,
         userId,
+        targetWordCountRange: sourceConfig.levelProfile?.passageLength,
       },
       recordUsage
     );
@@ -759,7 +751,10 @@ async function generateGappedMCQ(
       difficulty,
       {
         type: 'gapped_text',
-        raw: { theme: sourceConfig.theme },
+        raw: {
+          theme: sourceConfig.theme,
+          targetWordCountRange: sourceConfig.levelProfile?.passageLength,
+        },
         gaps: {
           requiredCount: sourceConfig.gapCount,
         },
