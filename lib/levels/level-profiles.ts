@@ -16,6 +16,7 @@ export interface LevelProfile {
     avoid?: string[];
     prefer?: string[];
   };
+  finalGuide?: string;
 }
 
 export type LevelId = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
@@ -49,6 +50,7 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
       ],
       prefer: ['Schule', 'Essen', 'Familie', 'Stadt', 'Bus', 'Bahn', 'Wetter', 'Sport', 'Arzt', 'Einkaufen'],
     },
+    finalGuide: 'Halte alles extrem einfach und konkret; nur Hauptsätze, Alltagswörter, keine Fachbegriffe.',
   },
   A2: {
     passageLength: [90, 130],
@@ -64,6 +66,7 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
       avoid: ['Korruption', 'Ministerium', 'Haushalt', 'Plenarsaal', 'Sensor', 'Drohne', 'Algorithmus', 'Labor', 'Mars', 'Orbiter'],
       prefer: ['Arbeit', 'Freizeit', 'Reise', 'Einkaufen', 'Schule', 'Familie', 'Wetter', 'Sport', 'Park', 'Bahn'],
     },
+    finalGuide: 'Einfache, klare Sprache mit kurzen Sätzen; wenige Nebensätze, keine Fachsprache.',
   },
   B1: {
     passageLength: [130, 180],
@@ -105,6 +108,7 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
         'Freizeit',
       ],
     },
+    finalGuide: 'Magazinartige Alltagssprache, kurze Sätze, kein Amtsdeutsch; konkrete Beispiele bevorzugen.',
   },
   B2: {
     passageLength: [180, 230],
@@ -142,6 +146,34 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
         'evidenz',
         'evaluierung',
         'experten warnen',
+        'Ausnahmezustand',
+        'handlungsfähig',
+        'Krisenlage',
+        'Ersatz bieten',
+        'verankert',
+        'Rahmen',
+        'restriktiv',
+        'implementieren',
+        'verpflichtend',
+        'stark formal',
+        'geänderte Bezahlung',
+        'Verdienste unsicher',
+        'im Hintergrund kommend',
+        'langkettige Nebensätze',
+        'Konjunktur',
+        'Planungssicherheit',
+        'Entlastungen',
+        'Förderprogramme',
+        'Genehmigungen',
+        'mittelständische Betriebe',
+        'Energiepreise',
+        'inflationsbedingt',
+        'Regulierung',
+        'Fachkräftemangel',
+        'Parteitag',
+        'Wirtschaftslage',
+        'Preisschub',
+        'Preisdämpfung',
       ],
       prefer: [
         'Alltagstechnik',
@@ -156,8 +188,11 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
         'Freizeit',
         'Online Lernen',
         'Videos',
+        'News Magazin',
+        'Alltagsbeispiele',
       ],
     },
+    finalGuide: 'Kurze, klare Sätze (max ein Nebensatz), magazinartig, keine schweren Wirtschafts-/Amtsfloskeln.',
   },
   C1: {
     passageLength: [220, 260],
@@ -169,6 +204,7 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
     distractorCloseness: 'tight',
     questionCount: 7,
     gapCount: 8,
+    finalGuide: 'Gehobener, aber klarer Stil; präzise Verknüpfungen, abwechslungsreiche Syntax ohne unnötige Schwerfälligkeit.',
   },
   C2: {
     passageLength: [280, 320],
@@ -180,6 +216,7 @@ export const LEVEL_PROFILES: Record<LevelId, LevelProfile> = {
     distractorCloseness: 'very_tight',
     questionCount: 8,
     gapCount: 8,
+    finalGuide: 'Sehr flüssig und nuanciert; anspruchsvolle Syntax und Wortwahl, dennoch kohärent und präzise.',
   },
 };
 

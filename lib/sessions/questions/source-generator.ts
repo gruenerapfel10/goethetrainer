@@ -54,7 +54,7 @@ function buildLevelGuidance(levelId?: string | null): string {
     case 'B1':
       return 'Mittelange Sätze (12-18 Wörter), geläufige Verben und Nomen, einfache Konnektoren (weil, obwohl, damit), klare Abfolge.';
     case 'B2':
-      return 'Variierende Satzlängen (15-22 Wörter), breiter Alltags- und mittlerer Fachwortschatz, aber immer klar und magazinartig, wenige Nebensätze, kein Behörden-/Juristendeutsch.';
+      return 'Satzlänge 12-18 Wörter (max 1 Nebensatz), Alltags-/mittlerer Fachwortschatz, magazinartig, kein Amts-/Akademiedeutsch, keine schweren Nominalisierungen; lange Sätze immer trennen.';
     case 'C1':
       return 'Längere Satzgefüge (18-28 Wörter), gehobener Wortschatz, variierende Register, verdeckte Konnexionen sind erlaubt.';
     case 'C2':
@@ -92,6 +92,34 @@ function trimToWordLimit(text: string, maxWords: number): string {
   if (words.length <= maxWords) return text.trim();
   const trimmed = words.slice(0, maxWords).join(' ');
   return trimmed.trim().replace(/\s+([.,!?;:])/g, '$1');
+}
+
+function clampSentenceLength(text: string, maxWordsPerSentence: number): string {
+  const sentences = text
+    .split(/([.!?])\s+/)
+    .reduce<string[]>((acc, part, idx, arr) => {
+      if (idx % 2 === 0) {
+        const sentence = part + (arr[idx + 1] ?? '');
+        acc.push(sentence);
+      }
+      return acc;
+    }, [])
+    .filter(Boolean);
+  const normalized = sentences
+    .map(sentence => {
+      const words = sentence.trim().split(/\s+/);
+      if (words.length <= maxWordsPerSentence) return sentence.trim();
+      return words.slice(0, maxWordsPerSentence).join(' ').replace(/\s+([.,!?;:])/g, '$1');
+    })
+    .join(' ');
+  return normalized.trim();
+}
+
+function enforceB2SentenceStyle(text: string): string {
+  // Keep sentences short and split on ';' or long commas
+  const splitOnSemicolons = text.replace(/;/g, '.');
+  const clamped = clampSentenceLength(splitOnSemicolons, 18);
+  return clamped;
 }
 
 function resolveTheme(levelId: string | null | undefined, override?: string, newsTheme?: string): string {
@@ -295,6 +323,7 @@ export async function generateRawSource(
   const difficultyLabel = levelDifficultyLabel(logMetadata?.levelId ?? null, difficulty);
   const levelGuidance = buildLevelGuidance(logMetadata?.levelId ?? null);
   const lexicalGuidance = buildLexicalGuidance(logMetadata?.levelId ?? null);
+  const finalGuide = levelProfile?.finalGuide ?? '';
   const explicitWordCount =
     targetRange && logMetadata?.levelId && ['A1', 'A2'].includes(logMetadata.levelId)
       ? `WORD COUNT: ${targetRange[0]}-${targetRange[1]} Wörter (hartes Maximum: ${targetRange[1]}).`
@@ -324,6 +353,7 @@ ${targetHint}
 Level: ${difficultyLabel}
 ${levelGuidance}
 ${lexicalGuidance}
+${finalGuide}
 
 ${levelHint}
 ${
@@ -400,6 +430,17 @@ WORD COUNT: ${targetRange[0]}-${targetRange[1]} (harte Obergrenze ${targetRange[
           };
         }
       }
+    }
+
+    if (logMetadata?.levelId === 'B2') {
+      const clamped = enforceB2SentenceStyle(result.object.context);
+      result = {
+        ...result,
+        object: {
+          ...result.object,
+          context: clamped,
+        },
+      };
     }
     recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
     logAiResponse('RawSource', result.object);
@@ -646,6 +687,7 @@ Vorgaben:
 - Niveau-Hinweis: ${buildLevelGuidance(levelId)}
 ${targetWordCountRange ? `- WORD COUNT: ${targetWordCountRange[0]}-${targetWordCountRange[1]} Wörter (nicht überschreiten).` : ''}
 - Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnah, klar, vermeide Fachsprache.'}
+- Leitfaden: ${getLevelProfile((levelId as any) ?? null)?.finalGuide ?? 'kurz, klar, magazinartig formulieren.'}
 - ${
     newsTopic
       ? `Nutze folgende aktuelle Nachricht als thematischen Bezug ohne sie zu kopieren:
@@ -810,6 +852,7 @@ Vorgaben:
       : 'WORD COUNT: levelgerecht und kompakt.'
   }
 - Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
+- Leitfaden: ${getLevelProfile((levelId as any) ?? null)?.finalGuide ?? 'Kurz, klar, magazinartig formulieren.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
@@ -977,6 +1020,7 @@ Vorgaben:
       : 'WORD COUNT: levelgerecht und kompakt.'
   }
 - Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
+- Leitfaden: ${getLevelProfile((levelId as any) ?? null)?.finalGuide ?? 'kurz, klar, magazinartig formulieren.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
@@ -1145,6 +1189,7 @@ Vorgaben:
 - Schwierigkeitsgrad/Level: ${levelDifficultyLabel(levelId, difficulty)}
 - Niveau-Hinweis: ${buildLevelGuidance(levelId)}
 - Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
+- Leitfaden: ${getLevelProfile((levelId as any) ?? null)?.finalGuide ?? 'kurz, klar, magazinartig formulieren.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als thematische Referenz:
