@@ -13,7 +13,7 @@ export const goetheAgentConfig: AgentConfig = {
     displayNameKey: 'agents.goethe.label',
     descriptionKey: 'agents.goethe.description',
     icon: 'book-open',
-    modelId: ModelId.CLAUDE_HAIKU_4_5,
+    modelId: ModelId.GPT_5_MINI,
   },
   // Tools this agent has access to
   tools: [

@@ -1,11 +1,13 @@
 import { GoetheHeader } from '@/components/questions/MultipleChoice/GoetheHeader';
 import type { SessionQuestion } from '@/lib/sessions/learning-session-context';
 import { cn } from '@/lib/utils';
+import { SavedWordHighlighter } from '@/components/questions/SessionBoard';
 
 interface StatementMatchSourceProps {
   question: SessionQuestion;
   teilLabel?: string;
   workingTime?: string;
+  highlightWords?: string[];
 }
 
 const DEFAULT_WORKING_TIMES: Record<string, string> = {
@@ -17,6 +19,7 @@ export function StatementMatchSource({
   question,
   teilLabel,
   workingTime,
+  highlightWords = [],
 }: StatementMatchSourceProps) {
   const texts = question.texts ?? [];
   const presentation = (question.presentation ?? {}) as {
@@ -59,7 +62,9 @@ export function StatementMatchSource({
         </span>
       </div>
 
-      <p className="text-foreground leading-relaxed">{summaryText}</p>
+      <p className="text-foreground leading-relaxed">
+        <SavedWordHighlighter words={highlightWords}>{summaryText}</SavedWordHighlighter>
+      </p>
 
       <div className="border border-foreground/40 p-8 space-y-4">
         {question.theme && (
@@ -77,7 +82,9 @@ export function StatementMatchSource({
         )}
         {question.context && (
           <div className="text-sm leading-relaxed whitespace-pre-wrap">
-            {renderContext(question.context, hasGapMarkers)}
+            <SavedWordHighlighter words={highlightWords}>
+              {renderContext(question.context, hasGapMarkers)}
+            </SavedWordHighlighter>
           </div>
         )}
       </div>
@@ -91,7 +98,9 @@ export function StatementMatchSource({
             {presentation.sentencePool.map(sentence => (
               <li key={sentence.id}>
                 <span className="font-semibold mr-1">{sentence.id}.</span>
-                <span>{sentence.text}</span>
+                <span>
+                  <SavedWordHighlighter words={highlightWords}>{sentence.text}</SavedWordHighlighter>
+                </span>
               </li>
             ))}
           </ol>
@@ -104,7 +113,11 @@ export function StatementMatchSource({
             <span>Beispiel</span>
             <span>Lösung: {presentation.example.answer}</span>
           </div>
-          <p>{presentation.example.statement}</p>
+          <p>
+            <SavedWordHighlighter words={highlightWords}>
+              {presentation.example.statement}
+            </SavedWordHighlighter>
+          </p>
           {presentation.example.explanation && (
             <p className="text-xs text-muted-foreground">{presentation.example.explanation}</p>
           )}
@@ -125,7 +138,9 @@ export function StatementMatchSource({
                   </div>
                 )}
               </header>
-              <p className="whitespace-pre-line text-foreground/90">{text.content}</p>
+              <p className="whitespace-pre-line text-foreground/90">
+                <SavedWordHighlighter words={highlightWords}>{text.content}</SavedWordHighlighter>
+              </p>
             </article>
           ))}
         </div>

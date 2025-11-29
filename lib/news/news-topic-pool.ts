@@ -12,6 +12,7 @@ export interface NewsTopic {
 }
 
 let cached: NewsTopic[] | null = null;
+let servedKeys: Set<string> = new Set();
 
 const RSS_FEEDS = [
   // Germany/Europe centric feeds to keep content relevant
@@ -26,11 +27,33 @@ function stripHtml(value: string | undefined): string {
   return value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
+function isRepoLink(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host.includes('github.com') || host.includes('gitlab.com') || host.includes('bitbucket.org');
+  } catch {
+    return false;
+  }
+}
+
 function validSummary(text: string | undefined) {
   if (!text) return false;
   const lower = text.toLowerCase();
   if (lower.includes('only available in paid plans')) return false;
   return text.length > 40;
+}
+
+function getTopicKey(topic: NewsTopic): string {
+  return `${(topic.headline ?? '').trim().toLowerCase()}::${(topic.url ?? '').trim().toLowerCase()}`;
+}
+
+function isWithinDays(publishedAt: string | undefined, days: number): boolean {
+  if (!publishedAt) return false;
+  const ts = Date.parse(publishedAt);
+  if (Number.isNaN(ts)) return false;
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  return ts >= cutoff;
 }
 
 async function loadFromRss(): Promise<NewsTopic[]> {
@@ -54,6 +77,8 @@ async function loadFromRss(): Promise<NewsTopic[]> {
           typeof item.published === 'number'
             ? new Date(item.published).toISOString()
             : (item.published as string | undefined);
+
+        if (isRepoLink(url)) continue;
 
         collected.push({
           headline,
@@ -127,20 +152,29 @@ async function loadTopics(): Promise<NewsTopic[]> {
 
   const rssTopics = await loadFromRss();
   if (rssTopics.length) {
-    cached = rssTopics;
-    return cached;
-  }
-
-  const localTopics = await loadFromLocal();
-  if (localTopics.length) {
-    cached = localTopics;
+    // Deduplicate by headline/url and prioritize the last 7 days; if none in window, keep all.
+    const seenKeys = new Set<string>();
+    const recent: NewsTopic[] = [];
+    const all: NewsTopic[] = [];
+    for (const topic of rssTopics) {
+      const key = getTopicKey(topic);
+      if (seenKeys.has(key)) continue;
+      seenKeys.add(key);
+      all.push(topic);
+      if (isWithinDays(topic.publishedAt, 7)) {
+        recent.push(topic);
+      }
+    }
+    const pool = (recent.length ? recent : all).sort(() => Math.random() - 0.5);
+    cached = pool;
+    servedKeys.clear();
     return cached;
   }
 
   cached = [
     {
       headline: 'Aktuelle Nachrichtenquelle fehlt',
-      summary: 'Keine News-Themen gefunden; bitte Newsfeed aktualisieren.',
+      summary: 'Keine News-Themen gefunden; bitte Newsfeed aktualisieren (RSS).',
     },
   ];
   return cached;
@@ -154,6 +188,21 @@ export async function getNewsTopicFromPool(): Promise<NewsTopic> {
       summary: 'Keine News-Themen gefunden; bitte Newsfeed aktualisieren.',
     };
   }
-  const idx = Math.floor(Math.random() * topics.length);
-  return topics[idx];
+
+  // Reset the served set if we have exhausted the pool
+  if (servedKeys.size >= topics.length) {
+    servedKeys.clear();
+  }
+
+  // Find the first topic not served recently
+  const shuffled = [...topics].sort(() => Math.random() - 0.5);
+  const next = shuffled.find(topic => !servedKeys.has(getTopicKey(topic)));
+  if (!next) {
+    // Fallback: return a random topic
+    const idx = Math.floor(Math.random() * topics.length);
+    return topics[idx];
+  }
+
+  servedKeys.add(getTopicKey(next));
+  return next;
 }

@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -33,6 +34,8 @@ interface MenuState {
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 const normalizeText = (value: string) => value.trim().toLowerCase();
+const normalizeKey = (value: string) =>
+  normalizeText(value).replace(/[^\p{L}\p{N}\s-]+/gu, '').replace(/\s+/g, ' ');
 
 const computePosition = (anchor: Point, size: { width: number; height: number }) => {
   if (typeof window === 'undefined') {
@@ -42,9 +45,16 @@ const computePosition = (anchor: Point, size: { width: number; height: number })
   const maxX = Math.max(MENU_OFFSET, window.innerWidth - size.width - MENU_OFFSET);
   const maxY = Math.max(MENU_OFFSET, window.innerHeight - size.height - MENU_OFFSET);
 
+  const aboveY = anchor.y - size.height - MENU_OFFSET;
+  const belowY = anchor.y + MENU_OFFSET;
+  const fitsAbove = aboveY >= MENU_OFFSET;
+  const fitsBelow = belowY + size.height + MENU_OFFSET <= window.innerHeight;
+
   return {
     x: clamp(anchor.x - size.width / 2, MENU_OFFSET, maxX),
-    y: clamp(anchor.y - size.height - MENU_OFFSET, MENU_OFFSET, maxY),
+    y: fitsAbove || !fitsBelow
+      ? clamp(aboveY, MENU_OFFSET, maxY)
+      : clamp(belowY, MENU_OFFSET, maxY),
   };
 };
 
@@ -58,14 +68,14 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const { data: readingListData, mutate: mutateReadingList } = useSWR<{ items: Array<{ text: string; translation: string }> }>(
-    '/api/reading-list?limit=200',
+    '/api/reading-list?limit=500',
     fetcher,
     { revalidateOnFocus: false }
   );
   const savedTranslations = useMemo(() => {
     const map = new Map<string, string>();
     readingListData?.items?.forEach(item => {
-      const key = normalizeText(item.text);
+      const key = normalizeKey(item.text);
       if (key) {
         map.set(key, item.translation);
       }
@@ -76,6 +86,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   const menuOpenRef = useRef(false);
   const ignoreNextPointerUpRef = useRef(false);
   const anchorRef = useRef<Point | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -123,26 +134,54 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     [resetTransientState]
   );
 
-  const expandToFull = useCallback((anchorOverride?: Point) => {
-    setMenuState(prev => {
-      if (!prev) {
-        return prev;
-      }
-
-      const anchor = anchorOverride ?? anchorRef.current ?? {
-        x: prev.position.x + FULL_SIZE.width / 2,
-        y: prev.position.y + FULL_SIZE.height + MENU_OFFSET,
-      };
-
-      anchorRef.current = anchor;
-
+  const getMenuSize = useCallback(
+    (variant: MenuVariant): { width: number; height: number } => {
+      const fallback = variant === 'mini' ? MINI_SIZE : FULL_SIZE;
+      if (!menuRef.current) return fallback;
+      const rect = menuRef.current.getBoundingClientRect();
       return {
-        ...prev,
-        variant: 'full',
-        position: computePosition(anchor, FULL_SIZE),
+        width: rect.width || fallback.width,
+        height: rect.height || fallback.height,
       };
-    });
-  }, []);
+    },
+    []
+  );
+
+  const repositionMenu = useCallback(
+    (variantOverride?: MenuVariant) => {
+      setMenuState(prev => {
+        if (!prev) return prev;
+        const variant = variantOverride ?? prev.variant;
+        const size = getMenuSize(variant);
+        const anchor =
+          anchorRef.current ??
+          {
+            x: prev.position.x + size.width / 2,
+            y: prev.position.y + size.height + MENU_OFFSET,
+          };
+        const nextPos = computePosition(anchor, size);
+        if (
+          prev.position.x === nextPos.x &&
+          prev.position.y === nextPos.y &&
+          prev.variant === variant
+        ) {
+          return prev;
+        }
+        return { ...prev, variant, position: nextPos };
+      });
+    },
+    [getMenuSize]
+  );
+
+  const expandToFull = useCallback(
+    (anchorOverride?: Point) => {
+      if (anchorOverride) {
+        anchorRef.current = anchorOverride;
+      }
+      repositionMenu('full');
+    },
+    [repositionMenu]
+  );
 
   const getSelectionText = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -291,7 +330,17 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     if (!key) {
       return;
     }
-    const savedTranslation = savedTranslations.get(key);
+    const savedTranslation =
+      savedTranslations.get(normalizeKey(menuState.text)) ??
+      (() => {
+        // Fuzzy fallback: look for partial overlaps to tolerate punctuation/inflection.
+        const entries = Array.from(savedTranslations.entries());
+        const normalised = normalizeKey(menuState.text);
+        const hit =
+          entries.find(([savedKey]) => savedKey === normalised) ??
+          entries.find(([savedKey]) => savedKey.includes(normalised) || normalised.includes(savedKey));
+        return hit?.[1];
+      })();
     if (savedTranslation) {
       setTranslation(savedTranslation);
       setSaveMessage('Already in reading list');
@@ -383,6 +432,20 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [closeMenu, expandToFull, getSelectionText, openMenu]);
+
+  // Reposition after render when dimensions/content change or on resize.
+  useLayoutEffect(() => {
+    if (menuState) {
+      repositionMenu(menuState.variant);
+    }
+  }, [menuState?.variant, translation, saveMessage, error, repositionMenu]);
+
+  useEffect(() => {
+    if (!menuState) return;
+    const handleResize = () => repositionMenu(menuState.variant);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [menuState, repositionMenu]);
 
   if (!mounted) {
     return <>{children}</>;
@@ -580,6 +643,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
               menuState.variant === 'mini' ? 'px-3 py-2' : 'w-[320px]'
             )}
             data-context-menu
+            ref={menuRef}
           >
             {MenuContent}
           </div>

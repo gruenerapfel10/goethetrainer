@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SavedWordHighlighter } from '@/components/questions/SessionBoard';
 
 interface StatementMatchQuestionProps {
   question: SessionQuestion;
@@ -17,6 +18,7 @@ interface StatementMatchQuestionProps {
   onAnswer: (value: Record<string, string>) => void;
   isSubmitted?: boolean;
   feedback?: string;
+  highlightWords?: string[];
 }
 
 export function StatementMatchQuestion({
@@ -25,7 +27,9 @@ export function StatementMatchQuestion({
   onAnswer,
   isSubmitted = false,
   feedback,
+  highlightWords: highlightWordsProp = [],
 }: StatementMatchQuestionProps) {
+  const highlightWords = (highlightWordsProp ?? []) as string[];
   const statements = question.statements ?? [];
   const options = question.options ?? [];
   const correctMatches = question.correctMatches ?? {};
@@ -139,6 +143,7 @@ export function StatementMatchQuestion({
         correctAssignments={correctAssignments}
         onAssign={handleSentenceAssign}
         isSubmitted={isSubmitted}
+        highlightWords={highlightWords}
       />
     );
   }
@@ -161,7 +166,11 @@ export function StatementMatchQuestion({
                 {statement.number ?? statement.id}
               </div>
               <div className="space-y-3">
-                <p className="text-base text-foreground">{statement.text}</p>
+                <p className="text-base text-foreground">
+                  <SavedWordHighlighter words={highlightWords}>
+                    {statement.text}
+                  </SavedWordHighlighter>
+                </p>
                 <div
                   className={cn(
                     isHorizontal ? 'flex flex-wrap gap-6' : 'flex flex-col gap-3'
@@ -220,6 +229,7 @@ interface SentencePoolMatchProps {
   correctAssignments: Record<string, string>;
   onAssign: (sentenceId: string, gapId: string | null) => void;
   isSubmitted: boolean;
+  highlightWords?: string[];
 }
 
 function SentencePoolMatch({
@@ -229,6 +239,7 @@ function SentencePoolMatch({
   correctAssignments,
   onAssign,
   isSubmitted,
+  highlightWords = [],
 }: SentencePoolMatchProps) {
   const gapLabelMap = useMemo(() => {
     return new Map(gaps.map(gap => [gap.id, gap.number ?? gap.id]));
@@ -246,7 +257,11 @@ function SentencePoolMatch({
           <div key={sentence.id} className="space-y-2">
             <div className="flex items-start gap-3">
               <div className="font-bold text-base min-w-[32px] text-right">{sentence.id}</div>
-              <p className="flex-1 whitespace-pre-line text-foreground">{sentence.text}</p>
+              <p className="flex-1 whitespace-pre-line text-foreground">
+                <SavedWordHighlighter words={highlightWords}>
+                  {sentence.text}
+                </SavedWordHighlighter>
+              </p>
             </div>
             <div className="pl-9 max-w-xs">
               <Select

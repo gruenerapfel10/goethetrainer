@@ -2,7 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { Check, Settings } from 'lucide-react';
+import { Check, Settings, FileText, Highlighter, Power, ExternalLink } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,7 +137,10 @@ export function TeilHeader({
               }}
               className="flex justify-between items-center gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
             >
-              <span>A4 Format</span>
+              <span className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-muted-foreground" />
+                A4 Format
+              </span>
               {showA4Format && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -147,7 +150,10 @@ export function TeilHeader({
               }}
               className="flex justify-between items-center gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
             >
-              <span>Gespeicherte Wörter markieren</span>
+              <span className="flex items-center gap-2">
+                <Highlighter className="w-4 h-4 text-muted-foreground" />
+                Gespeicherte Wörter markieren
+              </span>
               {highlightSavedWords && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
             <DropdownMenuItem
@@ -157,7 +163,10 @@ export function TeilHeader({
               }}
               className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
             >
-              End Session
+              <span className="flex items-center gap-2">
+                <Power className="w-4 h-4 text-muted-foreground" />
+                End Session
+              </span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={event => {
@@ -167,7 +176,10 @@ export function TeilHeader({
               className="gap-2 hover:bg-accent focus:bg-accent transition-colors duration-200 cursor-pointer px-2 py-3"
               disabled={isSubmitting}
             >
-              See source
+              <span className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                See source
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

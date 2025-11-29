@@ -426,8 +426,14 @@ export function SessionOrchestrator() {
   }
 
   const renderQuestion = () => {
-    if (isGeneratingQuestions) {
-      const generated = readyQuestionUnits > 0 ? readyQuestionUnits : generationState?.generated ?? 0;
+    const hasQuestions = sessionQuestions.length > 0 && activeTeilQuestions.length > 0;
+    const showGenerationSpinner = isGeneratingQuestions && !hasQuestions;
+
+    if (showGenerationSpinner) {
+      const generated =
+        readyQuestionUnits > 0
+          ? readyQuestionUnits
+          : generationState?.generated ?? 0;
       const fallbackTotal = Math.max(generationState?.total ?? 0, generated);
       const total = plannedQuestionTotal > 0 ? plannedQuestionTotal : fallbackTotal;
       const progressLabel =

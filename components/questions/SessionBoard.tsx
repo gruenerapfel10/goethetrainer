@@ -140,22 +140,31 @@ export function SessionBoard({
   );
 
   const shouldHighlight = highlightSavedWords && normalizedSavedWords.length > 0;
+  const injectHighlightWords = (node: ReactNode) => {
+    if (!shouldHighlight) return node;
+    if (isValidElement(node) && typeof node.type !== 'string') {
+      return cloneElement(node, { highlightWords: normalizedSavedWords } as any);
+    }
+    return node;
+  };
+  const frageContentWithHints = injectHighlightWords(frageContent);
+  const quelleContentWithHints = injectHighlightWords(quelleContent);
   const enhancedQuelleContent =
-    activeView === 'quelle' && shouldHighlight && quelleContent
+    activeView === 'quelle' && shouldHighlight && quelleContentWithHints
       ? (
           <SavedWordHighlighter words={normalizedSavedWords}>
-            {quelleContent}
+            {quelleContentWithHints}
           </SavedWordHighlighter>
         )
-      : quelleContent;
+      : quelleContentWithHints;
   const enhancedFrageContent =
-    activeView === 'fragen' && shouldHighlight && frageContent
+    activeView === 'fragen' && shouldHighlight && frageContentWithHints
       ? (
           <SavedWordHighlighter words={normalizedSavedWords}>
-            {frageContent}
+            {frageContentWithHints}
           </SavedWordHighlighter>
         )
-      : frageContent;
+      : frageContentWithHints;
 
   const handleSeeSource = () => {
     if (!sourceReference) {
@@ -276,13 +285,16 @@ function useSavedWords(enabled: boolean): string[] {
   return data?.items?.map(entry => entry.text) ?? [];
 }
 
-function SavedWordHighlighter({
+export function SavedWordHighlighter({
   words,
   children,
 }: {
   words: string[];
   children: ReactNode;
 }) {
+  if (!words.length) {
+    return <>{children}</>;
+  }
   const patterns = useMemo<HighlightPattern[]>(
     () =>
       words
