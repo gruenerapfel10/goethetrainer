@@ -49,6 +49,7 @@ export interface RegisterActionState {
     | 'success'
     | 'failed'
     | 'user_exists'
+    | 'user_exists_google'
     | 'invalid_data';
 }
 
@@ -64,8 +65,28 @@ export const register = async (
 
     const normalizedEmail = validatedData.email.toLowerCase().trim();
 
-    // Use service role to create the user and confirm immediately.
     const service = createSupabaseServiceClient();
+
+    try {
+      const { data: userList } = await service.auth.admin.listUsers({
+        page: 1,
+        perPage: 1,
+        email: normalizedEmail,
+      } as any);
+      const existingUser = userList?.users?.find(
+        user => user.email?.toLowerCase() === normalizedEmail
+      );
+      const hasGoogleIdentity = existingUser?.identities?.some(
+        identity => identity.provider?.toLowerCase() === 'google'
+      );
+      if (hasGoogleIdentity) {
+        return { status: 'user_exists_google' };
+      }
+    } catch (lookupError) {
+      console.warn('[auth] user lookup failed, continuing with registration', lookupError);
+    }
+
+    // Use service role to create the user and confirm immediately.
     const { data, error } = await service.auth.admin.createUser({
       email: normalizedEmail,
       password: validatedData.password,

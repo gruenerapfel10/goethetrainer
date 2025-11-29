@@ -7,10 +7,10 @@ export async function DELETE(
   { params }: { params: Promise<{ draftId: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const resolvedParams = await params;
-  await CardDraftRepository.delete(session.user.email, resolvedParams.draftId);
+  await CardDraftRepository.delete(session.user.id, resolvedParams.draftId);
   return NextResponse.json({ success: true });
 }

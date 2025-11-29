@@ -3,20 +3,20 @@ import type { DeckCategory } from '@/lib/flashcards/types';
 export class CategoryRepository {
   private static categoriesByUser: Map<string, DeckCategory[]> = new Map();
 
-  static async list(userId: string): Promise<DeckCategory[]> {
-    return this.categoriesByUser.get(userId) ?? [];
+  static async list(userKey: string): Promise<DeckCategory[]> {
+    return this.categoriesByUser.get(userKey) ?? [];
   }
 
-  static async create(userId: string, name: string): Promise<DeckCategory> {
+  static async create(userKey: string, name: string): Promise<DeckCategory> {
     const category: DeckCategory = {
       id: crypto.randomUUID(),
-      userId,
+      userId: userKey,
       name,
       createdAt: new Date().toISOString(),
     };
-    const existing = this.categoriesByUser.get(userId) ?? [];
+    const existing = this.categoriesByUser.get(userKey) ?? [];
     existing.push(category);
-    this.categoriesByUser.set(userId, existing);
+    this.categoriesByUser.set(userKey, existing);
     return category;
   }
 }

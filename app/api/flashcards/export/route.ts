@@ -6,14 +6,14 @@ import { deckToAnkiTxt } from '@/lib/flashcards/export/anki/text-export';
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { deckId, format } = await request.json();
   if (!deckId) {
     return NextResponse.json({ error: 'deckId required' }, { status: 400 });
   }
-  const deck = await DeckRepository.get(session.user.email, deckId);
+  const deck = await DeckRepository.get(session.user.id, deckId);
   if (!deck) {
     return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
   }

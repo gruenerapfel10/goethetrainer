@@ -330,17 +330,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     if (!key) {
       return;
     }
-    const savedTranslation =
-      savedTranslations.get(normalizeKey(menuState.text)) ??
-      (() => {
-        // Fuzzy fallback: look for partial overlaps to tolerate punctuation/inflection.
-        const entries = Array.from(savedTranslations.entries());
-        const normalised = normalizeKey(menuState.text);
-        const hit =
-          entries.find(([savedKey]) => savedKey === normalised) ??
-          entries.find(([savedKey]) => savedKey.includes(normalised) || normalised.includes(savedKey));
-        return hit?.[1];
-      })();
+    const savedTranslation = savedTranslations.get(normalizeKey(menuState.text));
     if (savedTranslation) {
       setTranslation(savedTranslation);
       setSaveMessage('Already in reading list');

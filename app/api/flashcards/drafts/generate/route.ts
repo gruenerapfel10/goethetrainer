@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'deckId and sourceId are required' }, { status: 400 });
   }
   try {
-    const drafts = await generateDraftsFromSource(session.user.email, deckId, sourceId);
+    const drafts = await generateDraftsFromSource(session.user.id, deckId, sourceId);
     return NextResponse.json({ drafts });
   } catch (error) {
     return NextResponse.json(

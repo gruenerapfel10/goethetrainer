@@ -4,7 +4,7 @@ import { CardDraftRepository } from '@/lib/flashcards/drafts-repository';
 
 export async function GET(request: Request) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const url = new URL(request.url);
@@ -12,6 +12,6 @@ export async function GET(request: Request) {
   if (!deckId) {
     return NextResponse.json({ error: 'deckId required' }, { status: 400 });
   }
-  const drafts = await CardDraftRepository.list(session.user.email, deckId);
+  const drafts = await CardDraftRepository.list(session.user.id, deckId);
   return NextResponse.json({ drafts });
 }

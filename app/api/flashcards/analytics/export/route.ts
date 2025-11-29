@@ -7,7 +7,7 @@ import type { AnalyticsExportFormat } from '@/lib/flashcards/analytics/types';
 export async function GET(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     if (!['json', 'csv'].includes(format)) {
       return NextResponse.json({ error: 'format must be json or csv' }, { status: 400 });
     }
-    const analytics = await FlashcardAnalytics.getDeck(session.user.email, deckId);
+    const analytics = await FlashcardAnalytics.getDeck(session.user.id, deckId);
     const payload = serializeDeckAnalytics(analytics, format);
     const filename = `${deckId}-analytics.${format === 'csv' ? 'csv' : 'json'}`;
     const contentType = format === 'csv' ? 'text/csv' : 'application/json';

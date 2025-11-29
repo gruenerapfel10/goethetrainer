@@ -5,18 +5,18 @@ import { FlashcardDeckType } from '@/lib/flashcards/types';
 
 export async function GET(request: Request) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const url = new URL(request.url);
   const status = url.searchParams.get('status') as 'draft' | 'published' | null;
-  const decks = await DeckRepository.list(session.user.email, status ?? undefined);
+  const decks = await DeckRepository.list(session.user.id, status ?? undefined);
   return NextResponse.json({ decks });
 }
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json();
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
         }))
         .filter(card => card.front && card.back)
     : [];
-  const deck = await DeckRepository.create(session.user.email, {
+  const deck = await DeckRepository.create(session.user.id, {
     title: title.trim(),
     description: typeof description === 'string' ? description.trim() : undefined,
     categories: sanitizedCategories,

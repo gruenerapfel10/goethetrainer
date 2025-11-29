@@ -7,11 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ deckId: string }> }
 ) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const resolvedParams = await params;
-  const deck = await DeckRepository.get(session.user.email, resolvedParams.deckId);
+  const deck = await DeckRepository.get(session.user.id, resolvedParams.deckId);
   if (!deck) {
     return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
   }

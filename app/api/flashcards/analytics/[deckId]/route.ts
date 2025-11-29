@@ -8,14 +8,14 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { deckId } = await context.params;
     if (!deckId) {
       return NextResponse.json({ error: 'Deck ID is required' }, { status: 400 });
     }
-    const analytics = await FlashcardAnalytics.getDeck(session.user.email, deckId);
+    const analytics = await FlashcardAnalytics.getDeck(session.user.id, deckId);
     return NextResponse.json({ analytics });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to load deck analytics';

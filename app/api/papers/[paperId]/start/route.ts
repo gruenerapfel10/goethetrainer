@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const payload = await request.json().catch(() => ({}));
 
-    const newSession = await createSessionFromPaper(session.user.email, paperId, payload.metadata);
+    const newSession = await createSessionFromPaper(session.user.id, paperId, payload.metadata);
     return NextResponse.json(newSession);
   } catch (error) {
     console.error('Error starting session from paper:', error);

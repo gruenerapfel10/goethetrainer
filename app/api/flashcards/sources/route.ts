@@ -4,16 +4,16 @@ import { SourceRepository } from '@/lib/flashcards/source-documents';
 
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  const sources = await SourceRepository.list(session.user.email);
+  const sources = await SourceRepository.list(session.user.id);
   return NextResponse.json({ sources });
 }
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const body = await request.json();
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       if (!body.url) {
         return NextResponse.json({ error: 'url is required' }, { status: 400 });
       }
-      const doc = await SourceRepository.createFromUrl(session.user.email, body.url, body.title);
+      const doc = await SourceRepository.createFromUrl(session.user.id, body.url, body.title);
       return NextResponse.json({ doc });
     }
 
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'content is required' }, { status: 400 });
     }
 
-    const doc = await SourceRepository.createFromText(session.user.email, {
+    const doc = await SourceRepository.createFromText(session.user.id, {
       title: body.title ?? 'Untitled',
       content: body.content,
       origin: {
