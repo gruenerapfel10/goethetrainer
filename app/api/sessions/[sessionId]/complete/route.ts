@@ -8,14 +8,14 @@ export async function POST(
 ) {
   try {
     const authSession = await auth();
-    if (!authSession?.user?.email) {
+    if (!authSession?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { sessionId } = await context.params;
     const results = await completeSessionForUser(
       sessionId,
-      authSession.user.email
+      authSession.user.id
     );
 
     return NextResponse.json(results);

@@ -22,8 +22,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { SessionConfig } from '@/components/flashcards/SessionConfig';
+import { SessionAnalysis } from '@/components/flashcards/SessionAnalysis';
+import { DeckContent } from '@/components/flashcards/DeckContent';
 
 export default function FlashcardsPage() {
+  const devMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
   const [publishedDecks, setPublishedDecks] = useState<Deck[]>([]);
   const [loadingDecks, setLoadingDecks] = useState(true);
   const [session, setSession] = useState<FlashcardSession | null>(null);
@@ -140,12 +144,13 @@ export default function FlashcardsPage() {
   }, [session?.activeCard?.card.id]);
 
   const [runnerMode, setRunnerMode] = useState<'finite' | 'infinite'>('finite');
+  const [algorithm, setAlgorithm] = useState<'sequential' | 'faust'>('faust');
 
   const startDeck = async (deckId: string, mode: 'flashcard' | 'typing') => {
     const response = await fetch('/api/flashcards/sessions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deckId, mode: runnerMode }),
+      body: JSON.stringify({ deckId, mode: runnerMode, algorithm }),
     });
     const payload = await response.json();
     if (!response.ok) {
@@ -266,8 +271,8 @@ export default function FlashcardsPage() {
   }, [publishedDecks, searchTerm, activeCategory, sortMode]);
 
   return (
-    <>
-        <div className="space-y-1 bg-background p-3 h-full">
+    <div className="min-h-screen bg-background overflow-y-auto">
+        <div className="space-y-6 p-3 pb-10 pt-16">
           {error && (
             <div className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div>
           )}
@@ -373,29 +378,24 @@ export default function FlashcardsPage() {
             >
               +
             </Button>
-            <div className="flex items-center gap-2 pl-2">
-              <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Runner</span>
-              <Button
-                size="sm"
-                variant={runnerMode === 'finite' ? 'default' : 'outline'}
-                className="rounded-full"
-                onClick={() => setRunnerMode('finite')}
-              >
-                Finite
-              </Button>
-              <Button
-                size="sm"
-                variant={runnerMode === 'infinite' ? 'default' : 'outline'}
-                className="rounded-full"
-                onClick={() => setRunnerMode('infinite')}
-              >
-                Infinite
-              </Button>
-            </div>
           </div>
+
+          <SessionConfig
+            className="mt-3"
+            runnerMode={runnerMode}
+            onRunnerModeChange={setRunnerMode}
+            algorithm={algorithm}
+            onAlgorithmChange={setAlgorithm}
+            showRunnerToggle
+          />
+        </section>
+
+        <section className="px-2">
+          <SessionAnalysis analytics={analyticsBundle} selectedDeckId={selectedAnalyticsDeckId ?? publishedDecks[0]?.id ?? null} />
         </section>
 
         <div className="pb-4 px-2">
+          <h2 className="text-2xl font-bold text-foreground mb-4 px-2">Decks</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredDecks.length === 0 ? (
               <p className="text-sm text-muted-foreground">No decks match your search.</p>
@@ -421,6 +421,9 @@ export default function FlashcardsPage() {
                         ))}
                       </div>
                     )}
+                    <div className="mt-4">
+                      <DeckContent deck={analyticsBundle?.decks?.find(d => d.deckId === deck.id) ?? null} />
+                    </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between">
                     <span className="text-xs uppercase text-muted-foreground">
@@ -636,6 +639,6 @@ export default function FlashcardsPage() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

@@ -17,12 +17,20 @@ export async function POST(
   if (typeof feedback !== 'number') {
     return NextResponse.json({ error: 'feedback is required' }, { status: 400 });
   }
+  const { shownAt, answeredAt, dueAt, responseMs, flags } = body ?? {};
   try {
     const resolvedParams = await context.params;
     const session = await FlashcardSessionOrchestrator.answerCard(
       sessionUser.user.id,
       resolvedParams.sessionId,
-      feedback as FeedbackRating
+      feedback as FeedbackRating,
+      {
+        shownAt: typeof shownAt === 'number' ? shownAt : undefined,
+        answeredAt: typeof answeredAt === 'number' ? answeredAt : undefined,
+        dueAt: typeof dueAt === 'number' ? dueAt : undefined,
+        responseMs: typeof responseMs === 'number' ? responseMs : undefined,
+        flags: typeof flags === 'object' && flags !== null ? flags : undefined,
+      }
     );
     const deck = session ? await DeckRepository.get(sessionUser.user.id, session.deckId) : null;
     return NextResponse.json({ session, deck });

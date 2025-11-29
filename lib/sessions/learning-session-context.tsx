@@ -870,18 +870,6 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     [buildSessionState]
   );
 
-  // Poll for generation progress while questions are being created to avoid UI stalls.
-  useEffect(() => {
-    if (!activeSession?.id || generationState?.status !== 'in_progress') {
-      return;
-    }
-    const sessionId = activeSession.id;
-    const interval = window.setInterval(() => {
-      void refreshSessionSnapshot(sessionId);
-    }, 2000);
-    return () => window.clearInterval(interval);
-  }, [activeSession?.id, generationState?.status, refreshSessionSnapshot]);
-
   const stopSessionEventStream = useCallback(() => {
     if (sessionEventRetryRef.current) {
       clearTimeout(sessionEventRetryRef.current);
@@ -923,6 +911,25 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
     },
     [refreshSessionSnapshot, stopSessionEventStream]
   );
+
+  // Poll for generation progress while questions are being created to avoid UI stalls.
+  useEffect(() => {
+    if (!activeSession?.id || generationState?.status !== 'in_progress') {
+      return;
+    }
+    const sessionId = activeSession.id;
+    const interval = window.setInterval(() => {
+      void refreshSessionSnapshot(sessionId);
+    }, 2000);
+    return () => window.clearInterval(interval);
+  }, [activeSession?.id, generationState?.status, refreshSessionSnapshot]);
+
+  // Stop SSE when the session is no longer active (e.g., completed/abandoned).
+  useEffect(() => {
+    if (activeSession?.status && activeSession.status !== 'active') {
+      stopSessionEventStream();
+    }
+  }, [activeSession?.status, stopSessionEventStream]);
 
   useEffect(() => stopSessionEventStream, [stopSessionEventStream]);
 

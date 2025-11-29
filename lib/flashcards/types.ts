@@ -7,6 +7,11 @@ export enum FlashcardStudyMode {
   FLASHCARD = 'flashcard',
 }
 
+export enum FlashcardAlgorithm {
+  SEQUENTIAL = 'sequential',
+  FAUST = 'faust',
+}
+
 export type CardTemplate = {
   id: string;
   type: FlashcardDeckType;
@@ -43,6 +48,14 @@ export type ReviewEvent = {
   deckId: string;
   userId: string;
   timestamp: number;
+  shownAt?: number | null;
+  answeredAt?: number | null;
+  dueAt?: number | null;
+  responseMs?: number | null;
+  flags?: {
+    revealedEarly?: boolean;
+    usedHint?: boolean;
+  };
   feedback: FeedbackRating;
   prevInterval: number;
   nextInterval: number;
@@ -61,6 +74,10 @@ export interface SchedulingState {
   easeFactor: number;
   stability: number;
   difficulty: number;
+   /** unix ms of last review */
+  lastReview?: number;
+  reps?: number;
+  lapses?: number;
 }
 
 export interface ScheduledCard {
@@ -79,6 +96,7 @@ export interface FlashcardSession {
   deckMode?: 'finite' | 'infinite';
   startedAt: number;
   endedAt?: number | null;
+  algorithm?: FlashcardAlgorithm;
 }
 
 export interface SourceDocument {

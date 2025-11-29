@@ -11,6 +11,8 @@ import {
   ReadingAssessmentCategory,
   getReadingAssessmentCategoryDefinition,
 } from '@/lib/questions/assessment-categories';
+import { getLevelProfile } from '@/lib/levels/level-profiles';
+import { mapLevelToQuestionDifficulty } from '@/lib/levels/utils';
 
 export const maxDuration = 30;
 
@@ -30,12 +32,85 @@ const THEMES = [
   'ARBEIT',
 ];
 
+const SAFE_THEMES_BY_LEVEL: Record<string, string[]> = {
+  A1: ['FAMILIE', 'SCHULE', 'EINKAUFEN', 'WETTER', 'SPORT', 'ARBEIT', 'GESUNDHEIT', 'STADT', 'REISE'],
+  A2: ['FAMILIE', 'SCHULE', 'ARBEIT', 'GESUNDHEIT', 'SPORT', 'STADT', 'REISE', 'ALLTAG', 'BILDUNG'],
+  B1: ['ARBEIT', 'GESUNDHEIT', 'SCHULE', 'STADT', 'REISE', 'TECHNOLOGIE', 'BILDUNG', 'FAMILIE', 'SPORT'],
+};
+
+function levelDifficultyLabel(levelId?: string | null, difficulty?: QuestionDifficulty): string {
+  if (levelId && typeof levelId === 'string') {
+    return levelId;
+  }
+  return difficulty ?? QuestionDifficulty.INTERMEDIATE;
+}
+
+function buildLevelGuidance(levelId?: string | null): string {
+  switch (levelId) {
+    case 'A1':
+      return 'Nutze nur sehr einfache Hauptsätze (max. 10-12 Wörter), Alltagswortschatz, keine Nebensätze, keine Partizipialkonstruktionen.';
+    case 'A2':
+      return 'Einfache Hauptsätze (10-15 Wörter), begrenzter Alltagswortschatz, wenige Nebensätze mit weil/aber/denn, klare Kohäsion.';
+    case 'B1':
+      return 'Mittelange Sätze (12-18 Wörter), geläufige Verben und Nomen, einfache Konnektoren (weil, obwohl, damit), klare Abfolge.';
+    case 'B2':
+      return 'Variierende Satzlängen (15-22 Wörter), breiter Alltags- und mittlerer Fachwortschatz, aber immer klar und magazinartig, wenige Nebensätze, kein Behörden-/Juristendeutsch.';
+    case 'C1':
+      return 'Längere Satzgefüge (18-28 Wörter), gehobener Wortschatz, variierende Register, verdeckte Konnexionen sind erlaubt.';
+    case 'C2':
+      return 'Sehr variierende Satzlängen, voller Wortschatz inklusive Idiomatik, verdichtete Syntax mit vielen Bezügen.';
+    default:
+      return 'Passe Syntax und Wortschatz an das genannte Niveau an; bevorzuge Klarheit und Kohärenz.';
+  }
+}
+
+function buildLexicalGuidance(levelId?: string | null): string {
+  const profile = getLevelProfile((levelId as any) ?? null);
+  if (!profile?.lexicon) return '';
+  const avoid = profile.lexicon.avoid?.join(', ');
+  const prefer = profile.lexicon.prefer?.join(', ');
+  const lines: string[] = [];
+  if (prefer) {
+    lines.push(`Bevorzuge einfache Alltagswörter (z.B. ${prefer}). Nutze eigene ähnliche Wörter, nicht nur diese Beispiele.`);
+  }
+  if (avoid) {
+    lines.push(`Meide diese Wörter und Register komplett (keine Synonyme nötig): ${avoid}.`);
+  }
+  return lines.join(' ');
+}
+
+function countWords(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
+function trimToWordLimit(text: string, maxWords: number): string {
+  if (!text) return text;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= maxWords) return text.trim();
+  const trimmed = words.slice(0, maxWords).join(' ');
+  return trimmed.trim().replace(/\s+([.,!?;:])/g, '$1');
+}
+
+function resolveTheme(levelId: string | null | undefined, override?: string, newsTheme?: string): string {
+  if (override) return override;
+  const safeList = levelId ? SAFE_THEMES_BY_LEVEL[levelId] : null;
+  if (safeList && safeList.length) {
+    return safeList[Math.floor(Math.random() * safeList.length)];
+  }
+  if (newsTheme) return newsTheme;
+  return THEMES[Math.floor(Math.random() * THEMES.length)];
+}
+
 // Schema for raw source generation (Pass 1)
 const RawSourceSchema = z.object({
   theme: z.string().describe('Theme/category in German (e.g., WIRTSCHAFT, BILDUNG)'),
   title: z.string().describe('Title of the passage in German'),
   subtitle: z.string().describe('Subtitle or brief description in German'),
-  context: z.string().describe('German passage 200-300 words appropriate for C1 level'),
+  context: z.string().describe('German passage with controlled length and level'),
+  levelId: z.string().optional(),
 });
 
 // Schema for gap identification (Pass 2)
@@ -171,7 +246,10 @@ function generateDeterministicGaps(
 const REQUIRED_GAP_COUNT = 9;
 const MAX_GAP_ATTEMPTS = 2;
 
-type RawSource = z.infer<typeof RawSourceSchema> & { newsTopic?: NewsTopic | null };
+type RawSource = z.infer<typeof RawSourceSchema> & {
+  newsTopic?: NewsTopic | null;
+  levelId?: string | null;
+};
 
 export interface SourceWithGaps {
   theme: string;
@@ -201,54 +279,74 @@ interface GapEntryRecord {
 export async function generateRawSource(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   overrides?: SessionSourceOptions['raw'],
-  logMetadata?: { teilLabel?: string },
+  logMetadata?: { teilLabel?: string; levelId?: string | null },
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<RawSource> {
-  const newsTopic = await getNewsTopicFromPool();
-  const selectedTheme =
-    overrides?.theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
-  const targetRange = overrides?.targetWordCountRange;
+  const levelProfile = getLevelProfile((logMetadata?.levelId as any) ?? null);
+  const newsTopic =
+    logMetadata?.levelId && ['A1', 'A2', 'B1'].includes(logMetadata.levelId)
+      ? null
+      : await getNewsTopicFromPool();
+  const selectedTheme = resolveTheme(logMetadata?.levelId ?? null, overrides?.theme, newsTopic?.theme);
+  const targetRange =
+    overrides?.targetWordCountRange ?? levelProfile?.passageLength ?? undefined;
   const model = customModel(ModelId.GPT_5);
+  const difficultyLabel = levelDifficultyLabel(logMetadata?.levelId ?? null, difficulty);
+  const levelGuidance = buildLevelGuidance(logMetadata?.levelId ?? null);
+  const lexicalGuidance = buildLexicalGuidance(logMetadata?.levelId ?? null);
+  const explicitWordCount =
+    targetRange && logMetadata?.levelId && ['A1', 'A2'].includes(logMetadata.levelId)
+      ? `WORD COUNT: ${targetRange[0]}-${targetRange[1]} Wörter (hartes Maximum: ${targetRange[1]}).`
+      : targetRange
+        ? `Target length: ${targetRange[0]}-${targetRange[1]} words.`
+        : '';
 
-  const defaultSystemPrompt = `You are a German language specialist creating Goethe C1 level reading passages.
+  const targetHint = explicitWordCount;
+  const levelHint =
+    logMetadata?.levelId === 'A1'
+      ? 'Use VERY simple sentences (max ~12 words), only everyday high-frequency words, no subordinate clauses or participles.'
+      : logMetadata?.levelId === 'A2'
+        ? 'Use simple sentences (max ~15 words), high-frequency words, minimal subordination.'
+        : 'Use level-appropriate syntax and vocabulary.';
 
-Generate ONE German text passage (200-300 words) with theme, title, and subtitle.
+  const defaultSystemPrompt = `You are a German language specialist creating exam-style reading passages.
+
+Generate ONE German text passage with theme, title, and subtitle.
 
 Requirements:
 1. ALL content in German language ONLY
-2. Provide a THEME (category): ${selectedTheme}
-3. Provide a TITLE for the passage (5-10 words)
-4. Provide a SUBTITLE (brief description 10-15 words)
-5. One context passage (200-300 words, C1 level, naturally written)
-${targetRange ? `6. Target length: ${targetRange[0]}-${targetRange[1]} words (soft constraint)` : ''}
+2. THEME (category): ${selectedTheme}
+3. TITLE: 5-10 words
+4. SUBTITLE: 10-15 words
+5. CONTEXT: naturally written passage
+${targetHint}
+Level: ${difficultyLabel}
+${levelGuidance}
+${lexicalGuidance}
 
-The passage should be rich with vocabulary and complex sentence structures suitable for gap-filling exercises.${ 
+${levelHint}
+${
     newsTopic
       ? `
-
-Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe einen originellen Text:
-- Schlagzeile: ${newsTopic.headline}
-- Zusammenfassung: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar.'}${
+Use this news item only as a loose thematic seed (do NOT copy):
+- Headline: ${newsTopic.headline}
+- Summary: ${newsTopic.summary || 'Keine Zusammenfassung verfügbar.'}${
           newsTopic.source
             ? `
-- Quelle: ${newsTopic.source}${newsTopic.publishedAt ? ` • ${newsTopic.publishedAt}` : ''}`
+- Source: ${newsTopic.source}${newsTopic.publishedAt ? ` • ${newsTopic.publishedAt}` : ''}`
             : ''
         }`
       : ''
   }`;
 
-  const defaultUserPrompt = `Generate a reading passage for theme: ${selectedTheme} at ${difficulty} level.${
-    newsTopic ? ` Orientiere dich inhaltlich an der Nachricht "${newsTopic.headline}" ohne sie zu kopieren.` : ''
+  const defaultUserPrompt = `Generate a level-appropriate German reading passage for theme: ${selectedTheme}.${
+    newsTopic ? ` Use the news "${newsTopic.headline}" only as inspiration; do not copy.` : ''
   }`;
 
-  const systemPrompt = (overrides?.systemPrompt ?? defaultSystemPrompt)
-    .replace('{{theme}}', selectedTheme)
-    .replace('{{difficulty}}', String(difficulty));
+  const systemPrompt = (overrides?.systemPrompt ?? defaultSystemPrompt).replace('{{theme}}', selectedTheme);
 
-  const userPrompt = (overrides?.userPrompt ?? defaultUserPrompt)
-    .replace('{{theme}}', selectedTheme)
-    .replace('{{difficulty}}', String(difficulty));
+  const userPrompt = (overrides?.userPrompt ?? defaultUserPrompt).replace('{{theme}}', selectedTheme);
 
   try {
     logAiRequest('RawSource', 'RawSourceSchema (theme/title/subtitle/context in German)', {
@@ -258,16 +356,51 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
         teil: logMetadata?.teilLabel ?? 'n/a',
         theme: selectedTheme,
         difficulty,
+        levelId: logMetadata?.levelId ?? 'unspecified',
         newsHeadline: newsTopic?.headline,
       },
     });
-    const result = await generateObject({
-      model,
-      schema: RawSourceSchema,
-      system: systemPrompt,
-      prompt: userPrompt,
-      temperature: 0.8,
-    });
+    const runGeneration = async (overridePrompt?: string, overrideSystem?: string) =>
+      generateObject({
+        model,
+        schema: RawSourceSchema,
+        system: overrideSystem ?? systemPrompt,
+        prompt: overridePrompt ?? userPrompt,
+        temperature: 0.8,
+      });
+
+    let result = await runGeneration();
+
+    if (logMetadata?.levelId && ['A1', 'A2'].includes(logMetadata.levelId) && targetRange) {
+      const words = countWords(result.object.context);
+      if (words > targetRange[1]) {
+        result = {
+          ...result,
+          object: {
+            ...result.object,
+            context: trimToWordLimit(result.object.context, targetRange[1]),
+          },
+        };
+      } else if (words < targetRange[0]) {
+        const stricterPrompt = `${userPrompt}
+
+CRITICAL: Schreibe zwischen ${targetRange[0]} und ${targetRange[1]} Wörtern (niemals mehr als ${targetRange[1]}). Kurze Hauptsätze, Alltagswortschatz.`;
+        const stricterSystem = `${systemPrompt}
+
+WORD COUNT: ${targetRange[0]}-${targetRange[1]} (harte Obergrenze ${targetRange[1]}).`;
+        result = await runGeneration(stricterPrompt, stricterSystem);
+        const strictWords = countWords(result.object.context);
+        if (strictWords > targetRange[1]) {
+          result = {
+            ...result,
+            object: {
+              ...result.object,
+              context: trimToWordLimit(result.object.context, targetRange[1]),
+            },
+          };
+        }
+      }
+    }
     recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
     logAiResponse('RawSource', result.object);
 
@@ -279,6 +412,7 @@ Nutze folgende aktuelle Nachricht als thematischen Ausgangspunkt, aber schreibe 
     return {
       ...result.object,
       newsTopic: newsTopic ?? null,
+      levelId: logMetadata?.levelId ?? undefined,
     };
   } catch (error) {
     throw new Error(`Failed to generate source material: ${error instanceof Error ? error.message : String(error)}`);
@@ -295,10 +429,12 @@ export async function identifyGapsInSource(
 ): Promise<SourceWithGaps> {
   const model = customModel(ModelId.GPT_5);
   const requiredCount = overrides?.requiredCount ?? REQUIRED_GAP_COUNT;
+  const difficultyLabel = levelDifficultyLabel(source.levelId, undefined);
+  const levelGuidance = buildLevelGuidance(source.levelId);
 
-const baseSystemPrompt = `You are a German language expert creating gap-fill exercises for C1 level learners.
+const baseSystemPrompt = `You are a German language expert creating level-appropriate gap-fill exercises (Level: ${difficultyLabel}).
 
-Your task: Identify EXACTLY ${requiredCount} strategically placed gaps in the provided German text.
+Your task: Identify EXACTLY ${requiredCount} strategically placed gaps in the provided German text while respecting the level guidance.
 
 Requirements:
 1. Select ${requiredCount} words/phrases that are:
@@ -313,6 +449,8 @@ Requirements:
    - Provide context around the gap
 3. Return the text with gaps replaced by [GAP_1], [GAP_2], ... [GAP_${requiredCount}] (all must be present)
 4. The gaps array MUST have exactly ${requiredCount} elements
+
+Level guidance: ${levelGuidance}
 
 Return ALL ${requiredCount} gaps in order of appearance in the text. GAP_1 is the first gap, GAP_${requiredCount} is the last gap.`;
   const exampleBlock = buildGapExampleBlock(requiredCount);
@@ -351,7 +489,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
       mode: 'json',
       schema: GapIdentificationSchema,
       schemaName: 'gap_identification',
-      schemaDescription: 'Identifies gaps in German text for C1 level exercises',
+      schemaDescription: 'Identifies gaps in German text for level-appropriate exercises',
       system: gapSystemPrompt,
       prompt,
       temperature: 0.4,
@@ -408,7 +546,7 @@ IMPORTANT: Return all ${requiredCount} gaps. Do not stop early. Return the gaps 
 export async function generateSourceWithGaps(
   difficulty: QuestionDifficulty = QuestionDifficulty.INTERMEDIATE,
   options?: SessionSourceOptions,
-  metadata?: { teilLabel?: string },
+  metadata?: { teilLabel?: string; levelId?: string | null },
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
@@ -429,17 +567,28 @@ export async function generatePlannedGapPassage(
     optionStyle?: 'word' | 'statement';
     difficulty?: QuestionDifficulty;
     userId?: string;
+    targetWordCountRange?: [number, number];
+    levelId?: string | null;
   },
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SourceWithGaps> {
-  const { categories, theme, teilLabel, optionStyle, difficulty, userId } = params;
+  const {
+    categories,
+    theme,
+    teilLabel,
+    optionStyle,
+    difficulty,
+    userId,
+    targetWordCountRange,
+    levelId,
+  } = params;
   if (!categories.length) {
     throw new Error('Planned gap generation requires at least one category');
   }
 
-  const newsTopic = await getNewsTopicFromPool();
-  const resolvedTheme =
-    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const newsTopic =
+    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
     theme: z.string().min(3),
@@ -489,13 +638,14 @@ export async function generatePlannedGapPassage(
   );
 
   const prompt = `
-Du schreibst einen zusammenhängenden Goethe C1 Lesetext (ca. 220-260 Wörter) mit exakt ${
-    categories.length
-  } geplanten Lücken. Jeder Gap testet die angegebene Kompetenz.
+Du schreibst einen zusammenhängenden Lesetext mit exakt ${categories.length} geplanten Lücken. Jeder Gap testet die angegebene Kompetenz.
 
 Vorgaben:
 - Thema: ${resolvedTheme}.
-- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}.
+- Schwierigkeitsgrad/Level: ${levelDifficultyLabel(levelId, difficulty)}.
+- Niveau-Hinweis: ${buildLevelGuidance(levelId)}
+${targetWordCountRange ? `- WORD COUNT: ${targetWordCountRange[0]}-${targetWordCountRange[1]} Wörter (nicht überschreiten).` : ''}
+- Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnah, klar, vermeide Fachsprache.'}
 - ${
     newsTopic
       ? `Nutze folgende aktuelle Nachricht als thematischen Bezug ohne sie zu kopieren:
@@ -535,7 +685,7 @@ ${jsonExample}
     model,
     schema,
     system:
-      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Texte mit sorgfältig geplanten Lücken.',
+      'Du bist Prüfungsautor:in für Deutsch als Fremdsprache. Schreibe Texte mit sorgfältig geplanten Lücken, angepasst an das genannte Niveau.',
     prompt,
     temperature: 0.4,
   });
@@ -577,16 +727,27 @@ export async function generatePlannedSentenceInsertionSet(
     teilLabel?: string;
     difficulty?: QuestionDifficulty;
     userId?: string;
+    levelId?: string | null;
+    targetWordCountRange?: [number, number];
   },
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<SentenceInsertionPlan> {
-  const { sentencePoolSize, gapCount, theme, teilLabel, difficulty, userId } = params;
+  const {
+    sentencePoolSize,
+    gapCount,
+    theme,
+    teilLabel,
+    difficulty,
+    userId,
+    levelId,
+    targetWordCountRange,
+  } = params;
   if (gapCount <= 0 || sentencePoolSize < gapCount) {
     throw new Error('Sentence pool must be >= gap count');
   }
-  const newsTopic = await getNewsTopicFromPool();
-  const resolvedTheme =
-    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const newsTopic =
+    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
     theme: z.string().min(3),
@@ -641,7 +802,14 @@ Du verfasst einen argumentativen Kommentar (ca. 320 Wörter) mit ${gapCount} Lü
 
 Vorgaben:
 - Thema: ${resolvedTheme}
-- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- Schwierigkeitsgrad/Level: ${levelDifficultyLabel(levelId, difficulty)}
+- Niveau-Hinweis: ${buildLevelGuidance(levelId)}
+- ${
+    targetWordCountRange
+      ? `WORD COUNT: ${targetWordCountRange[0]}-${targetWordCountRange[1]} Wörter (nicht überschreiten).`
+      : 'WORD COUNT: levelgerecht und kompakt.'
+  }
+- Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
@@ -675,7 +843,7 @@ ${jsonExample}
     model,
     schema,
     system:
-      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Kommentare mit Lücken und Satzpool.',
+      'Du bist Prüfungsautor:in für Deutsch als Fremdsprache. Erstelle Kommentare mit Lücken und Satzpool, angepasst an das Niveau.',
     prompt,
     temperature: 0.35,
   });
@@ -730,16 +898,27 @@ export async function generatePlannedArticleQuestionSet(
     teilLabel?: string;
     difficulty?: QuestionDifficulty;
     userId?: string;
+    levelId?: string | null;
+    targetWordCountRange?: [number, number];
   },
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<PlannedArticleQuestionSet> {
-  const { questionCount, optionsPerQuestion, theme, teilLabel, difficulty, userId } = params;
+  const {
+    questionCount,
+    optionsPerQuestion,
+    theme,
+    teilLabel,
+    difficulty,
+    userId,
+    levelId,
+    targetWordCountRange,
+  } = params;
   if (questionCount <= 0) {
     throw new Error('Question count must be positive for planned article set');
   }
-  const newsTopic = await getNewsTopicFromPool();
-  const resolvedTheme =
-    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const newsTopic =
+    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
     theme: z.string().min(3),
@@ -790,7 +969,14 @@ Du verfasst einen lesernahen Artikel (ca. 280-320 Wörter) mit genau ${questionC
 
 Vorgaben:
 - Thema: ${resolvedTheme}
-- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- Schwierigkeitsgrad/Level: ${levelDifficultyLabel(levelId, difficulty)}
+- Niveau-Hinweis: ${buildLevelGuidance(levelId)}
+- ${
+    targetWordCountRange
+      ? `WORD COUNT: ${targetWordCountRange[0]}-${targetWordCountRange[1]} Wörter (nicht überschreiten).`
+      : 'WORD COUNT: levelgerecht und kompakt.'
+  }
+- Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als Ausgangspunkt ohne sie zu kopieren:
@@ -826,7 +1012,7 @@ ${jsonExample}
     model,
     schema,
     system:
-      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Artikel mit präzisen Multiple-Choice-Fragen.',
+      'Du bist Prüfungsautor:in für Deutsch als Fremdsprache. Erstelle Artikel mit präzisen Multiple-Choice-Fragen auf dem angegebenen Niveau.',
     prompt,
     temperature: 0.35,
   });
@@ -873,13 +1059,23 @@ export async function generatePlannedAuthorStatementSet(
     teilLabel?: string;
     difficulty?: QuestionDifficulty;
     userId?: string;
+    levelId?: string | null;
   },
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<PlannedAuthorStatementSet> {
-  const { authorCount, statementCount, unmatchedCount, theme, teilLabel, difficulty, userId } = params;
-  const newsTopic = await getNewsTopicFromPool();
-  const resolvedTheme =
-    theme ?? newsTopic?.theme ?? THEMES[Math.floor(Math.random() * THEMES.length)];
+  const {
+    authorCount,
+    statementCount,
+    unmatchedCount,
+    theme,
+    teilLabel,
+    difficulty,
+    userId,
+    levelId,
+  } = params;
+  const newsTopic =
+    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
     theme: z.string(),
@@ -942,11 +1138,13 @@ export async function generatePlannedAuthorStatementSet(
   );
 
   const prompt = `
-Du erstellst für Goethe C1 Lesen Teil 4 eine Expertenrubrik mit ${authorCount} Beiträgen und ${statementCount} Aussagen (${unmatchedCount} ohne Zuordnung).
+Du erstellst eine Expertenrubrik (Lesen) mit ${authorCount} Beiträgen und ${statementCount} Aussagen (${unmatchedCount} ohne Zuordnung).
 
 Vorgaben:
 - Thema: ${resolvedTheme}
-- Schwierigkeitsgrad: ${difficulty ?? QuestionDifficulty.INTERMEDIATE}
+- Schwierigkeitsgrad/Level: ${levelDifficultyLabel(levelId, difficulty)}
+- Niveau-Hinweis: ${buildLevelGuidance(levelId)}
+- Lexik: ${buildLexicalGuidance(levelId) || 'Alltagsnahe Wörter, vermeide Fachsprache.'}
 - ${
     newsTopic
       ? `Nutze folgende Nachricht als thematische Referenz:
@@ -979,7 +1177,7 @@ ${jsonExample}
     model,
     schema,
     system:
-      'Du bist Prüfungsautor:in für Goethe C1. Erstelle Expertenbeiträge mit zuordenbaren Aussagen.',
+      'Du bist Prüfungsautor:in für Deutsch als Fremdsprache. Erstelle Expertenbeiträge mit zuordenbaren Aussagen, passend zum Niveau.',
     prompt,
     temperature: 0.3,
   });

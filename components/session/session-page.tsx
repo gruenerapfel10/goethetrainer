@@ -27,6 +27,7 @@ import {
   getReadingAssessmentCategoryDefinition,
   listReadingAssessmentCategories,
 } from '@/lib/questions/assessment-categories';
+import { LEVEL_PROFILES, type LevelId } from '@/lib/levels/level-profiles';
 
 // Icon mapping for session types
 const ICON_MAP = {
@@ -67,6 +68,7 @@ const ALL_FOCUS_OPTIONS: ReadingAssessmentCategory[] = listReadingAssessmentCate
 const DEFAULT_FOCUS_SELECTION: ReadingAssessmentCategory[] = [...ALL_FOCUS_OPTIONS];
 const FOCUS_STORAGE_KEY = 'goethe.focusCategories';
 const FOCUS_ALLOWED_SET = new Set(ALL_FOCUS_OPTIONS);
+const LEVEL_STORAGE_KEY = 'goethe.level';
 
 const formatDateTime = (value: string | Date) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -263,6 +265,7 @@ function SessionContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [focusSelection, setFocusSelection] = useState<ReadingAssessmentCategory[]>(() => [...DEFAULT_FOCUS_SELECTION]);
   const [focusLoaded, setFocusLoaded] = useState(false);
+  const [levelSelection, setLevelSelection] = useState<LevelId>('C1');
   const itemsPerPage = 5;
   const defaultQuestionCount = defaults?.questionCount ?? null;
 
@@ -279,11 +282,12 @@ function SessionContent() {
           ...(payload.preferences?.focus ?? {}),
           categories: focusSelection,
         },
+        level: levelSelection,
       };
     }
 
     return payload;
-  }, [sessionType, defaultQuestionCount, focusSelection]);
+  }, [sessionType, defaultQuestionCount, focusSelection, levelSelection]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -315,6 +319,16 @@ function SessionContent() {
   }, [sessionType]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const stored = window.localStorage.getItem(LEVEL_STORAGE_KEY) as LevelId | null;
+    if (stored && (stored in LEVEL_PROFILES)) {
+      setLevelSelection(stored);
+    }
+  }, []);
+
+  useEffect(() => {
     if (!focusLoaded) {
       return;
     }
@@ -323,10 +337,11 @@ function SessionContent() {
     }
     try {
       window.localStorage.setItem(FOCUS_STORAGE_KEY, JSON.stringify(focusSelection));
+      window.localStorage.setItem(LEVEL_STORAGE_KEY, levelSelection);
     } catch (error) {
       console.warn('Failed to persist reading focus preferences', error);
     }
-  }, [focusSelection, focusLoaded, sessionType]);
+  }, [focusSelection, focusLoaded, sessionType, levelSelection]);
 
   useEffect(() => {
     let cancelled = false;
@@ -399,17 +414,41 @@ function SessionContent() {
             <p className="text-gray-600 mt-2">{metadata.description}</p>
           </div>
         </div>
-        <StartSessionButton
-          type={sessionType}
-          metadata={startMetadata}
-          className="px-8 py-3 text-lg rounded-full h-auto flex-shrink-0"
-          onSessionStart={(sessionId) => {
-            console.log(`${sessionType} session started:`, sessionId);
-          }}
-          onSessionEnd={() => {
-            console.log(`${sessionType} session ended`);
-          }}
-        />
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-muted-foreground">Level</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <span>{levelSelection}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(Object.keys(LEVEL_PROFILES) as LevelId[]).map(level => (
+                  <DropdownMenuCheckboxItem
+                    key={level}
+                    checked={levelSelection === level}
+                    onCheckedChange={() => setLevelSelection(level)}
+                  >
+                    {level}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <StartSessionButton
+            type={sessionType}
+            metadata={startMetadata}
+            className="px-8 py-3 text-lg rounded-full h-auto flex-shrink-0"
+            onSessionStart={(sessionId) => {
+              console.log(`${sessionType} session started:`, sessionId);
+            }}
+            onSessionEnd={() => {
+              console.log(`${sessionType} session ended`);
+            }}
+          />
+        </div>
       </div>
 
       {sessionType === SessionTypeEnum.READING && (

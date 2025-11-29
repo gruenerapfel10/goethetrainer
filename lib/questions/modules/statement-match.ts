@@ -228,6 +228,7 @@ async function generateStatementMatchQuestion(
         teilLabel: sourceConfig.teilLabel,
         difficulty,
         userId,
+        levelId: typeof sourceConfig.levelId === 'string' ? sourceConfig.levelId : null,
       },
       recordUsage
     );
@@ -241,6 +242,9 @@ async function generateStatementMatchQuestion(
   }
 
   if (sourceConfig.constructionMode === 'planned_sentence_pool') {
+    const passageRange =
+      (sourceConfig.levelProfile as any)?.passageLength ??
+      undefined;
     const plan = await generatePlannedSentenceInsertionSet(
       {
         sentencePoolSize:
@@ -251,6 +255,8 @@ async function generateStatementMatchQuestion(
         teilLabel: sourceConfig.teilLabel,
         difficulty,
         userId,
+        levelId: typeof sourceConfig.levelId === 'string' ? sourceConfig.levelId : null,
+        targetWordCountRange: passageRange,
       },
       recordUsage
     );

@@ -45,6 +45,9 @@ import {
 import { loadPaperBlueprint, savePaperBlueprint } from '@/lib/papers/paper-queries';
 import { sanitizeQuestionForPaper } from '@/lib/papers/paper-utils';
 import type { PaperBlueprint } from '@/lib/papers/types';
+import { getLevelProfile, type LevelId } from '@/lib/levels/level-profiles';
+import { mapLevelToQuestionDifficulty } from '@/lib/levels/utils';
+import { QuestionModuleId } from '@/lib/questions/modules/types';
 
 registerDefaultQuestionModules();
 
@@ -522,8 +525,15 @@ export async function generateQuestionsForSession(
 
     const sessionType = session.type as SessionTypeEnum;
     const config = getSessionConfig(sessionType);
+    const defaultLevelId = (config.defaults?.levelId as LevelId | undefined) ?? null;
+    const levelId =
+      ((session.metadata?.preferences as any)?.level as LevelId | undefined) ??
+      defaultLevelId ??
+      null;
+    const levelProfile = getLevelProfile(levelId ?? null);
     const difficulty =
       (session.metadata?.difficulty as QuestionDifficulty | undefined) ??
+      mapLevelToQuestionDifficulty(levelId as any) ??
       QuestionDifficulty.INTERMEDIATE;
 
     let plan = getSessionLayout(sessionType);
@@ -533,28 +543,49 @@ export async function generateQuestionsForSession(
     }
 
     const focusCategories = extractGlobalFocusCategories(session.metadata);
-    if (focusCategories) {
-      plan = plan.map(entry => {
-        if (entry.moduleId !== QuestionModuleId.MULTIPLE_CHOICE) {
-          return entry;
-        }
+    plan = plan.map(entry => {
+      if (entry.moduleId === QuestionModuleId.MULTIPLE_CHOICE) {
         const currentSourceOverrides = entry.sourceOverrides ?? {};
         const currentCategoryAllocation =
           (currentSourceOverrides as any).categoryAllocation ?? {};
-        const nextSourceOverrides = {
+        const nextSourceOverrides: any = {
           ...currentSourceOverrides,
-          categoryAllocation: {
+        };
+        if (focusCategories) {
+          nextSourceOverrides.categoryAllocation = {
             ...currentCategoryAllocation,
             strategy: currentCategoryAllocation.strategy ?? 'even',
             categories: focusCategories,
-          },
-        };
+          };
+        }
+        if (levelProfile) {
+          nextSourceOverrides.levelProfile = levelProfile;
+          nextSourceOverrides.levelId = levelId ?? null;
+          if (typeof nextSourceOverrides.questionCount !== 'number') {
+            nextSourceOverrides.questionCount = levelProfile.questionCount ?? undefined;
+          }
+          if (typeof nextSourceOverrides.gapCount !== 'number') {
+            nextSourceOverrides.gapCount = levelProfile.gapCount ?? undefined;
+          }
+          if (typeof nextSourceOverrides.optionsPerGap !== 'number') {
+            nextSourceOverrides.optionsPerGap = levelProfile.optionsPerItem ?? undefined;
+          }
+          if (typeof nextSourceOverrides.optionsPerQuestion !== 'number') {
+            nextSourceOverrides.optionsPerQuestion = levelProfile.optionsPerItem ?? undefined;
+          }
+        }
         return {
           ...entry,
+          questionCount:
+            entry.questionCount ??
+            levelProfile?.questionCount ??
+            levelProfile?.gapCount ??
+            entry.questionCount,
           sourceOverrides: nextSourceOverrides,
         };
-      });
-    }
+      }
+      return entry;
+    });
 
     if (regenerate) {
       session.data.questions = [];
@@ -778,11 +809,24 @@ export async function generateQuestionsForSession(
       return index;
     };
 
+    const isSessionActive = async () => {
+      try {
+        const current = await loadSessionForUser(sessionId, userId);
+        return current.status === 'active';
+      } catch {
+        return false;
+      }
+    };
+
     const worker = async (workerId: number) => {
       console.log(`🤖 Worker ${workerId} started and ready for tasks`);
       while (true) {
         if (workerError) {
           console.log(`🤖 Worker ${workerId} stopping due to upstream error`);
+          return;
+        }
+        if (!(await isSessionActive())) {
+          console.log(`🤖 Worker ${workerId} stopping; session no longer active`);
           return;
         }
         const planIndex = getNextPlanIndex();
@@ -935,6 +979,28 @@ export async function completeSessionForUser(
   userId: string
 ): Promise<CompletionSummary> {
   const session = await loadSessionForUser(sessionId, userId);
+  if (!Array.isArray(session.data?.questions) || session.data.questions.length === 0) {
+    // Nothing to grade; mark as completed with empty results.
+    session.status = 'completed';
+    session.endedAt = new Date();
+    touchSession(session);
+    await persistSession(session);
+    return {
+      results: [],
+      summary: {
+        totalQuestions: 0,
+        answeredQuestions: 0,
+        correctAnswers: 0,
+        incorrectAnswers: 0,
+        totalScore: 0,
+        maxScore: 0,
+        percentage: 0,
+        pendingManualReview: 0,
+        teilBreakdown: [],
+        moduleBreakdown: [],
+      },
+    };
+  }
   const outcome = await finaliseSession(session);
   console.log('[session-controller] completeSession', sessionId, {
     results: session.data?.results?.length ?? 0,
@@ -950,20 +1016,25 @@ export async function endSessionForUser(
   status: SessionStatus
 ): Promise<Session> {
   const session = await loadSessionForUser(sessionId, userId);
+  const hasQuestions = Array.isArray(session.data?.questions) && session.data.questions.length > 0;
   if (status === 'completed') {
     const alreadyCompleted =
       session.status === 'completed' &&
       Array.isArray(session.data?.results) &&
       session.data.results.length > 0;
     if (!alreadyCompleted) {
-      try {
-        await finaliseSession(session);
-        console.log('[session-controller] endSession finalise', sessionId, {
-          results: session.data?.results?.length ?? 0,
-          questions: session.data?.questions?.length ?? 0,
-        });
-      } catch (error) {
-        console.error('Failed to finalise session before ending', error);
+      if (hasQuestions) {
+        try {
+          await finaliseSession(session);
+          console.log('[session-controller] endSession finalise', sessionId, {
+            results: session.data?.results?.length ?? 0,
+            questions: session.data?.questions?.length ?? 0,
+          });
+        } catch (error) {
+          console.error('Failed to finalise session before ending', error);
+        }
+      } else {
+        console.warn('[session-controller] endSession skipped finalise: no questions', sessionId);
       }
     }
   }

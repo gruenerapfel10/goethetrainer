@@ -430,12 +430,14 @@ export function SessionOrchestrator() {
     const showGenerationSpinner = isGeneratingQuestions && !hasQuestions;
 
     if (showGenerationSpinner) {
-      const generated =
-        readyQuestionUnits > 0
-          ? readyQuestionUnits
-          : generationState?.generated ?? 0;
-      const fallbackTotal = Math.max(generationState?.total ?? 0, generated);
-      const total = plannedQuestionTotal > 0 ? plannedQuestionTotal : fallbackTotal;
+      const generated = generationState?.generated ?? readyQuestionUnits ?? 0;
+      const fallbackTotal = generationState?.total ?? 0;
+      const total =
+        fallbackTotal > 0
+          ? fallbackTotal
+          : plannedQuestionTotal > 0
+            ? plannedQuestionTotal
+            : generated;
       const progressLabel =
         total > 0
           ? `${generated} / ${total} Fragen sind bereit.`

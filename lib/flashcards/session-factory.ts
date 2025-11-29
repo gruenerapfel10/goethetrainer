@@ -1,4 +1,4 @@
-import type { FlashcardSession, CardTemplate, SchedulingState } from '@/lib/flashcards/types';
+import type { FlashcardSession, CardTemplate, SchedulingState, FlashcardAlgorithm } from '@/lib/flashcards/types';
 
 export class SessionFactory {
   static create(
@@ -6,7 +6,8 @@ export class SessionFactory {
     deck: { id: string },
     queue: Array<{ card: CardTemplate; state: SchedulingState }>,
     schedulerId: string,
-    mode: 'finite' | 'infinite'
+    mode: 'finite' | 'infinite',
+    algorithm: FlashcardAlgorithm
   ): FlashcardSession {
     const [first, ...rest] = queue;
     return {
@@ -19,6 +20,7 @@ export class SessionFactory {
       completed: [],
       startedAt: Date.now(),
       deckMode: mode,
+      algorithm,
     } as any;
   }
 }

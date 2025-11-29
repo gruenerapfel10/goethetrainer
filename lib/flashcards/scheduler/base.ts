@@ -2,6 +2,12 @@ import type { FeedbackRating, CardTemplate, SchedulingState } from '@/lib/flashc
 
 export interface SchedulingContext {
   now: number;
+  shownAt?: number;
+  answeredAt?: number;
+  dueAt?: number;
+  responseMs?: number;
+  lastReview?: number;
+  targetRetention?: number;
 }
 
 export interface SchedulingStrategy {

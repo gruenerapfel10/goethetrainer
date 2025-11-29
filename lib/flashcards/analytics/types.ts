@@ -53,6 +53,7 @@ export interface DeckAnalytics {
   forgetting: ForgettingRiskStats;
   tagBreakdown: TagStatEntry[];
   lastUpdated: string;
+  sessionCount?: number;
 }
 
 export interface GlobalAnalyticsSummary {

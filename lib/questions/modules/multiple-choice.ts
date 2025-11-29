@@ -15,6 +15,7 @@ import {
   generatePlannedArticleQuestionSet,
   generatePlannedSentenceInsertionSet,
 } from '@/lib/sessions/questions/source-generator';
+import { mapLevelToQuestionDifficulty } from '@/lib/levels/utils';
 import { generateNewsBackedAudioTranscript } from '@/lib/sessions/questions/audio-source';
 import type {
   Question,
@@ -100,6 +101,7 @@ interface TextSourceConfig extends QuestionModuleSourceConfig {
   teilLabel?: string;
   constructionMode?: 'auto' | 'planned_article';
   levelProfile?: LevelProfile;
+  levelId?: string | null;
   prompts?: {
     passage?: string;
     questions?: string;
@@ -110,13 +112,15 @@ interface TextSourceConfig extends QuestionModuleSourceConfig {
 
 interface GappedSourceConfig extends QuestionModuleSourceConfig {
   type: 'gapped_text';
-  gapCount: number;
-  optionsPerGap: number;
+  gapCount?: number;
+  optionsPerGap?: number;
   optionStyle?: 'word' | 'statement';
   theme?: string;
   constructionMode?: 'auto' | 'planned' | 'planned_sentence_pool';
   categoryPlan?: ReadingAssessmentCategory[];
   categoryAllocation?: ReadingCategoryAllocationOptions;
+  levelProfile?: LevelProfile;
+  levelId?: string | null;
 }
 
 interface AudioGappedSourceConfig extends QuestionModuleSourceConfig {
@@ -411,21 +415,37 @@ async function generateStandardMCQ(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
+  const cfg: TextSourceConfig = sourceConfig ?? ({} as TextSourceConfig);
+  const levelMappedDifficulty = mapLevelToQuestionDifficulty(cfg.levelId as any);
+  const effectiveDifficulty = levelMappedDifficulty ?? difficulty;
   const resolvedQuestionCount = Math.max(
     1,
-    questionCount || sourceConfig?.questionCount || 7
+    questionCount ||
+      cfg.questionCount ||
+      cfg.levelProfile?.questionCount ||
+      7
   );
-  const optionsPerQuestion = sourceConfig?.optionsPerQuestion ?? sourceConfig?.levelProfile?.optionsPerItem ?? 3;
+  const optionsPerQuestion =
+    cfg.optionsPerQuestion ??
+    cfg.levelProfile?.optionsPerItem ??
+    3;
+  const effectiveGapCount =
+    cfg.gapCount ??
+    cfg.levelProfile?.gapCount ??
+    cfg.questionCount ??
+    8;
 
-  if (sourceConfig?.constructionMode === 'planned_article') {
+  if (cfg.constructionMode === 'planned_article') {
     const planned = await generatePlannedArticleQuestionSet(
       {
         questionCount: resolvedQuestionCount,
         optionsPerQuestion,
-        theme: sourceConfig.theme,
-        teilLabel: sourceConfig.teilLabel,
-        difficulty,
+        theme: cfg.theme,
+        teilLabel: cfg.teilLabel,
+        difficulty: effectiveDifficulty,
         userId,
+        levelId: cfg.levelId ?? undefined,
+        targetWordCountRange: cfg.levelProfile?.passageLength,
       },
       recordUsage
     );
@@ -456,19 +476,21 @@ async function generateStandardMCQ(
   }
 
   const rawSource = await generateRawSource(
-    difficulty,
+    effectiveDifficulty,
     {
-      theme: sourceConfig?.theme,
-      systemPrompt: sourceConfig?.prompts?.passage,
+      theme: cfg.theme,
+      systemPrompt: cfg.prompts?.passage,
     },
-    sourceConfig?.teilLabel ? { teilLabel: sourceConfig.teilLabel } : undefined,
+    cfg.teilLabel
+      ? { teilLabel: cfg.teilLabel, levelId: cfg.levelId ?? null }
+      : { levelId: cfg.levelId ?? null },
     userId,
     recordUsage
   );
 
   const allocatedCategories = resolveAssessmentCategories(
     resolvedQuestionCount,
-    sourceConfig
+    cfg
   );
   const questionType = resolveQuestionType(sessionType);
   const sourceReference = mapNewsTopicToSourceReference(rawSource.newsTopic);
@@ -480,10 +502,10 @@ async function generateStandardMCQ(
     return generateArticleQuestion({
       article: rawSource,
       sessionType,
-      difficulty,
+      difficulty: effectiveDifficulty,
       optionsPerQuestion,
       category,
-      customQuestionPrompt: sourceConfig?.prompts?.questions,
+      customQuestionPrompt: cfg.prompts?.questions,
       questionIndex: index,
       recordUsage,
     });
@@ -494,7 +516,7 @@ async function generateStandardMCQ(
     id: `${questionType}-${Date.now()}-${index}`,
     type: questionType,
     sessionType,
-    difficulty,
+    difficulty: effectiveDifficulty,
     inputType: QuestionInputType.MULTIPLE_CHOICE,
     prompt: entry.prompt,
     context: rawSource.context,
@@ -552,7 +574,7 @@ Generationshinweis: ${categoryDefinition.generationHint}`
   );
 
   const prompt = `
-You will compose ONE Goethe C1 Leseteil Multiple-Choice question (Frage ${questionIndex + 1}).
+You will compose ONE reading Multiple-Choice question (Frage ${questionIndex + 1}).
 
 Artikel-Infos:
 - Thema: ${article.theme}
@@ -595,7 +617,7 @@ ${jsonExample}
       model: customModel(DEFAULT_MODEL),
       schema: questionSchema,
       system:
-        'Du bist Prüfungsautor:in für Goethe C1. Erstelle präzise MC-Fragen mit Begründungen.',
+        'Du bist Prüfungsautor:in. Erstelle präzise MC-Fragen mit Begründungen.',
       prompt,
       temperature: 0.35,
     })
@@ -669,6 +691,17 @@ async function generateGappedMCQ(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
+  const effectiveDifficulty = mapLevelToQuestionDifficulty(sourceConfig.levelId as any) ?? difficulty;
+  const effectiveGapCount: number = Number(
+    sourceConfig.gapCount ??
+      sourceConfig.levelProfile?.gapCount ??
+      sourceConfig.questionCount ??
+      8
+  );
+  const optionsPerGap =
+    sourceConfig.optionsPerGap ??
+    sourceConfig.levelProfile?.optionsPerItem ??
+    3;
   const teilLabel =
     (sourceConfig as any)?.teilLabel ??
     (sourceConfig as any)?.label ??
@@ -678,15 +711,21 @@ async function generateGappedMCQ(
   let sourceWithGaps: Awaited<ReturnType<typeof generateSourceWithGaps>>;
 
   if (sourceConfig.constructionMode === 'planned_sentence_pool') {
+    const gapBase = Number.isFinite(effectiveGapCount) ? Number(effectiveGapCount) : 0;
+    const optionBase = Number.isFinite(optionsPerGap) ? Number(optionsPerGap) : gapBase;
+    const sentencePoolSize = Math.max(gapBase + 2, optionBase + 2);
     const sentencePlan = await generatePlannedSentenceInsertionSet(
       {
         sentencePoolSize:
-          (sourceConfig as any)?.sentencePoolSize ?? Math.max(sourceConfig.gapCount + 2, sourceConfig.optionsPerGap ?? sourceConfig.gapCount + 2),
-        gapCount: sourceConfig.gapCount,
+          (sourceConfig as any)?.sentencePoolSize ??
+          sentencePoolSize,
+        gapCount: gapBase,
         theme: sourceConfig.theme,
         teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined,
-        difficulty,
+        difficulty: effectiveDifficulty,
         userId,
+        levelId: sourceConfig.levelId ?? null,
+        targetWordCountRange: sourceConfig.levelProfile?.passageLength,
       },
       recordUsage
     );
@@ -714,7 +753,7 @@ async function generateGappedMCQ(
       moduleLabel: 'Multiple Choice',
       gaps: sentencePlan.gaps.map(gap => ({
         id: `GAP_${gap.gapNumber}`,
-        options: poolOptions.map(option => ({ ...option })),
+        options: poolOptions.slice(0, optionsPerGap).map(option => ({ ...option })),
         correctOptionId: gap.solution,
       })),
       presentation: {
@@ -731,7 +770,7 @@ async function generateGappedMCQ(
     ];
   } else if (sourceConfig.constructionMode === 'planned') {
     allocatedCategories = resolveAssessmentCategories(
-      sourceConfig.gapCount,
+      effectiveGapCount,
       sourceConfig
     );
     sourceWithGaps = await generatePlannedGapPassage(
@@ -740,15 +779,16 @@ async function generateGappedMCQ(
         theme: sourceConfig.theme,
         teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined,
         optionStyle: sourceConfig.optionStyle,
-        difficulty,
+        difficulty: effectiveDifficulty,
         userId,
         targetWordCountRange: sourceConfig.levelProfile?.passageLength,
+        levelId: sourceConfig.levelId ?? null,
       },
       recordUsage
     );
   } else {
     sourceWithGaps = await generateSourceWithGaps(
-      difficulty,
+      effectiveDifficulty,
       {
         type: 'gapped_text',
         raw: {
@@ -756,26 +796,23 @@ async function generateGappedMCQ(
           targetWordCountRange: sourceConfig.levelProfile?.passageLength,
         },
         gaps: {
-          requiredCount: sourceConfig.gapCount,
+          requiredCount: effectiveGapCount,
         },
       },
-      { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined },
+      { teilLabel: typeof teilLabel === 'string' ? teilLabel : undefined, levelId: sourceConfig.levelId ?? null },
       userId,
       recordUsage
     );
-    allocatedCategories = resolveAssessmentCategories(
-      sourceConfig.gapCount,
-      sourceConfig
-    );
+    allocatedCategories = resolveAssessmentCategories(effectiveGapCount, sourceConfig);
   }
 
   const model = customModel(DEFAULT_MODEL);
 
-  const gaps = sourceWithGaps.gaps.slice(0, sourceConfig.gapCount);
+  const gaps = sourceWithGaps.gaps.slice(0, effectiveGapCount);
   const questionType = resolveQuestionType(sessionType);
-  const distractorCount = Math.max(1, sourceConfig.optionsPerGap - 1);
+  const distractorCount = Math.max(1, optionsPerGap - 1);
   const gapSystemPrompt =
-    'You are a German language expert who creates Goethe C1 gap-fill multiple-choice options. Always respond with JSON that matches the provided schema.';
+    'You are a German language expert who creates exam-style gap-fill multiple-choice options. Always respond with JSON that matches the provided schema.';
   const jsonExample = JSON.stringify(
     {
       correctText: 'korrekte Option',
@@ -819,7 +856,7 @@ async function generateGappedMCQ(
       : 'Jede Option ist ein einzelnes Wort oder eine Kurzphrase (1-3 Wörter).';
 
   const gapBriefs = gaps.map((gap, index) => {
-    const category = allocatedCategories[index];
+    const category = allocatedCategories[index] ?? allocatedCategories[allocatedCategories.length - 1];
     if (!category) {
       throw new Error(`Missing assessment category for gap ${gap.gapNumber}`);
     }
@@ -837,7 +874,7 @@ async function generateGappedMCQ(
   });
 
   const combinedPrompt = `
-You will craft Goethe C1 Reading Teil 1 options for ${gaps.length} gaps in ONE response.
+You will craft reading gap-fill options for ${gaps.length} gaps in ONE response.
 
 Passage (with gaps):
 ${sourceWithGaps.gappedContext}
@@ -1058,7 +1095,7 @@ async function generateAudioPassageMCQ(
     .join('\n');
 
   const questionPrompt = `
-Du erstellst Aufgaben für Goethe-Zertifikat C1 Hören (${sourceConfig.teilLabel ?? 'Teil'}).
+Du erstellst Aufgaben für ein Hörverstehen (${sourceConfig.teilLabel ?? 'Teil'}).
 
 Vorgaben:
 - Schwierigkeitsgrad: ${difficulty}
@@ -1212,7 +1249,7 @@ export const multipleChoiceModule: QuestionModule<
   id: QuestionModuleId.MULTIPLE_CHOICE,
   label: 'Multiple Choice',
   description:
-    'Standard multiple choice interactions, including Goethe-style gap text variants.',
+    'Standard multiple choice interactions, including gap text variants.',
   supportsSessions: [SessionTypeEnum.READING, SessionTypeEnum.LISTENING],
   defaults: {
     prompt: {

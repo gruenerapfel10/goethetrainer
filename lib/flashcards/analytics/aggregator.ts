@@ -1,6 +1,7 @@
 import { DeckRepository } from '@/lib/flashcards/repository/supabase-repo';
 import { ReviewRepository } from '@/lib/flashcards/repository/review-repo';
 import { SchedulingStateRepository } from '@/lib/flashcards/repository/state-repo';
+import { SessionCountRepository } from '@/lib/flashcards/repository/session-count-repo';
 import { FeedbackRating, type CardTemplate, type Deck, type ReviewEvent, type SchedulingState } from '@/lib/flashcards/types';
 import type {
   DeckAnalytics,
@@ -53,6 +54,9 @@ const ensureState = (state: SchedulingState | undefined, now: number): Schedulin
     easeFactor: 2.3,
     stability: 1,
     difficulty: 0.5,
+    lastReview: undefined,
+    reps: 0,
+    lapses: 0,
   };
 };
 
@@ -120,9 +124,10 @@ const computeRisk = (
     if (!state) {
       return;
     }
-    const overdueMs = Math.max(0, now - state.due);
+    const lastReview = state.lastReview ?? state.due - state.interval * DAY_MS;
+    const elapsedMs = Math.max(0, now - lastReview);
     const stabilityMs = Math.max(DAY_MS, state.stability * DAY_MS);
-    const retrievability = Math.exp(-overdueMs / stabilityMs);
+    const retrievability = Math.exp(-elapsedMs / stabilityMs);
     const risk = Math.min(1, Math.max(0, 1 - retrievability));
     cumulativeRisk += risk;
     if (risk >= HIGH_RISK_THRESHOLD) {
@@ -172,7 +177,7 @@ const computeTagStats = (
   return Array.from(stats.values()).sort((a, b) => b.total - a.total);
 };
 
-const buildDeckAnalytics = async (userId: string, deck: Deck): Promise<DeckAnalytics> => {
+const buildDeckAnalytics = async (userId: string, deck: Deck, sessionCounts: Map<string, number>): Promise<DeckAnalytics> => {
   const now = Date.now();
   const states = await SchedulingStateRepository.listDeckStates(userId, deck.id);
   for (const card of deck.cards) {
@@ -198,6 +203,7 @@ const buildDeckAnalytics = async (userId: string, deck: Deck): Promise<DeckAnaly
     forgetting,
     tagBreakdown,
     lastUpdated: new Date(now).toISOString(),
+    sessionCount: sessionCounts.get(deck.id) ?? 0,
   };
 };
 
@@ -207,7 +213,8 @@ export const FlashcardAnalytics = {
     if (!deck) {
       throw new Error('Deck not found');
     }
-    return buildDeckAnalytics(userId, deck);
+    const counts = await SessionCountRepository.getCounts();
+    return buildDeckAnalytics(userId, deck, counts);
   },
   async getAll(userId: string): Promise<FlashcardAnalyticsBundle> {
     const decks = await DeckRepository.list(userId);
@@ -223,7 +230,8 @@ export const FlashcardAnalytics = {
         decks: [],
       };
     }
-    const deckAnalytics = await Promise.all(decks.map(deck => buildDeckAnalytics(userId, deck)));
+    const sessionCounts = await SessionCountRepository.getCounts();
+    const deckAnalytics = await Promise.all(decks.map(deck => buildDeckAnalytics(userId, deck, sessionCounts)));
     const totalDecks = deckAnalytics.length;
     const totalCards = decks.reduce((sum, deck) => sum + deck.cards.length, 0);
     const cardsMastered = deckAnalytics.reduce((sum, stats) => sum + stats.mastery.mastered, 0);

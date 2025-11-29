@@ -50,12 +50,18 @@ export const sm2Strategy: SchedulingStrategy = {
 
     const due = context.now + interval * 24 * 60 * 60 * 1000;
 
+    const lapses = prevState.lapses ?? 0;
+    const reps = (prevState.reps ?? 0) + 1;
+
     return {
       due,
       interval,
       easeFactor: ease,
       stability: interval,
       difficulty: 1 / ease,
+      lastReview: context.now,
+      reps,
+      lapses: quality < 3 ? lapses + 1 : lapses,
     };
   },
 };
