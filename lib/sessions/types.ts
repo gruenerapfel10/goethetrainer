@@ -52,6 +52,7 @@ export interface SessionData {
 export interface SessionMetadata {
   [key: string]: any;
   levelId?: LevelId;
+  paperId?: string;
 }
 
 export interface Session {

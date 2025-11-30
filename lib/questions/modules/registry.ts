@@ -10,6 +10,7 @@ import type {
   ModelUsageRecord,
 } from './types';
 import type { QuestionModuleId } from './types';
+import type { LevelId, LevelProfile } from '@/lib/levels/level-profiles';
 
 const MODULE_REGISTRY = new Map<QuestionModuleId, QuestionModule<any, any, any, any>>();
 
@@ -34,6 +35,8 @@ interface ExecuteTaskOptions {
   difficulty: QuestionDifficulty;
   userId?: string;
   recordUsage?: (record: ModelUsageRecord) => void;
+  levelId?: LevelId | null;
+  levelProfile?: LevelProfile | null;
 }
 
 export async function executeQuestionModuleTask(
@@ -76,6 +79,8 @@ export async function executeQuestionModuleTask(
       recordUsage: options.recordUsage,
       sessionType: options.sessionType,
       difficulty: options.difficulty,
+      levelId: options.levelId,
+      levelProfile: options.levelProfile,
       questionCount: task.questionCount,
       promptConfig,
       sourceConfig,

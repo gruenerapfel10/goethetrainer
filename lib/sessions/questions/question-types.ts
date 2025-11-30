@@ -1,6 +1,7 @@
 import type { SessionTypeEnum } from '../session-registry';
 import { QuestionInputType } from '../inputs/types';
 import type { ReadingAssessmentCategory } from '@/lib/questions/assessment-categories';
+import type { LevelId, LevelProfile } from '@/lib/levels/level-profiles';
 
 /**
  * Centralized question type definitions
@@ -228,6 +229,10 @@ export interface Question {
   presentation?: Record<string, unknown>;
   renderConfig?: Record<string, unknown>;
   scoring?: Record<string, unknown>;
+
+  // Level metadata (applied recipe)
+  levelId?: LevelId | null;
+  appliedLevelProfile?: (LevelProfile & { version?: string }) | null;
 }
 
 export interface UserAnswer {

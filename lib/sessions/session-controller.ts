@@ -45,7 +45,7 @@ import {
 import { loadPaperBlueprint, savePaperBlueprint } from '@/lib/papers/paper-queries';
 import { sanitizeQuestionForPaper } from '@/lib/papers/paper-utils';
 import type { PaperBlueprint } from '@/lib/papers/types';
-import { getLevelProfile, type LevelId } from '@/lib/levels/level-profiles';
+import { getLevelProfile, type LevelId, type LevelProfile } from '@/lib/levels/level-profiles';
 import { mapLevelToQuestionDifficulty } from '@/lib/levels/utils';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
 
@@ -109,11 +109,17 @@ function markQuestionAsExample(question: Question): Question {
   };
 }
 
-async function persistPaperForSession(session: Session): Promise<void> {
+async function persistPaperForSession(session: Session): Promise<string | null> {
   const questions = session.data?.questions ?? [];
   if (!questions.length) {
-    return;
+    return null;
   }
+
+  const existingPaperId = (session.metadata as any)?.paperId;
+  const paperId =
+    typeof existingPaperId === 'string' && existingPaperId.length > 0
+      ? existingPaperId
+      : generateUUID();
 
   const sanitizedQuestions = questions.map(sanitizeQuestionForPaper);
   const displayTitle =
@@ -155,7 +161,7 @@ async function persistPaperForSession(session: Session): Promise<void> {
         : undefined;
 
   const paper: PaperBlueprint = {
-    id: session.id,
+    id: paperId,
     sessionId: session.id,
     type: session.type as SessionType,
     createdBy: session.userId,
@@ -177,8 +183,19 @@ async function persistPaperForSession(session: Session): Promise<void> {
 
   try {
     await savePaperBlueprint(paper);
+    session.metadata = {
+      ...(session.metadata ?? {}),
+      paperId,
+    };
+    try {
+      await persistSession(session);
+    } catch (err) {
+      console.error('Paper saved but failed to link to session metadata', err);
+    }
+    return paperId;
   } catch (error) {
     console.error('Failed to persist paper blueprint:', error);
+    return null;
   }
 }
 
@@ -192,7 +209,9 @@ async function generateTeilQuestions(
   layoutEntry: NormalisedSessionLayoutEntry,
   difficulty: QuestionDifficulty,
   teilNumber: number,
-  userId?: string
+  userId?: string,
+  levelId?: LevelId | null,
+  levelProfile?: LevelProfile | null
 ): Promise<TeilGenerationResult> {
   const stageTimings: Record<string, number> = {};
   const stageStart = Date.now();
@@ -243,11 +262,15 @@ async function generateTeilQuestions(
       sessionType,
       difficulty,
       userId,
+      levelId: levelId ?? null,
+      levelProfile: levelProfile ?? null,
       recordUsage: record => {
         usageRecords.push(record);
       },
     });
     markTiming('module_execution_ms', moduleStart);
+
+    const appliedLevelProfile = levelProfile ? JSON.parse(JSON.stringify(levelProfile)) : null;
 
     let questions = rawQuestions.map((question: any, index: number) => ({
       ...question,
@@ -260,6 +283,8 @@ async function generateTeilQuestions(
       answerType: question.answerType ?? question.inputType,
       layoutId: layoutEntry.id,
       layoutLabel: layoutEntry.label,
+      levelId: levelId ?? null,
+      appliedLevelProfile,
     }));
 
     const exampleTimer = exampleRequested && questions.length > 0 ? Date.now() : null;
@@ -880,7 +905,9 @@ export async function generateQuestionsForSession(
             entry,
             difficulty,
             currentTeil,
-            userId
+            userId,
+            levelId,
+            levelProfile
           );
           const duration = Date.now() - startTime;
           console.log(`🤖 Worker ${workerId} completed Teil ${currentTeil} - ${result.questions.length} questions in ${(duration / 1000).toFixed(2)}s`);
@@ -1100,7 +1127,7 @@ export async function createSessionFromPaper(
     `${sessionType[0].toUpperCase()}${sessionType.slice(1)} paper`;
   const sessionMetadata = {
     ...(metadataOverrides ?? {}),
-    paperId,
+    paperId: paper.id,
     difficulty: paper.metadata?.difficulty,
     config: {
       displayName,

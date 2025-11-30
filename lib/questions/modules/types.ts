@@ -5,6 +5,7 @@ import type {
   QuestionResult,
   UserAnswer,
 } from '@/lib/sessions/questions/question-types';
+import type { LevelId, LevelProfile } from '@/lib/levels/level-profiles';
 
 export enum QuestionModuleId {
   MULTIPLE_CHOICE = 'multiple_choice',
@@ -86,6 +87,8 @@ export interface QuestionModuleGenerateContext<
   recordUsage?: (record: ModelUsageRecord) => void;
   sessionType: SessionTypeEnum;
   difficulty: QuestionDifficulty;
+  levelId?: LevelId | null;
+  levelProfile?: LevelProfile | null;
   questionCount: number;
   promptConfig: P;
   sourceConfig: S;
@@ -94,6 +97,8 @@ export interface QuestionModuleGenerateContext<
 export interface QuestionModuleGenerateResult {
   questions: Question[];
   metadata?: Record<string, unknown>;
+  levelId?: LevelId | null;
+  levelProfile?: LevelProfile | null;
 }
 
 export interface QuestionModuleMarkContext<TAnswer = unknown> {
