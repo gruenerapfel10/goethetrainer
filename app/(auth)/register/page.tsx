@@ -110,16 +110,16 @@ export default function Page() {
           </div>
           <div className="relative z-20 text-center space-y-8">
             <div>
-              <h2 className="text-5xl font-bold text-white leading-tight">Precision Science</h2>
-              <p className="text-lg text-white/80">AI-powered medical future</p>
+              <h2 className="text-5xl font-bold text-white leading-tight">Learn German faster</h2>
+              <p className="text-lg text-white/80">AI-powered spaced repetition & practice</p>
             </div>
             <div className="mt-4">
               <MultiStepLoader
                 loadingStates={[
-                  { text: 'Analyzing patient data' },
-                  { text: 'Processing medical records' },
-                  { text: 'Generating insights' },
-                  { text: 'Preparing results' },
+                  { text: 'Building your study plan' },
+                  { text: 'Prioritizing flashcards' },
+                  { text: 'Generating practice' },
+                  { text: 'Preparing your session' },
                 ]}
                 loading={true}
                 duration={1000}
@@ -179,7 +179,7 @@ export default function Page() {
                 {isGoogleLoading ? 'Redirecting…' : 'Continue with Google'}
               </Button>
 
-              <AuthForm action={handleSubmit} defaultEmail={email}>
+              <AuthForm onSubmit={handleSubmit} defaultEmail={email}>
                 <SubmitButton isSuccessful={isSuccessful}>
                   {t('register.submitButton')}
                 </SubmitButton>

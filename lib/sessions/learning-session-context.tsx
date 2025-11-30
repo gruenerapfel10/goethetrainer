@@ -26,6 +26,13 @@ import {
   getSupportedModules as getSupportedModulesFromRegistry,
 } from './session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import {
+  buildEnvelope,
+  isEnvelopeMoreRecent,
+  resolveAnswerAdapter,
+  type AnswerEnvelope,
+} from '@/lib/sessions/answers/adapter-registry';
+import { clearCache, loadCache, persistCache } from '@/lib/sessions/answers/cache';
 import { buildQuestionSessionSummary } from './question-summary';
 import { getQuestionUnitCount, sumQuestionUnitCounts } from './questions/question-units';
 
@@ -116,7 +123,7 @@ interface LearningSessionContextValue {
 
 const LearningSessionContext = createContext<LearningSessionContextValue | null>(null);
 
-const SAVE_DEBOUNCE_MS = 450;
+const SAVE_DEBOUNCE_MS = 250;
 
 function hasAnswer(value: unknown): boolean {
   if (value === undefined || value === null) {
@@ -128,7 +135,10 @@ function hasAnswer(value: unknown): boolean {
   if (Array.isArray(value)) {
     return value.length > 0;
   }
-  return true;
+  if (typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>).length > 0;
+  }
+  return false;
 }
 
 function defaultNormaliseAnswer(
@@ -252,9 +262,9 @@ function toSessionQuestion(
   question: Question,
   currentQuestionId: string | null
 ): SessionQuestion {
-  const answer = normaliseAnswerForQuestion(question, (question as any).answer);
+  const answer = hydrateAnswerForQuestion(question, (question as any).answer);
   const result = (question as any).result as QuestionResult | undefined;
-  const answered = hasAnswer(answer);
+  const answered = isAnswerComplete(question, answer);
   const isCurrent = question.id === currentQuestionId;
   const teilState: TeilState = isCurrent ? 'active' : answered ? 'completed' : 'pending';
 
@@ -346,6 +356,11 @@ async function requestJson<TResponse>(
   init?: RequestInit
 ): Promise<TResponse> {
   const response = await fetch(input, init);
+  if (response.status === 401 && typeof window !== 'undefined') {
+    const next = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.replace(`/login?next=${next}`);
+    throw new Error('Unauthorized');
+  }
   if (!response.ok) {
     const details = await response.text().catch(() => '');
     throw new Error(details || response.statusText || 'Request failed');
@@ -369,6 +384,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   const activeSessionRef = useRef<Session | null>(null);
   const questionsRef = useRef<SessionQuestion[]>([]);
   const activeQuestionIdRef = useRef<string | null>(null);
+  const localEnvelopesRef = useRef<Record<string, AnswerEnvelope>>({});
   const pendingUpdateRef = useRef<UpdateSessionInput | null>(null);
   const pendingAnswersRef = useRef<Record<string, AnswerValue>>({});
   const flushTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -672,6 +688,31 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
   }, [activeView]);
 
   useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        void flushPendingUpdates();
+      }
+    };
+    const handleBeforeUnload = () => {
+      sendBeaconForPendingUpdates();
+    };
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    };
+  }, [flushPendingUpdates, sendBeaconForPendingUpdates]);
+
+  useEffect(() => {
     return () => {
       isMountedRef.current = false;
       if (pendingUpdateRef.current) {
@@ -765,6 +806,10 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         : [];
       const shouldHydrateResults =
         session.status === 'completed' && serverResults.length > 0;
+      const cachedSnapshot = session.id ? loadCache(session.id) : null;
+      if (!merge) {
+        localEnvelopesRef.current = cachedSnapshot?.answers ?? {};
+      }
 
       const hydrateResults = () => {
         if (shouldHydrateResults) {
@@ -793,7 +838,26 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         );
 
         const statefulQuestions = withCurrentQuestionState(
-          questions.map(question => toSessionQuestion(question, derivedActiveId)),
+          questions.map(question => {
+            const adapter = resolveAnswerAdapter(question);
+            const serverAnswer = adapter.hydrate((question as any).answer, question);
+            const serverEnvelope = buildEnvelope(question, serverAnswer, 0);
+            const cachedEnvelope = cachedSnapshot?.answers?.[question.id];
+            const chosenEnvelope = isEnvelopeMoreRecent(cachedEnvelope, serverEnvelope)
+              ? cachedEnvelope!
+              : serverEnvelope;
+            if (chosenEnvelope) {
+              localEnvelopesRef.current[question.id] = chosenEnvelope;
+            }
+            const hydratedAnswer = adapter.hydrate(
+              (chosenEnvelope ?? serverEnvelope)?.value ?? serverAnswer,
+              question
+            );
+            return toSessionQuestion(
+              { ...question, answer: hydratedAnswer } as Question,
+              derivedActiveId
+            );
+          }),
           derivedActiveId
         );
 
@@ -807,6 +871,16 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setActiveViewState(derivedActiveView);
         pendingAnswersRef.current = {};
         pendingUpdateRef.current = null;
+        persistCache(session.id, {
+          answers: localEnvelopesRef.current,
+          metadata: {
+            activeQuestionId: derivedActiveId,
+            activeTeil:
+              statefulQuestions.find(q => q.id === derivedActiveId)?.teil ?? null,
+            activeView: derivedActiveView,
+          },
+          savedAt: Date.now(),
+        });
         hydrateResults();
         return;
       }
@@ -821,12 +895,38 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
       const mergedQuestions = questions.map(question => {
         const existing = existingMap.get(question.id);
+        const adapter = resolveAnswerAdapter(question);
+        const serverAnswer = adapter.hydrate((question as any).answer, question);
+        const serverEnvelope = buildEnvelope(question, serverAnswer, 0);
+        const cachedEnvelope = localEnvelopesRef.current[question.id];
+        const chosenEnvelope = isEnvelopeMoreRecent(cachedEnvelope, serverEnvelope)
+          ? cachedEnvelope!
+          : serverEnvelope;
+        const hydratedAnswer = adapter.hydrate(
+          (chosenEnvelope ?? serverEnvelope)?.value ?? serverAnswer,
+          question
+        );
+        const base = toSessionQuestion(
+          { ...question, answer: hydratedAnswer } as Question,
+          derivedActiveId
+        );
+
         if (!existing) {
-          return toSessionQuestion(question, derivedActiveId);
+          localEnvelopesRef.current[question.id] = chosenEnvelope;
+          return base;
         }
 
-        const base = toSessionQuestion(question, derivedActiveId);
         const hasLocalAnswer = hasAnswer(existing.answer);
+        if (hasLocalAnswer) {
+          const nextRevision = (localEnvelopesRef.current[question.id]?.revision ?? 0) + 1;
+          localEnvelopesRef.current[question.id] = buildEnvelope(
+            question,
+            existing.answer,
+            nextRevision
+          );
+        } else {
+          localEnvelopesRef.current[question.id] = chosenEnvelope;
+        }
 
         return {
           ...base,
@@ -849,6 +949,16 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         setActiveQuestionId(derivedActiveId);
         activeQuestionIdRef.current = derivedActiveId;
       }
+      persistCache(session.id, {
+        answers: localEnvelopesRef.current,
+        metadata: {
+          activeQuestionId: derivedActiveId,
+          activeTeil:
+            statefulQuestions.find(q => q.id === derivedActiveId)?.teil ?? null,
+          activeView: derivedActiveView,
+        },
+        savedAt: Date.now(),
+      });
       hydrateResults();
     },
     [setLatestResults]
@@ -1004,9 +1114,12 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         questionsRef.current.find(question => question.id === questionId) ??
         (session.data.questions as Question[] | undefined)?.find(question => question.id === questionId);
 
-      const normalised = sourceQuestion
-        ? normaliseAnswerForQuestion(sourceQuestion, answerValue)
-        : defaultNormaliseAnswer(answerValue);
+      if (!sourceQuestion) {
+        return;
+      }
+
+      const normalised = normaliseForQuestion(sourceQuestion, answerValue);
+      const adapter = resolveAnswerAdapter(sourceQuestion);
 
       setSessionQuestions(previous => {
         const updated = previous.map(question => {
@@ -1017,7 +1130,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           return {
             ...question,
             answer: normalised,
-            answered: hasAnswer(normalised),
+            answered: adapter.isComplete(normalised),
             result: undefined,
           };
         });
@@ -1032,11 +1145,26 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
         [questionId]: normalised ?? null,
       };
 
+      const currentRevision = localEnvelopesRef.current[questionId]?.revision ?? 0;
+      const envelope = buildEnvelope(sourceQuestion, normalised, currentRevision + 1);
+      localEnvelopesRef.current = {
+        ...localEnvelopesRef.current,
+        [questionId]: envelope,
+      };
       const updatedQuestions = questionsRef.current;
-      const progressSummary = deriveProgressSummary(updatedQuestions);
       const activeQuestion = updatedQuestions.find(
         question => question.id === activeQuestionIdRef.current
       );
+      persistCache(session.id, {
+        answers: localEnvelopesRef.current,
+        metadata: {
+          activeQuestionId: activeQuestionIdRef.current,
+          activeTeil: (activeQuestion?.teil ?? null) as number | null,
+          activeView,
+        },
+        savedAt: Date.now(),
+      });
+      const progressSummary = deriveProgressSummary(updatedQuestions);
       const nextState = {
         activeTeil: (activeQuestion?.teil ?? null) as number | null,
         activeQuestionId: activeQuestionIdRef.current,
@@ -1215,8 +1343,8 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
             question.id === questionId
               ? {
                   ...question,
-                  answer: normaliseAnswerForQuestion(question, answerValue),
-                  answered: true,
+                  answer: normaliseForQuestion(question, answerValue),
+                  answered: isAnswerComplete(question, answerValue),
                   result,
                 }
               : question
@@ -1334,11 +1462,11 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           }
           return {
             ...question,
-            answer: normaliseAnswerForQuestion(
+            answer: normaliseForQuestion(
               question,
               result.userAnswer.answer as AnswerValue
             ),
-            answered: true,
+            answered: isAnswerComplete(question, result.userAnswer.answer as AnswerValue),
             result,
           };
         });
@@ -1379,6 +1507,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
 
         setActiveSession(updated);
         activeSessionRef.current = updated;
+        clearCache(session.id);
       } catch (err) {
         console.error('Failed to end session', err);
         setError(err instanceof Error ? err.message : 'Failed to end session');
@@ -1500,33 +1629,24 @@ export function useLearningSession(): LearningSessionContextValue {
   }
   return context;
 }
-function normaliseAnswerForQuestion(
+
+function hydrateAnswerForQuestion(
   question: Question,
   value: AnswerValue | null | undefined
 ): AnswerValue | null {
-  if (value === undefined) {
-    return null;
-  }
+  const adapter = resolveAnswerAdapter(question);
+  return adapter.hydrate(value ?? null, question);
+}
 
-  const moduleId = (question.moduleId ??
-    question.registryType ??
-    QuestionModuleId.MULTIPLE_CHOICE) as QuestionModuleId;
+function normaliseForQuestion(
+  question: Question,
+  value: AnswerValue | null | undefined
+): AnswerValue | null {
+  const adapter = resolveAnswerAdapter(question);
+  return adapter.normalise(value ?? null, question);
+}
 
-  if (moduleId === QuestionModuleId.STATEMENT_MATCH) {
-    return normaliseStatementMatchAnswer(question, value);
-  }
-
-  if (question.gaps && question.gaps.length > 0) {
-    return normaliseGapAnswerValue(question, value);
-  }
-
-  if (moduleId === QuestionModuleId.WRITTEN_RESPONSE || question.inputType === 'long_text') {
-    return typeof value === 'string' ? value : defaultNormaliseAnswer(value);
-  }
-
-  if (moduleId === QuestionModuleId.MULTIPLE_CHOICE || question.inputType === 'multiple_choice') {
-    return normaliseSingleSelection(value);
-  }
-
-  return defaultNormaliseAnswer(value);
+function isAnswerComplete(question: Question, value: AnswerValue | null | undefined): boolean {
+  const adapter = resolveAnswerAdapter(question);
+  return adapter.isComplete(value ?? null);
 }

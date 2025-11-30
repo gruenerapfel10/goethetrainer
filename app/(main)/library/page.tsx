@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { SessionTypeEnum } from '@/lib/sessions/session-registry';
+import { SessionTypeEnum, getSessionConfig } from '@/lib/sessions/session-registry';
 import type { PaperBlueprint } from '@/lib/papers/types';
 
 const PAPER_CATEGORIES: Array<{ value: SessionTypeEnum; label: string }> = [
@@ -140,6 +140,30 @@ export default function LibraryPage() {
       paper.blueprint.questions[0]?.prompt ??
       `${paper.type} paper`;
     const subtitle = (typeof paper.metadata?.subtitle === 'string' ? paper.metadata.subtitle : null) ?? promptPreview ?? 'No description';
+    const defaultLevel = getSessionConfig(paper.type as SessionTypeEnum)?.defaults?.levelId;
+    const levelLabel =
+      (paper.metadata as any)?.levelId ??
+      defaultLevel ??
+      'n/a';
+    const focusTags: string[] = (() => {
+      if (Array.isArray((paper.metadata as any)?.focusCategories)) {
+        return (paper.metadata as any)?.focusCategories as string[];
+      }
+      const fromQuestions = Array.from(
+        new Set(
+          (paper.blueprint.questions ?? []).flatMap(question => {
+            const cat = (question as any)?.assessmentCategory;
+            const gapCats = Array.isArray(question.gaps)
+              ? question.gaps
+                  .map(gap => (gap as any)?.assessmentCategory)
+                  .filter((value): value is string => typeof value === 'string')
+              : [];
+            return [cat, ...gapCats].filter((value): value is string => typeof value === 'string');
+          })
+        )
+      );
+      return fromQuestions;
+    })();
 
     return (
       <div
@@ -156,6 +180,19 @@ export default function LibraryPage() {
           <p className="text-sm text-muted-foreground line-clamp-3">
             {subtitle}
           </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              {typeof levelLabel === 'string' ? levelLabel : 'Level: n/a'}
+            </span>
+            {focusTags.slice(0, 6).map(tag => (
+              <span
+                key={tag}
+                className="rounded-full bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="flex flex-col gap-3 text-xs text-muted-foreground">
           <div className="text-xs">{formatDistanceToNow(createdAt, { addSuffix: true })}</div>

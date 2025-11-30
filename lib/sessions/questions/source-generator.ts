@@ -312,10 +312,7 @@ export async function generateRawSource(
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<RawSource> {
   const levelProfile = getLevelProfile((logMetadata?.levelId as any) ?? null);
-  const newsTopic =
-    logMetadata?.levelId && ['A1', 'A2', 'B1'].includes(logMetadata.levelId)
-      ? null
-      : await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool();
   const selectedTheme = resolveTheme(logMetadata?.levelId ?? null, overrides?.theme, newsTopic?.theme);
   const targetRange =
     overrides?.targetWordCountRange ?? levelProfile?.passageLength ?? undefined;
@@ -627,8 +624,7 @@ export async function generatePlannedGapPassage(
     throw new Error('Planned gap generation requires at least one category');
   }
 
-  const newsTopic =
-    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
@@ -787,8 +783,7 @@ export async function generatePlannedSentenceInsertionSet(
   if (gapCount <= 0 || sentencePoolSize < gapCount) {
     throw new Error('Sentence pool must be >= gap count');
   }
-  const newsTopic =
-    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({
@@ -959,8 +954,7 @@ export async function generatePlannedArticleQuestionSet(
   if (questionCount <= 0) {
     throw new Error('Question count must be positive for planned article set');
   }
-  const newsTopic =
-    levelId && ['A1', 'A2', 'B1'].includes(levelId) ? null : await getNewsTopicFromPool();
+  const newsTopic = await getNewsTopicFromPool();
   const resolvedTheme = resolveTheme(levelId, theme, newsTopic?.theme);
   const model = customModel(ModelId.GPT_5);
   const schema = z.object({

@@ -59,8 +59,8 @@ export function Logo({
       {showIcon && (
         <div className="flex items-center justify-center">
           <Image
-            src={invert ? '/images/prosemble-logo-v2-white.svg' : '/images/prosemble-logo-v2.svg'}
-            alt="Prosemble Logo Icon"
+            src={invert ? '/logo_dark.png' : '/logo.png'}
+            alt="Faust Logo Icon"
             width={64}
             height={64}
             className={`${config.container.h} ${config.container.w} object-contain`}
@@ -73,27 +73,13 @@ export function Logo({
         <div className="flex flex-col justify-center flex-1 gap-0.5">
           {showTitle && (
             <div className="flex items-center">
-              <Image
-                src={invert ? '/images/prosemble-logo-v2-title-white.svg' : '/images/prosemble-logo-v2-title.svg'}
-                alt="Prosemble"
-                width={160}
-                height={32}
-                className={`${config.text.w} object-contain`}
-                priority
-              />
+              <span className={`${config.text.w} text-3xl font-bold tracking-tight text-foreground`}>Faust</span>
             </div>
           )}
 
           {showTagline && (
             <div className="flex items-center">
-              <Image
-                src={invert ? '/images/prosemble-logo-v2-text-white.svg' : '/images/prosemble-logo-v2-text.svg'}
-                alt="Precision science"
-                width={160}
-                height={24}
-                className={`${config.text.w} object-contain`}
-                priority
-              />
+              <span className={`${config.text.w} text-sm text-muted-foreground`}>AI-powered German learning</span>
             </div>
           )}
         </div>

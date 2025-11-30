@@ -13,6 +13,8 @@ export interface PaperBlueprint {
     icon?: string;
     color?: string;
     difficulty?: string;
+    levelId?: string | null;
+    focusCategories?: string[];
     [key: string]: unknown;
   };
   blueprint: {

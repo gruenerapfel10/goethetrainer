@@ -5,20 +5,23 @@ import { Label } from './ui/label';
 import { useTranslations } from 'next-intl';
 
 export function AuthForm({
-  action,
+  onSubmit,
   children,
   defaultEmail = '',
 }: {
-  action: NonNullable<
-    string | ((formData: FormData) => void | Promise<void>) | undefined
-  >;
+  onSubmit: (formData: FormData) => void | Promise<void>;
   children: React.ReactNode;
   defaultEmail?: string;
 }) {
   const t = useTranslations();
 
   return (
-    <Form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
+    <Form
+      className="flex flex-col gap-4 px-4 sm:px-16"
+      action={async (formData: FormData) => {
+        await onSubmit(formData);
+      }}
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="email" className="text-label-text font-normal">
           {t('login.email')}

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,8 @@ import { Logo } from '@/components/logo';
 import { WavyBackground } from '@/components/ui/wavy-background';
 import { MultiStepLoader } from '@/components/ui/multi-step-loader';
 import { AuthForm } from '@/components/auth-form';
-import { SubmitButton } from '@/components/submit-button';
 import { AuthNavbar } from '@/components/auth-navbar';
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser';
-import { login, type LoginActionState } from '../actions';
 import { motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 
@@ -25,29 +23,41 @@ const getRedirectTo = () =>
 
 export default function Page() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
-  const [isSuccessful, setIsSuccessful] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { theme } = useTheme();
 
   const t = useTranslations();
 
-  const [state, formAction] = useActionState<LoginActionState, FormData>(login, { status: 'idle' });
-
-  useEffect(() => {
-    if (state.status === 'failed') {
-      toast.error(t('login.errors.invalidCredentials'));
-    } else if (state.status === 'invalid_data') {
+  const handleSubmit = async (formData: FormData) => {
+    const next = searchParams.get('next') || '/dashboard';
+    const submittedEmail = (formData.get('email') as string) ?? '';
+    const password = (formData.get('password') as string) ?? '';
+    setEmail(submittedEmail);
+    if (!submittedEmail || !password) {
       toast.error(t('login.errors.invalidData'));
-    } else if (state.status === 'success') {
-      setIsSuccessful(true);
-      router.push('/dashboard');
+      return;
     }
-  }, [state.status, router, t]);
-
-  const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
-    formAction(formData);
+    setIsSubmitting(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: submittedEmail.toLowerCase().trim(),
+        password,
+      });
+      if (error) {
+        toast.error(t('login.errors.invalidCredentials'));
+        return;
+      }
+      router.push(next);
+    } catch (err) {
+      console.error('Email sign-in failed', err);
+      toast.error(t('login.errors.invalidCredentials'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -97,16 +107,16 @@ export default function Page() {
           </div>
           <div className="w-full flex flex-col items-center justify-center text-center space-y-8 z-20">
             <div>
-              <h2 className="text-5xl font-bold text-foreground leading-tight">Precision Science</h2>
-              <p className="text-lg text-foreground/70">AI-powered medical future</p>
+              <h2 className="text-5xl font-bold text-foreground leading-tight">Learn German faster</h2>
+              <p className="text-lg text-foreground/70">AI-powered spaced repetition & practice</p>
             </div>
             <div className="mt-4">
               <MultiStepLoader
                 loadingStates={[
-                  { text: 'Analyzing patient data' },
-                  { text: 'Processing medical records' },
-                  { text: 'Generating insights' },
-                  { text: 'Preparing results' },
+                  { text: 'Building your study plan' },
+                  { text: 'Prioritizing flashcards' },
+                  { text: 'Generating practice' },
+                  { text: 'Preparing your session' },
                 ]}
                 loading={true}
                 duration={1000}
@@ -166,15 +176,15 @@ export default function Page() {
                 {isGoogleLoading ? 'Redirecting…' : 'Continue with Google'}
               </Button>
 
-              <AuthForm action={handleSubmit} defaultEmail={email}>
+              <AuthForm onSubmit={handleSubmit} defaultEmail={email}>
                 <div className="flex justify-end">
                   <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-foreground">
                     Forgot password?
                   </Link>
                 </div>
-                <SubmitButton isSuccessful={isSuccessful}>
-                  {t('login.submitButton')}
-                </SubmitButton>
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? 'Signing in…' : t('login.submitButton')}
+                </Button>
               </AuthForm>
 
               <p className="text-center text-sm text-muted-foreground">

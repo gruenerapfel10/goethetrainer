@@ -208,7 +208,7 @@ export function SessionOrchestrator() {
     [sessionQuestions]
   );
   const totalLoadedQuestions = sessionQuestions.length;
-  const accumulatedAnswers = useMemo<Record<string, string | string[] | boolean>>(
+  const accumulatedAnswers = useMemo<Record<string, any>>(
     () =>
       Object.fromEntries(
         sessionQuestions
@@ -216,14 +216,7 @@ export function SessionOrchestrator() {
             question =>
               question.id && question.answer !== undefined && question.answer !== null
           )
-          .map(question => {
-            const value = question.answer as AnswerValue;
-            if (typeof value === 'string' || typeof value === 'boolean' || Array.isArray(value)) {
-              return [question.id as string, value];
-            }
-
-            return [question.id as string, ''];
-          })
+          .map(question => [question.id as string, question.answer])
       ),
     [sessionQuestions]
   );
@@ -427,10 +420,10 @@ export function SessionOrchestrator() {
 
   const renderQuestion = () => {
     const hasQuestions = sessionQuestions.length > 0 && activeTeilQuestions.length > 0;
-    const showGenerationSpinner = isGeneratingQuestions && !hasQuestions;
+    const showGenerationSpinner = isGeneratingQuestions && readyQuestionUnits === 0;
 
     if (showGenerationSpinner) {
-      const generated = generationState?.generated ?? readyQuestionUnits ?? 0;
+      const generated = Math.max(generationState?.generated ?? 0, readyQuestionUnits ?? 0);
       const fallbackTotal = generationState?.total ?? 0;
       const total =
         fallbackTotal > 0

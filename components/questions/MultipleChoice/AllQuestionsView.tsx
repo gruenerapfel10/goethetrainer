@@ -22,7 +22,7 @@ interface AllQuestionsViewProps {
   showA4Format?: boolean;
   onShowA4FormatChange?: (show: boolean) => void;
   isLastTeil?: boolean;
-  accumulatedAnswers?: Record<string, string | string[] | boolean>;
+  accumulatedAnswers?: Record<string, any>;
   onBack?: () => void;
   showBackButton?: boolean;
    totalTeils?: number;
@@ -115,6 +115,24 @@ export function AllQuestionsView({
     [questions]
   );
 
+  const toSingleSelection = (question: MCQuestion, value: unknown) => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') {
+      const gaps = (question as any).gaps ?? [];
+      if (gaps.length > 0) {
+        const firstGapId = gaps[0]?.id;
+        if (firstGapId && typeof (value as any)[firstGapId] === 'string') {
+          return (value as any)[firstGapId] as string;
+        }
+        const first = Object.values(value as Record<string, unknown>)[0];
+        if (typeof first === 'string') {
+          return first;
+        }
+      }
+    }
+    return '';
+  };
+
   useEffect(() => {
     const initial: Record<string, string> = {};
     questions.forEach(question => {
@@ -122,8 +140,9 @@ export function AllQuestionsView({
         // Don't show example options nor prefill them into the user's answers
         return;
       }
-      if (typeof question.answer === 'string' && question.answer) {
-        initial[question.id] = question.answer as string;
+      const value = toSingleSelection(question, question.answer);
+      if (value) {
+        initial[question.id] = value;
       }
     });
     setSelectedAnswers(initial);
@@ -137,11 +156,11 @@ export function AllQuestionsView({
       let changed = false;
       const next = { ...prev };
       Object.entries(accumulatedAnswers).forEach(([questionId, value]) => {
-        if (typeof value === 'string' && value) {
-          if (next[questionId] !== value) {
-            next[questionId] = value;
-            changed = true;
-          }
+        const question = questions.find(q => q.id === questionId);
+        const resolved = question ? toSingleSelection(question, value) : '';
+        if (resolved && next[questionId] !== resolved) {
+          next[questionId] = resolved;
+          changed = true;
         }
       });
       return changed ? next : prev;

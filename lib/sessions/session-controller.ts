@@ -120,6 +120,40 @@ async function persistPaperForSession(session: Session): Promise<void> {
     session.metadata?.config?.displayName ??
     `${session.type[0].toUpperCase()}${session.type.slice(1)} Paper`;
 
+  const config = getSessionConfig(session.type as SessionTypeEnum);
+  const levelId =
+    (session.metadata as any)?.preferences?.level ??
+    (session.metadata as any)?.levelId ??
+    config.defaults?.levelId ??
+    null;
+
+  const focusFromMetadata: string[] | undefined = Array.isArray(
+    (session.metadata as any)?.preferences?.focus?.categories
+  )
+    ? ((session.metadata as any)?.preferences?.focus?.categories as string[])
+    : undefined;
+
+  const focusFromQuestions = Array.from(
+    new Set(
+      sanitizedQuestions.flatMap(question => {
+        const cat = (question as any)?.assessmentCategory;
+        const gapCats = Array.isArray(question.gaps)
+          ? question.gaps
+              .map(gap => (gap as any)?.assessmentCategory)
+              .filter((value): value is string => typeof value === 'string')
+          : [];
+        return [cat, ...gapCats].filter((value): value is string => typeof value === 'string');
+      })
+    )
+  );
+
+  const focusCategories =
+    focusFromMetadata && focusFromMetadata.length > 0
+      ? focusFromMetadata
+      : focusFromQuestions.length > 0
+        ? focusFromQuestions
+        : undefined;
+
   const paper: PaperBlueprint = {
     id: session.id,
     sessionId: session.id,
@@ -132,6 +166,8 @@ async function persistPaperForSession(session: Session): Promise<void> {
       icon: session.metadata?.config?.icon,
       color: session.metadata?.config?.color,
       difficulty: session.metadata?.difficulty,
+      levelId,
+      focusCategories,
       preview: sanitizedQuestions[0]?.prompt,
     },
     blueprint: {
