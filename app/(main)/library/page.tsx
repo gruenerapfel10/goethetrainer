@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { SessionTypeEnum, getSessionConfig } from '@/lib/sessions/session-registry';
+import { SessionTypeEnum } from '@/lib/sessions/session-registry';
 import type { PaperBlueprint } from '@/lib/papers/types';
+import { LEVEL_PROFILES, type LevelId } from '@/lib/levels/level-profiles';
 
 const PAPER_CATEGORIES: Array<{ value: SessionTypeEnum; label: string }> = [
   { value: SessionTypeEnum.READING, label: 'Reading' },
@@ -117,34 +118,39 @@ export default function LibraryPage() {
       if (filterType !== 'all' && paper.type !== filterType) {
         return false;
       }
-      if (!term) {
-        return true;
+      if (term) {
+        const content = [
+          paper.metadata?.title,
+          paper.metadata?.subtitle,
+          paper.metadata?.preview,
+        ]
+          .filter(value => typeof value === 'string')
+          .join(' ')
+          .toLowerCase();
+        if (!content.includes(term)) {
+          return false;
+        }
       }
-      const content = [
-        paper.metadata?.title,
-        paper.metadata?.subtitle,
-        paper.metadata?.preview,
-        paper.blueprint.questions[0]?.prompt,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return content.includes(term);
+      return true;
     });
   }, [allPapers, filterType, searchTerm]);
 
   const renderPaperCard = (paper: PaperBlueprint) => {
     const createdAt = new Date(paper.createdAt);
-    const promptPreview =
-      (typeof paper.metadata?.preview === 'string' ? paper.metadata.preview : null) ??
-      paper.blueprint.questions[0]?.prompt ??
-      `${paper.type} paper`;
-    const subtitle = (typeof paper.metadata?.subtitle === 'string' ? paper.metadata.subtitle : null) ?? promptPreview ?? 'No description';
-    const defaultLevel = getSessionConfig(paper.type as SessionTypeEnum)?.defaults?.levelId;
-    const levelLabel =
+    const subtitle =
+      typeof paper.metadata?.subtitle === 'string'
+        ? paper.metadata.subtitle
+        : typeof paper.metadata?.preview === 'string'
+          ? paper.metadata.preview
+          : '';
+    const levelIdRaw =
       (paper.metadata as any)?.levelId ??
-      defaultLevel ??
-      'n/a';
+      (paper.blueprint.questions?.[0] as any)?.levelId ??
+      (paper.blueprint.questions?.[0] as any)?.appliedLevelProfile?.levelId;
+    const normalizedLevelId =
+      typeof levelIdRaw === 'string' ? (levelIdRaw as string).toUpperCase() : null;
+    const hasValidLevel =
+      normalizedLevelId !== null && (normalizedLevelId as LevelId) in LEVEL_PROFILES;
     const focusTags: string[] = (() => {
       if (Array.isArray((paper.metadata as any)?.focusCategories)) {
         return (paper.metadata as any)?.focusCategories as string[];
@@ -175,15 +181,17 @@ export default function LibraryPage() {
             {paper.type}
           </p>
           <h3 className="text-lg font-semibold text-foreground">
-            {paper.metadata?.title ?? 'Generated paper'}
+            {paper.metadata?.title ?? ''}
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-3">
             {subtitle}
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
-            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              {typeof levelLabel === 'string' ? levelLabel : 'Level: n/a'}
-            </span>
+            {hasValidLevel || normalizedLevelId ? (
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                {normalizedLevelId}
+              </span>
+            ) : null}
             {focusTags.slice(0, 6).map(tag => (
               <span
                 key={tag}

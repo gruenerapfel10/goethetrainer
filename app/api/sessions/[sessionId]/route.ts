@@ -25,6 +25,13 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    console.log('[api/sessions/:id] fetched session', {
+      sessionId,
+      status: session.status,
+      questions: Array.isArray(session.data?.questions) ? session.data.questions.length : null,
+      generation: session.data?.generation,
+    });
+
     return NextResponse.json(session);
   } catch (error) {
     console.error('Error fetching session:', error);
