@@ -125,7 +125,7 @@ const LearningSessionContext = createContext<LearningSessionContextValue | null>
 
 const SAVE_DEBOUNCE_MS = 250;
 
-function hasAnswer(value: unknown): boolean {
+function hasAnswer(value: AnswerValue | null | undefined): value is NonNullable<AnswerValue> {
   if (value === undefined || value === null) {
     return false;
   }
@@ -921,7 +921,7 @@ export function LearningSessionProvider({ children }: { children: React.ReactNod
           const nextRevision = (localEnvelopesRef.current[question.id]?.revision ?? 0) + 1;
           localEnvelopesRef.current[question.id] = buildEnvelope(
             question,
-            existing.answer,
+            existing.answer!,
             nextRevision
           );
         } else {
