@@ -59,8 +59,6 @@ const MODULE_LABELS: Record<SessionTypeEnum, string> = {
   [SessionTypeEnum.SPEAKING]: 'Sprechen',
 };
 
-const LEVEL_BADGE = 'GOETHE-ZERTIFIKAT C1';
-
 const GRADE_BANDS = [
   { min: 90, label: 'sehr gut', color: 'text-green-700' },
   { min: 80, label: 'gut', color: 'text-emerald-600' },
@@ -183,6 +181,11 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
   const overallPercentage =
     overallScaledMax > 0 ? Math.round((overallScaledScore / overallScaledMax) * 100) : summary.percentage;
   const gradeInfo = resolveGradeInfo(overallPercentage);
+  const derivedLevel =
+    (results[0]?.question as any)?.levelId ??
+    (results[0]?.question as any)?.appliedLevelProfile?.levelId ??
+    null;
+  const levelBadge = derivedLevel ? `GOETHE-ZERTIFIKAT ${String(derivedLevel).toUpperCase()}` : null;
 
   const issuedAtDate = (() => {
     if (!issuedAt) return new Date();
@@ -279,7 +282,9 @@ export function SessionResultsView({ results, summary, sessionType, onClose, iss
         <div className="border-b px-10 py-6 flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">GOETHE-INSTITUT</p>
-            <h1 className="text-2xl font-bold tracking-wide">{LEVEL_BADGE}</h1>
+            {levelBadge ? (
+              <h1 className="text-2xl font-bold tracking-wide">{levelBadge}</h1>
+            ) : null}
             <p className="text-xs text-muted-foreground mt-1">Modul: {MODULE_LABELS[sessionType]}</p>
           </div>
           <div className="text-right">

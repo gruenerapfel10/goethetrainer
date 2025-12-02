@@ -1,4 +1,5 @@
 import { GoetheHeader } from '@/components/questions/MultipleChoice/GoetheHeader';
+import { AudioSourcePlayer } from '@/components/questions/media/AudioSourcePlayer';
 import type { SessionQuestion } from '@/lib/sessions/learning-session-context';
 import { cn } from '@/lib/utils';
 import { SavedWordHighlighter } from '@/components/questions/SessionBoard';
@@ -22,6 +23,8 @@ export function StatementMatchSource({
   highlightWords = [],
 }: StatementMatchSourceProps) {
   const texts = question.texts ?? [];
+  const sourceMedia = (question as any)?.sourceMedia ?? null;
+  const audioSource = sourceMedia?.type === 'audio' ? sourceMedia.audio : null;
   const presentation = (question.presentation ?? {}) as {
     intro?: string;
     example?: {
@@ -41,6 +44,10 @@ export function StatementMatchSource({
     '15 Minuten';
   const sectionLabel =
     (question.renderConfig as { sectionLabel?: string } | undefined)?.sectionLabel ?? 'LESEN';
+  const levelLabel =
+    (question as any)?.levelId ??
+    (question as any)?.appliedLevelProfile?.levelId ??
+    null;
   const summaryText =
     presentation.intro ??
     question.prompt ??
@@ -53,7 +60,7 @@ export function StatementMatchSource({
 
   return (
     <div className="space-y-6 text-sm leading-relaxed text-foreground">
-      <GoetheHeader sectionLabel={sectionLabel} />
+      <GoetheHeader sectionLabel={sectionLabel} levelLabel={levelLabel ?? undefined} />
 
       <div className="flex items-start">
         <h3 className="font-bold text-base">{resolvedTeilLabel}</h3>
@@ -62,9 +69,13 @@ export function StatementMatchSource({
         </span>
       </div>
 
-      <p className="text-foreground leading-relaxed">
-        <SavedWordHighlighter words={highlightWords}>{summaryText}</SavedWordHighlighter>
-      </p>
+      {audioSource ? (
+        <AudioSourcePlayer source={audioSource} />
+      ) : (
+        <p className="text-foreground leading-relaxed">
+          <SavedWordHighlighter words={highlightWords}>{summaryText}</SavedWordHighlighter>
+        </p>
+      )}
 
       <div className="border border-foreground/40 p-8 space-y-4">
         {question.theme && (
@@ -80,7 +91,7 @@ export function StatementMatchSource({
             {question.subtitle}
           </p>
         )}
-        {question.context && (
+        {!audioSource && question.context && (
           <div className="text-sm leading-relaxed whitespace-pre-wrap">
             <SavedWordHighlighter words={highlightWords}>
               {renderContext(question.context, hasGapMarkers)}

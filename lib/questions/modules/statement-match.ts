@@ -107,6 +107,8 @@ function resolveQuestionType(sessionType: SessionTypeEnum): QuestionType {
   switch (sessionType) {
     case SessionTypeEnum.READING:
       return QuestionType.READING_COMPREHENSION;
+    case SessionTypeEnum.LISTENING:
+      return QuestionType.LISTENING_COMPREHENSION;
     default:
       return QuestionType.READING_COMPREHENSION;
   }

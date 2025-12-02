@@ -32,12 +32,6 @@ const THEMES = [
   'ARBEIT',
 ];
 
-const SAFE_THEMES_BY_LEVEL: Record<string, string[]> = {
-  A1: ['FAMILIE', 'SCHULE', 'EINKAUFEN', 'WETTER', 'SPORT', 'ARBEIT', 'GESUNDHEIT', 'STADT', 'REISE'],
-  A2: ['FAMILIE', 'SCHULE', 'ARBEIT', 'GESUNDHEIT', 'SPORT', 'STADT', 'REISE', 'ALLTAG', 'BILDUNG'],
-  B1: ['ARBEIT', 'GESUNDHEIT', 'SCHULE', 'STADT', 'REISE', 'TECHNOLOGIE', 'BILDUNG', 'FAMILIE', 'SPORT'],
-};
-
 function levelDifficultyLabel(levelId?: string | null, difficulty?: QuestionDifficulty): string {
   if (levelId && typeof levelId === 'string') {
     return levelId;
@@ -65,69 +59,26 @@ function buildLevelGuidance(levelId?: string | null): string {
 }
 
 function buildLexicalGuidance(levelId?: string | null): string {
-  const profile = getLevelProfile((levelId as any) ?? null);
-  if (!profile?.lexicon) return '';
-  const avoid = profile.lexicon.avoid?.join(', ');
-  const prefer = profile.lexicon.prefer?.join(', ');
-  const lines: string[] = [];
-  if (prefer) {
-    lines.push(`Bevorzuge einfache Alltagswörter (z.B. ${prefer}). Nutze eigene ähnliche Wörter, nicht nur diese Beispiele.`);
+  switch (levelId) {
+    case 'A1':
+      return 'Nutze nur hochfrequente Alltagswörter; keine Fachbegriffe, keine abstrakten Nomen, keine Abkürzungen.';
+    case 'A2':
+      return 'Alltagsregister, einfache Verben und Nomen, meide Fachsprache und komplizierte Zusammensetzungen.';
+    case 'B1':
+      return 'Neutral-umgangssprachliches Register, wenige Fachwörter, keine Bürokratie- oder Behördenfloskeln.';
+    case 'B2':
+      return 'Magazin-/Newsregister, klar und präzise; begrenze Fachwortschatz und vermeide Amtsdeutsch.';
+    case 'C1':
+      return 'Gehobenes, aber klares Register; wähle präzise Wörter ohne unnötigen Jargon.';
+    case 'C2':
+      return 'Volles Register mit nuancierten Wortwahlen; dennoch kohärent und präzise.';
+    default:
+      return 'Nutze niveauangemessenes, klares Register ohne unnötigen Fachjargon.';
   }
-  if (avoid) {
-    lines.push(`Meide diese Wörter und Register komplett (keine Synonyme nötig): ${avoid}.`);
-  }
-  return lines.join(' ');
-}
-
-function countWords(text: string): number {
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-}
-
-function trimToWordLimit(text: string, maxWords: number): string {
-  if (!text) return text;
-  const words = text.trim().split(/\s+/);
-  if (words.length <= maxWords) return text.trim();
-  const trimmed = words.slice(0, maxWords).join(' ');
-  return trimmed.trim().replace(/\s+([.,!?;:])/g, '$1');
-}
-
-function clampSentenceLength(text: string, maxWordsPerSentence: number): string {
-  const sentences = text
-    .split(/([.!?])\s+/)
-    .reduce<string[]>((acc, part, idx, arr) => {
-      if (idx % 2 === 0) {
-        const sentence = part + (arr[idx + 1] ?? '');
-        acc.push(sentence);
-      }
-      return acc;
-    }, [])
-    .filter(Boolean);
-  const normalized = sentences
-    .map(sentence => {
-      const words = sentence.trim().split(/\s+/);
-      if (words.length <= maxWordsPerSentence) return sentence.trim();
-      return words.slice(0, maxWordsPerSentence).join(' ').replace(/\s+([.,!?;:])/g, '$1');
-    })
-    .join(' ');
-  return normalized.trim();
-}
-
-function enforceB2SentenceStyle(text: string): string {
-  // Keep sentences short and split on ';' or long commas
-  const splitOnSemicolons = text.replace(/;/g, '.');
-  const clamped = clampSentenceLength(splitOnSemicolons, 18);
-  return clamped;
 }
 
 function resolveTheme(levelId: string | null | undefined, override?: string, newsTheme?: string): string {
   if (override) return override;
-  const safeList = levelId ? SAFE_THEMES_BY_LEVEL[levelId] : null;
-  if (safeList && safeList.length) {
-    return safeList[Math.floor(Math.random() * safeList.length)];
-  }
   if (newsTheme) return newsTheme;
   return THEMES[Math.floor(Math.random() * THEMES.length)];
 }
@@ -396,49 +347,7 @@ Use this news item only as a loose thematic seed (do NOT copy):
         temperature: 0.8,
       });
 
-    let result = await runGeneration();
-
-    if (logMetadata?.levelId && ['A1', 'A2'].includes(logMetadata.levelId) && targetRange) {
-      const words = countWords(result.object.context);
-      if (words > targetRange[1]) {
-        result = {
-          ...result,
-          object: {
-            ...result.object,
-            context: trimToWordLimit(result.object.context, targetRange[1]),
-          },
-        };
-      } else if (words < targetRange[0]) {
-        const stricterPrompt = `${userPrompt}
-
-CRITICAL: Schreibe zwischen ${targetRange[0]} und ${targetRange[1]} Wörtern (niemals mehr als ${targetRange[1]}). Kurze Hauptsätze, Alltagswortschatz.`;
-        const stricterSystem = `${systemPrompt}
-
-WORD COUNT: ${targetRange[0]}-${targetRange[1]} (harte Obergrenze ${targetRange[1]}).`;
-        result = await runGeneration(stricterPrompt, stricterSystem);
-        const strictWords = countWords(result.object.context);
-        if (strictWords > targetRange[1]) {
-          result = {
-            ...result,
-            object: {
-              ...result.object,
-              context: trimToWordLimit(result.object.context, targetRange[1]),
-            },
-          };
-        }
-      }
-    }
-
-    if (logMetadata?.levelId === 'B2') {
-      const clamped = enforceB2SentenceStyle(result.object.context);
-      result = {
-        ...result,
-        object: {
-          ...result.object,
-          context: clamped,
-        },
-      };
-    }
+    const result = await runGeneration();
     recordModelUsage(recordUsage, ModelId.GPT_5, result.usage);
     logAiResponse('RawSource', result.object);
 

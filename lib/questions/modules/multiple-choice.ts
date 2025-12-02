@@ -16,7 +16,7 @@ import {
   generatePlannedSentenceInsertionSet,
 } from '@/lib/sessions/questions/source-generator';
 import { mapLevelToQuestionDifficulty } from '@/lib/levels/utils';
-import { generateNewsBackedAudioTranscript } from '@/lib/sessions/questions/audio-source';
+import { buildGeneratedAudio, synthesizeText, TTSProvider } from '@/services/tts';
 import type {
   Question,
   QuestionResult,
@@ -80,6 +80,10 @@ import type {
   QuestionModuleRenderConfig,
   QuestionModuleSourceConfig,
 } from './types';
+import {
+  generateListeningScript,
+  type ListeningStyleId,
+} from '@/lib/sessions/questions/listening-style-factory';
 
 interface MCQPromptConfig extends QuestionModulePromptConfig {
   instructions: string;
@@ -136,6 +140,9 @@ interface AudioPassageSourceConfig extends QuestionModuleSourceConfig {
   teilLabel?: string;
   questionCount?: number;
   optionsPerQuestion: number;
+   theme?: string;
+   levelProfile?: LevelProfile;
+   levelId?: string | null;
   playback?: AudioPlaybackPolicy;
   audioAsset?: {
     url?: string;
@@ -154,6 +161,7 @@ interface AudioPassageSourceConfig extends QuestionModuleSourceConfig {
   speakerCount?: number;
   segmentCount?: number;
   tts?: {
+    provider?: TTSProvider;
     voiceHint?: string;
     locale?: string;
     rate?: number;
@@ -1055,112 +1063,127 @@ async function generateAudioPassageMCQ(
   userId?: string,
   recordUsage?: (record: ModelUsageRecord) => void
 ): Promise<Question[]> {
-  const requiredQuestions = Math.max(questionCount, 1);
-  const transcript = await generateNewsBackedAudioTranscript(
-    difficulty,
+  const resolvedQuestionCount = Math.max(
+    questionCount ||
+      sourceConfig.questionCount ||
+      sourceConfig.levelProfile?.questionCount ||
+      DEFAULT_AUDIO_QUESTION_COUNT,
+    1
+  );
+
+  const optionsPerQuestion =
+    sourceConfig.optionsPerQuestion ??
+    sourceConfig.levelProfile?.optionsPerItem ??
+    3;
+
+  const planned = await generatePlannedArticleQuestionSet(
     {
-      conversationStyle: sourceConfig.conversationStyle,
-      speakerCount: sourceConfig.speakerCount,
-      segmentCount: sourceConfig.segmentCount,
-      listeningMode: sourceConfig.listeningMode,
-      scenario: sourceConfig.scenario,
-      prompts: { transcript: sourceConfig.prompts?.transcript },
+      questionCount: resolvedQuestionCount,
+      optionsPerQuestion,
+      theme: sourceConfig.scenario ?? sourceConfig.theme,
       teilLabel: sourceConfig.teilLabel,
+      difficulty,
+      userId,
+      levelId: sourceConfig.levelId ?? undefined,
+      targetWordCountRange: sourceConfig.levelProfile?.passageLength,
     },
-    userId,
     recordUsage
   );
 
-  const questionModel = customModel(DEFAULT_MODEL);
-  const questionsSchema = z.object({
-    questions: z.array(
-      z.object({
-        prompt: z.string(),
-        options: z
-          .array(
-            z.object({
-              id: z.string(),
-              text: z.string(),
-            })
-          )
-          .length(sourceConfig.optionsPerQuestion),
-        correctOptionId: z.string(),
-        explanation: z.string().optional(),
-      })
-    ),
-  });
-
-  const transcriptBody = transcript.segments
-    .map((segment, index) => `${index + 1}. ${segment.speakerName}: ${segment.text}`)
-    .join('\n');
-
-  const questionPrompt = `
-Du erstellst Aufgaben für ein Hörverstehen (${sourceConfig.teilLabel ?? 'Teil'}).
-
-Vorgaben:
-- Schwierigkeitsgrad: ${difficulty}
-- Antwortoptionen je Frage: ${sourceConfig.optionsPerQuestion}
-- Format: ${sourceConfig.listeningMode ?? 'Hörtext'}
-
-Transkript:
-${transcriptBody}
-
-${sourceConfig.prompts?.questions ?? ''}
-
-Erstelle ${requiredQuestions} Aufgaben, stelle sicher, dass die Antworten eindeutig aus dem Transkript hervorgehen. Wenn ein Beispiel verlangt ist, markiere die erste Aufgabe so, dass sie eindeutig als Beispiel verwendet werden kann (wir kennzeichnen sie später).`;
-
-  const questionResult = await callWithRetry(() =>
-    generateObject({
-      model: questionModel,
-      schema: questionsSchema,
-      system:
-        'Du bist Aufgabenentwickler:in für Hörverstehensprüfungen und formulierst präzise Multiple-Choice-Fragen.',
-      prompt: questionPrompt,
-      temperature: 0.55,
-    })
-  );
-  reportUsage(recordUsage, DEFAULT_MODEL, questionResult.usage);
-
-  if (
-    !Array.isArray(questionResult.object.questions) ||
-    questionResult.object.questions.length < requiredQuestions
-  ) {
-    throw new Error('Audio question generator returned too few questions');
-  }
-
+  const questionType = resolveQuestionType(sessionType);
   const playback = withDefaultPlayback(sourceConfig.playback);
   const ttsConfig = sourceConfig.tts ?? {};
+  const ttsProvider =
+    process.env.AWS_TTS_BUCKET && (process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION)
+      ? TTSProvider.AWS_POLLY
+      : TTSProvider.BROWSER_SPEECH;
+
+  let synthesizedUrl: string | null = null;
+  try {
+    const synthResult = await synthesizeText(planned.context, {
+      provider: ttsProvider,
+      locale: ttsConfig.locale ?? 'de-DE',
+      voiceId: selectPollyVoiceId(ttsConfig.voiceHint),
+    });
+    synthesizedUrl = synthResult?.url ?? null;
+  } catch (error) {
+    console.warn('[tts] synthesis failed, falling back to generatedAudio', error);
+  }
+
+  // Build structured listening script based on desired style
+  const listeningStyle: ListeningStyleId =
+    (sourceConfig.conversationStyle as ListeningStyleId) ?? 'monologue';
+  const script = await generateListeningScript({
+    style: listeningStyle,
+    theme: sourceConfig.scenario ?? sourceConfig.theme,
+    headline: planned.title,
+    summary: planned.subtitle,
+    speakerCount: sourceConfig.speakerCount,
+    segmentCount: sourceConfig.segmentCount,
+    levelId: sourceConfig.levelId ?? null,
+    baseContext: planned.context,
+  });
+
+  const transcriptText = script.segments
+    .map(seg => {
+      const speaker = script.speakers.find(s => s.id === seg.speakerId);
+      const label = speaker?.name ?? seg.speakerId;
+      return `${label}: ${seg.text}`;
+    })
+    .join('\n');
+
   const audioSource = {
-    title: sourceConfig.audioAsset?.title ?? transcript.title,
-    description: sourceConfig.audioAsset?.description ?? transcript.description,
-    url: sourceConfig.audioAsset?.url ?? '',
-    durationSeconds: sourceConfig.audioAsset?.durationSeconds ?? transcript.durationSeconds,
-    transcript: transcript.transcript,
+    title: sourceConfig.audioAsset?.title ?? script.title,
+    description: sourceConfig.audioAsset?.description ?? script.subtitle,
+    url: sourceConfig.audioAsset?.url ?? synthesizedUrl ?? '',
+    durationSeconds: sourceConfig.audioAsset?.durationSeconds ?? undefined,
+    transcript: transcriptText,
     transcriptLanguage: 'de-DE',
-    segments: transcript.segments.slice(0, 6).map((segment, index) => ({
-      timestamp: `S${index + 1}`,
-      summary: `${segment.speakerName}: ${segment.text.slice(0, 140)}${
-        segment.text.length > 140 ? '…' : ''
-      }`,
-    })),
+    segments: script.segments.map((seg, idx) => {
+      const speaker = script.speakers.find(s => s.id === seg.speakerId);
+      const label = speaker?.name ?? seg.speakerId;
+      const summaryText = `${label}: ${seg.text}`;
+      return {
+        timestamp: `S${idx + 1}`,
+        summary: summaryText.slice(0, 140) + (summaryText.length > 140 ? '…' : ''),
+      };
+    }),
     status: 'ready' as const,
     playback,
-    dialogue: transcript.segments,
+    dialogue: script.segments.map(seg => {
+      const speaker = script.speakers.find(s => s.id === seg.speakerId);
+      return {
+        speakerId: seg.speakerId,
+        speakerName: speaker?.name ?? seg.speakerId,
+        role: speaker?.role ?? sourceConfig.listeningMode ?? 'Hörtext',
+        text: seg.text,
+      };
+    }),
     generatedAudio: sourceConfig.audioAsset?.url
       ? undefined
-      : {
-          provider: 'web_speech' as const,
-          locale: ttsConfig.locale ?? 'de-DE',
-          voiceHint: ttsConfig.voiceHint ?? transcript.speakingStyle,
-          rate: ttsConfig.rate ?? 1,
-          pitch: ttsConfig.pitch ?? 1,
-          segments: transcript.segments,
-        },
+      : synthesizedUrl
+        ? undefined
+        : buildGeneratedAudio(
+          script.segments.map(seg => {
+            const speaker = script.speakers.find(s => s.id === seg.speakerId);
+            return {
+              speakerId: seg.speakerId,
+              speakerName: speaker?.name ?? seg.speakerId,
+              role: speaker?.role ?? sourceConfig.listeningMode ?? 'Hörtext',
+              text: seg.text,
+            };
+          }),
+          {
+            provider: ttsConfig.provider,
+            locale: ttsConfig.locale ?? 'de-DE',
+            voiceHint: ttsConfig.voiceHint,
+            rate: ttsConfig.rate,
+            pitch: ttsConfig.pitch,
+          }
+        ),
   };
 
-  const questionType = resolveQuestionType(sessionType);
-
-  return questionResult.object.questions.slice(0, requiredQuestions).map((entry, index) => {
+  return planned.questions.map((entry, index) => {
     const normalised = normaliseGeneratedOptions(entry.options, entry.correctOptionId);
     return {
       id: `${questionType}-audio-${Date.now()}-${index}`,
@@ -1169,17 +1192,28 @@ Erstelle ${requiredQuestions} Aufgaben, stelle sicher, dass die Antworten eindeu
       difficulty,
       inputType: QuestionInputType.MULTIPLE_CHOICE,
       prompt: entry.prompt,
-      context: transcript.transcript,
-      title: transcript.title,
-      subtitle: transcript.description,
-      theme: transcript.theme,
+      context: transcriptText,
+      title: script.title,
+      subtitle: script.subtitle,
+      theme: planned.theme,
       options: normalised.options,
       correctOptionId: normalised.correctOptionId,
       explanation: entry.explanation,
-      points: 1,
+      points: resolvePointsPerQuestion(index, sourceConfig),
       audioSource,
+      sourceMedia: {
+        type: 'audio' as const,
+        transcript: planned.context,
+        audio: audioSource,
+      },
+      playbackPolicy: playback,
       instructions: sourceConfig.prompts?.instructions,
-    };
+      renderConfig: {
+        ...(sourceConfig.renderOverrides ?? {}),
+        showAudioControls: true,
+      },
+      scoring: sourceConfig.scoringOverrides,
+    } as Question;
   });
 }
 
@@ -1304,7 +1338,6 @@ export const multipleChoiceModule: QuestionModule<
         questionCount ||
         sourceConfig.questionCount ||
         DEFAULT_AUDIO_QUESTION_COUNT;
-      const requiredCount = targetCount;
       const questions = await generateAudioPassageMCQ(
         sessionType,
         difficulty,
@@ -1313,13 +1346,7 @@ export const multipleChoiceModule: QuestionModule<
         userId,
         recordUsage
       );
-
-      return {
-        questions: questions.slice(0, requiredCount).map((question, index) => ({
-          ...question,
-          points: 1,
-        })),
-      };
+      return { questions };
     }
 
     if (sourceConfig.type === 'audio_with_gaps') {
@@ -1453,4 +1480,13 @@ function mapNewsTopicToSourceReference(topic?: NewsTopic | null) {
     provider: topic.source,
     publishedAt: topic.publishedAt,
   };
+}
+
+function selectPollyVoiceId(hint?: string): string | undefined {
+  if (!hint) return undefined;
+  const value = hint.trim().toLowerCase();
+  // German voices: Vicki (default, female, neural), Hans (male)
+  if (/hans|male|herr|deep|bariton/.test(value)) return 'Hans';
+  if (/vicki|female|frau|neutral|standard|de-?de/.test(value)) return 'Vicki';
+  return undefined;
 }

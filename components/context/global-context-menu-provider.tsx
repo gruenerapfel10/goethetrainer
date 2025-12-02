@@ -28,6 +28,7 @@ type MenuVariant = 'mini' | 'full';
 
 interface MenuState {
   text: string;
+  context?: string;
   variant: MenuVariant;
   position: Point;
 }
@@ -120,13 +121,24 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
   }, [resetTransientState]);
 
   const openMenu = useCallback(
-    ({ text, anchor, variant }: { text: string; anchor: Point; variant: MenuVariant }) => {
+    ({
+      text,
+      context,
+      anchor,
+      variant,
+    }: {
+      text: string;
+      context?: string;
+      anchor: Point;
+      variant: MenuVariant;
+    }) => {
       anchorRef.current = anchor;
       resetTransientState();
 
       const size = variant === 'mini' ? MINI_SIZE : FULL_SIZE;
       setMenuState({
         text,
+        context,
         variant,
         position: computePosition(anchor, size),
       });
@@ -183,7 +195,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
     [repositionMenu]
   );
 
-  const getSelectionText = useCallback(() => {
+  const getSelectionWithContext = useCallback((): { text: string; context?: string } | null => {
     if (typeof window === 'undefined') {
       return null;
     }
@@ -193,12 +205,73 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       return null;
     }
 
-    const text = selection.toString().trim();
+    const rawText = selection.toString();
+    const text = rawText.trim();
     if (!text) {
       return null;
     }
 
-    return text.length > MAX_SELECTION_CHARS ? text.slice(0, MAX_SELECTION_CHARS) : text;
+    const boundedText =
+      text.length > MAX_SELECTION_CHARS ? text.slice(0, MAX_SELECTION_CHARS) : text;
+
+    let context: string | undefined;
+
+    try {
+      const range = selection.getRangeAt(0);
+      let container: Node | null = range.commonAncestorContainer;
+
+      if (container.nodeType === Node.TEXT_NODE) {
+        container = container.parentNode;
+      }
+
+      while (container && container.parentNode && container.parentNode !== document.body) {
+        container = container.parentNode;
+      }
+
+      const fullText = (container?.textContent ?? '').trim();
+
+      if (fullText) {
+        const idx = fullText.indexOf(text);
+        if (idx !== -1) {
+          let start = idx;
+          for (let i = idx - 1; i >= 0; i -= 1) {
+            const char = fullText[i];
+            if (char === '.' || char === '!' || char === '?' || char === '\n') {
+              start = i + 1;
+              break;
+            }
+            if (i === 0) {
+              start = 0;
+            }
+          }
+
+          let end = idx + text.length;
+          for (let i = end; i < fullText.length; i += 1) {
+            const char = fullText[i];
+            if (char === '.' || char === '!' || char === '?' || char === '\n') {
+              end = i + 1;
+              break;
+            }
+            if (i === fullText.length - 1) {
+              end = fullText.length;
+            }
+          }
+
+          const sentence = fullText.slice(start, end).trim();
+          if (sentence && sentence.length > boundedText.length) {
+            context =
+              sentence.length > MAX_SELECTION_CHARS
+                ? sentence.slice(0, MAX_SELECTION_CHARS)
+                : sentence;
+          }
+        }
+      }
+    } catch {
+      // If anything goes wrong while computing context, fall back to selection-only.
+      context = undefined;
+    }
+
+    return { text: boundedText, context };
   }, []);
 
   const handleTranslate = useCallback(async () => {
@@ -214,7 +287,10 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       const response = await fetch('/api/tools/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: menuState.text }),
+        body: JSON.stringify({
+          text: menuState.text,
+          context: menuState.context ?? menuState.text,
+        }),
       });
 
       if (!response.ok) {
@@ -360,12 +436,17 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       anchorRef.current = anchor;
 
       requestAnimationFrame(() => {
-        const text = getSelectionText();
-        if (!text) {
+        const selection = getSelectionWithContext();
+        if (!selection) {
           closeMenu();
           return;
         }
-        openMenu({ text, anchor, variant: 'mini' });
+        openMenu({
+          text: selection.text,
+          context: selection.context,
+          anchor,
+          variant: 'mini',
+        });
       });
     };
 
@@ -387,8 +468,8 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
         return;
       }
 
-      const text = getSelectionText();
-      if (!text) {
+      const selection = getSelectionWithContext();
+      if (!selection) {
         closeMenu();
         return;
       }
@@ -399,7 +480,12 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       if (menuOpenRef.current) {
         expandToFull(anchor);
       } else {
-        openMenu({ text, anchor, variant: 'full' });
+        openMenu({
+          text: selection.text,
+          context: selection.context,
+          anchor,
+          variant: 'full',
+        });
       }
     };
 
@@ -421,7 +507,7 @@ export function GlobalContextMenuProvider({ children }: { children: ReactNode })
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeMenu, expandToFull, getSelectionText, openMenu]);
+  }, [closeMenu, expandToFull, getSelectionWithContext, openMenu]);
 
   // Reposition after render when dimensions/content change or on resize.
   useLayoutEffect(() => {

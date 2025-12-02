@@ -63,7 +63,7 @@ export interface AudioDialogueSegment {
 }
 
 export interface GeneratedAudioDefinition {
-  provider: 'web_speech';
+  provider: 'web_speech' | 'browser_speech' | string;
   locale?: string;
   voiceHint?: string;
   rate?: number;
@@ -85,6 +85,17 @@ export interface AudioSourceDefinition {
   dialogue?: AudioDialogueSegment[];
   generatedAudio?: GeneratedAudioDefinition;
 }
+
+export type SourceMedia =
+  | {
+      type: 'text';
+      transcript: string;
+    }
+  | {
+      type: 'audio';
+      transcript?: string;
+      audio: AudioSourceDefinition;
+    };
 
 export interface QuestionSourceReference {
   title?: string;
@@ -233,6 +244,13 @@ export interface Question {
   // Level metadata (applied recipe)
   levelId?: LevelId | null;
   appliedLevelProfile?: (LevelProfile & { version?: string }) | null;
+
+   // Source media and playback
+  sourceMedia?: SourceMedia | null;
+  playbackPolicy?: AudioPlaybackPolicy;
+  segmentLabels?: Record<string, string>;
+  groupId?: string;
+  groupLabel?: string;
 }
 
 export interface UserAnswer {

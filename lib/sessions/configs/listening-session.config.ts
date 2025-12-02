@@ -1,5 +1,6 @@
 import { SessionTypeEnum, type SessionConfig } from '../session-registry';
 import { QuestionModuleId } from '@/lib/questions/modules/types';
+import { LevelId } from '@/lib/levels';
 
 const defaultPlayback = {
   allowPause: true,
@@ -61,7 +62,7 @@ export const listeningSessionConfig: SessionConfig = {
       ],
     },
   },
-  supportedModules: [QuestionModuleId.MULTIPLE_CHOICE],
+  supportedModules: [QuestionModuleId.MULTIPLE_CHOICE, QuestionModuleId.STATEMENT_MATCH],
   fixedLayout: [
     {
       id: 'teil_1',
@@ -85,7 +86,7 @@ export const listeningSessionConfig: SessionConfig = {
         questionCount: 6,
         optionsPerQuestion: 3,
         conversationStyle: 'podcast',
-        speakerCount: 1,
+        speakerCount: 2,
         segmentCount: 6,
         tts: {
           voiceHint: 'Podcast',
@@ -173,7 +174,7 @@ export const listeningSessionConfig: SessionConfig = {
         questionCount: 8,
         optionsPerQuestion: 3,
         conversationStyle: 'dialogue',
-        speakerCount: 3,
+        speakerCount: 2,
         segmentCount: 12,
         tts: {
           voiceHint: 'Dialog',
@@ -217,7 +218,7 @@ export const listeningSessionConfig: SessionConfig = {
         questionCount: 7,
         optionsPerQuestion: 3,
         conversationStyle: 'discussion',
-        speakerCount: 4,
+        speakerCount: 1,
         segmentCount: 10,
         tts: {
           voiceHint: 'Diskussion',
@@ -248,6 +249,7 @@ export const listeningSessionConfig: SessionConfig = {
   defaults: {
     targetDuration: 2100,
     questionCount: 30,
+    levelId: LevelId.C1,
     targetMetrics: {
       audioPlayed: 900,
       answeredQuestions: 30,

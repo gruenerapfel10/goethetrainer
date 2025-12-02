@@ -59,15 +59,25 @@ export function AllQuestionsView({
   const primaryQuestion = questions[0];
   const renderConfig = (primaryQuestion?.renderConfig ?? {}) as Record<string, any>;
   const sessionType = primaryQuestion?.sessionType ?? SessionTypeEnum.READING;
-  const isListening = sessionType === SessionTypeEnum.LISTENING;
-   const sectionLabel = renderConfig.sectionLabel ?? (sessionType === SessionTypeEnum.LISTENING ? 'HÖREN' : 'LESEN');
-   const workingTime = renderConfig.workingTime ?? primaryQuestion?.workingTime ?? '10 Minuten';
+  const sourceMedia = primaryQuestion?.sourceMedia ?? null;
+  const isListening = sourceMedia?.type === 'audio' || sessionType === SessionTypeEnum.LISTENING;
+  const sectionLabel = renderConfig.sectionLabel ?? (isListening ? 'HÖREN' : 'LESEN');
+  const levelLabel =
+    (primaryQuestion as any)?.levelId ??
+    (primaryQuestion as any)?.appliedLevelProfile?.levelId ??
+    null;
+  const workingTime = renderConfig.workingTime ?? primaryQuestion?.workingTime ?? '10 Minuten';
    const defaultReadingSummary = 'Sie lesen einen Artikel. Wählen Sie für jede Aufgabe die passende Lösung.';
    const defaultListeningSummary = 'Sie hören einen Hörtext. Treffen Sie für jede Aussage die richtige Entscheidung.';
-   const sourceSummary = renderConfig.sourceSummary ?? (sessionType === SessionTypeEnum.LISTENING ? defaultListeningSummary : defaultReadingSummary);
-   const audioSource = primaryQuestion?.audioSource;
+   const sourceSummary = renderConfig.sourceSummary ?? (isListening ? defaultListeningSummary : defaultReadingSummary);
+   const audioSource = sourceMedia?.type === 'audio'
+     ? sourceMedia.audio
+     : (primaryQuestion as any)?.audioSource ?? null;
    const showAudioSource = Boolean(audioSource && (renderConfig.showAudioControls ?? true));
-  const contextBody = isListening ? '' : primaryQuestion?.context ?? audioSource?.transcript ?? '';
+  const contextBody =
+    isListening && sourceMedia?.type === 'audio'
+      ? sourceMedia.transcript ?? ''
+      : primaryQuestion?.context ?? (audioSource as any)?.transcript ?? '';
   const hasGapMarkers = Boolean(!isListening && primaryQuestion?.context && /\[GAP_\d+\]/.test(primaryQuestion.context));
    const [view, setView] = useState<'fragen' | 'quelle'>(activeView);
   const globalOrder = useMemo(() => {
@@ -206,7 +216,7 @@ export function AllQuestionsView({
  
   const fragenContent = (
     <div className="space-y-10">
-      <GoetheHeader sectionLabel={sectionLabel} />
+      <GoetheHeader sectionLabel={sectionLabel} levelLabel={levelLabel ?? undefined} />
        {questions.map((question, qIndex) => {
          const optionLayout = question.renderConfig?.layout ?? renderLayout;
          const isHorizontal = optionLayout === 'horizontal';
@@ -318,7 +328,7 @@ export function AllQuestionsView({
     <div className="space-y-6">
       {hasSourceContent ? (
         <>
-          <GoetheHeader sectionLabel={sectionLabel} />
+          <GoetheHeader sectionLabel={sectionLabel} levelLabel={levelLabel ?? undefined} />
           <div className="flex items-start mb-8">
             <h3 className="font-bold text-base">{teilLabel}</h3>
             <span className="text-muted-foreground ml-20 font-normal text-base">
